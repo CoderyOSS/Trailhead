@@ -1,0 +1,10 @@
+interfaces:
+  http:
+    client:
+      base_url: "http://localhost:4050"
+  sql:
+    path: "./data/test.db"
+    reset_on_start: true
+  fs:
+    root: "./test-workspace"
+    reset_on_start: true

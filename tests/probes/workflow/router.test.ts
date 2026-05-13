@@ -1,41 +1,35 @@
-import { describe, it, expect, beforeAll } from "bun:test";
-import { createTestProbes, uniqueId } from "../helpers";
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
+import { uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-import type { ProbesInstance } from "@codery/probes";
-
-let p: ProbesInstance;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 describe("workflow router", () => {
-  beforeAll(async () => {
-    p = await createTestProbes();
-  });
-
   it("routes on string equality", async () => {
     const projectId = uniqueId();
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Build feature",
       workflow: "feature",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "test-worker",
     });
 
-    await adapter.workerComplete(p, workerId, {
+    await adapter.workerComplete(workerId, {
       job_id: jobId,
       stage: "plan",
       output: "Simple task",
       response: { complexity: "simple" },
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job) && isRecord(job["current_stage"])) {
       const stageName = job["current_stage"]["name"];
@@ -47,26 +41,26 @@ describe("workflow router", () => {
 
   it("routes on boolean field", async () => {
     const projectId = uniqueId();
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Build feature",
       workflow: "feature",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "test-worker",
     });
 
-    await adapter.workerComplete(p, workerId, {
+    await adapter.workerComplete(workerId, {
       job_id: jobId,
       stage: "plan",
       output: "Plan done",
       response: { complexity: "simple" },
     });
 
-    const jobAfterPlan = await adapter.getJob(p, jobId);
+    const jobAfterPlan = await adapter.getJob(jobId);
 
     if (isRecord(jobAfterPlan) && isRecord(jobAfterPlan["current_stage"])) {
       const stageName = jobAfterPlan["current_stage"]["name"];
@@ -75,14 +69,14 @@ describe("workflow router", () => {
       }
     }
 
-    await adapter.workerComplete(p, workerId, {
+    await adapter.workerComplete(workerId, {
       job_id: jobId,
       stage: "implement",
       output: "Implementation succeeded",
       response: { success: true },
     });
 
-    const jobAfterImpl = await adapter.getJob(p, jobId);
+    const jobAfterImpl = await adapter.getJob(jobId);
 
     if (isRecord(jobAfterImpl) && isRecord(jobAfterImpl["current_stage"])) {
       const stageName = jobAfterImpl["current_stage"]["name"];
@@ -128,26 +122,26 @@ stages:
 
   it("routes to first matching condition", async () => {
     const projectId = uniqueId();
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Build feature",
       workflow: "feature",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "test-worker",
     });
 
-    await adapter.workerComplete(p, workerId, {
+    await adapter.workerComplete(workerId, {
       job_id: jobId,
       stage: "plan",
       output: "Complex plan",
       response: { complexity: "complex" },
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job) && isRecord(job["current_stage"])) {
       const stageName = job["current_stage"]["name"];
@@ -159,26 +153,26 @@ stages:
 
   it("ends workflow when routes null", async () => {
     const projectId = uniqueId();
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Simple task",
       workflow: "simple",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "test-worker",
     });
 
-    await adapter.workerComplete(p, workerId, {
+    await adapter.workerComplete(workerId, {
       job_id: jobId,
       stage: "plan",
       output: "Done planning",
       response: { complexity: "simple" },
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job)) {
       const status = job["status"];

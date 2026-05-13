@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { uniqueId } from "../helpers";
+import { p, uniqueId } from "../helpers";
 
 const SSH_BUILD =
   "export PATH=\"$HOME/.cargo/bin:$PATH\" && cd /home/gem/projects/CoderyTrailhead && cargo build -p agent-runner --release 2>&1";

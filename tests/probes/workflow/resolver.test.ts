@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeAll } from "bun:test";
-import { createTestProbes, uniqueId } from "../helpers";
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
+import { uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-import type { ProbesInstance } from "@codery/probes";
-
-let p: ProbesInstance;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,19 +12,15 @@ function hasStringField(obj: unknown, field: string): boolean {
 }
 
 describe("workflow resolver", () => {
-  beforeAll(async () => {
-    p = await createTestProbes();
-  });
-
   it("resolves {{input}} variable", async () => {
     const projectId = uniqueId();
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Add a hello world function",
       workflow: "simple",
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job) && isRecord(job["current_stage"])) {
       const prompt = job["current_stage"]["prompt"];
@@ -38,26 +32,26 @@ describe("workflow resolver", () => {
 
   it("resolves {{stages.*}} variables", async () => {
     const projectId = uniqueId();
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Build feature X",
       workflow: "feature",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "test-worker",
     });
 
-    await adapter.workerComplete(p, workerId, {
+    await adapter.workerComplete(workerId, {
       job_id: jobId,
       stage: "plan",
       output: "Plan created: implement the thing",
       response: { complexity: "complex" },
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job) && isRecord(job["current_stage"])) {
       const prompt = job["current_stage"]["prompt"];
@@ -76,13 +70,13 @@ describe("workflow resolver", () => {
       rows: [{ id: projectId, name: "test-project", repo: "org/test-repo", branch: "main" }],
     });
 
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Fix the bug",
       workflow: "simple",
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job) && isRecord(job["current_stage"])) {
       const prompt = job["current_stage"]["prompt"];

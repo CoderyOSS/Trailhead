@@ -1,18 +1,18 @@
-import type { ProbesInstance } from "@codery/probes";
+import { p } from "@codery/probes";
 
 export interface ServiceAdapter {
-  createJob(p: ProbesInstance, params: { project_id: string; description: string; workflow: string }): Promise<string>;
-  getJob(p: ProbesInstance, jobId: string): Promise<Record<string, unknown>>;
-  listJobs(p: ProbesInstance): Promise<Record<string, unknown>[]>;
-  cancelJob(p: ProbesInstance, jobId: string): Promise<void>;
-  pauseJob(p: ProbesInstance, jobId: string): Promise<void>;
-  resumeJob(p: ProbesInstance, jobId: string): Promise<void>;
-  listWorkers(p: ProbesInstance): Promise<Record<string, unknown>[]>;
-  workerRegister(p: ProbesInstance, workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerHeartbeat(p: ProbesInstance, workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerCheckpoint(p: ProbesInstance, workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerComplete(p: ProbesInstance, workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerFail(p: ProbesInstance, workerId: string, body: Record<string, unknown>): Promise<void>;
+  createJob(params: { project_id: string; description: string; workflow: string }): Promise<string>;
+  getJob(jobId: string): Promise<Record<string, unknown>>;
+  listJobs(): Promise<Record<string, unknown>[]>;
+  cancelJob(jobId: string): Promise<void>;
+  pauseJob(jobId: string): Promise<void>;
+  resumeJob(jobId: string): Promise<void>;
+  listWorkers(): Promise<Record<string, unknown>[]>;
+  workerRegister(workerId: string, body: Record<string, unknown>): Promise<void>;
+  workerHeartbeat(workerId: string, body: Record<string, unknown>): Promise<void>;
+  workerCheckpoint(workerId: string, body: Record<string, unknown>): Promise<void>;
+  workerComplete(workerId: string, body: Record<string, unknown>): Promise<void>;
+  workerFail(workerId: string, body: Record<string, unknown>): Promise<void>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -31,7 +31,7 @@ function extractId(body: unknown): string {
 }
 
 export const adapter: ServiceAdapter = {
-  async createJob(p, params) {
+  async createJob(params) {
     const res = await p.http.send({
       method: "POST",
       path: "/api/v1/jobs",
@@ -40,7 +40,7 @@ export const adapter: ServiceAdapter = {
     return extractId(res.body);
   },
 
-  async getJob(p, jobId) {
+  async getJob(jobId) {
     const res = await p.http.send({
       method: "GET",
       path: `/api/v1/jobs/${jobId}`,
@@ -49,7 +49,7 @@ export const adapter: ServiceAdapter = {
     throw new Error("Expected record response");
   },
 
-  async listJobs(p) {
+  async listJobs() {
     const res = await p.http.send({
       method: "GET",
       path: "/api/v1/jobs",
@@ -58,28 +58,28 @@ export const adapter: ServiceAdapter = {
     throw new Error("Expected record array response");
   },
 
-  async cancelJob(p, jobId) {
+  async cancelJob(jobId) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/jobs/${jobId}/cancel`,
     });
   },
 
-  async pauseJob(p, jobId) {
+  async pauseJob(jobId) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/jobs/${jobId}/pause`,
     });
   },
 
-  async resumeJob(p, jobId) {
+  async resumeJob(jobId) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/jobs/${jobId}/resume`,
     });
   },
 
-  async listWorkers(p) {
+  async listWorkers() {
     const res = await p.http.send({
       method: "GET",
       path: "/api/v1/workers",
@@ -88,7 +88,7 @@ export const adapter: ServiceAdapter = {
     throw new Error("Expected record array response");
   },
 
-  async workerRegister(p, workerId, body) {
+  async workerRegister(workerId, body) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/register`,
@@ -96,7 +96,7 @@ export const adapter: ServiceAdapter = {
     });
   },
 
-  async workerHeartbeat(p, workerId, body) {
+  async workerHeartbeat(workerId, body) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/heartbeat`,
@@ -104,7 +104,7 @@ export const adapter: ServiceAdapter = {
     });
   },
 
-  async workerCheckpoint(p, workerId, body) {
+  async workerCheckpoint(workerId, body) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/checkpoint`,
@@ -112,7 +112,7 @@ export const adapter: ServiceAdapter = {
     });
   },
 
-  async workerComplete(p, workerId, body) {
+  async workerComplete(workerId, body) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/complete`,
@@ -120,7 +120,7 @@ export const adapter: ServiceAdapter = {
     });
   },
 
-  async workerFail(p, workerId, body) {
+  async workerFail(workerId, body) {
     await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/fail`,

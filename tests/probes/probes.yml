@@ -1,3 +1,7 @@
+proof:
+  output: "proof-records.md"
+  title: "Trailhead E2E Test Suite"
+
 interfaces:
   http:
     client:

@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeAll } from "bun:test";
-import { createTestProbes, uniqueId } from "../helpers";
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
+import { uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-import type { ProbesInstance } from "@codery/probes";
-
-let p: ProbesInstance;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,10 +12,6 @@ function hasStringField(obj: unknown, field: string): boolean {
 }
 
 describe("database operations", () => {
-  beforeAll(async () => {
-    p = await createTestProbes();
-  });
-
   it("creates project and retrieves it", async () => {
     const projectId = uniqueId();
     const createRes = await p.http.send({
@@ -61,13 +55,13 @@ describe("database operations", () => {
       },
     });
 
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Job with project ref",
       workflow: "feature",
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job)) {
       expect(job["project_id"]).toBe(projectId);
@@ -88,7 +82,7 @@ describe("database operations", () => {
       },
     });
 
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Queued job",
       workflow: "feature",
@@ -118,19 +112,19 @@ describe("database operations", () => {
       },
     });
 
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Checkpoint test",
       workflow: "feature",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "checkpoint-worker",
     });
 
-    await adapter.workerCheckpoint(p, workerId, {
+    await adapter.workerCheckpoint(workerId, {
       job_id: jobId,
       stage: "plan",
       response: "Planning complete",
@@ -164,21 +158,21 @@ describe("database operations", () => {
       },
     });
 
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Heartbeat test",
       workflow: "feature",
     });
 
     const workerId = uniqueId();
-    await adapter.workerRegister(p, workerId, {
+    await adapter.workerRegister(workerId, {
       job_id: jobId,
       hostname: "heartbeat-worker",
     });
 
     const beforeHeartbeat = Date.now();
 
-    await adapter.workerHeartbeat(p, workerId, {
+    await adapter.workerHeartbeat(workerId, {
       status: "running",
       current_stage: "plan",
       token_usage: { input: 100, output: 50 },

@@ -1,22 +1,8 @@
-import { describe, it, expect, beforeAll, afterAll } from "bun:test";
-import { probes, type ProbesInstance } from "@codery/probes";
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
 import { uniqueId } from "../helpers";
 
 describe("full job lifecycle", () => {
-  let p: ProbesInstance;
-
-  beforeAll(async () => {
-    p = await probes({
-      sql: { path: "./data/test.db", reset_on_start: true },
-      http: { client: { base_url: "http://localhost:4050" } },
-      fs: { root: "./test-workspace", reset_on_start: true },
-    });
-  });
-
-  afterAll(async () => {
-    await p.close();
-  });
-
   it("creates project then job then runs to completion", async () => {
     const projectId = uniqueId();
     const createProjectRes = await p.http.send({

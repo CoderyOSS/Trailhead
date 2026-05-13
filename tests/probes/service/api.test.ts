@@ -1,15 +1,13 @@
-import { describe, it, expect, beforeAll } from "bun:test";
-import { createTestProbes, uniqueId } from "../helpers";
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
+import { uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-import type { ProbesInstance } from "@codery/probes";
-
-let p: ProbesInstance;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; workerId: string }> {
+async function createRunningJob(): Promise<{ jobId: string; workerId: string }> {
   const projectId = uniqueId();
   await p.http.send({
     method: "POST",
@@ -22,7 +20,7 @@ async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; wor
     },
   });
 
-  const jobId = await adapter.createJob(p, {
+  const jobId = await adapter.createJob({
     project_id: projectId,
     description: "API test job",
     workflow: "feature",
@@ -34,7 +32,7 @@ async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; wor
   });
 
   const workerId = uniqueId();
-  await adapter.workerRegister(p, workerId, {
+  await adapter.workerRegister(workerId, {
     job_id: jobId,
     hostname: "api-test-worker",
   });
@@ -43,12 +41,8 @@ async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; wor
 }
 
 describe("worker HTTP API", () => {
-  beforeAll(async () => {
-    p = await createTestProbes();
-  });
-
   it("worker register", async () => {
-    const { jobId, workerId } = await createRunningJob(p);
+    const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "GET",
@@ -64,7 +58,7 @@ describe("worker HTTP API", () => {
   });
 
   it("worker heartbeat", async () => {
-    const { workerId } = await createRunningJob(p);
+    const { workerId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "POST",
@@ -80,7 +74,7 @@ describe("worker HTTP API", () => {
   });
 
   it("worker checkpoint", async () => {
-    const { jobId, workerId } = await createRunningJob(p);
+    const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "POST",
@@ -100,7 +94,7 @@ describe("worker HTTP API", () => {
   });
 
   it("worker complete", async () => {
-    const { jobId, workerId } = await createRunningJob(p);
+    const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "POST",
@@ -115,14 +109,14 @@ describe("worker HTTP API", () => {
 
     expect(res.status).toBe(200);
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
     if (isRecord(job)) {
       expect(job["status"]).toBe("completed");
     }
   });
 
   it("worker fail", async () => {
-    const { jobId, workerId } = await createRunningJob(p);
+    const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "POST",
@@ -136,14 +130,14 @@ describe("worker HTTP API", () => {
 
     expect(res.status).toBe(200);
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
     if (isRecord(job)) {
       expect(job["status"]).toBe("failed_retryable");
     }
   });
 
   it("get job config", async () => {
-    const { jobId } = await createRunningJob(p);
+    const { jobId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "GET",
@@ -159,7 +153,7 @@ describe("worker HTTP API", () => {
   });
 
   it("get skill content", async () => {
-    const { jobId } = await createRunningJob(p);
+    const { jobId } = await createRunningJob();
 
     const res = await p.http.send({
       method: "GET",

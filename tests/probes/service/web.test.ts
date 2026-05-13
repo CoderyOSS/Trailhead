@@ -1,9 +1,7 @@
-import { describe, it, expect, beforeAll } from "bun:test";
-import { createTestProbes, uniqueId } from "../helpers";
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
+import { uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-import type { ProbesInstance } from "@codery/probes";
-
-let p: ProbesInstance;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -20,7 +18,7 @@ function getStatus(job: unknown): string {
   return "";
 }
 
-async function createProjectAndJob(p: ProbesInstance): Promise<string> {
+async function createProjectAndJob(): Promise<string> {
   const projectId = uniqueId();
   await p.http.send({
     method: "POST",
@@ -33,15 +31,15 @@ async function createProjectAndJob(p: ProbesInstance): Promise<string> {
     },
   });
 
-  return adapter.createJob(p, {
+  return adapter.createJob({
     project_id: projectId,
     description: "Dashboard test job",
     workflow: "feature",
   });
 }
 
-async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; workerId: string }> {
-  const jobId = await createProjectAndJob(p);
+async function createRunningJob(): Promise<{ jobId: string; workerId: string }> {
+  const jobId = await createProjectAndJob();
 
   await p.http.send({
     method: "POST",
@@ -49,7 +47,7 @@ async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; wor
   });
 
   const workerId = uniqueId();
-  await adapter.workerRegister(p, workerId, {
+  await adapter.workerRegister(workerId, {
     job_id: jobId,
     hostname: "web-test-worker",
   });
@@ -58,14 +56,10 @@ async function createRunningJob(p: ProbesInstance): Promise<{ jobId: string; wor
 }
 
 describe("dashboard API", () => {
-  beforeAll(async () => {
-    p = await createTestProbes();
-  });
-
   it("GET /api/v1/jobs returns list", async () => {
-    const jobId = await createProjectAndJob(p);
+    const jobId = await createProjectAndJob();
 
-    const jobs = await adapter.listJobs(p);
+    const jobs = await adapter.listJobs();
 
     expect(jobs.length).toBeGreaterThan(0);
 
@@ -92,13 +86,13 @@ describe("dashboard API", () => {
       },
     });
 
-    const jobId = await adapter.createJob(p, {
+    const jobId = await adapter.createJob({
       project_id: projectId,
       description: "Detail retrieval test",
       workflow: "feature",
     });
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
 
     if (isRecord(job)) {
       expect(typeof job["id"]).toBe("string");
@@ -111,9 +105,9 @@ describe("dashboard API", () => {
   });
 
   it("GET /api/v1/workers returns list", async () => {
-    const { workerId } = await createRunningJob(p);
+    const { workerId } = await createRunningJob();
 
-    const workers = await adapter.listWorkers(p);
+    const workers = await adapter.listWorkers();
 
     expect(workers.length).toBeGreaterThan(0);
 
@@ -128,30 +122,30 @@ describe("dashboard API", () => {
   });
 
   it("POST /api/v1/jobs/{id}/pause changes status", async () => {
-    const { jobId } = await createRunningJob(p);
+    const { jobId } = await createRunningJob();
 
-    await adapter.pauseJob(p, jobId);
+    await adapter.pauseJob(jobId);
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
     expect(getStatus(job)).toBe("paused");
   });
 
   it("POST /api/v1/jobs/{id}/resume changes status", async () => {
-    const { jobId } = await createRunningJob(p);
+    const { jobId } = await createRunningJob();
 
-    await adapter.pauseJob(p, jobId);
-    await adapter.resumeJob(p, jobId);
+    await adapter.pauseJob(jobId);
+    await adapter.resumeJob(jobId);
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
     expect(getStatus(job)).toBe("running");
   });
 
   it("POST /api/v1/jobs/{id}/cancel changes status", async () => {
-    const jobId = await createProjectAndJob(p);
+    const jobId = await createProjectAndJob();
 
-    await adapter.cancelJob(p, jobId);
+    await adapter.cancelJob(jobId);
 
-    const job = await adapter.getJob(p, jobId);
+    const job = await adapter.getJob(jobId);
     expect(getStatus(job)).toBe("cancelled");
   });
 });

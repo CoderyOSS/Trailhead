@@ -1,8 +1,5 @@
-import { describe, it, expect, beforeAll } from "bun:test";
-import { createTestProbes, uniqueId } from "../helpers";
-import type { ProbesInstance } from "@codery/probes";
-
-let p: ProbesInstance;
+import { describe, it, expect } from "bun:test";
+import { p } from "@codery/probes";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -13,10 +10,6 @@ function hasStatus(res: { status: number }, expected: number): boolean {
 }
 
 describe("workflow parser", () => {
-  beforeAll(async () => {
-    p = await createTestProbes();
-  });
-
   it("parses valid workflow YAML", async () => {
     const yaml = `
 name: simple

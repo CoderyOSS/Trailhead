@@ -1,8 +1,9 @@
 use anyhow::Result;
 use chrono::Utc;
 use rusqlite::params;
+use serde::Serialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct ProjectRow {
     pub id: String,
     pub repo_url: String,
@@ -11,7 +12,7 @@ pub struct ProjectRow {
     pub updated_at: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct JobRow {
     pub id: String,
     pub project_id: String,
@@ -32,7 +33,7 @@ pub struct JobRow {
     pub finished_at: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct WorkerRow {
     pub id: String,
     pub job_id: Option<String>,
@@ -46,7 +47,7 @@ pub struct WorkerRow {
     pub destroyed_at: Option<String>,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct CheckpointRow {
     pub id: String,
     pub job_id: String,
@@ -59,7 +60,7 @@ pub struct CheckpointRow {
     pub created_at: String,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize)]
 pub struct WorkflowRow {
     pub name: String,
     pub content: String,
@@ -69,6 +70,7 @@ pub struct WorkflowRow {
     pub updated_at: String,
 }
 
+#[derive(Debug)]
 pub struct Database {
     conn: std::sync::Mutex<rusqlite::Connection>,
 }

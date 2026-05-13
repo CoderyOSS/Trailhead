@@ -1,0 +1,15 @@
+name: exploration
+description: "Code exploration and analysis"
+
+stages:
+  explore:
+    skill: plan
+    prompt: "Explore and analyze: {{input}}"
+    response_schema:
+      type: object
+      properties:
+        findings: { type: string }
+      required: [findings]
+    tools: [bash, read, glob, grep]
+    max_tokens: 8096
+    routes: null

@@ -1,0 +1,75 @@
+name: refactor
+description: "Code refactoring workflow"
+
+stages:
+  plan:
+    skill: plan
+    prompt: "Plan refactoring for: {{input}}"
+    response_schema:
+      type: object
+      properties:
+        plan: { type: string }
+      required: [plan]
+    tools: [bash, read, glob, grep]
+    max_tokens: 8000
+    routes:
+      - when: 'true'
+        next: implement
+
+  implement:
+    skill: implement
+    prompt: "Refactor: {{input}}"
+    response_schema:
+      type: object
+      properties:
+        success: { type: boolean }
+      required: [success]
+    tools: [bash, read, write, edit, glob, grep]
+    max_tokens: 8096
+    checkpoint: true
+    routes:
+      - when: 'response.success'
+        next: test
+      - when: 'true'
+        next: implement
+
+  test:
+    skill: test
+    prompt: "Run tests to verify refactoring."
+    response_schema:
+      type: object
+      properties:
+        passed: { type: boolean }
+      required: [passed]
+    tools: [bash, read, write, edit, grep]
+    routes:
+      - when: 'response.passed'
+        next: review
+      - when: 'true'
+        next: fix
+
+  fix:
+    skill: fix
+    prompt: "Fix test failures from refactoring."
+    response_schema:
+      type: object
+      properties:
+        fixed: { type: boolean }
+      required: [fixed]
+    tools: [bash, read, write, edit, grep]
+    routes:
+      - when: 'response.fixed'
+        next: test
+      - when: 'true'
+        next: implement
+
+  review:
+    skill: review
+    prompt: "Review refactoring for correctness."
+    response_schema:
+      type: object
+      properties:
+        approved: { type: boolean }
+      required: [approved]
+    tools: [bash, read, glob, grep]
+    routes: null

@@ -1,0 +1,27 @@
+[package]
+name = "trailhead-service"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+trailhead-core = { path = "../trailhead-core" }
+tokio = { version = "1", features = ["full"] }
+bollard = "0.17"
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+serde_yaml = "0.9"
+cel = "0.13"
+rmcp = { version = "1", features = ["server", "transport-streamable-http-server", "schemars"] }
+axum = { version = "0.8", features = ["http1", "tokio"] }
+tokio-util = { version = "0.7", features = ["rt"] }
+uuid = { version = "1", features = ["v4"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1"
+minijinja = "2"
+schemars = "1"
+chrono = "0.4"
+
+[dev-dependencies]
+tempfile = "3"

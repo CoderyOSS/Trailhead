@@ -1,7 +1,5 @@
 /target
+Cargo.lock
 *.db
-*.db-wal
-*.db-shm
 node_modules/
 dist/
-.env

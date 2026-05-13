@@ -1,0 +1,17 @@
+name: simple
+description: "Simple two-stage workflow for testing"
+stages:
+  plan:
+    skill: plan
+    prompt: "Plan: {{input}}"
+    tools: [bash, read, glob, grep]
+    max_tokens: 8000
+    routes:
+      - when: 'response.complexity == "simple"'
+        next: done
+      - when: 'true'
+        next: done
+  done:
+    skill: pause
+    prompt: "Done"
+    routes: null

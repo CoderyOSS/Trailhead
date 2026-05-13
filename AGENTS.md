@@ -32,9 +32,11 @@ Cargo workspace with three crates. Separate builds — keep them clearly segrega
 ~/projects/CoderyTrailhead/
 ├── Cargo.toml                          # Workspace root
 ├── crates/
-│   ├── trailhead-core/                 # Shared types (JobId, WorkerId, JobStatus, etc.)
+│   ├── trailhead-core/                 # Shared types (JobId, WorkerId, JobStatus, TokenUsage, etc.)
+│   │   ├── Cargo.toml
 │   │   └── src/lib.rs
 │   ├── agent-runner/                   # Runs INSIDE worker containers
+│   │   ├── Cargo.toml
 │   │   └── src/
 │   │       ├── main.rs                 # CLI: run, resume
 │   │       ├── lib.rs
@@ -43,18 +45,43 @@ Cargo workspace with three crates. Separate builds — keep them clearly segrega
 │   │       ├── tools/                  # bash, read, write, edit, glob, grep
 │   │       └── session.rs              # JSON session persistence
 │   └── trailhead-service/              # Runs on VPS host
-│       └── src/
-│           ├── main.rs                 # CLI: daemon, jobs, workers, projects
-│           ├── db.rs                   # SQLite schema + queries
-│           ├── jobs.rs                 # Job state machine
-│           ├── scheduler.rs            # Round-robin scheduling loop
-│           ├── workers.rs              # Worker lifecycle
-│           ├── workflow/               # Parser, resolver (minijinja), router (CEL)
-│           ├── provider/               # WorkerProvider trait + Docker impl
-│           ├── ide/                    # IDE adapters (opencode, cursor, vscode, shell, ssh)
-│           ├── mcp.rs                  # MCP server (rmcp)
-│           ├── web.rs                  # Dashboard API (axum)
-│           └── api.rs                  # Worker-facing HTTP API
+│       ├── Cargo.toml
+│       ├── src/
+│       │   ├── main.rs                 # CLI: daemon, jobs, workers, projects
+│       │   ├── db.rs                   # SQLite schema + queries
+│       │   ├── jobs.rs                 # Job state machine
+│       │   ├── scheduler.rs            # Round-robin scheduling loop
+│       │   ├── workers.rs              # Worker lifecycle
+│       │   ├── workflow/               # Parser, resolver (minijinja), router (CEL)
+│       │   ├── provider/               # WorkerProvider trait + Docker impl
+│       │   ├── ide/                    # IDE adapters (opencode, cursor, vscode, shell, ssh)
+│       │   ├── mcp.rs                  # MCP server (rmcp)
+│       │   ├── web.rs                  # Dashboard API (axum)
+│       │   └── api.rs                  # Worker-facing HTTP API
+│       ├── skills/                     # Built-in skill markdown files
+│       │   ├── plan.md
+│       │   ├── plan_detail.md
+│       │   ├── implement.md
+│       │   ├── test.md
+│       │   ├── fix.md
+│       │   ├── review.md
+│       │   ├── create_pr.md
+│       │   └── pause.md
+│       ├── workflows/                  # Built-in workflow YAML files
+│       │   ├── feature.yaml
+│       │   ├── quick-fix.yaml
+│       │   ├── exploration.yaml
+│       │   └── refactor.yaml
+│       └── ui/                         # Dashboard frontend (Vite + React)
+│           ├── index.html
+│           ├── package.json
+│           ├── vite.config.ts
+│           └── src/
+│               ├── main.tsx
+│               ├── App.tsx
+│               ├── JobList.tsx
+│               ├── WorkerList.tsx
+│               └── types.ts
 ├── tests/
 │   └── probes/                         # E2E test suite (CoderyProbes)
 ├── docs/
@@ -70,7 +97,34 @@ Cargo workspace with three crates. Separate builds — keep them clearly segrega
 | `agent-runner` | `agent-runner` | Worker containers | Standalone binary, minimal deps |
 | `trailhead-service` | `trailhead-service` | VPS host | Full binary with all features |
 
-**Shared code goes in `trailhead-core`.** Do not create cross-dependencies between `agent-runner` and `trailhead-service`.
+**Shared code goes in `trailhead-core`.** Do not create cross-dependencies between `agent-runner` and `trailhead-service`. Do not duplicate types that exist in `trailhead-core` (e.g. `TokenUsage`) — import from the shared crate.
+
+## Key Configuration
+
+### Scheduler (env vars)
+
+| Variable | Default | Purpose |
+|----------|---------|---------|
+| `MAX_GLOBAL_WORKERS` | 3 | Max concurrent workers across all projects |
+| `MAX_WORKERS_PER_PROJECT` | 1 | Max concurrent workers per project |
+| `HEARTBEAT_TIMEOUT_SECS` | 180 | Mark worker failed after no heartbeat |
+| `JOB_TIMEOUT_SECS` | 3600 | Max total job duration |
+| `MAX_RETRIES` | 3 | Retry limit before `failed_final` |
+| `SCHEDULER_INTERVAL_SECS` | 30 | Scheduler tick interval |
+
+### Execution Boundaries
+
+| Boundary | Default | Scope |
+|----------|---------|-------|
+| Max tool calls per stage | 200 | Per-stage in workflow |
+| Max tokens per stage | 8096 | Per-stage in workflow |
+| Stage timeout | 600s | Per-stage in workflow |
+| Bash timeout | 120s | Global config |
+| Max files changed before checkpoint | 20 | Global config |
+
+### Database
+
+SQLite WAL mode at `/opt/codery/trailhead.db`.
 
 ## Code Style
 

@@ -197,6 +197,36 @@ CoderyProbes is symlinked into `tests/probes/node_modules/@codery/probes`.
 
 After editing CoderyProbes source, run `cd tests/probes && bun test` to verify.
 
+#### Exports — Which to Use
+
+| Export | When | Auto-init | Auto-save proof records |
+|--------|------|-----------|------------------------|
+| `p` | Test suites (default) | Yes (top-level await, walks CWD for probes.yml) | Yes (exit + beforeExit hooks + bunfig preload) |
+| `probes()` | Standalone scripts only | No | **No — must call `.proof.save()` manually** |
+| `probesSession()` | Manual config init | No | Yes (exit + beforeExit hooks) |
+| `group()` | Shared instance pool | No | No |
+
+**ALWAYS use `p` in test files.** Import from `"@codery/probes"` directly:
+
+```ts
+import { p } from "@codery/probes";
+```
+
+**NEVER use `probes()` factory in test files.** It creates isolated instances without auto-save. Proof records (`proof-records.md`) will NOT be generated.
+
+#### Proof Records
+
+Proof records are written to `tests/probes/proof-records.md`. They contain timestamped event logs of all probe interactions, grouped by test section.
+
+`bun test` does NOT fire `process.on("exit")`. Proof saving uses three mechanisms:
+1. `process.on("beforeExit")` — fires when bun's event loop drains
+2. `bunfig.toml` preload (`setup.ts`) — registers `afterAll(() => p.proof.save())` per test file
+3. `process.on("exit")` — works under `bun run` but not `bun test`
+
+#### Preload Setup
+
+`tests/probes/bunfig.toml` preloads `setup.ts` before each test file. This ensures proof records are saved after each file's tests complete. Do not remove these files.
+
 ### Running E2E Tests
 
 ```bash

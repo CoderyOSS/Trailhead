@@ -37,6 +37,10 @@ impl WorkerProvider for DockerProvider {
         let mut env = vec![
             format!("WORKER_ID={}", spec.job_id),
             format!("JOB_ID={}", spec.job_id),
+            format!("LLM_PROVIDER={}", spec.llm_provider),
+            format!("LLM_MODEL={}", spec.llm_model),
+            format!("LLM_API_KEY={}", spec.llm_api_key),
+            format!("LLM_BASE_URL={}", spec.llm_base_url),
         ];
         for (k, v) in &spec.env {
             env.push(format!("{}={}", k, v));

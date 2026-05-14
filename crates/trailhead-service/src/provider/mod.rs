@@ -11,6 +11,10 @@ pub struct WorkerSpec {
     pub workspace_path: PathBuf,
     pub agent_runner_image: String,
     pub env: HashMap<String, String>,
+    pub llm_provider: String,
+    pub llm_model: String,
+    pub llm_api_key: String,
+    pub llm_base_url: String,
 }
 
 #[derive(Debug, Clone)]

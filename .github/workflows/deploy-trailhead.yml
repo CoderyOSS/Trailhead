@@ -1,0 +1,59 @@
+name: Build & Deploy Trailhead
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "crates/trailhead-service/**"
+      - "crates/trailhead-core/**"
+      - "Cargo.toml"
+      - ".github/workflows/deploy-trailhead.yml"
+  workflow_dispatch:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - run: cargo check --release -p trailhead-service
+      - run: cargo test --release -p trailhead-service
+      - run: cargo clippy --release -p trailhead-service -- -D warnings
+
+  deploy:
+    needs: check
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release binary
+        run: cargo build --release -p trailhead-service
+
+      - name: Deploy to VPS
+        env:
+          SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+
+          SHA=$(git rev-parse --short HEAD)
+          BINARY="target/release/trailhead-service"
+
+          scp -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "$BINARY" "$VPS_USER@$VPS_HOST:/opt/codery/trailhead/bin/trailhead-service-$SHA"
+
+          ssh -i ~/.ssh/deploy_key -o StrictHostKeyChecking=no \
+            "$VPS_USER@$VPS_HOST" <<EOF
+            ln -sf /opt/codery/trailhead/bin/trailhead-service-$SHA /opt/codery/trailhead/bin/current
+            sudo supervisorctl restart trailhead
+          EOF

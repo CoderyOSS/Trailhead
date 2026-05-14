@@ -1,7 +1,9 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId } from "../helpers";
+import { uniqueId, proofSection } from "../helpers";
 import { adapter } from "../adapter";
+
+proofSection("database operations");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

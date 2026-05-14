@@ -1,5 +1,8 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
+import { proofSection } from "../helpers";
+
+proofSection("workflow parser");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

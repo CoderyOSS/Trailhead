@@ -1,5 +1,7 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { p, uniqueId } from "../helpers";
+import { p, uniqueId, proofSection } from "../helpers";
+
+proofSection("agent-runner session");
 
 const SSH_BUILD =
   "export PATH=\"$HOME/.cargo/bin:$PATH\" && cd /home/gem/projects/CoderyTrailhead && cargo build -p agent-runner --release 2>&1";

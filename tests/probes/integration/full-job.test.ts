@@ -1,6 +1,8 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId } from "../helpers";
+import { uniqueId, proofSection } from "../helpers";
+
+proofSection("full job lifecycle");
 
 describe("full job lifecycle", () => {
   it("creates project then job then runs to completion", async () => {

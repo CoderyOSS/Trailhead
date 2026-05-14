@@ -50,16 +50,37 @@ pub mod types {
 
     #[derive(Debug, Clone, Serialize, Deserialize)]
     pub struct TokenUsage {
-        pub input_tokens: u64,
-        pub output_tokens: u64,
+        pub prompt_tokens: u64,
+        pub completion_tokens: u64,
+        pub total_tokens: u64,
     }
 
     impl TokenUsage {
         pub fn zero() -> Self {
             Self {
-                input_tokens: 0,
-                output_tokens: 0,
+                prompt_tokens: 0,
+                completion_tokens: 0,
+                total_tokens: 0,
             }
+        }
+
+        pub fn new(prompt_tokens: u64, completion_tokens: u64) -> Self {
+            Self {
+                prompt_tokens,
+                completion_tokens,
+                total_tokens: prompt_tokens + completion_tokens,
+            }
+        }
+    }
+
+    impl std::ops::Add for TokenUsage {
+        type Output = TokenUsage;
+
+        fn add(self, rhs: TokenUsage) -> TokenUsage {
+            TokenUsage::new(
+                self.prompt_tokens + rhs.prompt_tokens,
+                self.completion_tokens + rhs.completion_tokens,
+            )
         }
     }
 

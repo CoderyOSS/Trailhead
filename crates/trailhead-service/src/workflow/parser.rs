@@ -12,9 +12,11 @@ pub struct Workflow {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Stage {
-    pub skill: String,
+    #[serde(default)]
+    pub skill: Option<String>,
     #[serde(default)]
     pub prompt: String,
+    pub model: Option<String>,
     pub response_schema: Option<serde_json::Value>,
     #[serde(default)]
     pub tools: Vec<String>,
@@ -37,9 +39,6 @@ pub fn parse_workflow(yaml_str: &str) -> Result<Workflow> {
         bail!("workflow needs at least one stage");
     }
     for (name, stage) in &wf.stages {
-        if stage.skill.is_empty() {
-            bail!("stage '{}' needs a skill", name);
-        }
         if let Some(ref routes) = stage.routes {
             for route in routes {
                 if !route.next.is_empty() && !wf.stages.contains_key(&route.next) {

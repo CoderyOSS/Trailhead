@@ -1,11 +1,13 @@
-use agent_runner::agent::{self, AgentConfig, FinishReason, TokenUsage};
+use agent_runner::agent::{self, AgentConfig, FinishReason};
 use agent_runner::provider::anthropic::AnthropicProvider;
+use agent_runner::provider::openai_compatible::OpenAiCompatibleProvider;
 use agent_runner::session::Session;
 use agent_runner::tools::{self, ToolContext};
 use anyhow::{anyhow, Result};
 use std::env;
 use std::path::PathBuf;
 use std::process;
+use trailhead_core::types::TokenUsage;
 
 fn get_arg<'a>(args: &'a [String], flag: &str) -> Option<&'a str> {
     args.iter()
@@ -18,7 +20,7 @@ fn parse_args() -> Vec<String> {
 }
 
 fn print_usage() {
-    eprintln!("agent-runner - AI agent that executes tasks using LLM tools
+    println!("agent-runner - AI agent that executes tasks using LLM tools
 
 USAGE:
     agent-runner <SUBCOMMAND>
@@ -49,9 +51,10 @@ fn create_provider() -> Result<Box<dyn agent_runner::provider::LlmProvider>> {
 
     match provider_name.as_str() {
         "anthropic" => Ok(Box::new(AnthropicProvider::new(api_key, model))),
-        "openai" => {
-            let _base_url = env::var("OPENAI_BASE_URL").ok();
-            Err(anyhow!("OpenAI provider not yet implemented"))
+        "openai-compatible" => {
+            let base_url = env::var("LLM_BASE_URL")
+                .unwrap_or_else(|_| "https://api.openai.com/v1".to_string());
+            Ok(Box::new(OpenAiCompatibleProvider::new(api_key, model, base_url)))
         }
         other => Err(anyhow!("unknown LLM_PROVIDER: {other}")),
     }

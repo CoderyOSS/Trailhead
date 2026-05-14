@@ -1,4 +1,5 @@
-use crate::agent::{FinishReason, LlmResponse, Message, Role, TokenUsage, ToolCall};
+use crate::agent::{FinishReason, LlmResponse, Message, Role, ToolCall};
+use trailhead_core::types::TokenUsage;
 use crate::provider::{LlmProvider, RequestConfig, ToolDef};
 use anyhow::{anyhow, Result};
 use async_trait::async_trait;

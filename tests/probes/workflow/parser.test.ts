@@ -1,6 +1,6 @@
 import { describe, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { test } from "../helpers";
+import { test, seedProject, createJob, isRecord } from "../helpers";
 
 describe("workflow parser", () => {
   test("parses valid workflow YAML", async () => {
@@ -44,7 +44,7 @@ stages: {}
       body: { content: yaml },
     });
 
-    if (typeof res.body === "object" && res.body !== null && "valid" in res.body) {
+    if (isRecord(res.body)) {
       expect(res.body["valid"]).toBe(false);
     }
   });

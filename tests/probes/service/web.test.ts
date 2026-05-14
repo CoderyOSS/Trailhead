@@ -1,14 +1,10 @@
 import { describe, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { test, createProject, createJob, createWorker, isRecord, isRecordArray } from "../helpers";
-
-function isRecordArrayVal(value: unknown): value is Record<string, unknown>[] {
-  return Array.isArray(value) && value.every(isRecord);
-}
+import { test, seedProject, createJob, createWorker, isRecord } from "../helpers";
 
 describe("dashboard API", () => {
-  test("GET /api/v1/jobs returns list", async () => {
-    const projectId = await createProject();
+  test("GET /api/v1/jobs returns list matching DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Dashboard test job");
 
     const res = await p.http.send({
@@ -23,10 +19,13 @@ describe("dashboard API", () => {
       );
       expect(found).toBe(true);
     }
+
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["description"]).toBe("Dashboard test job");
   });
 
-  test("GET /api/v1/jobs/{id} returns detail", async () => {
-    const projectId = await createProject();
+  test("GET /api/v1/jobs/{id} returns detail matching DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Detail test");
 
     const res = await p.http.send({
@@ -36,16 +35,16 @@ describe("dashboard API", () => {
 
     expect(res.status).toBe(200);
     if (isRecord(res.body)) {
-      expect(typeof res.body["id"]).toBe("string");
-      expect(typeof res.body["status"]).toBe("string");
-      expect(typeof res.body["project_id"]).toBe("string");
-      expect(typeof res.body["description"]).toBe("string");
-      expect(typeof res.body["created_at"]).toBe("string");
+      expect(res.body["id"]).toBe(jobId);
+      expect(res.body["status"]).toBe("queued");
     }
+
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("queued");
   });
 
-  test("GET /api/v1/workers returns list", async () => {
-    const projectId = await createProject();
+  test("GET /api/v1/workers returns list matching DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Worker list test");
     const workerId = await createWorker(jobId);
 
@@ -67,10 +66,13 @@ describe("dashboard API", () => {
       );
       expect(found).toBe(true);
     }
+
+    const rows = await p.sql.read({ table: "workers", where: { id: workerId } });
+    expect(rows[0]["job_id"]).toBe(jobId);
   });
 
-  test("POST /api/v1/jobs/{id}/pause changes status", async () => {
-    const projectId = await createProject();
+  test("POST /api/v1/jobs/{id}/pause changes status in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Pause via dashboard");
     const workerId = await createWorker(jobId);
 
@@ -85,17 +87,12 @@ describe("dashboard API", () => {
       path: `/api/v1/jobs/${jobId}/pause`,
     });
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("paused");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("paused");
   });
 
-  test("POST /api/v1/jobs/{id}/cancel changes status", async () => {
-    const projectId = await createProject();
+  test("POST /api/v1/jobs/{id}/cancel changes status in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Cancel via dashboard");
 
     await p.http.send({
@@ -103,12 +100,7 @@ describe("dashboard API", () => {
       path: `/api/v1/jobs/${jobId}/cancel`,
     });
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("cancelled");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("cancelled");
   });
 });

@@ -9,7 +9,7 @@ launcher:
 interfaces:
   http:
     client:
-      base_url: "http://172.18.0.3:4050"
-  fs:
-    root: "./test-workspace"
-    reset_on_start: true
+      base_url: "http://localhost:4050"
+  sql:
+    path: "./data/service.db"
+    reset_on_start: false

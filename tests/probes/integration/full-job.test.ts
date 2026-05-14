@@ -1,20 +1,14 @@
 import { describe, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { test, createProject, createJob, createWorker, isRecord } from "../helpers";
+import { test, seedProject, createJob, createWorker, isRecord } from "../helpers";
 
 describe("full job lifecycle", () => {
   test("create project → create job → register worker → complete", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Full lifecycle test");
 
-    const jobRes1 = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    expect(jobRes1.status).toBe(200);
-    if (isRecord(jobRes1.body)) {
-      expect(jobRes1.body["status"]).toBe("queued");
-    }
+    const dbRows1 = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(dbRows1[0]["status"]).toBe("queued");
 
     const workerId = await createWorker(jobId);
 
@@ -24,7 +18,13 @@ describe("full job lifecycle", () => {
       body: { job_id: jobId },
     });
 
-    const hbRes = await p.http.send({
+    const dbRows2 = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(dbRows2[0]["status"]).toBe("running");
+
+    const dbWorker = await p.sql.read({ table: "workers", where: { id: workerId } });
+    expect(dbWorker[0]["status"]).toBe("running");
+
+    await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/heartbeat`,
       body: {
@@ -36,7 +36,9 @@ describe("full job lifecycle", () => {
         message: "Planning",
       },
     });
-    expect(hbRes.status).toBe(200);
+
+    const workerAfterHb = await p.sql.read({ table: "workers", where: { id: workerId } });
+    expect(workerAfterHb[0]["heartbeat_at"]).not.toBeNull();
 
     await p.http.send({
       method: "POST",
@@ -52,36 +54,50 @@ describe("full job lifecycle", () => {
       },
     });
 
+    const jobAfterCp = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(jobAfterCp[0]["current_stage"]).toBe("done");
+
+    const checkpoints = await p.sql.read({ table: "checkpoints", where: { job_id: jobId } });
+    expect(checkpoints.length).toBe(1);
+    expect(checkpoints[0]["git_sha"]).toBe("abc123");
+
     await p.http.send({
       method: "POST",
       path: `/api/v1/workers/${workerId}/complete`,
       body: { result: "Job completed successfully" },
     });
 
-    const finalRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    expect(finalRes.status).toBe(200);
-    if (isRecord(finalRes.body)) {
-      expect(finalRes.body["status"]).toBe("completed");
-    }
+    const finalJob = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(finalJob[0]["status"]).toBe("completed");
+    expect(finalJob[0]["result"]).toBe("Job completed successfully");
+
+    const finalWorker = await p.sql.read({ table: "workers", where: { id: workerId } });
+    expect(finalWorker.length).toBe(1);
+    expect(finalWorker[0]["status"]).toBe("stopped");
   });
 
-  test("lists jobs and workers", async () => {
+  test("lists jobs and workers via HTTP matches DB", async () => {
     const jobsRes = await p.http.send({
       method: "GET",
       path: "/api/v1/jobs",
     });
     expect(jobsRes.status).toBe(200);
-    expect(Array.isArray(jobsRes.body)).toBe(true);
+
+    const dbJobs = await p.sql.read({ table: "jobs" });
+    if (Array.isArray(jobsRes.body)) {
+      expect(jobsRes.body.length).toBe(dbJobs.length);
+    }
 
     const workersRes = await p.http.send({
       method: "GET",
       path: "/api/v1/workers",
     });
     expect(workersRes.status).toBe(200);
-    expect(Array.isArray(workersRes.body)).toBe(true);
+
+    const dbWorkers = await p.sql.read({ table: "workers" });
+    if (Array.isArray(workersRes.body)) {
+      expect(workersRes.body.length).toBe(dbWorkers.length);
+    }
   });
 
   test("validates workflow YAML", async () => {

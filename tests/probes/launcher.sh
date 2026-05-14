@@ -1,37 +1,40 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-APPS_IP="172.18.0.3"
 BINARY="/home/gem/projects/CoderyTrailhead/target/release/trailhead-service"
-DB_PATH="/tmp/trailhead-e2e.db"
+DB_PATH="/home/gem/projects/CoderyTrailhead/tests/probes/data/service.db"
 CONFIG_PATH="/tmp/trailhead-e2e-config.toml"
 PORT=4050
 
-ssh gem@apps "pkill -f 'trailhead-service daemon' 2>/dev/null; sleep 0.3; rm -f $DB_PATH $CONFIG_PATH" 2>/dev/null || true
-
-DSK_KEY=$(printenv DEEPSEEK_API_KEY)
-
-ssh gem@apps "cat > $CONFIG_PATH" <<TOMLEOF
+cat > "$CONFIG_PATH" <<'TOMEOF'
 model = "deepseek/deepseek-chat"
 
 [provider.deepseek]
 api = "openai-compatible"
 base_url = "https://api.deepseek.com/v1"
 env = ["DEEPSEEK_API_KEY"]
-TOMLEOF
+TOMEOF
 
-ssh gem@apps "DEEPSEEK_API_KEY='$DSK_KEY' MAX_GLOBAL_WORKERS=0 SCHEDULER_INTERVAL_SECS=3600 nohup $BINARY daemon --port $PORT --db $DB_PATH --config $CONFIG_PATH > /tmp/trailhead-e2e.log 2>&1 &"
+pkill -f 'trailhead-service daemon' 2>/dev/null || true
+sleep 0.3
+rm -f "$DB_PATH" "$DB_PATH-shm" "$DB_PATH-wal"
 
-sleep 2
+export DEEPSEEK_API_KEY="${DEEPSEEK_API_KEY:-}"
+export MAX_GLOBAL_WORKERS=0
+export SCHEDULER_INTERVAL_SECS=3600
+
+nohup "$BINARY" daemon --port "$PORT" --db "$DB_PATH" --config "$CONFIG_PATH" > /tmp/trailhead-test.log 2>&1 &
+
+sleep 1
 
 for i in $(seq 1 20); do
-    if curl -s -o /dev/null -w '' "http://${APPS_IP}:${PORT}/api/v1/jobs" 2>/dev/null; then
-        echo "trailhead-service ready on ${APPS_IP}:${PORT}"
+    if curl -s -o /dev/null -w '%{http_code}' "http://localhost:$PORT/api/v1/jobs" 2>/dev/null | grep -q "200"; then
+        echo "trailhead-service ready on :$PORT"
         exit 0
     fi
     sleep 0.5
 done
 
 echo "ERROR: trailhead-service failed to start" >&2
-ssh gem@apps "cat /tmp/trailhead-e2e.log" 2>/dev/null || true
+cat /tmp/trailhead-test.log 2>/dev/null || true
 exit 1

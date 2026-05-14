@@ -1,10 +1,10 @@
 import { describe, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { test, createProject, createJob, createWorker, isRecord } from "../helpers";
+import { test, seedProject, createJob, createWorker } from "../helpers";
 
 describe("workflow router", () => {
   test("routes based on string equality in response", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Build feature", "feature");
     const workerId = await createWorker(jobId);
 
@@ -28,18 +28,16 @@ describe("workflow router", () => {
       },
     });
 
-    const res = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    expect(res.status).toBe(200);
-    if (isRecord(res.body)) {
-      expect(res.body["current_stage"]).toBe("implement");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["current_stage"]).toBe("implement");
+
+    const cpRows = await p.sql.read({ table: "checkpoints", where: { job_id: jobId } });
+    expect(cpRows.length).toBe(1);
+    expect(cpRows[0]["stage"]).toBe("plan");
   });
 
   test("routes to plan_detail on complex response", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Complex feature", "feature");
     const workerId = await createWorker(jobId);
 
@@ -63,18 +61,12 @@ describe("workflow router", () => {
       },
     });
 
-    const res = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    expect(res.status).toBe(200);
-    if (isRecord(res.body)) {
-      expect(res.body["current_stage"]).toBe("plan_detail");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["current_stage"]).toBe("plan_detail");
   });
 
   test("completes workflow when routes is null", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Simple task", "simple");
     const workerId = await createWorker(jobId);
 
@@ -90,14 +82,13 @@ describe("workflow router", () => {
       body: { result: "done" },
     });
 
-    const res = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    expect(res.status).toBe(200);
-    if (isRecord(res.body)) {
-      expect(res.body["status"]).toBe("completed");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("completed");
+    expect(rows[0]["result"]).toBe("done");
+
+    const workerRows = await p.sql.read({ table: "workers", where: { id: workerId } });
+    expect(workerRows.length).toBe(1);
+    expect(workerRows[0]["status"]).toBe("stopped");
   });
 
   test("validates numeric routing workflow", async () => {

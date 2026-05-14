@@ -1,445 +1,8 @@
 # Trailhead E2E Test Suite
 
-**Date:** 2026-05-14T07:24:42.824Z
-**Events:** 388
-**Duration:** 30900ms
-
----
-
-## lists jobs with status filter
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.928 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451928-wrejq6","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.932 | Response | http response | `200 {"project_id":"943b8ded-ca90-4348-b44d-5e3dc6b6aeec"}` |
-| 3 | 07:24:11.932 | Send | http.send | `POST /api/v1/jobs {"project_id":"943b8ded-ca90-4348-b44d-5e3dc6b6aeec","description":"Job 1"}` |
-| 4 | 07:24:11.934 | Response | http response | `200 {"job_id":"e6f5556a-f38b-4af4-b870-277e88b7f833"}` |
-| 5 | 07:24:11.934 | Send | http.send | `POST /api/v1/jobs {"project_id":"943b8ded-ca90-4348-b44d-5e3dc6b6aeec","description":"Job 2"}` |
-| 6 | 07:24:11.936 | Response | http response | `200 {"job_id":"8bf7afc3-1218-46f8-b197-6686aee1f858"}` |
-| 7 | 07:24:11.936 | Send | http.send | `GET /api/v1/jobs` |
-| 8 | 07:24:11.938 | Response | http response | `200 [{"id":"d13bb9f9-5c45-4a53-8e56-cca338cfb2ba","project_id":"99592130-1904-4d05-94c8-f2813a388bf9","description":"DB test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null...` |
-
----
-
-## list workers returns array
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.939 | Send | http.send | `GET /api/v1/workers` |
-| 2 | 07:24:11.940 | Response | http response | `200 [{"id":"9b1abb6e-707a-4d66-b48f-cc51f4070de1","job_id":"b74c82f6-5314-444d-8094-953348bfff39","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T07:17:31.453953553+00:00","destroyed_at":null},{"id":"639f...` |
-
----
-
-## GET /api/v1/jobs returns list
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.943 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451943-zj4o75","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.945 | Response | http response | `200 {"project_id":"2bf19e7f-349d-4fb1-ac0f-db2400d22382"}` |
-| 3 | 07:24:11.945 | Send | http.send | `POST /api/v1/jobs {"project_id":"2bf19e7f-349d-4fb1-ac0f-db2400d22382","description":"Dashboard test job"}` |
-| 4 | 07:24:11.947 | Response | http response | `200 {"job_id":"c537b116-b005-425f-815d-e0fdd58ed9ba"}` |
-| 5 | 07:24:11.947 | Send | http.send | `GET /api/v1/jobs` |
-| 6 | 07:24:11.949 | Response | http response | `200 [{"id":"d13bb9f9-5c45-4a53-8e56-cca338cfb2ba","project_id":"99592130-1904-4d05-94c8-f2813a388bf9","description":"DB test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null...` |
-
----
-
-## GET /api/v1/jobs/{id} returns detail
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.949 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451949-9u0qos","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.951 | Response | http response | `200 {"project_id":"b3b259d9-fd1c-4e75-bb48-bd1ec0f3a7f2"}` |
-| 3 | 07:24:11.951 | Send | http.send | `POST /api/v1/jobs {"project_id":"b3b259d9-fd1c-4e75-bb48-bd1ec0f3a7f2","description":"Detail test"}` |
-| 4 | 07:24:11.952 | Response | http response | `200 {"job_id":"3702d6d4-4553-460e-a9d5-c9645de3f3b2"}` |
-| 5 | 07:24:11.952 | Send | http.send | `GET /api/v1/jobs/3702d6d4-4553-460e-a9d5-c9645de3f3b2` |
-| 6 | 07:24:11.953 | Response | http response | `200 {"id":"3702d6d4-4553-460e-a9d5-c9645de3f3b2","project_id":"b3b259d9-fd1c-4e75-bb48-bd1ec0f3a7f2","description":"Detail test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,...` |
-
----
-
-## GET /api/v1/workers returns list
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.953 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451953-fanvjg","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.955 | Response | http response | `200 {"project_id":"73a46df6-814b-4dad-9191-2780ac63cf05"}` |
-| 3 | 07:24:11.955 | Send | http.send | `POST /api/v1/jobs {"project_id":"73a46df6-814b-4dad-9191-2780ac63cf05","description":"Worker list test"}` |
-| 4 | 07:24:11.957 | Response | http response | `200 {"job_id":"af1e7fe7-1b6f-4f93-a3ad-0b1aff7dc8d5"}` |
-| 5 | 07:24:11.957 | Send | http.send | `POST /api/v1/workers {"job_id":"af1e7fe7-1b6f-4f93-a3ad-0b1aff7dc8d5","provider":"test"}` |
-| 6 | 07:24:11.959 | Response | http response | `200 {"worker_id":"50e018e6-e540-4590-bc0f-8d1b2bc62841"}` |
-| 7 | 07:24:11.959 | Send | http.send | `POST /api/v1/workers/50e018e6-e540-4590-bc0f-8d1b2bc62841/register {"job_id":"af1e7fe7-1b6f-4f93-a3ad-0b1aff7dc8d5"}` |
-| 8 | 07:24:11.962 | Response | http response | `200 ` |
-| 9 | 07:24:11.962 | Send | http.send | `GET /api/v1/workers` |
-| 10 | 07:24:11.963 | Response | http response | `200 [{"id":"9b1abb6e-707a-4d66-b48f-cc51f4070de1","job_id":"b74c82f6-5314-444d-8094-953348bfff39","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T07:17:31.453953553+00:00","destroyed_at":null},{"id":"639f...` |
-
----
-
-## POST /api/v1/jobs/{id}/pause changes status
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.963 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451963-8h1cc9","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.965 | Response | http response | `200 {"project_id":"95d7163d-dd60-4c17-ba43-bafe95673a39"}` |
-| 3 | 07:24:11.965 | Send | http.send | `POST /api/v1/jobs {"project_id":"95d7163d-dd60-4c17-ba43-bafe95673a39","description":"Pause via dashboard"}` |
-| 4 | 07:24:11.967 | Response | http response | `200 {"job_id":"b352a9f5-23aa-4d91-87bb-dde1384011c2"}` |
-| 5 | 07:24:11.967 | Send | http.send | `POST /api/v1/workers {"job_id":"b352a9f5-23aa-4d91-87bb-dde1384011c2","provider":"test"}` |
-| 6 | 07:24:11.968 | Response | http response | `200 {"worker_id":"b7c310d5-bc1b-4a01-9d76-bee19f51eacb"}` |
-| 7 | 07:24:11.968 | Send | http.send | `POST /api/v1/workers/b7c310d5-bc1b-4a01-9d76-bee19f51eacb/register {"job_id":"b352a9f5-23aa-4d91-87bb-dde1384011c2"}` |
-| 8 | 07:24:11.971 | Response | http response | `200 ` |
-| 9 | 07:24:11.971 | Send | http.send | `POST /api/v1/jobs/b352a9f5-23aa-4d91-87bb-dde1384011c2/pause` |
-| 10 | 07:24:11.973 | Response | http response | `200 ` |
-| 11 | 07:24:11.973 | Send | http.send | `GET /api/v1/jobs/b352a9f5-23aa-4d91-87bb-dde1384011c2` |
-| 12 | 07:24:11.973 | Response | http response | `200 {"id":"b352a9f5-23aa-4d91-87bb-dde1384011c2","project_id":"95d7163d-dd60-4c17-ba43-bafe95673a39","description":"Pause via dashboard","status":"paused","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"erro...` |
-
----
-
-## POST /api/v1/jobs/{id}/cancel changes status
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.974 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451974-pyd9oc","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.976 | Response | http response | `200 {"project_id":"1ea3dbdc-04c8-4385-bc08-e0af42d6755a"}` |
-| 3 | 07:24:11.976 | Send | http.send | `POST /api/v1/jobs {"project_id":"1ea3dbdc-04c8-4385-bc08-e0af42d6755a","description":"Cancel via dashboard"}` |
-| 4 | 07:24:11.978 | Response | http response | `200 {"job_id":"e0795e48-2c52-4de5-bddb-59eab3df3a3d"}` |
-| 5 | 07:24:11.978 | Send | http.send | `POST /api/v1/jobs/e0795e48-2c52-4de5-bddb-59eab3df3a3d/cancel` |
-| 6 | 07:24:11.980 | Response | http response | `200 ` |
-| 7 | 07:24:11.980 | Send | http.send | `GET /api/v1/jobs/e0795e48-2c52-4de5-bddb-59eab3df3a3d` |
-| 8 | 07:24:11.980 | Response | http response | `200 {"id":"e0795e48-2c52-4de5-bddb-59eab3df3a3d","project_id":"1ea3dbdc-04c8-4385-bc08-e0af42d6755a","description":"Cancel via dashboard","status":"cancelled","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"...` |
-
----
-
-## new job is queued
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.983 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451983-rg4s1a","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.984 | Response | http response | `200 {"project_id":"538b4499-f4de-4270-b3e7-e25dbc6e5049"}` |
-| 3 | 07:24:11.984 | Send | http.send | `POST /api/v1/jobs {"project_id":"538b4499-f4de-4270-b3e7-e25dbc6e5049","description":"State machine test"}` |
-| 4 | 07:24:11.986 | Response | http response | `200 {"job_id":"28883e75-e3ac-4cf6-ad0c-8a807a37e721"}` |
-| 5 | 07:24:11.986 | Send | http.send | `GET /api/v1/jobs/28883e75-e3ac-4cf6-ad0c-8a807a37e721` |
-| 6 | 07:24:11.987 | Response | http response | `200 {"id":"28883e75-e3ac-4cf6-ad0c-8a807a37e721","project_id":"538b4499-f4de-4270-b3e7-e25dbc6e5049","description":"State machine test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error...` |
-
----
-
-## running to paused
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:11.987 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451987-lvy605","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:11.989 | Response | http response | `200 {"project_id":"b8e08015-e523-448a-933b-0f79a50c3d8d"}` |
-| 3 | 07:24:11.989 | Send | http.send | `POST /api/v1/jobs {"project_id":"b8e08015-e523-448a-933b-0f79a50c3d8d","description":"Pause test"}` |
-| 4 | 07:24:11.991 | Response | http response | `200 {"job_id":"b4564146-7d23-4d6d-bb84-c576c41c0bee"}` |
-| 5 | 07:24:11.991 | Send | http.send | `POST /api/v1/workers {"job_id":"b4564146-7d23-4d6d-bb84-c576c41c0bee","provider":"test"}` |
-| 6 | 07:24:11.993 | Response | http response | `200 {"worker_id":"3cf12f7b-27f6-49d0-82ca-ac5d372c9a68"}` |
-| 7 | 07:24:11.993 | Send | http.send | `POST /api/v1/workers/3cf12f7b-27f6-49d0-82ca-ac5d372c9a68/register {"job_id":"b4564146-7d23-4d6d-bb84-c576c41c0bee"}` |
-| 8 | 07:24:11.996 | Response | http response | `200 ` |
-| 9 | 07:24:11.996 | Send | http.send | `POST /api/v1/jobs/b4564146-7d23-4d6d-bb84-c576c41c0bee/pause` |
-| 10 | 07:24:11.998 | Response | http response | `200 ` |
-| 11 | 07:24:11.998 | Send | http.send | `GET /api/v1/jobs/b4564146-7d23-4d6d-bb84-c576c41c0bee` |
-| 12 | 07:24:11.999 | Response | http response | `200 {"id":"b4564146-7d23-4d6d-bb84-c576c41c0bee","project_id":"b8e08015-e523-448a-933b-0f79a50c3d8d","description":"Pause test","status":"paused","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"...` |
-
----
-
-## paused to resuming
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.000 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743451999-md189k","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.001 | Response | http response | `200 {"project_id":"897c9c9b-9976-4b28-9b4b-716ee738b0e1"}` |
-| 3 | 07:24:12.001 | Send | http.send | `POST /api/v1/jobs {"project_id":"897c9c9b-9976-4b28-9b4b-716ee738b0e1","description":"Resume test"}` |
-| 4 | 07:24:12.004 | Response | http response | `200 {"job_id":"55cd625a-faa7-421f-97cc-7437354de6c2"}` |
-| 5 | 07:24:12.004 | Send | http.send | `POST /api/v1/workers {"job_id":"55cd625a-faa7-421f-97cc-7437354de6c2","provider":"test"}` |
-| 6 | 07:24:12.006 | Response | http response | `200 {"worker_id":"d9266f1c-4686-4b03-9dd4-8b3e0e7b3963"}` |
-| 7 | 07:24:12.006 | Send | http.send | `POST /api/v1/workers/d9266f1c-4686-4b03-9dd4-8b3e0e7b3963/register {"job_id":"55cd625a-faa7-421f-97cc-7437354de6c2"}` |
-| 8 | 07:24:12.010 | Response | http response | `200 ` |
-| 9 | 07:24:12.010 | Send | http.send | `POST /api/v1/jobs/55cd625a-faa7-421f-97cc-7437354de6c2/pause` |
-| 10 | 07:24:12.012 | Response | http response | `200 ` |
-| 11 | 07:24:12.012 | Send | http.send | `POST /api/v1/jobs/55cd625a-faa7-421f-97cc-7437354de6c2/resume` |
-| 12 | 07:24:12.014 | Response | http response | `200 ` |
-| 13 | 07:24:12.014 | Send | http.send | `GET /api/v1/jobs/55cd625a-faa7-421f-97cc-7437354de6c2` |
-| 14 | 07:24:12.014 | Response | http response | `200 {"id":"55cd625a-faa7-421f-97cc-7437354de6c2","project_id":"897c9c9b-9976-4b28-9b4b-716ee738b0e1","description":"Resume test","status":"resuming","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":nul...` |
-
----
-
-## running to completed
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.014 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452014-37uxpz","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.016 | Response | http response | `200 {"project_id":"e6c26598-df4a-40ce-b0e5-86e26b572f40"}` |
-| 3 | 07:24:12.016 | Send | http.send | `POST /api/v1/jobs {"project_id":"e6c26598-df4a-40ce-b0e5-86e26b572f40","description":"Complete test"}` |
-| 4 | 07:24:12.018 | Response | http response | `200 {"job_id":"b8c1b4ca-d554-4859-9830-a7d65c7988f2"}` |
-| 5 | 07:24:12.018 | Send | http.send | `POST /api/v1/workers {"job_id":"b8c1b4ca-d554-4859-9830-a7d65c7988f2","provider":"test"}` |
-| 6 | 07:24:12.020 | Response | http response | `200 {"worker_id":"04f6ac96-76ff-41c4-bc83-58a84040441d"}` |
-| 7 | 07:24:12.020 | Send | http.send | `POST /api/v1/workers/04f6ac96-76ff-41c4-bc83-58a84040441d/register {"job_id":"b8c1b4ca-d554-4859-9830-a7d65c7988f2"}` |
-| 8 | 07:24:12.023 | Response | http response | `200 ` |
-| 9 | 07:24:12.023 | Send | http.send | `POST /api/v1/workers/04f6ac96-76ff-41c4-bc83-58a84040441d/complete {"result":"success"}` |
-| 10 | 07:24:12.026 | Response | http response | `200 ` |
-| 11 | 07:24:12.026 | Send | http.send | `GET /api/v1/jobs/b8c1b4ca-d554-4859-9830-a7d65c7988f2` |
-| 12 | 07:24:12.026 | Response | http response | `200 {"id":"b8c1b4ca-d554-4859-9830-a7d65c7988f2","project_id":"e6c26598-df4a-40ce-b0e5-86e26b572f40","description":"Complete test","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"success","er...` |
-
----
-
-## running to failed_retryable on first attempt
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.027 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452027-3cr9we","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.028 | Response | http response | `200 {"project_id":"b1425ec8-bc16-4740-b394-05a088cd98da"}` |
-| 3 | 07:24:12.028 | Send | http.send | `POST /api/v1/jobs {"project_id":"b1425ec8-bc16-4740-b394-05a088cd98da","description":"Fail test"}` |
-| 4 | 07:24:12.029 | Response | http response | `200 {"job_id":"bfae9e80-e81e-43bf-abb3-68e88a11fd08"}` |
-| 5 | 07:24:12.029 | Send | http.send | `POST /api/v1/workers {"job_id":"bfae9e80-e81e-43bf-abb3-68e88a11fd08","provider":"test"}` |
-| 6 | 07:24:12.031 | Response | http response | `200 {"worker_id":"e26dade0-1879-4daf-abf5-7ba7dd8988b0"}` |
-| 7 | 07:24:12.031 | Send | http.send | `POST /api/v1/workers/e26dade0-1879-4daf-abf5-7ba7dd8988b0/register {"job_id":"bfae9e80-e81e-43bf-abb3-68e88a11fd08"}` |
-| 8 | 07:24:12.034 | Response | http response | `200 ` |
-| 9 | 07:24:12.034 | Send | http.send | `POST /api/v1/workers/e26dade0-1879-4daf-abf5-7ba7dd8988b0/fail {"error":"transient failure"}` |
-| 10 | 07:24:12.037 | Response | http response | `200 ` |
-| 11 | 07:24:12.038 | Send | http.send | `GET /api/v1/jobs/bfae9e80-e81e-43bf-abb3-68e88a11fd08` |
-| 12 | 07:24:12.038 | Response | http response | `200 {"id":"bfae9e80-e81e-43bf-abb3-68e88a11fd08","project_id":"b1425ec8-bc16-4740-b394-05a088cd98da","description":"Fail test","status":"failed_retryable","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"erro...` |
-
----
-
-## cannot resume completed job
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.038 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452038-ceki02","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.040 | Response | http response | `200 {"project_id":"83f4bf71-51b4-4fbb-a31e-996a16845d43"}` |
-| 3 | 07:24:12.040 | Send | http.send | `POST /api/v1/jobs {"project_id":"83f4bf71-51b4-4fbb-a31e-996a16845d43","description":"Terminal test"}` |
-| 4 | 07:24:12.041 | Response | http response | `200 {"job_id":"e3a13b40-8c15-4c84-96e3-1ed3ca016a3d"}` |
-| 5 | 07:24:12.041 | Send | http.send | `POST /api/v1/workers {"job_id":"e3a13b40-8c15-4c84-96e3-1ed3ca016a3d","provider":"test"}` |
-| 6 | 07:24:12.043 | Response | http response | `200 {"worker_id":"351555ca-0447-4882-a3b3-c10c40348bcd"}` |
-| 7 | 07:24:12.043 | Send | http.send | `POST /api/v1/workers/351555ca-0447-4882-a3b3-c10c40348bcd/register {"job_id":"e3a13b40-8c15-4c84-96e3-1ed3ca016a3d"}` |
-| 8 | 07:24:12.046 | Response | http response | `200 ` |
-| 9 | 07:24:12.046 | Send | http.send | `POST /api/v1/workers/351555ca-0447-4882-a3b3-c10c40348bcd/complete {"result":"done"}` |
-| 10 | 07:24:12.049 | Response | http response | `200 ` |
-| 11 | 07:24:12.049 | Send | http.send | `POST /api/v1/jobs/e3a13b40-8c15-4c84-96e3-1ed3ca016a3d/resume` |
-| 12 | 07:24:12.050 | Response | http response | `409 invalid transition: completed -> resuming` |
-
----
-
-## cancel from queued state
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.050 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452050-9jd4a6","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.052 | Response | http response | `200 {"project_id":"cd4ae229-2b4d-4995-b39c-98d2d07e4ba4"}` |
-| 3 | 07:24:12.052 | Send | http.send | `POST /api/v1/jobs {"project_id":"cd4ae229-2b4d-4995-b39c-98d2d07e4ba4","description":"Cancel queued"}` |
-| 4 | 07:24:12.053 | Response | http response | `200 {"job_id":"0c2ea6a5-667f-4c46-8114-27979d77b5bc"}` |
-| 5 | 07:24:12.053 | Send | http.send | `POST /api/v1/jobs/0c2ea6a5-667f-4c46-8114-27979d77b5bc/cancel` |
-| 6 | 07:24:12.055 | Response | http response | `200 ` |
-| 7 | 07:24:12.055 | Send | http.send | `GET /api/v1/jobs/0c2ea6a5-667f-4c46-8114-27979d77b5bc` |
-| 8 | 07:24:12.055 | Response | http response | `200 {"id":"0c2ea6a5-667f-4c46-8114-27979d77b5bc","project_id":"cd4ae229-2b4d-4995-b39c-98d2d07e4ba4","description":"Cancel queued","status":"cancelled","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":...` |
-
----
-
-## cancel from running state
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.055 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452055-40zj2m","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.057 | Response | http response | `200 {"project_id":"40b31e3f-1897-432c-8bf8-a251d6a495fe"}` |
-| 3 | 07:24:12.057 | Send | http.send | `POST /api/v1/jobs {"project_id":"40b31e3f-1897-432c-8bf8-a251d6a495fe","description":"Cancel running"}` |
-| 4 | 07:24:12.058 | Response | http response | `200 {"job_id":"4a22a42c-5dd7-46b0-b373-6c44be510845"}` |
-| 5 | 07:24:12.058 | Send | http.send | `POST /api/v1/workers {"job_id":"4a22a42c-5dd7-46b0-b373-6c44be510845","provider":"test"}` |
-| 6 | 07:24:12.059 | Response | http response | `200 {"worker_id":"d6602380-3a13-4a25-8019-593937f417d8"}` |
-| 7 | 07:24:12.059 | Send | http.send | `POST /api/v1/workers/d6602380-3a13-4a25-8019-593937f417d8/register {"job_id":"4a22a42c-5dd7-46b0-b373-6c44be510845"}` |
-| 8 | 07:24:12.062 | Response | http response | `200 ` |
-| 9 | 07:24:12.062 | Send | http.send | `POST /api/v1/jobs/4a22a42c-5dd7-46b0-b373-6c44be510845/cancel` |
-| 10 | 07:24:12.064 | Response | http response | `200 ` |
-| 11 | 07:24:12.064 | Send | http.send | `GET /api/v1/jobs/4a22a42c-5dd7-46b0-b373-6c44be510845` |
-| 12 | 07:24:12.064 | Response | http response | `200 {"id":"4a22a42c-5dd7-46b0-b373-6c44be510845","project_id":"40b31e3f-1897-432c-8bf8-a251d6a495fe","description":"Cancel running","status":"cancelled","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error"...` |
-
----
-
-## worker register sets job to running
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.066 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452066-o2kwqs","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.068 | Response | http response | `200 {"project_id":"609b710e-286f-49fa-9a44-d9cead0517a6"}` |
-| 3 | 07:24:12.068 | Send | http.send | `POST /api/v1/jobs {"project_id":"609b710e-286f-49fa-9a44-d9cead0517a6","description":"E2E test job"}` |
-| 4 | 07:24:12.069 | Response | http response | `200 {"job_id":"721c9647-a8f2-46fe-b2d9-29c2947ba3f0"}` |
-| 5 | 07:24:12.069 | Send | http.send | `POST /api/v1/workers {"job_id":"721c9647-a8f2-46fe-b2d9-29c2947ba3f0","provider":"test"}` |
-| 6 | 07:24:12.071 | Response | http response | `200 {"worker_id":"b14b90fb-fa86-4f79-8ef1-7af8c1e23ade"}` |
-| 7 | 07:24:12.071 | Send | http.send | `POST /api/v1/workers/b14b90fb-fa86-4f79-8ef1-7af8c1e23ade/register {"job_id":"721c9647-a8f2-46fe-b2d9-29c2947ba3f0"}` |
-| 8 | 07:24:12.074 | Response | http response | `200 ` |
-| 9 | 07:24:12.074 | Send | http.send | `GET /api/v1/jobs/721c9647-a8f2-46fe-b2d9-29c2947ba3f0` |
-| 10 | 07:24:12.074 | Response | http response | `200 {"id":"721c9647-a8f2-46fe-b2d9-29c2947ba3f0","project_id":"609b710e-286f-49fa-9a44-d9cead0517a6","description":"E2E test job","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":nul...` |
-
----
-
-## worker heartbeat succeeds
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.075 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452075-z4o8x6","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.076 | Response | http response | `200 {"project_id":"0ab54aa5-7ffd-4efd-ab5a-326b9349bd1f"}` |
-| 3 | 07:24:12.076 | Send | http.send | `POST /api/v1/jobs {"project_id":"0ab54aa5-7ffd-4efd-ab5a-326b9349bd1f","description":"E2E test job"}` |
-| 4 | 07:24:12.078 | Response | http response | `200 {"job_id":"273b4982-16dd-40b5-9a33-0ab8ac936d56"}` |
-| 5 | 07:24:12.078 | Send | http.send | `POST /api/v1/workers {"job_id":"273b4982-16dd-40b5-9a33-0ab8ac936d56","provider":"test"}` |
-| 6 | 07:24:12.080 | Response | http response | `200 {"worker_id":"476875e3-5f39-4986-a213-99ce4707b780"}` |
-| 7 | 07:24:12.080 | Send | http.send | `POST /api/v1/workers/476875e3-5f39-4986-a213-99ce4707b780/register {"job_id":"273b4982-16dd-40b5-9a33-0ab8ac936d56"}` |
-| 8 | 07:24:12.083 | Response | http response | `200 ` |
-| 9 | 07:24:12.083 | Send | http.send | `POST /api/v1/workers/476875e3-5f39-4986-a213-99ce4707b780/heartbeat {"status":"running","current_stage":"plan","token_usage":{"prompt_tokens":500,"completion_tokens":200},"files_changed":0,"tool_ca...` |
-| 10 | 07:24:12.084 | Response | http response | `200 ` |
-
----
-
-## worker checkpoint saves stage data
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.085 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452085-3gwvfx","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.086 | Response | http response | `200 {"project_id":"90906914-5bc2-4d6b-8001-0e5bc3afa031"}` |
-| 3 | 07:24:12.087 | Send | http.send | `POST /api/v1/jobs {"project_id":"90906914-5bc2-4d6b-8001-0e5bc3afa031","description":"E2E test job"}` |
-| 4 | 07:24:12.088 | Response | http response | `200 {"job_id":"85645d5d-6ff3-4f98-a1f2-46149f54de45"}` |
-| 5 | 07:24:12.088 | Send | http.send | `POST /api/v1/workers {"job_id":"85645d5d-6ff3-4f98-a1f2-46149f54de45","provider":"test"}` |
-| 6 | 07:24:12.090 | Response | http response | `200 {"worker_id":"12925754-0d89-48d4-af2e-371207ea3816"}` |
-| 7 | 07:24:12.090 | Send | http.send | `POST /api/v1/workers/12925754-0d89-48d4-af2e-371207ea3816/register {"job_id":"85645d5d-6ff3-4f98-a1f2-46149f54de45"}` |
-| 8 | 07:24:12.093 | Response | http response | `200 ` |
-| 9 | 07:24:12.093 | Send | http.send | `POST /api/v1/workers/12925754-0d89-48d4-af2e-371207ea3816/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"def456","token_usage":{"prompt_...` |
-| 10 | 07:24:12.095 | Response | http response | `200 ` |
-
----
-
-## worker complete marks job completed
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.096 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452096-k6l9dc","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.097 | Response | http response | `200 {"project_id":"620ace58-9fbf-4cb7-9422-14f4e576ccfc"}` |
-| 3 | 07:24:12.097 | Send | http.send | `POST /api/v1/jobs {"project_id":"620ace58-9fbf-4cb7-9422-14f4e576ccfc","description":"E2E test job"}` |
-| 4 | 07:24:12.099 | Response | http response | `200 {"job_id":"1ea4ef70-73d6-4683-ab22-8a694876becb"}` |
-| 5 | 07:24:12.099 | Send | http.send | `POST /api/v1/workers {"job_id":"1ea4ef70-73d6-4683-ab22-8a694876becb","provider":"test"}` |
-| 6 | 07:24:12.100 | Response | http response | `200 {"worker_id":"338ac85b-1824-477e-94b1-71596939f0dc"}` |
-| 7 | 07:24:12.100 | Send | http.send | `POST /api/v1/workers/338ac85b-1824-477e-94b1-71596939f0dc/register {"job_id":"1ea4ef70-73d6-4683-ab22-8a694876becb"}` |
-| 8 | 07:24:12.102 | Response | http response | `200 ` |
-| 9 | 07:24:12.103 | Send | http.send | `POST /api/v1/workers/338ac85b-1824-477e-94b1-71596939f0dc/complete {"result":"success"}` |
-| 10 | 07:24:12.105 | Response | http response | `200 ` |
-| 11 | 07:24:12.105 | Send | http.send | `GET /api/v1/jobs/1ea4ef70-73d6-4683-ab22-8a694876becb` |
-| 12 | 07:24:12.105 | Response | http response | `200 {"id":"1ea4ef70-73d6-4683-ab22-8a694876becb","project_id":"620ace58-9fbf-4cb7-9422-14f4e576ccfc","description":"E2E test job","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"success","err...` |
-
----
-
-## worker fail marks job failed_retryable on first attempt
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.106 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452106-pepe6a","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.107 | Response | http response | `200 {"project_id":"cdebba08-3f8f-4de7-97a4-6e7daaf0931a"}` |
-| 3 | 07:24:12.107 | Send | http.send | `POST /api/v1/jobs {"project_id":"cdebba08-3f8f-4de7-97a4-6e7daaf0931a","description":"E2E test job"}` |
-| 4 | 07:24:12.108 | Response | http response | `200 {"job_id":"f49b77e1-1968-43a4-adfe-104a50c11d44"}` |
-| 5 | 07:24:12.109 | Send | http.send | `POST /api/v1/workers {"job_id":"f49b77e1-1968-43a4-adfe-104a50c11d44","provider":"test"}` |
-| 6 | 07:24:12.110 | Response | http response | `200 {"worker_id":"12bcd3b8-6673-4353-b299-654bc9996046"}` |
-| 7 | 07:24:12.110 | Send | http.send | `POST /api/v1/workers/12bcd3b8-6673-4353-b299-654bc9996046/register {"job_id":"f49b77e1-1968-43a4-adfe-104a50c11d44"}` |
-| 8 | 07:24:12.112 | Response | http response | `200 ` |
-| 9 | 07:24:12.112 | Send | http.send | `POST /api/v1/workers/12bcd3b8-6673-4353-b299-654bc9996046/fail {"error":"build failed"}` |
-| 10 | 07:24:12.115 | Response | http response | `200 ` |
-| 11 | 07:24:12.115 | Send | http.send | `GET /api/v1/jobs/f49b77e1-1968-43a4-adfe-104a50c11d44` |
-| 12 | 07:24:12.115 | Response | http response | `200 {"id":"f49b77e1-1968-43a4-adfe-104a50c11d44","project_id":"cdebba08-3f8f-4de7-97a4-6e7daaf0931a","description":"E2E test job","status":"failed_retryable","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"e...` |
-
----
-
-## get job config returns resolved stage info
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.116 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452116-jt0dpr","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.117 | Response | http response | `200 {"project_id":"b3bfeb96-6047-49a6-9636-6e44aba0e06f"}` |
-| 3 | 07:24:12.117 | Send | http.send | `POST /api/v1/jobs {"project_id":"b3bfeb96-6047-49a6-9636-6e44aba0e06f","description":"E2E test job"}` |
-| 4 | 07:24:12.118 | Response | http response | `200 {"job_id":"af9602f3-5675-464b-b283-1238f780d765"}` |
-| 5 | 07:24:12.118 | Send | http.send | `POST /api/v1/workers {"job_id":"af9602f3-5675-464b-b283-1238f780d765","provider":"test"}` |
-| 6 | 07:24:12.120 | Response | http response | `200 {"worker_id":"4f3df403-f895-46c9-bdf4-b5ae2080037d"}` |
-| 7 | 07:24:12.120 | Send | http.send | `POST /api/v1/workers/4f3df403-f895-46c9-bdf4-b5ae2080037d/register {"job_id":"af9602f3-5675-464b-b283-1238f780d765"}` |
-| 8 | 07:24:12.122 | Response | http response | `200 ` |
-| 9 | 07:24:12.122 | Send | http.send | `GET /api/v1/jobs/af9602f3-5675-464b-b283-1238f780d765/config` |
-| 10 | 07:24:12.122 | Response | http response | `200 {"job_id":"af9602f3-5675-464b-b283-1238f780d765","stage":"","prompt":"E2E test job","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1","api...` |
-
----
-
-## get skill content returns markdown
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.123 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452123-z2mz1j","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.124 | Response | http response | `200 {"project_id":"081a4ad1-3ccd-4316-b2d9-d9a3ef638193"}` |
-| 3 | 07:24:12.124 | Send | http.send | `POST /api/v1/jobs {"project_id":"081a4ad1-3ccd-4316-b2d9-d9a3ef638193","description":"E2E test job"}` |
-| 4 | 07:24:12.125 | Response | http response | `200 {"job_id":"9686e49d-78dc-4770-8bbd-25a2692a9825"}` |
-| 5 | 07:24:12.125 | Send | http.send | `POST /api/v1/workers {"job_id":"9686e49d-78dc-4770-8bbd-25a2692a9825","provider":"test"}` |
-| 6 | 07:24:12.127 | Response | http response | `200 {"worker_id":"d41d1b05-03b0-467a-b7d6-6624f7df8938"}` |
-| 7 | 07:24:12.127 | Send | http.send | `POST /api/v1/workers/d41d1b05-03b0-467a-b7d6-6624f7df8938/register {"job_id":"9686e49d-78dc-4770-8bbd-25a2692a9825"}` |
-| 8 | 07:24:12.129 | Response | http response | `200 ` |
-| 9 | 07:24:12.129 | Send | http.send | `GET /api/v1/jobs/9686e49d-78dc-4770-8bbd-25a2692a9825/skill/plan` |
-| 10 | 07:24:12.129 | Response | http response | `200 {"content":"You are a senior software engineer tasked with creating an implementation plan.\n\n## Instructions\n\n- Explore the project structure first using glob and grep\n- Identify all files and modules relevant to the task\n- Produce a clear, step-by-step implementation plan\n- Estimate t...` |
-
----
-
-## unknown worker returns 404
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.130 | Send | http.send | `POST /api/v1/workers/nonexistent-id/register {"job_id":"fake-job"}` |
-| 2 | 07:24:12.130 | Response | http response | `404 worker not found` |
-
----
-
-## creates project and retrieves it
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.131 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452131-zpmhu1","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.133 | Response | http response | `200 {"project_id":"351c8f69-9c18-42ea-a5ad-a80efa9305aa"}` |
-| 3 | 07:24:12.133 | Send | http.send | `GET /api/v1/projects` |
-| 4 | 07:24:12.133 | Response | http response | `200 [{"id":"de9d2494-442f-4f77-bf0f-f117ae64e2ee","repo_url":"https://github.com/test/e2e","branch":"main","created_at":"2026-05-14T07:17:31.439586174+00:00","updated_at":"2026-05-14T07:17:31.439586174+00:00"},{"id":"99592130-1904-4d05-94c8-f2813a388bf9","repo_url":"https://github.com/test/e2e","...` |
-
----
-
-## creates job linked to project
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.134 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452134-07grdl","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.135 | Response | http response | `200 {"project_id":"5b36d17b-8baa-4a2e-b93e-97ea734f858c"}` |
-| 3 | 07:24:12.135 | Send | http.send | `POST /api/v1/jobs {"project_id":"5b36d17b-8baa-4a2e-b93e-97ea734f858c","description":"DB test job"}` |
-| 4 | 07:24:12.137 | Response | http response | `200 {"job_id":"1ef8b1e3-48c7-4de4-8158-820153eec002"}` |
-| 5 | 07:24:12.137 | Send | http.send | `GET /api/v1/jobs/1ef8b1e3-48c7-4de4-8158-820153eec002` |
-| 6 | 07:24:12.137 | Response | http response | `200 {"id":"1ef8b1e3-48c7-4de4-8158-820153eec002","project_id":"5b36d17b-8baa-4a2e-b93e-97ea734f858c","description":"DB test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,...` |
-
----
-
-## stores checkpoint for job
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.137 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452137-0ap7uw","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.139 | Response | http response | `200 {"project_id":"2c5c9cbe-38a6-4fe6-b390-8fde4d6103f2"}` |
-| 3 | 07:24:12.139 | Send | http.send | `POST /api/v1/jobs {"project_id":"2c5c9cbe-38a6-4fe6-b390-8fde4d6103f2","description":"Checkpoint test"}` |
-| 4 | 07:24:12.140 | Response | http response | `200 {"job_id":"61a086a1-38b0-4eee-a063-c89c11462b3d"}` |
-| 5 | 07:24:12.140 | Send | http.send | `POST /api/v1/workers {"job_id":"61a086a1-38b0-4eee-a063-c89c11462b3d","provider":"test"}` |
-| 6 | 07:24:12.142 | Response | http response | `200 {"worker_id":"a7ad9501-985d-4996-bba4-2bc77f216ff1"}` |
-| 7 | 07:24:12.142 | Send | http.send | `POST /api/v1/workers/a7ad9501-985d-4996-bba4-2bc77f216ff1/register {"job_id":"61a086a1-38b0-4eee-a063-c89c11462b3d"}` |
-| 8 | 07:24:12.144 | Response | http response | `200 ` |
-| 9 | 07:24:12.144 | Send | http.send | `POST /api/v1/workers/a7ad9501-985d-4996-bba4-2bc77f216ff1/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt_...` |
-| 10 | 07:24:12.147 | Response | http response | `200 ` |
-| 11 | 07:24:12.147 | Send | http.send | `GET /api/v1/jobs/61a086a1-38b0-4eee-a063-c89c11462b3d` |
-| 12 | 07:24:12.147 | Response | http response | `200 {"id":"61a086a1-38b0-4eee-a063-c89c11462b3d","project_id":"2c5c9cbe-38a6-4fe6-b390-8fde4d6103f2","description":"Checkpoint test","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","att...` |
-
----
-
-## tracks worker heartbeat
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:12.147 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452147-p1p1cl","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.148 | Response | http response | `200 {"project_id":"83962304-27df-47f2-a517-bea91111e65c"}` |
-| 3 | 07:24:12.148 | Send | http.send | `POST /api/v1/jobs {"project_id":"83962304-27df-47f2-a517-bea91111e65c","description":"Heartbeat test"}` |
-| 4 | 07:24:12.150 | Response | http response | `200 {"job_id":"4dc1617b-a832-4d72-a9bd-b55d2c3123e1"}` |
-| 5 | 07:24:12.150 | Send | http.send | `POST /api/v1/workers {"job_id":"4dc1617b-a832-4d72-a9bd-b55d2c3123e1","provider":"test"}` |
-| 6 | 07:24:12.151 | Response | http response | `200 {"worker_id":"ddd3579f-293b-416b-a4c1-dbb6d418614f"}` |
-| 7 | 07:24:12.151 | Send | http.send | `POST /api/v1/workers/ddd3579f-293b-416b-a4c1-dbb6d418614f/register {"job_id":"4dc1617b-a832-4d72-a9bd-b55d2c3123e1"}` |
-| 8 | 07:24:12.154 | Response | http response | `200 ` |
-| 9 | 07:24:12.154 | Send | http.send | `POST /api/v1/workers/ddd3579f-293b-416b-a4c1-dbb6d418614f/heartbeat {"status":"running","current_stage":"plan","token_usage":{"prompt_tokens":100,"completion_tokens":50},"files_changed":0,"tool_cal...` |
-| 10 | 07:24:12.155 | Response | http response | `200 ` |
+**Date:** 2026-05-14T08:38:48.489Z
+**Events:** 379
+**Duration:** 24471ms
 
 ---
 
@@ -447,10 +10,451 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.156 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452156-rlkiuk","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.157 | Response | http response | `200 {"project_id":"d17fe694-be63-410d-9ce0-0900c69e2c3f"}` |
-| 3 | 07:24:12.157 | Send | http.send | `POST /api/v1/jobs {"project_id":"d17fe694-be63-410d-9ce0-0900c69e2c3f","description":"Hello world test","workflow":"hello-world"}` |
-| 4 | 07:24:12.159 | Response | http response | `200 {"job_id":"b3f3e986-5a5b-4df8-a195-93f3586f20ea"}` |
+| 1 | 08:38:24.037 | Send | sql.clear | `all tables` |
+| 2 | 08:38:24.052 | Send | sql.put | `2 rows` |
+| 3 | 08:38:24.076 | Send | sql.clear | `all tables` |
+| 4 | 08:38:24.081 | Send | sql.put | `2 rows` |
+| 5 | 08:38:24.316 | Send | sql.put | `1 rows` |
+| 6 | 08:38:24.316 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904314-sqfdol","description":"Hello world test"}` |
+| 7 | 08:38:24.318 | Response | http response | `200 {"job_id":"b7b77c2b-567e-4564-a59c-8111b3d6221a"}` |
+
+---
+
+## lists jobs via HTTP matching DB count
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.056 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.057 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904053-5343s4","description":"Job 1"}` |
+| 3 | 08:38:24.062 | Response | http response | `200 {"job_id":"0c65ad20-8913-4fdc-a509-4888bf538178"}` |
+| 4 | 08:38:24.062 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904053-5343s4","description":"Job 2"}` |
+| 5 | 08:38:24.064 | Response | http response | `200 {"job_id":"02083918-5c47-48e4-958c-9fc52b40efa3"}` |
+| 6 | 08:38:24.064 | Send | http.send | `GET /api/v1/jobs` |
+| 7 | 08:38:24.065 | Response | http response | `200 [{"id":"0c65ad20-8913-4fdc-a509-4888bf538178","project_id":"test-1778747904053-5343s4","description":"Job 1","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"20...` |
+| 8 | 08:38:24.065 | Recv | sql:jobs | `[{"id":"0c65ad20-8913-4fdc-a509-4888bf538178","project_id":"test-1778747904053-5343s4","description":"Job 1","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"2026-0...` |
+| 9 | 08:38:24.066 | Recv | sql:jobs | `[{"id":"0c65ad20-8913-4fdc-a509-4888bf538178","project_id":"test-1778747904053-5343s4","description":"Job 1","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"2026-0...` |
+| 10 | 08:38:24.066 | Recv | sql:jobs | `[{"id":"02083918-5c47-48e4-958c-9fc52b40efa3","project_id":"test-1778747904053-5343s4","description":"Job 2","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"2026-0...` |
+
+---
+
+## list workers via HTTP matching DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.082 | Send | http.send | `GET /api/v1/workers` |
+| 2 | 08:38:24.084 | Response | http response | `200 []` |
+| 3 | 08:38:24.084 | Recv | sql:workers | `[]` |
+
+---
+
+## GET /api/v1/jobs returns list matching DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.091 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.092 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904089-2b75u1","description":"Dashboard test job"}` |
+| 3 | 08:38:24.094 | Response | http response | `200 {"job_id":"ed363081-353b-44ef-83c5-d384f78ee89e"}` |
+| 4 | 08:38:24.094 | Send | http.send | `GET /api/v1/jobs` |
+| 5 | 08:38:24.095 | Response | http response | `200 [{"id":"ed363081-353b-44ef-83c5-d384f78ee89e","project_id":"test-1778747904089-2b75u1","description":"Dashboard test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"cr...` |
+| 6 | 08:38:24.095 | Recv | sql:jobs | `[{"id":"ed363081-353b-44ef-83c5-d384f78ee89e","project_id":"test-1778747904089-2b75u1","description":"Dashboard test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"create...` |
+
+---
+
+## GET /api/v1/jobs/{id} returns detail matching DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.098 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.098 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904096-i60avz","description":"Detail test"}` |
+| 3 | 08:38:24.100 | Response | http response | `200 {"job_id":"95ef1048-09b1-472b-85e1-04dc2e8f97d7"}` |
+| 4 | 08:38:24.100 | Send | http.send | `GET /api/v1/jobs/95ef1048-09b1-472b-85e1-04dc2e8f97d7` |
+| 5 | 08:38:24.100 | Response | http response | `200 {"id":"95ef1048-09b1-472b-85e1-04dc2e8f97d7","project_id":"test-1778747904096-i60avz","description":"Detail test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at...` |
+| 6 | 08:38:24.100 | Recv | sql:jobs | `[{"id":"95ef1048-09b1-472b-85e1-04dc2e8f97d7","project_id":"test-1778747904096-i60avz","description":"Detail test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"...` |
+
+---
+
+## GET /api/v1/workers returns list matching DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.101 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.101 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904100-ac8oyg","description":"Worker list test"}` |
+| 3 | 08:38:24.103 | Response | http response | `200 {"job_id":"12035eef-722a-4998-abb1-04412ad0cbe8"}` |
+| 4 | 08:38:24.103 | Send | http.send | `POST /api/v1/workers {"job_id":"12035eef-722a-4998-abb1-04412ad0cbe8","provider":"test"}` |
+| 5 | 08:38:24.105 | Response | http response | `200 {"worker_id":"9522e768-d9f6-48d3-b3d0-3ef8eb443382"}` |
+| 6 | 08:38:24.105 | Send | http.send | `POST /api/v1/workers/9522e768-d9f6-48d3-b3d0-3ef8eb443382/register {"job_id":"12035eef-722a-4998-abb1-04412ad0cbe8"}` |
+| 7 | 08:38:24.108 | Response | http response | `200 ` |
+| 8 | 08:38:24.108 | Send | http.send | `GET /api/v1/workers` |
+| 9 | 08:38:24.108 | Response | http response | `200 [{"id":"9522e768-d9f6-48d3-b3d0-3ef8eb443382","job_id":"12035eef-722a-4998-abb1-04412ad0cbe8","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.103803117+00:00","destroyed_at":null}]` |
+| 10 | 08:38:24.108 | Recv | sql:workers | `[{"id":"9522e768-d9f6-48d3-b3d0-3ef8eb443382","job_id":"12035eef-722a-4998-abb1-04412ad0cbe8","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.103803117+00:00","destroyed_at":null}]` |
+
+---
+
+## POST /api/v1/jobs/{id}/pause changes status in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.110 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.110 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904109-8o2k7h","description":"Pause via dashboard"}` |
+| 3 | 08:38:24.111 | Response | http response | `200 {"job_id":"06ec9301-9ccd-48d0-9a36-a5c985106b0f"}` |
+| 4 | 08:38:24.111 | Send | http.send | `POST /api/v1/workers {"job_id":"06ec9301-9ccd-48d0-9a36-a5c985106b0f","provider":"test"}` |
+| 5 | 08:38:24.112 | Response | http response | `200 {"worker_id":"d326aa4b-d8ea-4d24-9d12-4fc6f68381bb"}` |
+| 6 | 08:38:24.112 | Send | http.send | `POST /api/v1/workers/d326aa4b-d8ea-4d24-9d12-4fc6f68381bb/register {"job_id":"06ec9301-9ccd-48d0-9a36-a5c985106b0f"}` |
+| 7 | 08:38:24.115 | Response | http response | `200 ` |
+| 8 | 08:38:24.115 | Send | http.send | `POST /api/v1/jobs/06ec9301-9ccd-48d0-9a36-a5c985106b0f/pause` |
+| 9 | 08:38:24.116 | Response | http response | `200 ` |
+| 10 | 08:38:24.116 | Recv | sql:jobs | `[{"id":"06ec9301-9ccd-48d0-9a36-a5c985106b0f","project_id":"test-1778747904109-8o2k7h","description":"Pause via dashboard","status":"paused","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"creat...` |
+
+---
+
+## POST /api/v1/jobs/{id}/cancel changes status in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.118 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.118 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904117-8nt98o","description":"Cancel via dashboard"}` |
+| 3 | 08:38:24.119 | Response | http response | `200 {"job_id":"006ab524-f947-4c72-ada7-4ebffcab3e1e"}` |
+| 4 | 08:38:24.119 | Send | http.send | `POST /api/v1/jobs/006ab524-f947-4c72-ada7-4ebffcab3e1e/cancel` |
+| 5 | 08:38:24.120 | Response | http response | `200 ` |
+| 6 | 08:38:24.121 | Recv | sql:jobs | `[{"id":"006ab524-f947-4c72-ada7-4ebffcab3e1e","project_id":"test-1778747904117-8nt98o","description":"Cancel via dashboard","status":"cancelled","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"c...` |
+
+---
+
+## new job is queued in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.125 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.125 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904123-a7524s","description":"State machine test"}` |
+| 3 | 08:38:24.126 | Response | http response | `200 {"job_id":"3762a36f-9fbb-4415-9e1d-68550ff08e75"}` |
+| 4 | 08:38:24.126 | Recv | sql:jobs | `[{"id":"3762a36f-9fbb-4415-9e1d-68550ff08e75","project_id":"test-1778747904123-a7524s","description":"State machine test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"create...` |
+| 5 | 08:38:48.439 | Send | sql.put | `1 rows` |
+| 6 | 08:38:48.439 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928437-ce9uuw","description":"Start at first stage"}` |
+| 7 | 08:38:48.440 | Response | http response | `200 {"job_id":"379bde44-f4c1-40a3-88d7-f7778a1ed1f9"}` |
+| 8 | 08:38:48.441 | Recv | sql:jobs | `[{"id":"379bde44-f4c1-40a3-88d7-f7778a1ed1f9","project_id":"test-1778747928437-ce9uuw","description":"Start at first stage","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"crea...` |
+
+---
+
+## running to paused via HTTP, verified in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.128 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.128 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904127-76t6hs","description":"Pause test"}` |
+| 3 | 08:38:24.129 | Response | http response | `200 {"job_id":"2b3e61fa-cf71-4b43-900f-c17d87840ad5"}` |
+| 4 | 08:38:24.130 | Send | http.send | `POST /api/v1/workers {"job_id":"2b3e61fa-cf71-4b43-900f-c17d87840ad5","provider":"test"}` |
+| 5 | 08:38:24.132 | Response | http response | `200 {"worker_id":"9cf44bfd-4f06-4a9e-a50f-c9b634d8e97c"}` |
+| 6 | 08:38:24.132 | Send | http.send | `POST /api/v1/workers/9cf44bfd-4f06-4a9e-a50f-c9b634d8e97c/register {"job_id":"2b3e61fa-cf71-4b43-900f-c17d87840ad5"}` |
+| 7 | 08:38:24.135 | Response | http response | `200 ` |
+| 8 | 08:38:24.135 | Send | http.send | `POST /api/v1/jobs/2b3e61fa-cf71-4b43-900f-c17d87840ad5/pause` |
+| 9 | 08:38:24.136 | Response | http response | `200 ` |
+| 10 | 08:38:24.137 | Recv | sql:jobs | `[{"id":"2b3e61fa-cf71-4b43-900f-c17d87840ad5","project_id":"test-1778747904127-76t6hs","description":"Pause test","status":"paused","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"2...` |
+
+---
+
+## paused to resuming via HTTP, verified in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.138 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.138 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904137-1he6nn","description":"Resume test"}` |
+| 3 | 08:38:24.139 | Response | http response | `200 {"job_id":"7bf84d0d-6d17-4743-8864-ee7c458bd5b1"}` |
+| 4 | 08:38:24.139 | Send | http.send | `POST /api/v1/workers {"job_id":"7bf84d0d-6d17-4743-8864-ee7c458bd5b1","provider":"test"}` |
+| 5 | 08:38:24.141 | Response | http response | `200 {"worker_id":"98c1b838-9c5b-43d2-b54b-ae7a42e4c95d"}` |
+| 6 | 08:38:24.141 | Send | http.send | `POST /api/v1/workers/98c1b838-9c5b-43d2-b54b-ae7a42e4c95d/register {"job_id":"7bf84d0d-6d17-4743-8864-ee7c458bd5b1"}` |
+| 7 | 08:38:24.143 | Response | http response | `200 ` |
+| 8 | 08:38:24.143 | Send | http.send | `POST /api/v1/jobs/7bf84d0d-6d17-4743-8864-ee7c458bd5b1/pause` |
+| 9 | 08:38:24.145 | Response | http response | `200 ` |
+| 10 | 08:38:24.145 | Send | http.send | `POST /api/v1/jobs/7bf84d0d-6d17-4743-8864-ee7c458bd5b1/resume` |
+| 11 | 08:38:24.146 | Response | http response | `200 ` |
+| 12 | 08:38:24.146 | Recv | sql:jobs | `[{"id":"7bf84d0d-6d17-4743-8864-ee7c458bd5b1","project_id":"test-1778747904137-1he6nn","description":"Resume test","status":"resuming","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at"...` |
+
+---
+
+## running to completed, verified in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.148 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.148 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904146-swz73k","description":"Complete test"}` |
+| 3 | 08:38:24.149 | Response | http response | `200 {"job_id":"c4ee50e6-7998-4d85-94f8-2aae188016ce"}` |
+| 4 | 08:38:24.149 | Send | http.send | `POST /api/v1/workers {"job_id":"c4ee50e6-7998-4d85-94f8-2aae188016ce","provider":"test"}` |
+| 5 | 08:38:24.151 | Response | http response | `200 {"worker_id":"8ca07897-26bf-4428-ae81-59ff80980373"}` |
+| 6 | 08:38:24.151 | Send | http.send | `POST /api/v1/workers/8ca07897-26bf-4428-ae81-59ff80980373/register {"job_id":"c4ee50e6-7998-4d85-94f8-2aae188016ce"}` |
+| 7 | 08:38:24.153 | Response | http response | `200 ` |
+| 8 | 08:38:24.153 | Send | http.send | `POST /api/v1/workers/8ca07897-26bf-4428-ae81-59ff80980373/complete {"result":"success"}` |
+| 9 | 08:38:24.156 | Response | http response | `200 ` |
+| 10 | 08:38:24.156 | Recv | sql:jobs | `[{"id":"c4ee50e6-7998-4d85-94f8-2aae188016ce","project_id":"test-1778747904146-swz73k","description":"Complete test","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"success","error":null,"cre...` |
+
+---
+
+## running to failed_retryable, verified in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.158 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.158 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904157-b14la4","description":"Fail test"}` |
+| 3 | 08:38:24.160 | Response | http response | `200 {"job_id":"0461d97d-a1d2-48d7-9eae-056b7d8c192b"}` |
+| 4 | 08:38:24.160 | Send | http.send | `POST /api/v1/workers {"job_id":"0461d97d-a1d2-48d7-9eae-056b7d8c192b","provider":"test"}` |
+| 5 | 08:38:24.162 | Response | http response | `200 {"worker_id":"0a86fb33-e267-4b3d-8fef-0af0c2dc59d0"}` |
+| 6 | 08:38:24.162 | Send | http.send | `POST /api/v1/workers/0a86fb33-e267-4b3d-8fef-0af0c2dc59d0/register {"job_id":"0461d97d-a1d2-48d7-9eae-056b7d8c192b"}` |
+| 7 | 08:38:24.165 | Response | http response | `200 ` |
+| 8 | 08:38:24.165 | Send | http.send | `POST /api/v1/workers/0a86fb33-e267-4b3d-8fef-0af0c2dc59d0/fail {"error":"transient failure"}` |
+| 9 | 08:38:24.167 | Response | http response | `200 ` |
+| 10 | 08:38:24.168 | Recv | sql:jobs | `[{"id":"0461d97d-a1d2-48d7-9eae-056b7d8c192b","project_id":"test-1778747904157-b14la4","description":"Fail test","status":"failed_retryable","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":"transient ...` |
+
+---
+
+## cannot resume completed job
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.169 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.169 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904168-vltr3t","description":"Terminal test"}` |
+| 3 | 08:38:24.171 | Response | http response | `200 {"job_id":"1177d61c-4437-4bae-ac98-2944a7858ffe"}` |
+| 4 | 08:38:24.171 | Send | http.send | `POST /api/v1/workers {"job_id":"1177d61c-4437-4bae-ac98-2944a7858ffe","provider":"test"}` |
+| 5 | 08:38:24.172 | Response | http response | `200 {"worker_id":"580c9983-507a-419c-9bfe-ec5da94dc716"}` |
+| 6 | 08:38:24.172 | Send | http.send | `POST /api/v1/workers/580c9983-507a-419c-9bfe-ec5da94dc716/register {"job_id":"1177d61c-4437-4bae-ac98-2944a7858ffe"}` |
+| 7 | 08:38:24.174 | Response | http response | `200 ` |
+| 8 | 08:38:24.174 | Send | http.send | `POST /api/v1/workers/580c9983-507a-419c-9bfe-ec5da94dc716/complete {"result":"done"}` |
+| 9 | 08:38:24.177 | Response | http response | `200 ` |
+| 10 | 08:38:24.177 | Send | http.send | `POST /api/v1/jobs/1177d61c-4437-4bae-ac98-2944a7858ffe/resume` |
+| 11 | 08:38:24.177 | Response | http response | `409 invalid transition: completed -> resuming` |
+| 12 | 08:38:24.177 | Recv | sql:jobs | `[{"id":"1177d61c-4437-4bae-ac98-2944a7858ffe","project_id":"test-1778747904168-vltr3t","description":"Terminal test","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"done","error":null,"create...` |
+
+---
+
+## cancel from queued state
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.179 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.179 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904178-ed8dde","description":"Cancel queued"}` |
+| 3 | 08:38:24.181 | Response | http response | `200 {"job_id":"82e80138-12de-4582-9c9f-5ddde2d90dc8"}` |
+| 4 | 08:38:24.181 | Send | http.send | `POST /api/v1/jobs/82e80138-12de-4582-9c9f-5ddde2d90dc8/cancel` |
+| 5 | 08:38:24.182 | Response | http response | `200 ` |
+| 6 | 08:38:24.182 | Recv | sql:jobs | `[{"id":"82e80138-12de-4582-9c9f-5ddde2d90dc8","project_id":"test-1778747904178-ed8dde","description":"Cancel queued","status":"cancelled","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_...` |
+
+---
+
+## cancel from running state
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.184 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.184 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904183-ybgap3","description":"Cancel running"}` |
+| 3 | 08:38:24.185 | Response | http response | `200 {"job_id":"4a5657a0-9db6-4465-b146-1c613a68a595"}` |
+| 4 | 08:38:24.185 | Send | http.send | `POST /api/v1/workers {"job_id":"4a5657a0-9db6-4465-b146-1c613a68a595","provider":"test"}` |
+| 5 | 08:38:24.187 | Response | http response | `200 {"worker_id":"05f22e77-5373-4302-ac50-8c9f6aee5ed3"}` |
+| 6 | 08:38:24.187 | Send | http.send | `POST /api/v1/workers/05f22e77-5373-4302-ac50-8c9f6aee5ed3/register {"job_id":"4a5657a0-9db6-4465-b146-1c613a68a595"}` |
+| 7 | 08:38:24.190 | Response | http response | `200 ` |
+| 8 | 08:38:24.190 | Send | http.send | `POST /api/v1/jobs/4a5657a0-9db6-4465-b146-1c613a68a595/cancel` |
+| 9 | 08:38:24.192 | Response | http response | `200 ` |
+| 10 | 08:38:24.192 | Recv | sql:jobs | `[{"id":"4a5657a0-9db6-4465-b146-1c613a68a595","project_id":"test-1778747904183-ybgap3","description":"Cancel running","status":"cancelled","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created...` |
+
+---
+
+## worker register sets job to running in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.197 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.197 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904195-ynshfv","description":"E2E test job"}` |
+| 3 | 08:38:24.199 | Response | http response | `200 {"job_id":"b1be55d5-937d-4139-b959-4d96f42f3f3f"}` |
+| 4 | 08:38:24.199 | Send | http.send | `POST /api/v1/workers {"job_id":"b1be55d5-937d-4139-b959-4d96f42f3f3f","provider":"test"}` |
+| 5 | 08:38:24.201 | Response | http response | `200 {"worker_id":"af3e3e2e-fac8-49ca-876c-038203f38ac0"}` |
+| 6 | 08:38:24.201 | Send | http.send | `POST /api/v1/workers/af3e3e2e-fac8-49ca-876c-038203f38ac0/register {"job_id":"b1be55d5-937d-4139-b959-4d96f42f3f3f"}` |
+| 7 | 08:38:24.204 | Response | http response | `200 ` |
+| 8 | 08:38:24.204 | Recv | sql:jobs | `[{"id":"b1be55d5-937d-4139-b959-4d96f42f3f3f","project_id":"test-1778747904195-ynshfv","description":"E2E test job","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at"...` |
+| 9 | 08:38:24.204 | Recv | sql:workers | `[{"id":"af3e3e2e-fac8-49ca-876c-038203f38ac0","job_id":"b1be55d5-937d-4139-b959-4d96f42f3f3f","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.199677192+00:00","destroyed_at":null}]` |
+
+---
+
+## worker heartbeat updates timestamp in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.209 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.209 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904205-0dyy40","description":"E2E test job"}` |
+| 3 | 08:38:24.211 | Response | http response | `200 {"job_id":"aacf1442-d8b0-4245-8e0d-804fde4636c4"}` |
+| 4 | 08:38:24.211 | Send | http.send | `POST /api/v1/workers {"job_id":"aacf1442-d8b0-4245-8e0d-804fde4636c4","provider":"test"}` |
+| 5 | 08:38:24.212 | Response | http response | `200 {"worker_id":"2adf5ea4-0538-4f2f-bff8-81df1d900e0c"}` |
+| 6 | 08:38:24.212 | Send | http.send | `POST /api/v1/workers/2adf5ea4-0538-4f2f-bff8-81df1d900e0c/register {"job_id":"aacf1442-d8b0-4245-8e0d-804fde4636c4"}` |
+| 7 | 08:38:24.215 | Response | http response | `200 ` |
+| 8 | 08:38:24.215 | Send | http.send | `POST /api/v1/workers/2adf5ea4-0538-4f2f-bff8-81df1d900e0c/heartbeat {"status":"running","current_stage":"plan","token_usage":{"prompt_tokens":500,"completion_tokens":200},"files_changed":0,"tool_ca...` |
+| 9 | 08:38:24.217 | Response | http response | `200 ` |
+| 10 | 08:38:24.217 | Recv | sql:workers | `[{"id":"2adf5ea4-0538-4f2f-bff8-81df1d900e0c","job_id":"aacf1442-d8b0-4245-8e0d-804fde4636c4","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":"2026-05-14T08:38:24.215804825+00:00","created_at":"2026-05-14T08:38:24.211303267+00:00","de...` |
+
+---
+
+## worker checkpoint writes to jobs and checkpoints tables
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.218 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.218 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904217-hznjje","description":"E2E test job"}` |
+| 3 | 08:38:24.220 | Response | http response | `200 {"job_id":"222627d0-8a9e-482d-ab10-c5ee4f17f699"}` |
+| 4 | 08:38:24.220 | Send | http.send | `POST /api/v1/workers {"job_id":"222627d0-8a9e-482d-ab10-c5ee4f17f699","provider":"test"}` |
+| 5 | 08:38:24.221 | Response | http response | `200 {"worker_id":"ca3856f1-dda9-4810-9759-0fc6ba1e91ee"}` |
+| 6 | 08:38:24.221 | Send | http.send | `POST /api/v1/workers/ca3856f1-dda9-4810-9759-0fc6ba1e91ee/register {"job_id":"222627d0-8a9e-482d-ab10-c5ee4f17f699"}` |
+| 7 | 08:38:24.224 | Response | http response | `200 ` |
+| 8 | 08:38:24.224 | Send | http.send | `POST /api/v1/workers/ca3856f1-dda9-4810-9759-0fc6ba1e91ee/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"def456","token_usage":{"prompt_...` |
+| 9 | 08:38:24.227 | Response | http response | `200 ` |
+| 10 | 08:38:24.227 | Recv | sql:jobs | `[{"id":"222627d0-8a9e-482d-ab10-c5ee4f17f699","project_id":"test-1778747904217-hznjje","description":"E2E test job","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":"implement","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attempt":1,"max...` |
+| 11 | 08:38:24.228 | Recv | sql:checkpoints | `[{"id":"5a4e839d-b247-48a4-bba5-e31a4ae67de1","job_id":"222627d0-8a9e-482d-ab10-c5ee4f17f699","stage":"plan","response":"{\"complexity\":\"simple\"}","session_path":"/tmp/session.json","git_sha":"def456","token_usage":"{\"prompt_tokens\":100,\"completion_tokens\":50}","files_changed":"[\"src/lib....` |
+
+---
+
+## worker complete sets result and destroys worker
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.229 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.229 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904228-1m8cgz","description":"E2E test job"}` |
+| 3 | 08:38:24.231 | Response | http response | `200 {"job_id":"bb4ab709-aa81-4fce-8210-7a2e257102b7"}` |
+| 4 | 08:38:24.231 | Send | http.send | `POST /api/v1/workers {"job_id":"bb4ab709-aa81-4fce-8210-7a2e257102b7","provider":"test"}` |
+| 5 | 08:38:24.232 | Response | http response | `200 {"worker_id":"1261cf82-682f-4d22-a772-7373003cf56a"}` |
+| 6 | 08:38:24.232 | Send | http.send | `POST /api/v1/workers/1261cf82-682f-4d22-a772-7373003cf56a/register {"job_id":"bb4ab709-aa81-4fce-8210-7a2e257102b7"}` |
+| 7 | 08:38:24.235 | Response | http response | `200 ` |
+| 8 | 08:38:24.235 | Send | http.send | `POST /api/v1/workers/1261cf82-682f-4d22-a772-7373003cf56a/complete {"result":"success"}` |
+| 9 | 08:38:24.238 | Response | http response | `200 ` |
+| 10 | 08:38:24.239 | Recv | sql:jobs | `[{"id":"bb4ab709-aa81-4fce-8210-7a2e257102b7","project_id":"test-1778747904228-1m8cgz","description":"E2E test job","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"success","error":null,"crea...` |
+| 11 | 08:38:24.239 | Recv | sql:workers | `[{"id":"1261cf82-682f-4d22-a772-7373003cf56a","job_id":"bb4ab709-aa81-4fce-8210-7a2e257102b7","provider":"test","provider_id":null,"status":"stopped","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.231390192+00:00","destroyed_at":"2026-05-14T08:38:24....` |
+
+---
+
+## worker fail sets error in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.240 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.240 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904239-9r00wd","description":"E2E test job"}` |
+| 3 | 08:38:24.242 | Response | http response | `200 {"job_id":"c88f2470-7895-4b7d-a024-b98060c8b752"}` |
+| 4 | 08:38:24.242 | Send | http.send | `POST /api/v1/workers {"job_id":"c88f2470-7895-4b7d-a024-b98060c8b752","provider":"test"}` |
+| 5 | 08:38:24.245 | Response | http response | `200 {"worker_id":"c08ffdb6-00fd-4fbe-9001-1f826ff562d5"}` |
+| 6 | 08:38:24.245 | Send | http.send | `POST /api/v1/workers/c08ffdb6-00fd-4fbe-9001-1f826ff562d5/register {"job_id":"c88f2470-7895-4b7d-a024-b98060c8b752"}` |
+| 7 | 08:38:24.247 | Response | http response | `200 ` |
+| 8 | 08:38:24.248 | Send | http.send | `POST /api/v1/workers/c08ffdb6-00fd-4fbe-9001-1f826ff562d5/fail {"error":"build failed"}` |
+| 9 | 08:38:24.250 | Response | http response | `200 ` |
+| 10 | 08:38:24.250 | Recv | sql:jobs | `[{"id":"c88f2470-7895-4b7d-a024-b98060c8b752","project_id":"test-1778747904239-9r00wd","description":"E2E test job","status":"failed_retryable","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":"build f...` |
+| 11 | 08:38:24.250 | Recv | sql:workers | `[{"id":"c08ffdb6-00fd-4fbe-9001-1f826ff562d5","job_id":"c88f2470-7895-4b7d-a024-b98060c8b752","provider":"test","provider_id":null,"status":"stopped","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.242848735+00:00","destroyed_at":"2026-05-14T08:38:24....` |
+
+---
+
+## get job config returns resolved stage info
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.252 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.252 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904251-ztbdl7","description":"E2E test job"}` |
+| 3 | 08:38:24.254 | Response | http response | `200 {"job_id":"2dad7732-1e0d-4eed-ab86-d172c6992c21"}` |
+| 4 | 08:38:24.254 | Send | http.send | `POST /api/v1/workers {"job_id":"2dad7732-1e0d-4eed-ab86-d172c6992c21","provider":"test"}` |
+| 5 | 08:38:24.256 | Response | http response | `200 {"worker_id":"d4dd5d6b-6338-4af3-bad7-1ba8c2bb0538"}` |
+| 6 | 08:38:24.256 | Send | http.send | `POST /api/v1/workers/d4dd5d6b-6338-4af3-bad7-1ba8c2bb0538/register {"job_id":"2dad7732-1e0d-4eed-ab86-d172c6992c21"}` |
+| 7 | 08:38:24.259 | Response | http response | `200 ` |
+| 8 | 08:38:24.259 | Send | http.send | `GET /api/v1/jobs/2dad7732-1e0d-4eed-ab86-d172c6992c21/config` |
+| 9 | 08:38:24.260 | Response | http response | `200 {"job_id":"2dad7732-1e0d-4eed-ab86-d172c6992c21","stage":"","prompt":"E2E test job","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1","api...` |
+
+---
+
+## get skill content returns markdown
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.262 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.262 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904260-mx3k2p","description":"E2E test job"}` |
+| 3 | 08:38:24.264 | Response | http response | `200 {"job_id":"db291747-f7e4-40ae-8e26-69059838d2ba"}` |
+| 4 | 08:38:24.264 | Send | http.send | `POST /api/v1/workers {"job_id":"db291747-f7e4-40ae-8e26-69059838d2ba","provider":"test"}` |
+| 5 | 08:38:24.266 | Response | http response | `200 {"worker_id":"9754aa1a-405a-4b63-8b1a-b802b0fb1b63"}` |
+| 6 | 08:38:24.266 | Send | http.send | `POST /api/v1/workers/9754aa1a-405a-4b63-8b1a-b802b0fb1b63/register {"job_id":"db291747-f7e4-40ae-8e26-69059838d2ba"}` |
+| 7 | 08:38:24.268 | Response | http response | `200 ` |
+| 8 | 08:38:24.268 | Send | http.send | `GET /api/v1/jobs/db291747-f7e4-40ae-8e26-69059838d2ba/skill/plan` |
+| 9 | 08:38:24.269 | Response | http response | `200 {"content":"You are a senior software engineer tasked with creating an implementation plan.\n\n## Instructions\n\n- Explore the project structure first using glob and grep\n- Identify all files and modules relevant to the task\n- Produce a clear, step-by-step implementation plan\n- Estimate t...` |
+
+---
+
+## unknown worker returns 404
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.269 | Send | http.send | `POST /api/v1/workers/nonexistent-id/register {"job_id":"fake-job"}` |
+| 2 | 08:38:24.269 | Response | http response | `404 worker not found` |
+
+---
+
+## creates project via SQL seed and reads via HTTP and SQL
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.274 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.274 | Send | http.send | `GET /api/v1/projects` |
+| 3 | 08:38:24.274 | Response | http response | `200 [{"id":"test-1778747904089-2b75u1","repo_url":"https://github.com/test/test-1778747904089-2b75u1","branch":"main","created_at":"2026-05-14T08:38:24.089Z","updated_at":"2026-05-14T08:38:24.089Z"},{"id":"test-1778747904096-i60avz","repo_url":"https://github.com/test/test-1778747904096-i60avz","...` |
+| 4 | 08:38:24.275 | Recv | sql:projects | `[{"id":"test-1778747904272-uhwxdo","repo_url":"https://github.com/test/test-1778747904272-uhwxdo","branch":"main","created_at":"2026-05-14T08:38:24.272Z","updated_at":"2026-05-14T08:38:24.272Z"}]` |
+
+---
+
+## creates job via HTTP, verifies via HTTP and SQL
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.276 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.276 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904275-92xdy8","description":"DB test job"}` |
+| 3 | 08:38:24.278 | Response | http response | `200 {"job_id":"7434d61a-eaf4-4e91-bba0-01bcbf3b6438"}` |
+| 4 | 08:38:24.278 | Send | http.send | `GET /api/v1/jobs/7434d61a-eaf4-4e91-bba0-01bcbf3b6438` |
+| 5 | 08:38:24.278 | Response | http response | `200 {"id":"7434d61a-eaf4-4e91-bba0-01bcbf3b6438","project_id":"test-1778747904275-92xdy8","description":"DB test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at...` |
+| 6 | 08:38:24.278 | Recv | sql:jobs | `[{"id":"7434d61a-eaf4-4e91-bba0-01bcbf3b6438","project_id":"test-1778747904275-92xdy8","description":"DB test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"...` |
+
+---
+
+## stores checkpoint and verifies via SQL
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.280 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.280 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904279-9yd453","description":"Checkpoint test"}` |
+| 3 | 08:38:24.283 | Response | http response | `200 {"job_id":"07b9c3df-97b0-449a-ad45-45945221332a"}` |
+| 4 | 08:38:24.283 | Send | http.send | `POST /api/v1/workers {"job_id":"07b9c3df-97b0-449a-ad45-45945221332a","provider":"test"}` |
+| 5 | 08:38:24.284 | Response | http response | `200 {"worker_id":"a9cd46b2-6fa2-459b-bc30-65b366c350e5"}` |
+| 6 | 08:38:24.284 | Send | http.send | `POST /api/v1/workers/a9cd46b2-6fa2-459b-bc30-65b366c350e5/register {"job_id":"07b9c3df-97b0-449a-ad45-45945221332a"}` |
+| 7 | 08:38:24.287 | Response | http response | `200 ` |
+| 8 | 08:38:24.287 | Send | http.send | `POST /api/v1/workers/a9cd46b2-6fa2-459b-bc30-65b366c350e5/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt_...` |
+| 9 | 08:38:24.291 | Response | http response | `200 ` |
+| 10 | 08:38:24.291 | Recv | sql:jobs | `[{"id":"07b9c3df-97b0-449a-ad45-45945221332a","project_id":"test-1778747904279-9yd453","description":"Checkpoint test","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attempt":1,"max_a...` |
+| 11 | 08:38:24.291 | Recv | sql:checkpoints | `[{"id":"629dbb1d-c953-4bad-899c-cad240a43487","job_id":"07b9c3df-97b0-449a-ad45-45945221332a","stage":"plan","response":"{\"complexity\":\"simple\"}","session_path":"/tmp/session.json","git_sha":"abc123","token_usage":"{\"prompt_tokens\":100,\"completion_tokens\":50}","files_changed":"[\"src/main...` |
+
+---
+
+## tracks worker heartbeat in DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.293 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.293 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904291-n7yo1r","description":"Heartbeat test"}` |
+| 3 | 08:38:24.294 | Response | http response | `200 {"job_id":"3c81cc60-31ee-4684-97a2-6359ed8b9580"}` |
+| 4 | 08:38:24.294 | Send | http.send | `POST /api/v1/workers {"job_id":"3c81cc60-31ee-4684-97a2-6359ed8b9580","provider":"test"}` |
+| 5 | 08:38:24.296 | Response | http response | `200 {"worker_id":"924cd24d-2dca-47a2-bc38-6f26ccc6150b"}` |
+| 6 | 08:38:24.296 | Send | http.send | `POST /api/v1/workers/924cd24d-2dca-47a2-bc38-6f26ccc6150b/register {"job_id":"3c81cc60-31ee-4684-97a2-6359ed8b9580"}` |
+| 7 | 08:38:24.299 | Response | http response | `200 ` |
+| 8 | 08:38:24.299 | Send | http.send | `POST /api/v1/workers/924cd24d-2dca-47a2-bc38-6f26ccc6150b/heartbeat {"status":"running","current_stage":"plan","token_usage":{"prompt_tokens":100,"completion_tokens":50},"files_changed":0,"tool_cal...` |
+| 9 | 08:38:24.300 | Response | http response | `200 ` |
+| 10 | 08:38:24.301 | Recv | sql:workers | `[{"id":"924cd24d-2dca-47a2-bc38-6f26ccc6150b","job_id":"3c81cc60-31ee-4684-97a2-6359ed8b9580","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":"2026-05-14T08:38:24.299505041+00:00","created_at":"2026-05-14T08:38:24.294891204+00:00","de...` |
+
+---
+
+## destroyed workers removed from DB
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:24.302 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.302 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904301-xpd8xs","description":"Destroy test"}` |
+| 3 | 08:38:24.304 | Response | http response | `200 {"job_id":"efb018a3-205d-4fe6-9924-15905c47cc07"}` |
+| 4 | 08:38:24.304 | Send | http.send | `POST /api/v1/workers {"job_id":"efb018a3-205d-4fe6-9924-15905c47cc07","provider":"test"}` |
+| 5 | 08:38:24.306 | Response | http response | `200 {"worker_id":"cd0c2408-c4d3-4855-ae4c-ac9265542dbb"}` |
+| 6 | 08:38:24.306 | Send | http.send | `POST /api/v1/workers/cd0c2408-c4d3-4855-ae4c-ac9265542dbb/register {"job_id":"efb018a3-205d-4fe6-9924-15905c47cc07"}` |
+| 7 | 08:38:24.309 | Response | http response | `200 ` |
+| 8 | 08:38:24.309 | Send | http.send | `POST /api/v1/workers/cd0c2408-c4d3-4855-ae4c-ac9265542dbb/complete {"result":"done"}` |
+| 9 | 08:38:24.312 | Response | http response | `200 ` |
+| 10 | 08:38:24.312 | Recv | sql:workers | `[{"id":"cd0c2408-c4d3-4855-ae4c-ac9265542dbb","job_id":"efb018a3-205d-4fe6-9924-15905c47cc07","provider":"test","provider_id":null,"status":"stopped","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.304743729+00:00","destroyed_at":"2026-05-14T08:38:24....` |
 
 ---
 
@@ -458,17 +462,16 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.159 | Send | http.send | `GET /api/v1/jobs/b3f3e986-5a5b-4df8-a195-93f3586f20ea` |
-| 2 | 07:24:12.159 | Response | http response | `200 {"id":"b3f3e986-5a5b-4df8-a195-93f3586f20ea","project_id":"d17fe694-be63-410d-9ce0-0900c69e2c3f","description":"Hello world test","status":"queued","worker_id":null,"branch":null,"workflow_name":"hello-world","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null...` |
+| 1 | 08:38:24.318 | Recv | sql:jobs | `[{"id":"b7b77c2b-567e-4564-a59c-8111b3d6221a","project_id":"test-1778747904314-sqfdol","description":"Hello world test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_...` |
 
 ---
 
-## job config returns resolved workflow stage
+## job config returns resolved stage info
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.159 | Send | http.send | `GET /api/v1/jobs/b3f3e986-5a5b-4df8-a195-93f3586f20ea/config` |
-| 2 | 07:24:12.160 | Response | http response | `200 {"job_id":"b3f3e986-5a5b-4df8-a195-93f3586f20ea","stage":"","prompt":"Hello world test","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1",...` |
+| 1 | 08:38:24.318 | Send | http.send | `GET /api/v1/jobs/b7b77c2b-567e-4564-a59c-8111b3d6221a/config` |
+| 2 | 08:38:24.319 | Response | http response | `200 {"job_id":"b7b77c2b-567e-4564-a59c-8111b3d6221a","stage":"","prompt":"Hello world test","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1",...` |
 
 ---
 
@@ -476,35 +479,40 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.161 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743452161-ivg42l","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:12.162 | Response | http response | `200 {"project_id":"f0d17172-391b-4bca-8109-04ae561f5f2d"}` |
-| 3 | 07:24:12.162 | Send | http.send | `POST /api/v1/jobs {"project_id":"f0d17172-391b-4bca-8109-04ae561f5f2d","description":"Full lifecycle test"}` |
-| 4 | 07:24:12.163 | Response | http response | `200 {"job_id":"5b700fd1-e2e8-4089-ab97-483b750e6b72"}` |
-| 5 | 07:24:12.163 | Send | http.send | `GET /api/v1/jobs/5b700fd1-e2e8-4089-ab97-483b750e6b72` |
-| 6 | 07:24:12.164 | Response | http response | `200 {"id":"5b700fd1-e2e8-4089-ab97-483b750e6b72","project_id":"f0d17172-391b-4bca-8109-04ae561f5f2d","description":"Full lifecycle test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"erro...` |
-| 7 | 07:24:12.164 | Send | http.send | `POST /api/v1/workers {"job_id":"5b700fd1-e2e8-4089-ab97-483b750e6b72","provider":"test"}` |
-| 8 | 07:24:12.165 | Response | http response | `200 {"worker_id":"849bfc0d-575a-4519-957c-ea978396da57"}` |
-| 9 | 07:24:12.165 | Send | http.send | `POST /api/v1/workers/849bfc0d-575a-4519-957c-ea978396da57/register {"job_id":"5b700fd1-e2e8-4089-ab97-483b750e6b72"}` |
-| 10 | 07:24:12.167 | Response | http response | `200 ` |
-| 11 | 07:24:12.167 | Send | http.send | `POST /api/v1/workers/849bfc0d-575a-4519-957c-ea978396da57/heartbeat {"status":"running","current_stage":"plan","token_usage":{"prompt_tokens":100,"completion_tokens":50},"files_changed":0,"tool_cal...` |
-| 12 | 07:24:12.169 | Response | http response | `200 ` |
-| 13 | 07:24:12.169 | Send | http.send | `POST /api/v1/workers/849bfc0d-575a-4519-957c-ea978396da57/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/workspace/.codery/session.json","git_sha":"abc123","token_us...` |
-| 14 | 07:24:12.171 | Response | http response | `200 ` |
-| 15 | 07:24:12.171 | Send | http.send | `POST /api/v1/workers/849bfc0d-575a-4519-957c-ea978396da57/complete {"result":"Job completed successfully"}` |
-| 16 | 07:24:12.174 | Response | http response | `200 ` |
-| 17 | 07:24:12.174 | Send | http.send | `GET /api/v1/jobs/5b700fd1-e2e8-4089-ab97-483b750e6b72` |
-| 18 | 07:24:12.174 | Response | http response | `200 {"id":"5b700fd1-e2e8-4089-ab97-483b750e6b72","project_id":"f0d17172-391b-4bca-8109-04ae561f5f2d","description":"Full lifecycle test","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]...` |
+| 1 | 08:38:24.322 | Send | sql.put | `1 rows` |
+| 2 | 08:38:24.322 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747904320-qn2qz6","description":"Full lifecycle test"}` |
+| 3 | 08:38:24.323 | Response | http response | `200 {"job_id":"6887280b-44df-4ee8-8814-b7a36907de82"}` |
+| 4 | 08:38:24.323 | Recv | sql:jobs | `[{"id":"6887280b-44df-4ee8-8814-b7a36907de82","project_id":"test-1778747904320-qn2qz6","description":"Full lifecycle test","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"creat...` |
+| 5 | 08:38:24.323 | Send | http.send | `POST /api/v1/workers {"job_id":"6887280b-44df-4ee8-8814-b7a36907de82","provider":"test"}` |
+| 6 | 08:38:24.325 | Response | http response | `200 {"worker_id":"233e30d1-3e8f-4c21-adaf-b74aa0419849"}` |
+| 7 | 08:38:24.325 | Send | http.send | `POST /api/v1/workers/233e30d1-3e8f-4c21-adaf-b74aa0419849/register {"job_id":"6887280b-44df-4ee8-8814-b7a36907de82"}` |
+| 8 | 08:38:24.328 | Response | http response | `200 ` |
+| 9 | 08:38:24.328 | Recv | sql:jobs | `[{"id":"6887280b-44df-4ee8-8814-b7a36907de82","project_id":"test-1778747904320-qn2qz6","description":"Full lifecycle test","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"crea...` |
+| 10 | 08:38:24.328 | Recv | sql:workers | `[{"id":"233e30d1-3e8f-4c21-adaf-b74aa0419849","job_id":"6887280b-44df-4ee8-8814-b7a36907de82","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.323992141+00:00","destroyed_at":null}]` |
+| 11 | 08:38:24.328 | Send | http.send | `POST /api/v1/workers/233e30d1-3e8f-4c21-adaf-b74aa0419849/heartbeat {"status":"running","current_stage":"plan","token_usage":{"prompt_tokens":100,"completion_tokens":50},"files_changed":0,"tool_cal...` |
+| 12 | 08:38:24.330 | Response | http response | `200 ` |
+| 13 | 08:38:24.330 | Recv | sql:workers | `[{"id":"233e30d1-3e8f-4c21-adaf-b74aa0419849","job_id":"6887280b-44df-4ee8-8814-b7a36907de82","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":"2026-05-14T08:38:24.328526548+00:00","created_at":"2026-05-14T08:38:24.323992141+00:00","de...` |
+| 14 | 08:38:24.330 | Send | http.send | `POST /api/v1/workers/233e30d1-3e8f-4c21-adaf-b74aa0419849/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/workspace/.codery/session.json","git_sha":"abc123","token_us...` |
+| 15 | 08:38:24.334 | Response | http response | `200 ` |
+| 16 | 08:38:24.335 | Recv | sql:jobs | `[{"id":"6887280b-44df-4ee8-8814-b7a36907de82","project_id":"test-1778747904320-qn2qz6","description":"Full lifecycle test","status":"running","worker_id":null,"branch":null,"workflow_name":null,"current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attempt":1,"m...` |
+| 17 | 08:38:24.335 | Recv | sql:checkpoints | `[{"id":"c9a2cf3c-035e-4557-917d-32e5a0028a2d","job_id":"6887280b-44df-4ee8-8814-b7a36907de82","stage":"plan","response":"{\"complexity\":\"simple\"}","session_path":"/workspace/.codery/session.json","git_sha":"abc123","token_usage":"{\"prompt_tokens\":100,\"completion_tokens\":50}","files_changed...` |
+| 18 | 08:38:24.335 | Send | http.send | `POST /api/v1/workers/233e30d1-3e8f-4c21-adaf-b74aa0419849/complete {"result":"Job completed successfully"}` |
+| 19 | 08:38:24.338 | Response | http response | `200 ` |
+| 20 | 08:38:24.338 | Recv | sql:jobs | `[{"id":"6887280b-44df-4ee8-8814-b7a36907de82","project_id":"test-1778747904320-qn2qz6","description":"Full lifecycle test","status":"completed","worker_id":null,"branch":null,"workflow_name":null,"current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attempt":1,...` |
+| 21 | 08:38:24.338 | Recv | sql:workers | `[{"id":"233e30d1-3e8f-4c21-adaf-b74aa0419849","job_id":"6887280b-44df-4ee8-8814-b7a36907de82","provider":"test","provider_id":null,"status":"stopped","ip_address":null,"workspace_path":null,"heartbeat_at":"2026-05-14T08:38:24.328526548+00:00","created_at":"2026-05-14T08:38:24.323992141+00:00","de...` |
 
 ---
 
-## lists jobs and workers
+## lists jobs and workers via HTTP matches DB
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.174 | Send | http.send | `GET /api/v1/jobs` |
-| 2 | 07:24:12.176 | Response | http response | `200 [{"id":"d13bb9f9-5c45-4a53-8e56-cca338cfb2ba","project_id":"99592130-1904-4d05-94c8-f2813a388bf9","description":"DB test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null...` |
-| 3 | 07:24:12.176 | Send | http.send | `GET /api/v1/workers` |
-| 4 | 07:24:12.177 | Response | http response | `200 [{"id":"9b1abb6e-707a-4d66-b48f-cc51f4070de1","job_id":"b74c82f6-5314-444d-8094-953348bfff39","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T07:17:31.453953553+00:00","destroyed_at":null},{"id":"639f...` |
+| 1 | 08:38:24.338 | Send | http.send | `GET /api/v1/jobs` |
+| 2 | 08:38:24.339 | Response | http response | `200 [{"id":"ed363081-353b-44ef-83c5-d384f78ee89e","project_id":"test-1778747904089-2b75u1","description":"Dashboard test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"cr...` |
+| 3 | 08:38:24.339 | Recv | sql:jobs | `[{"id":"ed363081-353b-44ef-83c5-d384f78ee89e","project_id":"test-1778747904089-2b75u1","description":"Dashboard test job","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"create...` |
+| 4 | 08:38:24.339 | Send | http.send | `GET /api/v1/workers` |
+| 5 | 08:38:24.340 | Response | http response | `200 [{"id":"9522e768-d9f6-48d3-b3d0-3ef8eb443382","job_id":"12035eef-722a-4998-abb1-04412ad0cbe8","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.103803117+00:00","destroyed_at":null},{"id":"d326...` |
+| 6 | 08:38:24.340 | Recv | sql:workers | `[{"id":"9522e768-d9f6-48d3-b3d0-3ef8eb443382","job_id":"12035eef-722a-4998-abb1-04412ad0cbe8","provider":"test","provider_id":null,"status":"running","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:24.103803117+00:00","destroyed_at":null},{"id":"d326aa4b...` |
 
 ---
 
@@ -512,8 +520,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.177 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: test\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash]\n routes: null\n"}` |
-| 2 | 07:24:12.178 | Response | http response | `200 {"name":"test","stages":1,"valid":true}` |
+| 1 | 08:38:24.340 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: test\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash]\n routes: null\n"}` |
+| 2 | 08:38:24.340 | Response | http response | `200 {"name":"test","stages":1,"valid":true}` |
 
 ---
 
@@ -521,8 +529,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:12.178 | Send | http.send | `POST /api/v1/workflows/validate {"content":"name: bad\nstages: {}\n"}` |
-| 2 | 07:24:12.178 | Response | http response | `200 {"error":"workflow needs at least one stage","valid":false}` |
+| 1 | 08:38:24.340 | Send | http.send | `POST /api/v1/workflows/validate {"content":"name: bad\nstages: {}\n"}` |
+| 2 | 08:38:24.341 | Response | http response | `200 {"error":"workflow needs at least one stage","valid":false}` |
 
 ---
 
@@ -530,18 +538,17 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.715 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482715-3pfedr","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.719 | Response | http response | `200 {"project_id":"1732cbf2-3ad9-4bc3-908f-5420195b7fc8"}` |
-| 3 | 07:24:42.719 | Send | http.send | `POST /api/v1/jobs {"project_id":"1732cbf2-3ad9-4bc3-908f-5420195b7fc8","description":"Build feature","workflow":"feature"}` |
-| 4 | 07:24:42.725 | Response | http response | `200 {"job_id":"f5285eba-e9bc-4a4a-ae45-a74a038bc185"}` |
-| 5 | 07:24:42.725 | Send | http.send | `POST /api/v1/workers {"job_id":"f5285eba-e9bc-4a4a-ae45-a74a038bc185","provider":"test"}` |
-| 6 | 07:24:42.728 | Response | http response | `200 {"worker_id":"2e828d03-c044-4ac7-811a-379692f4f171"}` |
-| 7 | 07:24:42.728 | Send | http.send | `POST /api/v1/workers/2e828d03-c044-4ac7-811a-379692f4f171/register {"job_id":"f5285eba-e9bc-4a4a-ae45-a74a038bc185"}` |
-| 8 | 07:24:42.731 | Response | http response | `200 ` |
-| 9 | 07:24:42.731 | Send | http.send | `POST /api/v1/workers/2e828d03-c044-4ac7-811a-379692f4f171/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt_...` |
-| 10 | 07:24:42.733 | Response | http response | `200 ` |
-| 11 | 07:24:42.733 | Send | http.send | `GET /api/v1/jobs/f5285eba-e9bc-4a4a-ae45-a74a038bc185` |
-| 12 | 07:24:42.734 | Response | http response | `200 {"id":"f5285eba-e9bc-4a4a-ae45-a74a038bc185","project_id":"1732cbf2-3ad9-4bc3-908f-5420195b7fc8","description":"Build feature","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"implement","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"...` |
+| 1 | 08:38:48.393 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.393 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928390-x4h8zc","description":"Build feature","workflow":"feature"}` |
+| 3 | 08:38:48.395 | Response | http response | `200 {"job_id":"da4ec9df-5c9a-487f-b3f7-66b00f3901e6"}` |
+| 4 | 08:38:48.395 | Send | http.send | `POST /api/v1/workers {"job_id":"da4ec9df-5c9a-487f-b3f7-66b00f3901e6","provider":"test"}` |
+| 5 | 08:38:48.396 | Response | http response | `200 {"worker_id":"116439af-424f-4e7f-a16c-1b1bf58f6466"}` |
+| 6 | 08:38:48.396 | Send | http.send | `POST /api/v1/workers/116439af-424f-4e7f-a16c-1b1bf58f6466/register {"job_id":"da4ec9df-5c9a-487f-b3f7-66b00f3901e6"}` |
+| 7 | 08:38:48.399 | Response | http response | `200 ` |
+| 8 | 08:38:48.399 | Send | http.send | `POST /api/v1/workers/116439af-424f-4e7f-a16c-1b1bf58f6466/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt_...` |
+| 9 | 08:38:48.403 | Response | http response | `200 ` |
+| 10 | 08:38:48.403 | Recv | sql:jobs | `[{"id":"da4ec9df-5c9a-487f-b3f7-66b00f3901e6","project_id":"test-1778747928390-x4h8zc","description":"Build feature","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"implement","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attempt":...` |
+| 11 | 08:38:48.403 | Recv | sql:checkpoints | `[{"id":"ea696dca-dff4-4dd2-87e8-9a942b953467","job_id":"da4ec9df-5c9a-487f-b3f7-66b00f3901e6","stage":"plan","response":"{\"complexity\":\"simple\"}","session_path":"/tmp/session.json","git_sha":"abc123","token_usage":"{\"prompt_tokens\":100,\"completion_tokens\":50}","files_changed":"[]","create...` |
 
 ---
 
@@ -549,18 +556,16 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.734 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482734-m6loz0","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.736 | Response | http response | `200 {"project_id":"f94b7e66-77a2-4eb7-b722-78ebfda00156"}` |
-| 3 | 07:24:42.736 | Send | http.send | `POST /api/v1/jobs {"project_id":"f94b7e66-77a2-4eb7-b722-78ebfda00156","description":"Complex feature","workflow":"feature"}` |
-| 4 | 07:24:42.737 | Response | http response | `200 {"job_id":"4bd7dae7-e21b-4c06-a8dc-551c14a20e34"}` |
-| 5 | 07:24:42.737 | Send | http.send | `POST /api/v1/workers {"job_id":"4bd7dae7-e21b-4c06-a8dc-551c14a20e34","provider":"test"}` |
-| 6 | 07:24:42.739 | Response | http response | `200 {"worker_id":"61e42823-d19f-49e5-b119-d4eb7bfe5dcc"}` |
-| 7 | 07:24:42.739 | Send | http.send | `POST /api/v1/workers/61e42823-d19f-49e5-b119-d4eb7bfe5dcc/register {"job_id":"4bd7dae7-e21b-4c06-a8dc-551c14a20e34"}` |
-| 8 | 07:24:42.742 | Response | http response | `200 ` |
-| 9 | 07:24:42.742 | Send | http.send | `POST /api/v1/workers/61e42823-d19f-49e5-b119-d4eb7bfe5dcc/checkpoint {"stage":"plan","response":{"complexity":"complex"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt...` |
-| 10 | 07:24:42.745 | Response | http response | `200 ` |
-| 11 | 07:24:42.745 | Send | http.send | `GET /api/v1/jobs/4bd7dae7-e21b-4c06-a8dc-551c14a20e34` |
-| 12 | 07:24:42.745 | Response | http response | `200 {"id":"4bd7dae7-e21b-4c06-a8dc-551c14a20e34","project_id":"f94b7e66-77a2-4eb7-b722-78ebfda00156","description":"Complex feature","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"plan_detail","stage_history":"[{\"stage\":\"plan\",\"status\":\"complet...` |
+| 1 | 08:38:48.405 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.405 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928403-x0p6em","description":"Complex feature","workflow":"feature"}` |
+| 3 | 08:38:48.407 | Response | http response | `200 {"job_id":"167beaf1-7f11-41a6-a609-9f239aa8a592"}` |
+| 4 | 08:38:48.407 | Send | http.send | `POST /api/v1/workers {"job_id":"167beaf1-7f11-41a6-a609-9f239aa8a592","provider":"test"}` |
+| 5 | 08:38:48.409 | Response | http response | `200 {"worker_id":"cca707c4-0c61-4e06-a964-5c781f66aa25"}` |
+| 6 | 08:38:48.409 | Send | http.send | `POST /api/v1/workers/cca707c4-0c61-4e06-a964-5c781f66aa25/register {"job_id":"167beaf1-7f11-41a6-a609-9f239aa8a592"}` |
+| 7 | 08:38:48.415 | Response | http response | `200 ` |
+| 8 | 08:38:48.415 | Send | http.send | `POST /api/v1/workers/cca707c4-0c61-4e06-a964-5c781f66aa25/checkpoint {"stage":"plan","response":{"complexity":"complex"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt...` |
+| 9 | 08:38:48.419 | Response | http response | `200 ` |
+| 10 | 08:38:48.419 | Recv | sql:jobs | `[{"id":"167beaf1-7f11-41a6-a609-9f239aa8a592","project_id":"test-1778747928403-x0p6em","description":"Complex feature","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"plan_detail","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attem...` |
 
 ---
 
@@ -568,18 +573,17 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.746 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482746-rbhbow","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.747 | Response | http response | `200 {"project_id":"76c07037-e1ef-448f-a330-048c19e225e6"}` |
-| 3 | 07:24:42.747 | Send | http.send | `POST /api/v1/jobs {"project_id":"76c07037-e1ef-448f-a330-048c19e225e6","description":"Simple task","workflow":"simple"}` |
-| 4 | 07:24:42.748 | Response | http response | `200 {"job_id":"5e9100e8-a513-4185-abff-a7cedade6719"}` |
-| 5 | 07:24:42.748 | Send | http.send | `POST /api/v1/workers {"job_id":"5e9100e8-a513-4185-abff-a7cedade6719","provider":"test"}` |
-| 6 | 07:24:42.750 | Response | http response | `200 {"worker_id":"bc569679-e81f-49da-b6d0-457c21a192d7"}` |
-| 7 | 07:24:42.750 | Send | http.send | `POST /api/v1/workers/bc569679-e81f-49da-b6d0-457c21a192d7/register {"job_id":"5e9100e8-a513-4185-abff-a7cedade6719"}` |
-| 8 | 07:24:42.752 | Response | http response | `200 ` |
-| 9 | 07:24:42.752 | Send | http.send | `POST /api/v1/workers/bc569679-e81f-49da-b6d0-457c21a192d7/complete {"result":"done"}` |
-| 10 | 07:24:42.754 | Response | http response | `200 ` |
-| 11 | 07:24:42.754 | Send | http.send | `GET /api/v1/jobs/5e9100e8-a513-4185-abff-a7cedade6719` |
-| 12 | 07:24:42.755 | Response | http response | `200 {"id":"5e9100e8-a513-4185-abff-a7cedade6719","project_id":"76c07037-e1ef-448f-a330-048c19e225e6","description":"Simple task","status":"completed","worker_id":null,"branch":null,"workflow_name":"simple","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"done","err...` |
+| 1 | 08:38:48.422 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.422 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928420-i6ekk9","description":"Simple task","workflow":"simple"}` |
+| 3 | 08:38:48.423 | Response | http response | `200 {"job_id":"b8f35ff0-7d62-4694-a430-b904f813cb3b"}` |
+| 4 | 08:38:48.423 | Send | http.send | `POST /api/v1/workers {"job_id":"b8f35ff0-7d62-4694-a430-b904f813cb3b","provider":"test"}` |
+| 5 | 08:38:48.425 | Response | http response | `200 {"worker_id":"24e2ba22-1c57-4814-9caf-319665e264e9"}` |
+| 6 | 08:38:48.425 | Send | http.send | `POST /api/v1/workers/24e2ba22-1c57-4814-9caf-319665e264e9/register {"job_id":"b8f35ff0-7d62-4694-a430-b904f813cb3b"}` |
+| 7 | 08:38:48.428 | Response | http response | `200 ` |
+| 8 | 08:38:48.428 | Send | http.send | `POST /api/v1/workers/24e2ba22-1c57-4814-9caf-319665e264e9/complete {"result":"done"}` |
+| 9 | 08:38:48.430 | Response | http response | `200 ` |
+| 10 | 08:38:48.431 | Recv | sql:jobs | `[{"id":"b8f35ff0-7d62-4694-a430-b904f813cb3b","project_id":"test-1778747928420-i6ekk9","description":"Simple task","status":"completed","worker_id":null,"branch":null,"workflow_name":"simple","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"done","error":null,"crea...` |
+| 11 | 08:38:48.431 | Recv | sql:workers | `[{"id":"24e2ba22-1c57-4814-9caf-319665e264e9","job_id":"b8f35ff0-7d62-4694-a430-b904f813cb3b","provider":"test","provider_id":null,"status":"stopped","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:48.423944085+00:00","destroyed_at":"2026-05-14T08:38:48....` |
 
 ---
 
@@ -587,8 +591,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.755 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: numeric-route\ndescription: \"Numeric routing\"\nstages:\n check:\n skill: plan\n prompt: \"Check\"\n tools: [bash]\n max_tokens: 8000\n routes:\...` |
-| 2 | 07:24:42.755 | Response | http response | `200 {"name":"numeric-route","stages":3,"valid":true}` |
+| 1 | 08:38:48.431 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: numeric-route\ndescription: \"Numeric routing\"\nstages:\n check:\n skill: plan\n prompt: \"Check\"\n tools: [bash]\n max_tokens: 8000\n routes:\...` |
+| 2 | 08:38:48.432 | Response | http response | `200 {"name":"numeric-route","stages":3,"valid":true}` |
 
 ---
 
@@ -596,8 +600,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.757 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: simple\ndescription: \"Simple workflow\"\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash, read]\n max_tokens: 8000\n ...` |
-| 2 | 07:24:42.757 | Response | http response | `200 {"name":"simple","stages":2,"valid":true}` |
+| 1 | 08:38:48.434 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: simple\ndescription: \"Simple workflow\"\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash, read]\n max_tokens: 8000\n ...` |
+| 2 | 08:38:48.435 | Response | http response | `200 {"name":"simple","stages":2,"valid":true}` |
 
 ---
 
@@ -605,8 +609,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.758 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: empty\ndescription: \"No stages\"\nstages: {}\n"}` |
-| 2 | 07:24:42.758 | Response | http response | `200 {"error":"workflow needs at least one stage","valid":false}` |
+| 1 | 08:38:48.435 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: empty\ndescription: \"No stages\"\nstages: {}\n"}` |
+| 2 | 08:38:48.435 | Response | http response | `200 {"error":"workflow needs at least one stage","valid":false}` |
 
 ---
 
@@ -614,21 +618,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.758 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: minimal\ndescription: \"One stage\"\nstages:\n work:\n prompt: \"Do it\"\n tools: [bash]\n max_tokens: 4000\n routes: null\n"}` |
-| 2 | 07:24:42.759 | Response | http response | `200 {"name":"minimal","stages":1,"valid":true}` |
-
----
-
-## new job starts at first stage
-
-| # | Time | Direction | Step | Detail |
-|---|------|-----------|------|--------|
-| 1 | 07:24:42.761 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482761-hnlm7c","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.763 | Response | http response | `200 {"project_id":"4fcc3f47-6b13-46d8-8b87-2b30dd898ac8"}` |
-| 3 | 07:24:42.763 | Send | http.send | `POST /api/v1/jobs {"project_id":"4fcc3f47-6b13-46d8-8b87-2b30dd898ac8","description":"Start at first stage"}` |
-| 4 | 07:24:42.765 | Response | http response | `200 {"job_id":"0e9eff56-d74c-4605-b15a-fb0bac96043e"}` |
-| 5 | 07:24:42.765 | Send | http.send | `GET /api/v1/jobs/0e9eff56-d74c-4605-b15a-fb0bac96043e` |
-| 6 | 07:24:42.765 | Response | http response | `200 {"id":"0e9eff56-d74c-4605-b15a-fb0bac96043e","project_id":"4fcc3f47-6b13-46d8-8b87-2b30dd898ac8","description":"Start at first stage","status":"queued","worker_id":null,"branch":null,"workflow_name":null,"current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"err...` |
+| 1 | 08:38:48.435 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: minimal\ndescription: \"One stage\"\nstages:\n work:\n prompt: \"Do it\"\n tools: [bash]\n max_tokens: 4000\n routes: null\n"}` |
+| 2 | 08:38:48.436 | Response | http response | `200 {"name":"minimal","stages":1,"valid":true}` |
 
 ---
 
@@ -636,18 +627,17 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.766 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482766-7pqccf","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.768 | Response | http response | `200 {"project_id":"5c23bd3e-cfde-4a1c-8672-a7562cbe1f68"}` |
-| 3 | 07:24:42.768 | Send | http.send | `POST /api/v1/jobs {"project_id":"5c23bd3e-cfde-4a1c-8672-a7562cbe1f68","description":"Advance stages","workflow":"feature"}` |
-| 4 | 07:24:42.769 | Response | http response | `200 {"job_id":"cbb71529-ae6d-4acd-8888-60eada54e2c0"}` |
-| 5 | 07:24:42.769 | Send | http.send | `POST /api/v1/workers {"job_id":"cbb71529-ae6d-4acd-8888-60eada54e2c0","provider":"test"}` |
-| 6 | 07:24:42.771 | Response | http response | `200 {"worker_id":"b414d7a9-bad8-44c7-8854-005974d86d4f"}` |
-| 7 | 07:24:42.771 | Send | http.send | `POST /api/v1/workers/b414d7a9-bad8-44c7-8854-005974d86d4f/register {"job_id":"cbb71529-ae6d-4acd-8888-60eada54e2c0"}` |
-| 8 | 07:24:42.774 | Response | http response | `200 ` |
-| 9 | 07:24:42.774 | Send | http.send | `POST /api/v1/workers/b414d7a9-bad8-44c7-8854-005974d86d4f/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt_...` |
-| 10 | 07:24:42.778 | Response | http response | `200 ` |
-| 11 | 07:24:42.778 | Send | http.send | `GET /api/v1/jobs/cbb71529-ae6d-4acd-8888-60eada54e2c0` |
-| 12 | 07:24:42.779 | Response | http response | `200 {"id":"cbb71529-ae6d-4acd-8888-60eada54e2c0","project_id":"5c23bd3e-cfde-4a1c-8672-a7562cbe1f68","description":"Advance stages","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"implement","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\...` |
+| 1 | 08:38:48.443 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.443 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928441-tvvxwk","description":"Advance stages","workflow":"feature"}` |
+| 3 | 08:38:48.444 | Response | http response | `200 {"job_id":"f72157ff-0565-475a-bac9-92cbbc2a9de0"}` |
+| 4 | 08:38:48.444 | Send | http.send | `POST /api/v1/workers {"job_id":"f72157ff-0565-475a-bac9-92cbbc2a9de0","provider":"test"}` |
+| 5 | 08:38:48.446 | Response | http response | `200 {"worker_id":"f1274720-b784-4e35-ab91-1a4bcb07d326"}` |
+| 6 | 08:38:48.446 | Send | http.send | `POST /api/v1/workers/f1274720-b784-4e35-ab91-1a4bcb07d326/register {"job_id":"f72157ff-0565-475a-bac9-92cbbc2a9de0"}` |
+| 7 | 08:38:48.449 | Response | http response | `200 ` |
+| 8 | 08:38:48.449 | Send | http.send | `POST /api/v1/workers/f1274720-b784-4e35-ab91-1a4bcb07d326/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/session.json","git_sha":"abc123","token_usage":{"prompt_...` |
+| 9 | 08:38:48.451 | Response | http response | `200 ` |
+| 10 | 08:38:48.452 | Recv | sql:jobs | `[{"id":"f72157ff-0565-475a-bac9-92cbbc2a9de0","project_id":"test-1778747928441-tvvxwk","description":"Advance stages","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"implement","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"}]","attempt"...` |
+| 11 | 08:38:48.452 | Recv | sql:checkpoints | `[{"id":"d610a0fb-9dd3-42cf-96c7-08d2dd4df3f3","job_id":"f72157ff-0565-475a-bac9-92cbbc2a9de0","stage":"plan","response":"{\"complexity\":\"simple\"}","session_path":"/tmp/session.json","git_sha":"abc123","token_usage":"{\"prompt_tokens\":100,\"completion_tokens\":50}","files_changed":"[]","create...` |
 
 ---
 
@@ -655,20 +645,19 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.779 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482779-4ogrsl","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.781 | Response | http response | `200 {"project_id":"46e18003-079c-4ef8-8e2f-a49def3599f8"}` |
-| 3 | 07:24:42.782 | Send | http.send | `POST /api/v1/jobs {"project_id":"46e18003-079c-4ef8-8e2f-a49def3599f8","description":"Multi-stage","workflow":"feature"}` |
-| 4 | 07:24:42.784 | Response | http response | `200 {"job_id":"2464e41c-60ac-41e4-8759-92b27fff23c3"}` |
-| 5 | 07:24:42.784 | Send | http.send | `POST /api/v1/workers {"job_id":"2464e41c-60ac-41e4-8759-92b27fff23c3","provider":"test"}` |
-| 6 | 07:24:42.786 | Response | http response | `200 {"worker_id":"caf1dc2c-ed01-4eed-81b0-de12a9607e9d"}` |
-| 7 | 07:24:42.786 | Send | http.send | `POST /api/v1/workers/caf1dc2c-ed01-4eed-81b0-de12a9607e9d/register {"job_id":"2464e41c-60ac-41e4-8759-92b27fff23c3"}` |
-| 8 | 07:24:42.789 | Response | http response | `200 ` |
-| 9 | 07:24:42.789 | Send | http.send | `POST /api/v1/workers/caf1dc2c-ed01-4eed-81b0-de12a9607e9d/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/s1.json","git_sha":"aaa111","token_usage":{"prompt_token...` |
-| 10 | 07:24:42.792 | Response | http response | `200 ` |
-| 11 | 07:24:42.792 | Send | http.send | `POST /api/v1/workers/caf1dc2c-ed01-4eed-81b0-de12a9607e9d/checkpoint {"stage":"implement","response":{"success":true},"session_path":"/tmp/s2.json","git_sha":"bbb222","token_usage":{"prompt_tokens"...` |
-| 12 | 07:24:42.795 | Response | http response | `200 ` |
-| 13 | 07:24:42.795 | Send | http.send | `GET /api/v1/jobs/2464e41c-60ac-41e4-8759-92b27fff23c3` |
-| 14 | 07:24:42.795 | Response | http response | `200 {"id":"2464e41c-60ac-41e4-8759-92b27fff23c3","project_id":"46e18003-079c-4ef8-8e2f-a49def3599f8","description":"Multi-stage","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"},{\"st...` |
+| 1 | 08:38:48.453 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.453 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928452-4g5ilq","description":"Multi-stage","workflow":"feature"}` |
+| 3 | 08:38:48.455 | Response | http response | `200 {"job_id":"5a084b3b-e99d-4c24-9e9e-9c2e5854ee05"}` |
+| 4 | 08:38:48.455 | Send | http.send | `POST /api/v1/workers {"job_id":"5a084b3b-e99d-4c24-9e9e-9c2e5854ee05","provider":"test"}` |
+| 5 | 08:38:48.457 | Response | http response | `200 {"worker_id":"be0945d4-b276-4f46-a609-1da0e801ef9a"}` |
+| 6 | 08:38:48.457 | Send | http.send | `POST /api/v1/workers/be0945d4-b276-4f46-a609-1da0e801ef9a/register {"job_id":"5a084b3b-e99d-4c24-9e9e-9c2e5854ee05"}` |
+| 7 | 08:38:48.460 | Response | http response | `200 ` |
+| 8 | 08:38:48.460 | Send | http.send | `POST /api/v1/workers/be0945d4-b276-4f46-a609-1da0e801ef9a/checkpoint {"stage":"plan","response":{"complexity":"simple"},"session_path":"/tmp/s1.json","git_sha":"aaa111","token_usage":{"prompt_token...` |
+| 9 | 08:38:48.464 | Response | http response | `200 ` |
+| 10 | 08:38:48.464 | Send | http.send | `POST /api/v1/workers/be0945d4-b276-4f46-a609-1da0e801ef9a/checkpoint {"stage":"implement","response":{"success":true},"session_path":"/tmp/s2.json","git_sha":"bbb222","token_usage":{"prompt_tokens"...` |
+| 11 | 08:38:48.467 | Response | http response | `200 ` |
+| 12 | 08:38:48.467 | Recv | sql:jobs | `[{"id":"5a084b3b-e99d-4c24-9e9e-9c2e5854ee05","project_id":"test-1778747928452-4g5ilq","description":"Multi-stage","status":"running","worker_id":null,"branch":null,"workflow_name":"feature","current_stage":"done","stage_history":"[{\"stage\":\"plan\",\"status\":\"completed\"},{\"stage\":\"implem...` |
+| 13 | 08:38:48.467 | Recv | sql:checkpoints | `[{"id":"93d2c88b-8f89-4a1c-848d-a01295b97ce3","job_id":"5a084b3b-e99d-4c24-9e9e-9c2e5854ee05","stage":"plan","response":"{\"complexity\":\"simple\"}","session_path":"/tmp/s1.json","git_sha":"aaa111","token_usage":"{\"prompt_tokens\":100,\"completion_tokens\":50}","files_changed":"[]","created_at"...` |
 
 ---
 
@@ -676,18 +665,17 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.796 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482796-qy3dj0","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.798 | Response | http response | `200 {"project_id":"12dbac1f-28ad-4a2d-bea2-cfa74cecd7e5"}` |
-| 3 | 07:24:42.798 | Send | http.send | `POST /api/v1/jobs {"project_id":"12dbac1f-28ad-4a2d-bea2-cfa74cecd7e5","description":"Complete workflow","workflow":"simple"}` |
-| 4 | 07:24:42.800 | Response | http response | `200 {"job_id":"a2752e3d-7fc7-4984-8a75-43de3b87adef"}` |
-| 5 | 07:24:42.800 | Send | http.send | `POST /api/v1/workers {"job_id":"a2752e3d-7fc7-4984-8a75-43de3b87adef","provider":"test"}` |
-| 6 | 07:24:42.802 | Response | http response | `200 {"worker_id":"7ff02fa1-7fe1-40be-8c4e-fd09c6fa5115"}` |
-| 7 | 07:24:42.802 | Send | http.send | `POST /api/v1/workers/7ff02fa1-7fe1-40be-8c4e-fd09c6fa5115/register {"job_id":"a2752e3d-7fc7-4984-8a75-43de3b87adef"}` |
-| 8 | 07:24:42.805 | Response | http response | `200 ` |
-| 9 | 07:24:42.805 | Send | http.send | `POST /api/v1/workers/7ff02fa1-7fe1-40be-8c4e-fd09c6fa5115/complete {"result":"all done"}` |
-| 10 | 07:24:42.808 | Response | http response | `200 ` |
-| 11 | 07:24:42.808 | Send | http.send | `GET /api/v1/jobs/a2752e3d-7fc7-4984-8a75-43de3b87adef` |
-| 12 | 07:24:42.808 | Response | http response | `200 {"id":"a2752e3d-7fc7-4984-8a75-43de3b87adef","project_id":"12dbac1f-28ad-4a2d-bea2-cfa74cecd7e5","description":"Complete workflow","status":"completed","worker_id":null,"branch":null,"workflow_name":"simple","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"all ...` |
+| 1 | 08:38:48.469 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.469 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928468-1g6h4g","description":"Complete workflow","workflow":"simple"}` |
+| 3 | 08:38:48.471 | Response | http response | `200 {"job_id":"07d9ba57-263e-4c51-888c-16dca8925224"}` |
+| 4 | 08:38:48.471 | Send | http.send | `POST /api/v1/workers {"job_id":"07d9ba57-263e-4c51-888c-16dca8925224","provider":"test"}` |
+| 5 | 08:38:48.472 | Response | http response | `200 {"worker_id":"bba3d130-01c5-4bfc-935d-24b5200dfb33"}` |
+| 6 | 08:38:48.472 | Send | http.send | `POST /api/v1/workers/bba3d130-01c5-4bfc-935d-24b5200dfb33/register {"job_id":"07d9ba57-263e-4c51-888c-16dca8925224"}` |
+| 7 | 08:38:48.474 | Response | http response | `200 ` |
+| 8 | 08:38:48.474 | Send | http.send | `POST /api/v1/workers/bba3d130-01c5-4bfc-935d-24b5200dfb33/complete {"result":"all done"}` |
+| 9 | 08:38:48.476 | Response | http response | `200 ` |
+| 10 | 08:38:48.476 | Recv | sql:jobs | `[{"id":"07d9ba57-263e-4c51-888c-16dca8925224","project_id":"test-1778747928468-1g6h4g","description":"Complete workflow","status":"completed","worker_id":null,"branch":null,"workflow_name":"simple","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":"all done","error":...` |
+| 11 | 08:38:48.476 | Recv | sql:workers | `[{"id":"bba3d130-01c5-4bfc-935d-24b5200dfb33","job_id":"07d9ba57-263e-4c51-888c-16dca8925224","provider":"test","provider_id":null,"status":"stopped","ip_address":null,"workspace_path":null,"heartbeat_at":null,"created_at":"2026-05-14T08:38:48.471390624+00:00","destroyed_at":"2026-05-14T08:38:48....` |
 
 ---
 
@@ -695,12 +683,12 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.811 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482811-w6p9dk","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.813 | Response | http response | `200 {"project_id":"9d37b048-b355-4738-824b-8e009ad921ec"}` |
-| 3 | 07:24:42.813 | Send | http.send | `POST /api/v1/jobs {"project_id":"9d37b048-b355-4738-824b-8e009ad921ec","description":"Add a hello world function","workflow":"simple"}` |
-| 4 | 07:24:42.815 | Response | http response | `200 {"job_id":"890ec9f1-4bd7-4fe4-baf7-636068c9b6ce"}` |
-| 5 | 07:24:42.815 | Send | http.send | `GET /api/v1/jobs/890ec9f1-4bd7-4fe4-baf7-636068c9b6ce/config` |
-| 6 | 07:24:42.815 | Response | http response | `200 {"job_id":"890ec9f1-4bd7-4fe4-baf7-636068c9b6ce","stage":"","prompt":"Add a hello world function","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepsee...` |
+| 1 | 08:38:48.478 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.478 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928477-fthqka","description":"Add a hello world function","workflow":"simple"}` |
+| 3 | 08:38:48.480 | Response | http response | `200 {"job_id":"384def26-52bc-473d-b012-d7dea55427c8"}` |
+| 4 | 08:38:48.480 | Send | http.send | `GET /api/v1/jobs/384def26-52bc-473d-b012-d7dea55427c8/config` |
+| 5 | 08:38:48.480 | Response | http response | `200 {"job_id":"384def26-52bc-473d-b012-d7dea55427c8","stage":"","prompt":"Add a hello world function","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepsee...` |
+| 6 | 08:38:48.480 | Recv | sql:jobs | `[{"id":"384def26-52bc-473d-b012-d7dea55427c8","project_id":"test-1778747928477-fthqka","description":"Add a hello world function","status":"queued","worker_id":null,"branch":null,"workflow_name":"simple","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":...` |
 
 ---
 
@@ -708,12 +696,11 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.816 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482816-pt2cqm","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.817 | Response | http response | `200 {"project_id":"b26999b9-d5b2-407b-a342-1f3178ec714e"}` |
-| 3 | 07:24:42.817 | Send | http.send | `POST /api/v1/jobs {"project_id":"b26999b9-d5b2-407b-a342-1f3178ec714e","description":"Build feature X","workflow":"feature"}` |
-| 4 | 07:24:42.819 | Response | http response | `200 {"job_id":"d67296da-ea09-4f8f-8498-0ffe7fad105f"}` |
-| 5 | 07:24:42.819 | Send | http.send | `GET /api/v1/jobs/d67296da-ea09-4f8f-8498-0ffe7fad105f/config` |
-| 6 | 07:24:42.820 | Response | http response | `200 {"job_id":"d67296da-ea09-4f8f-8498-0ffe7fad105f","stage":"","prompt":"Build feature X","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1","...` |
+| 1 | 08:38:48.481 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.481 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928480-50z47l","description":"Build feature X","workflow":"feature"}` |
+| 3 | 08:38:48.483 | Response | http response | `200 {"job_id":"2e53c4fa-7000-4aed-bd34-45bf07e78476"}` |
+| 4 | 08:38:48.483 | Send | http.send | `GET /api/v1/jobs/2e53c4fa-7000-4aed-bd34-45bf07e78476/config` |
+| 5 | 08:38:48.483 | Response | http response | `200 {"job_id":"2e53c4fa-7000-4aed-bd34-45bf07e78476","stage":"","prompt":"Build feature X","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1","...` |
 
 ---
 
@@ -721,12 +708,23 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 07:24:42.820 | Send | http.send | `POST /api/v1/projects {"name":"test-1778743482820-fda1b4","repo_url":"https://github.com/test/e2e"}` |
-| 2 | 07:24:42.822 | Response | http response | `200 {"project_id":"567c1ce0-9d9f-425b-83b7-1f8f099c53f9"}` |
-| 3 | 07:24:42.822 | Send | http.send | `POST /api/v1/jobs {"project_id":"567c1ce0-9d9f-425b-83b7-1f8f099c53f9","description":"Plan the feature","workflow":"simple"}` |
-| 4 | 07:24:42.824 | Response | http response | `200 {"job_id":"50217f1d-4246-4f20-8b17-5dda342718ea"}` |
-| 5 | 07:24:42.824 | Send | http.send | `GET /api/v1/jobs/50217f1d-4246-4f20-8b17-5dda342718ea/config` |
-| 6 | 07:24:42.824 | Response | http response | `200 {"job_id":"50217f1d-4246-4f20-8b17-5dda342718ea","stage":"","prompt":"Plan the feature","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1",...` |
+| 1 | 08:38:48.484 | Send | sql.put | `1 rows` |
+| 2 | 08:38:48.484 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928483-apv2a2","description":"Plan the feature","workflow":"simple"}` |
+| 3 | 08:38:48.486 | Response | http response | `200 {"job_id":"ed9012a0-c387-4caa-8975-cf1767c5317d"}` |
+| 4 | 08:38:48.486 | Send | http.send | `GET /api/v1/jobs/ed9012a0-c387-4caa-8975-cf1767c5317d/config` |
+| 5 | 08:38:48.486 | Response | http response | `200 {"job_id":"ed9012a0-c387-4caa-8975-cf1767c5317d","stage":"","prompt":"Plan the feature","tools":["bash","read","write","edit","glob","grep"],"max_tokens":8096,"timeout_secs":600,"skill_content":"","model":"deepseek-chat","provider":"openai-compatible","base_url":"https://api.deepseek.com/v1",...` |
+
+---
+
+## workflow seeded in DB is accessible via config
+
+| # | Time | Direction | Step | Detail |
+|---|------|-----------|------|--------|
+| 1 | 08:38:48.486 | Recv | sql:workflows | `[{"name":"simple","content":"name: simple\ndescription: \"Simple two-stage workflow for testing\"\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash, read, glob, grep]\n max_tokens: 8000\n routes:\n - when: 'response.complexity == \"simple\"'\n next: done\n - when: 'true'...` |
+| 2 | 08:38:48.487 | Send | sql.put | `1 rows` |
+| 3 | 08:38:48.487 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778747928486-jenind","description":"Test","workflow":"simple"}` |
+| 4 | 08:38:48.488 | Response | http response | `200 {"job_id":"d3a2d7df-ffe2-4661-b419-b71c246af68d"}` |
+| 5 | 08:38:48.488 | Recv | sql:jobs | `[{"id":"d3a2d7df-ffe2-4661-b419-b71c246af68d","project_id":"test-1778747928486-jenind","description":"Test","status":"queued","worker_id":null,"branch":null,"workflow_name":"simple","current_stage":null,"stage_history":"[]","attempt":1,"max_attempts":3,"result":null,"error":null,"created_at":"202...` |
 
 ---
 

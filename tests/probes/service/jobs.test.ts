@@ -1,24 +1,18 @@
 import { describe, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { test, createProject, createJob, createWorker, isRecord, getStatus } from "../helpers";
+import { test, seedProject, createJob, createWorker } from "../helpers";
 
 describe("job state machine", () => {
-  test("new job is queued", async () => {
-    const projectId = await createProject();
+  test("new job is queued in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "State machine test");
 
-    const res = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    expect(res.status).toBe(200);
-    if (isRecord(res.body)) {
-      expect(res.body["status"]).toBe("queued");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("queued");
   });
 
-  test("running to paused", async () => {
-    const projectId = await createProject();
+  test("running to paused via HTTP, verified in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Pause test");
     const workerId = await createWorker(jobId);
 
@@ -34,17 +28,12 @@ describe("job state machine", () => {
     });
     expect(pauseRes.status).toBe(200);
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("paused");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("paused");
   });
 
-  test("paused to resuming", async () => {
-    const projectId = await createProject();
+  test("paused to resuming via HTTP, verified in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Resume test");
     const workerId = await createWorker(jobId);
 
@@ -65,17 +54,12 @@ describe("job state machine", () => {
     });
     expect(resumeRes.status).toBe(200);
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("resuming");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("resuming");
   });
 
-  test("running to completed", async () => {
-    const projectId = await createProject();
+  test("running to completed, verified in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Complete test");
     const workerId = await createWorker(jobId);
 
@@ -91,17 +75,13 @@ describe("job state machine", () => {
       body: { result: "success" },
     });
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("completed");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("completed");
+    expect(rows[0]["result"]).toBe("success");
   });
 
-  test("running to failed_retryable on first attempt", async () => {
-    const projectId = await createProject();
+  test("running to failed_retryable, verified in DB", async () => {
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Fail test");
     const workerId = await createWorker(jobId);
 
@@ -117,17 +97,13 @@ describe("job state machine", () => {
       body: { error: "transient failure" },
     });
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("failed_retryable");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("failed_retryable");
+    expect(rows[0]["error"]).toBe("transient failure");
   });
 
   test("cannot resume completed job", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Terminal test");
     const workerId = await createWorker(jobId);
 
@@ -149,10 +125,13 @@ describe("job state machine", () => {
     });
 
     expect(res.status).toBeGreaterThanOrEqual(400);
+
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("completed");
   });
 
   test("cancel from queued state", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Cancel queued");
 
     const cancelRes = await p.http.send({
@@ -161,17 +140,12 @@ describe("job state machine", () => {
     });
     expect(cancelRes.status).toBe(200);
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("cancelled");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("cancelled");
   });
 
   test("cancel from running state", async () => {
-    const projectId = await createProject();
+    const projectId = await seedProject();
     const jobId = await createJob(projectId, "Cancel running");
     const workerId = await createWorker(jobId);
 
@@ -187,12 +161,7 @@ describe("job state machine", () => {
     });
     expect(cancelRes.status).toBe(200);
 
-    const jobRes = await p.http.send({
-      method: "GET",
-      path: `/api/v1/jobs/${jobId}`,
-    });
-    if (isRecord(jobRes.body)) {
-      expect(jobRes.body["status"]).toBe("cancelled");
-    }
+    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(rows[0]["status"]).toBe("cancelled");
   });
 });

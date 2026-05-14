@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("database operations");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,7 +12,7 @@ function hasStringField(obj: unknown, field: string): boolean {
 }
 
 describe("database operations", () => {
-  it("creates project and retrieves it", async () => {
+  test("creates project and retrieves it", async () => {
     const projectId = uniqueId();
     const createRes = await p.http.send({
       method: "POST",
@@ -43,7 +41,7 @@ describe("database operations", () => {
     }
   });
 
-  it("creates job with project reference", async () => {
+  test("creates job with project reference", async () => {
     const projectId = uniqueId();
 
     await p.http.send({
@@ -70,7 +68,7 @@ describe("database operations", () => {
     }
   });
 
-  it("job starts with queued status", async () => {
+  test("job starts with queued status", async () => {
     const projectId = uniqueId();
 
     await p.http.send({
@@ -100,7 +98,7 @@ describe("database operations", () => {
     }
   });
 
-  it("stores checkpoint for job", async () => {
+  test("stores checkpoint for job", async () => {
     const projectId = uniqueId();
 
     await p.http.send({
@@ -146,7 +144,7 @@ describe("database operations", () => {
     }
   });
 
-  it("tracks worker heartbeat", async () => {
+  test("tracks worker heartbeat", async () => {
     const projectId = uniqueId();
 
     await p.http.send({

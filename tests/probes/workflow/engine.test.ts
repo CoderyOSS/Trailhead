@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("workflow engine");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,7 +12,7 @@ function isRecordArray(value: unknown): value is Record<string, unknown>[] {
 }
 
 describe("workflow engine", () => {
-  it("starts at first stage", async () => {
+  test("starts at first stage", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -32,7 +30,7 @@ describe("workflow engine", () => {
     }
   });
 
-  it("advances through stages", async () => {
+  test("advances through stages", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -63,7 +61,7 @@ describe("workflow engine", () => {
     }
   });
 
-  it("pauses for human", async () => {
+  test("pauses for human", async () => {
     const yaml = `
 name: pause-workflow
 description: "Pauses mid-workflow"
@@ -118,7 +116,7 @@ stages:
     }
   });
 
-  it("completes workflow", async () => {
+  test("completes workflow", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -149,7 +147,7 @@ stages:
     }
   });
 
-  it("tracks stage history", async () => {
+  test("tracks stage history", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,

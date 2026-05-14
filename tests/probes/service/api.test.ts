@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("worker HTTP API");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -43,7 +41,7 @@ async function createRunningJob(): Promise<{ jobId: string; workerId: string }> 
 }
 
 describe("worker HTTP API", () => {
-  it("worker register", async () => {
+  test("worker register", async () => {
     const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -59,7 +57,7 @@ describe("worker HTTP API", () => {
     }
   });
 
-  it("worker heartbeat", async () => {
+  test("worker heartbeat", async () => {
     const { workerId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -75,7 +73,7 @@ describe("worker HTTP API", () => {
     expect(res.status).toBe(200);
   });
 
-  it("worker checkpoint", async () => {
+  test("worker checkpoint", async () => {
     const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -95,7 +93,7 @@ describe("worker HTTP API", () => {
     expect(res.status).toBe(200);
   });
 
-  it("worker complete", async () => {
+  test("worker complete", async () => {
     const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -117,7 +115,7 @@ describe("worker HTTP API", () => {
     }
   });
 
-  it("worker fail", async () => {
+  test("worker fail", async () => {
     const { jobId, workerId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -138,7 +136,7 @@ describe("worker HTTP API", () => {
     }
   });
 
-  it("get job config", async () => {
+  test("get job config", async () => {
     const { jobId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -154,7 +152,7 @@ describe("worker HTTP API", () => {
     }
   });
 
-  it("get skill content", async () => {
+  test("get skill content", async () => {
     const { jobId } = await createRunningJob();
 
     const res = await p.http.send({
@@ -169,7 +167,7 @@ describe("worker HTTP API", () => {
     }
   });
 
-  it("unknown worker returns 404", async () => {
+  test("unknown worker returns 404", async () => {
     const res = await p.http.send({
       method: "POST",
       path: "/api/v1/workers/nonexistent-id/register",

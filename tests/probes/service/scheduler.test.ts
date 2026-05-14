@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("scheduler");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -36,7 +34,7 @@ function sleep(ms: number): Promise<void> {
 }
 
 describe("scheduler", () => {
-  it("picks queued job when capacity available", async () => {
+  test("picks queued job when capacity available", async () => {
     const projectId = await createProject("pick");
 
     const jobId = await adapter.createJob({
@@ -54,7 +52,7 @@ describe("scheduler", () => {
     expect(status === "scheduled" || status === "running").toBe(true);
   });
 
-  it("respects max global workers", async () => {
+  test("respects max global workers", async () => {
     const projectIds = await Promise.all([
       createProject("global-1"),
       createProject("global-2"),
@@ -85,7 +83,7 @@ describe("scheduler", () => {
     expect(activeCount).toBeLessThanOrEqual(3);
   });
 
-  it("respects max workers per project", async () => {
+  test("respects max workers per project", async () => {
     const projectId = await createProject("per-project");
 
     const jobIds = await Promise.all([
@@ -114,7 +112,7 @@ describe("scheduler", () => {
     expect(activeCount).toBeLessThanOrEqual(1);
   });
 
-  it("detects stuck workers", async () => {
+  test("detects stuck workers", async () => {
     const projectId = await createProject("stuck");
 
     const jobId = await adapter.createJob({
@@ -147,7 +145,7 @@ describe("scheduler", () => {
     expect(getStatus(job)).toBe("failed_retryable");
   });
 
-  it("retries failed jobs within limit", async () => {
+  test("retries failed jobs within limit", async () => {
     const projectId = await createProject("retry");
 
     const jobId = await adapter.createJob({

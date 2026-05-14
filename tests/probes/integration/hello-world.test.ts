@@ -1,8 +1,6 @@
-import { describe, test, expect, beforeAll } from "bun:test";
+import { describe, expect, beforeAll } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
-
-proofSection("hello-world pipeline");
+import { test, uniqueId } from "../helpers";
 
 const BASE_URL = process.env.TRAILHEAD_URL ?? "http://localhost:4050";
 

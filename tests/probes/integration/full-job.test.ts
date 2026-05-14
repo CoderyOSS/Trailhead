@@ -1,11 +1,9 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
-
-proofSection("full job lifecycle");
+import { test, uniqueId } from "../helpers";
 
 describe("full job lifecycle", () => {
-  it("creates project then job then runs to completion", async () => {
+  test("creates project then job then runs to completion", async () => {
     const projectId = uniqueId();
     const createProjectRes = await p.http.send({
       method: "POST",
@@ -113,7 +111,7 @@ describe("full job lifecycle", () => {
     }
   });
 
-  it("lists jobs and workers after activity", async () => {
+  test("lists jobs and workers after activity", async () => {
     const jobsRes = await p.http.send({
       method: "GET",
       path: "/api/v1/jobs",
@@ -127,7 +125,7 @@ describe("full job lifecycle", () => {
     expect(workersRes.status).toBe(200);
   });
 
-  it("validates workflow YAML", async () => {
+  test("validates workflow YAML", async () => {
     const yaml = `
 name: test
 stages:
@@ -145,7 +143,7 @@ stages:
     expect(res.status).toBe(200);
   });
 
-  it("rejects invalid workflow YAML", async () => {
+  test("rejects invalid workflow YAML", async () => {
     const yaml = "name: bad\nstages: {}\n";
     const res = await p.http.send({
       method: "POST",

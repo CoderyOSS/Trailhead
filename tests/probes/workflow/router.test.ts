@@ -1,16 +1,14 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("workflow router");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 describe("workflow router", () => {
-  it("routes on string equality", async () => {
+  test("routes on string equality", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -41,7 +39,7 @@ describe("workflow router", () => {
     }
   });
 
-  it("routes on boolean field", async () => {
+  test("routes on boolean field", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -88,7 +86,7 @@ describe("workflow router", () => {
     }
   });
 
-  it("routes on numeric comparison", async () => {
+  test("routes on numeric comparison", async () => {
     const yaml = `
 name: numeric-route
 description: "Numeric routing"
@@ -122,7 +120,7 @@ stages:
     expect(validateRes.status).toBe(200);
   });
 
-  it("routes to first matching condition", async () => {
+  test("routes to first matching condition", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -153,7 +151,7 @@ stages:
     }
   });
 
-  it("ends workflow when routes null", async () => {
+  test("ends workflow when routes null", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,

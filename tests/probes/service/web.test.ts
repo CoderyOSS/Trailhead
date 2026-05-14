@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("dashboard API");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -58,7 +56,7 @@ async function createRunningJob(): Promise<{ jobId: string; workerId: string }> 
 }
 
 describe("dashboard API", () => {
-  it("GET /api/v1/jobs returns list", async () => {
+  test("GET /api/v1/jobs returns list", async () => {
     const jobId = await createProjectAndJob();
 
     const jobs = await adapter.listJobs();
@@ -75,7 +73,7 @@ describe("dashboard API", () => {
     expect(found).toBe(true);
   });
 
-  it("GET /api/v1/jobs/{id} returns detail", async () => {
+  test("GET /api/v1/jobs/{id} returns detail", async () => {
     const projectId = uniqueId();
     await p.http.send({
       method: "POST",
@@ -106,7 +104,7 @@ describe("dashboard API", () => {
     }
   });
 
-  it("GET /api/v1/workers returns list", async () => {
+  test("GET /api/v1/workers returns list", async () => {
     const { workerId } = await createRunningJob();
 
     const workers = await adapter.listWorkers();
@@ -123,7 +121,7 @@ describe("dashboard API", () => {
     expect(found).toBe(true);
   });
 
-  it("POST /api/v1/jobs/{id}/pause changes status", async () => {
+  test("POST /api/v1/jobs/{id}/pause changes status", async () => {
     const { jobId } = await createRunningJob();
 
     await adapter.pauseJob(jobId);
@@ -132,7 +130,7 @@ describe("dashboard API", () => {
     expect(getStatus(job)).toBe("paused");
   });
 
-  it("POST /api/v1/jobs/{id}/resume changes status", async () => {
+  test("POST /api/v1/jobs/{id}/resume changes status", async () => {
     const { jobId } = await createRunningJob();
 
     await adapter.pauseJob(jobId);
@@ -142,7 +140,7 @@ describe("dashboard API", () => {
     expect(getStatus(job)).toBe("running");
   });
 
-  it("POST /api/v1/jobs/{id}/cancel changes status", async () => {
+  test("POST /api/v1/jobs/{id}/cancel changes status", async () => {
     const jobId = await createProjectAndJob();
 
     await adapter.cancelJob(jobId);

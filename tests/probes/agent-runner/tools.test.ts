@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { p, uniqueId, proofSection } from "../helpers";
-
-proofSection("agent-runner tools");
+import { test, p, uniqueId } from "../helpers";
 
 const SSH_BUILD =
   "export PATH=\"$HOME/.cargo/bin:$PATH\" && cd /home/gem/projects/CoderyTrailhead && cargo build -p agent-runner --release 2>&1";
@@ -44,7 +42,7 @@ describe("agent-runner tools", () => {
     expect(result.exitCode).toBe(0);
   });
 
-  it("prints help with --help flag", async () => {
+  test("prints help with --help flag", async () => {
     const result = await runAgent("--help");
     expect(result.exitCode).toBe(0);
     expect(result.stdout).toContain("agent-runner");
@@ -52,13 +50,13 @@ describe("agent-runner tools", () => {
     expect(result.stdout).toContain("resume");
   });
 
-  it("rejects unknown subcommand", async () => {
+  test("rejects unknown subcommand", async () => {
     const result = await runAgent("nonexistent");
     expect(result.exitCode).not.toBe(0);
     expect(result.stderr).toContain("error");
   });
 
-  it("bash tool: executes command and returns output", async () => {
+  test("bash tool: executes command and returns output", async () => {
     const ws = `/tmp/ar-test-${uniqueId()}`;
     const prompt = 'Use the bash tool to run: echo "hello world"';
 
@@ -70,7 +68,7 @@ describe("agent-runner tools", () => {
     expect(result.stdout).toContain("hello world");
   });
 
-  it("read tool: reads file content with line numbers", async () => {
+  test("read tool: reads file content with line numbers", async () => {
     const ws = `/tmp/ar-read-${uniqueId()}`;
     await sshWriteFile(`${ws}/sample.txt`, "line one\nline two\nline three");
 
@@ -85,7 +83,7 @@ describe("agent-runner tools", () => {
     expect(result.stdout).toContain("line two");
   });
 
-  it("write tool: creates file with content", async () => {
+  test("write tool: creates file with content", async () => {
     const ws = `/tmp/ar-write-${uniqueId()}`;
     const prompt = 'Use the write tool to create output.txt with content "written by agent"';
 
@@ -99,7 +97,7 @@ describe("agent-runner tools", () => {
     expect(check.stdout.trim()).toBe("written by agent");
   });
 
-  it("edit tool: replaces unique string in file", async () => {
+  test("edit tool: replaces unique string in file", async () => {
     const ws = `/tmp/ar-edit-${uniqueId()}`;
     await sshWriteFile(`${ws}/editme.txt`, "The quick brown fox jumps over the lazy dog");
 
@@ -116,7 +114,7 @@ describe("agent-runner tools", () => {
     expect(verify.stdout).not.toContain("lazy dog");
   });
 
-  it("glob tool: finds files matching pattern", async () => {
+  test("glob tool: finds files matching pattern", async () => {
     const ws = `/tmp/ar-glob-${uniqueId()}`;
     await sshWriteFile(`${ws}/src/main.rs`, "fn main() {}");
     await sshWriteFile(`${ws}/src/lib.rs`, "pub fn lib() {}");
@@ -133,7 +131,7 @@ describe("agent-runner tools", () => {
     expect(result.stdout).toContain("lib.rs");
   });
 
-  it("grep tool: searches file contents", async () => {
+  test("grep tool: searches file contents", async () => {
     const ws = `/tmp/ar-grep-${uniqueId()}`;
     await sshWriteFile(`${ws}/code.rs`, 'fn hello() -> String {\n  "hello".to_string()\n}');
     await sshWriteFile(`${ws}/other.rs`, "fn world() -> i32 {\n  42\n}");
@@ -149,7 +147,7 @@ describe("agent-runner tools", () => {
     expect(result.stdout).toContain("hello");
   });
 
-  it("rejects --tools with invalid tool name", async () => {
+  test("rejects --tools with invalid tool name", async () => {
     const ws = `/tmp/ar-invalid-${uniqueId()}`;
     const result = await runAgent(
       `run --workspace ${ws} --prompt "test" --tools invalid_tool --max-tokens 100`
@@ -159,12 +157,12 @@ describe("agent-runner tools", () => {
     expect(result.stderr.toLowerCase()).toContain("invalid");
   });
 
-  it("rejects run without required --workspace arg", async () => {
+  test("rejects run without required --workspace arg", async () => {
     const result = await runAgent('run --prompt "test" --tools bash');
     expect(result.exitCode).not.toBe(0);
   });
 
-  it("rejects run without required --prompt arg", async () => {
+  test("rejects run without required --prompt arg", async () => {
     const result = await runAgent("run --workspace /tmp/test --tools bash");
     expect(result.exitCode).not.toBe(0);
   });

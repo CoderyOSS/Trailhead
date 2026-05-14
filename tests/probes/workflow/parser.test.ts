@@ -1,8 +1,6 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { proofSection } from "../helpers";
-
-proofSection("workflow parser");
+import { test } from "../helpers";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -13,7 +11,7 @@ function hasStatus(res: { status: number }, expected: number): boolean {
 }
 
 describe("workflow parser", () => {
-  it("parses valid workflow YAML", async () => {
+  test("parses valid workflow YAML", async () => {
     const yaml = `
 name: simple
 description: "Simple workflow"
@@ -49,7 +47,7 @@ stages:
     }
   });
 
-  it("rejects empty stages", async () => {
+  test("rejects empty stages", async () => {
     const yaml = `
 name: empty
 description: "No stages"
@@ -65,7 +63,7 @@ stages: {}
     expect(hasStatus(res, 400)).toBe(true);
   });
 
-  it("rejects unknown route target", async () => {
+  test("rejects unknown route target", async () => {
     const yaml = `
 name: bad-route
 description: "Routes to nonexistent stage"
@@ -89,7 +87,7 @@ stages:
     expect(hasStatus(res, 400)).toBe(true);
   });
 
-  it("rejects missing skill", async () => {
+  test("rejects missing skill", async () => {
     const yaml = `
 name: no-skill
 description: "Stage without skill"

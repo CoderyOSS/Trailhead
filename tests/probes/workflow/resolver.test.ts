@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("workflow resolver");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -14,7 +12,7 @@ function hasStringField(obj: unknown, field: string): boolean {
 }
 
 describe("workflow resolver", () => {
-  it("resolves {{input}} variable", async () => {
+  test("resolves {{input}} variable", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -32,7 +30,7 @@ describe("workflow resolver", () => {
     }
   });
 
-  it("resolves {{stages.*}} variables", async () => {
+  test("resolves {{stages.*}} variables", async () => {
     const projectId = uniqueId();
     const jobId = await adapter.createJob({
       project_id: projectId,
@@ -63,7 +61,7 @@ describe("workflow resolver", () => {
     }
   });
 
-  it("resolves {{project.*}} variables", async () => {
+  test("resolves {{project.*}} variables", async () => {
     const projectId = uniqueId();
 
     await p.sql.put({

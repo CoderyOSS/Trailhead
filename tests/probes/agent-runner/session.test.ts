@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeAll } from "bun:test";
-import { p, uniqueId, proofSection } from "../helpers";
-
-proofSection("agent-runner session");
+import { test, p, uniqueId } from "../helpers";
 
 const SSH_BUILD =
   "export PATH=\"$HOME/.cargo/bin:$PATH\" && cd /home/gem/projects/CoderyTrailhead && cargo build -p agent-runner --release 2>&1";
@@ -59,7 +57,7 @@ describe("agent-runner session", () => {
     expect(result.exitCode).toBe(0);
   });
 
-  it("session file created after run", async () => {
+  test("session file created after run", async () => {
     const ws = `/tmp/ar-session-${uniqueId()}`;
     const prompt = "Use the bash tool to run: echo done";
 
@@ -74,7 +72,7 @@ describe("agent-runner session", () => {
     expect(session.stdout.length).toBeGreaterThan(0);
   });
 
-  it("session file has required fields", async () => {
+  test("session file has required fields", async () => {
     const ws = `/tmp/ar-fields-${uniqueId()}`;
     const prompt = "Use the bash tool to run: echo done";
 
@@ -92,7 +90,7 @@ describe("agent-runner session", () => {
     expect(hasStringField(session, "created_at")).toBe(true);
   });
 
-  it("session contains token usage", async () => {
+  test("session contains token usage", async () => {
     const ws = `/tmp/ar-tokens-${uniqueId()}`;
     const prompt = "Use the bash tool to run: echo done";
 
@@ -116,7 +114,7 @@ describe("agent-runner session", () => {
     }
   });
 
-  it("session messages include user and assistant entries", async () => {
+  test("session messages include user and assistant entries", async () => {
     const ws = `/tmp/ar-msgs-${uniqueId()}`;
     const prompt = "Use the bash tool to run: echo done";
 
@@ -141,7 +139,7 @@ describe("agent-runner session", () => {
     }
   });
 
-  it("resume subcommand loads existing session", async () => {
+  test("resume subcommand loads existing session", async () => {
     const ws = `/tmp/ar-resume-${uniqueId()}`;
     const prompt = "Use the bash tool to run: echo step1";
 
@@ -169,7 +167,7 @@ describe("agent-runner session", () => {
     }
   });
 
-  it("resume fails when no session file exists", async () => {
+  test("resume fails when no session file exists", async () => {
     const ws = `/tmp/ar-noresume-${uniqueId()}`;
     const result = await runAgent(
       `resume --workspace ${ws} --prompt "continue" --max-tokens 100`

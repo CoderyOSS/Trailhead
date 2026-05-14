@@ -1,9 +1,7 @@
 import { describe, it, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { uniqueId, proofSection } from "../helpers";
+import { test, uniqueId } from "../helpers";
 import { adapter } from "../adapter";
-
-proofSection("job state machine");
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
@@ -37,13 +35,13 @@ async function createProjectJob(): Promise<string> {
 }
 
 describe("job state machine", () => {
-  it("new job is queued", async () => {
+  test("new job is queued", async () => {
     const jobId = await createProjectJob();
     const job = await adapter.getJob(jobId);
     expect(getStatus(job)).toBe("queued");
   });
 
-  it("queued to scheduled", async () => {
+  test("queued to scheduled", async () => {
     const jobId = await createProjectJob();
 
     const res = await p.http.send({
@@ -57,7 +55,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("scheduled");
   });
 
-  it("scheduled to running", async () => {
+  test("scheduled to running", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -75,7 +73,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("running");
   });
 
-  it("running to paused", async () => {
+  test("running to paused", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -95,7 +93,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("paused");
   });
 
-  it("paused to running", async () => {
+  test("paused to running", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -116,7 +114,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("running");
   });
 
-  it("running to completed", async () => {
+  test("running to completed", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -140,7 +138,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("completed");
   });
 
-  it("running to failed_retryable", async () => {
+  test("running to failed_retryable", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -164,7 +162,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("failed_retryable");
   });
 
-  it("cannot transition completed to running", async () => {
+  test("cannot transition completed to running", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -192,14 +190,14 @@ describe("job state machine", () => {
     expect(res.status).toBeGreaterThanOrEqual(400);
   });
 
-  it("cancel from queued state", async () => {
+  test("cancel from queued state", async () => {
     const jobId = await createProjectJob();
     await adapter.cancelJob(jobId);
     const job = await adapter.getJob(jobId);
     expect(getStatus(job)).toBe("cancelled");
   });
 
-  it("cancel from running state", async () => {
+  test("cancel from running state", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({
@@ -218,7 +216,7 @@ describe("job state machine", () => {
     expect(getStatus(job)).toBe("cancelled");
   });
 
-  it("cancel from paused state", async () => {
+  test("cancel from paused state", async () => {
     const jobId = await createProjectJob();
 
     await p.http.send({

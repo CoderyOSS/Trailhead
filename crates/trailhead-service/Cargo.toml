@@ -24,6 +24,7 @@ schemars = "1"
 chrono = "0.4"
 async-trait = "0.1"
 futures-util = "0.3"
+toml = "0.8"
 
 [dev-dependencies]
 tempfile = "3"

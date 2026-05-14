@@ -1,3 +1,4 @@
+pub mod config;
 pub mod db;
 pub mod workflow;
 pub mod provider;
@@ -62,22 +63,29 @@ async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
         .parse()
         .map_err(|e| anyhow::anyhow!("invalid port: {}", e))?;
     let db_path = get_flag(args, "--db").unwrap_or_else(|_| "/opt/codery/trailhead.db".into());
+    let config_path = get_flag(args, "--config").unwrap_or_else(|_| "/opt/codery/trailhead/trailhead.toml".into());
+
+    let app_config = config::TrailheadConfig::load(std::path::Path::new(&config_path))?;
+    tracing::info!("loaded config from {}", config_path);
 
     let db = Arc::new(db::Database::open(&db_path)?);
     let provider = Arc::new(provider::docker::DockerProvider::new()?);
+    let app_config = Arc::new(app_config);
 
     let sched_db = db.clone();
     let sched_provider = provider.clone();
+    let sched_config = app_config.clone();
     let sched_handle = tokio::spawn(async move {
         let sched = scheduler::Scheduler::new(
             sched_db,
             sched_provider,
             scheduler::SchedulerConfig::default(),
+            sched_config,
         );
         sched.run().await;
     });
 
-    let api_router = api::api_routes(db.clone());
+    let api_router = api::api_routes(db.clone(), app_config.clone());
     let web_router = web::web_routes(db.clone());
     let app = api_router.merge(web_router);
 

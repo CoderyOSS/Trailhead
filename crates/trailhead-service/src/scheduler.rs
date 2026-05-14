@@ -1,6 +1,7 @@
 use std::sync::Arc;
 use tokio::time::{interval, Duration};
 use tracing::{error, info, warn};
+use crate::config::TrailheadConfig;
 use crate::db::Database;
 use crate::provider::WorkerProvider;
 
@@ -48,6 +49,7 @@ pub struct Scheduler {
     db: Arc<Database>,
     provider: Arc<dyn WorkerProvider>,
     config: SchedulerConfig,
+    app_config: Arc<TrailheadConfig>,
 }
 
 impl Scheduler {
@@ -55,11 +57,13 @@ impl Scheduler {
         db: Arc<Database>,
         provider: Arc<dyn WorkerProvider>,
         config: SchedulerConfig,
+        app_config: Arc<TrailheadConfig>,
     ) -> Self {
         Self {
             db,
             provider,
             config,
+            app_config,
         }
     }
 

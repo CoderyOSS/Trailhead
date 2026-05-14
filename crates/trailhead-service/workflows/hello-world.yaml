@@ -1,0 +1,7 @@
+name: hello-world
+description: "Simple test pipeline — sends a prompt, gets a response"
+stages:
+  greet:
+    prompt: "Say 'Hello from Trailhead!' and nothing else."
+    max_tokens: 256
+    timeout_secs: 60

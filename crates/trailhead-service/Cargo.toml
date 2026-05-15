@@ -8,6 +8,7 @@ trailhead-core = { path = "../trailhead-core" }
 tokio = { version = "1", features = ["full"] }
 bollard = "0.17"
 rusqlite = { version = "0.32", features = ["bundled"] }
+ureq = { version = "2", features = ["json"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 serde_yaml = "0.9"

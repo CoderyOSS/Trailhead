@@ -2,7 +2,7 @@
 set -euo pipefail
 
 BINARY="/home/gem/projects/CoderyTrailhead/target/release/trailhead-service"
-DB_PATH="/home/gem/projects/CoderyTrailhead/tests/probes/data/service.db"
+SQL_PORT=4051
 CONFIG_PATH="/tmp/trailhead-e2e-config.toml"
 PORT=4050
 
@@ -17,13 +17,12 @@ TOMEOF
 
 pkill -f 'trailhead-service daemon' 2>/dev/null || true
 sleep 0.3
-rm -f "$DB_PATH" "$DB_PATH-shm" "$DB_PATH-wal"
 
 export DEEPSEEK_API_KEY="${DEEPSEEK_API_KEY:-}"
 export MAX_GLOBAL_WORKERS=0
 export SCHEDULER_INTERVAL_SECS=3600
 
-nohup "$BINARY" daemon --port "$PORT" --db "$DB_PATH" --config "$CONFIG_PATH" > /tmp/trailhead-test.log 2>&1 &
+nohup "$BINARY" daemon --port "$PORT" --db "http://localhost:$SQL_PORT" --config "$CONFIG_PATH" > /tmp/trailhead-test.log 2>&1 &
 
 sleep 1
 

@@ -12,4 +12,5 @@ interfaces:
       base_url: "http://localhost:4050"
   sql:
     path: "./data/service.db"
-    reset_on_start: false
+    server_port: 4051
+    schema_file: "fixtures/schema.sql"

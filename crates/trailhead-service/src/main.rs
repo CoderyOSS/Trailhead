@@ -8,6 +8,7 @@ pub mod api;
 pub mod ide;
 pub mod mcp;
 pub mod web;
+pub mod worker;
 
 use std::sync::Arc;
 
@@ -87,7 +88,10 @@ async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
 
     let api_router = api::api_routes(db.clone(), app_config.clone());
     let web_router = web::web_routes(db.clone());
-    let app = api_router.merge(web_router);
+    let mcp_service = mcp::create_mcp_service(db.clone());
+    let app = api_router
+        .merge(web_router)
+        .route_service("/mcp/sse", mcp_service);
 
     let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
     tracing::info!("trailhead-service listening on port {}", port);

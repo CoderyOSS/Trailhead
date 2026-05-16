@@ -9,7 +9,7 @@ use resolver::{TemplateVars, StageOutput, resolve_prompt, resolve_input};
 use router::evaluate_routes;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct StageResult {
     pub stage_name: String,
     pub response: serde_json::Value,

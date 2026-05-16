@@ -1,3 +1,4 @@
+use std::collections::HashMap as StdMap;
 use anyhow::{Context, Result};
 use async_trait::async_trait;
 use bollard::Docker;
@@ -7,7 +8,7 @@ use bollard::container::{
 };
 use bollard::models::HostConfig;
 use futures_util::StreamExt;
-use super::{WorkerHandle, WorkerProvider, WorkerSpec};
+use super::{WorkerHandle, WorkerProvider, WorkerSpec, WorkerStatus};
 
 pub struct DockerProvider {
     docker: Option<Docker>,
@@ -16,10 +17,7 @@ pub struct DockerProvider {
 
 impl DockerProvider {
     pub fn new() -> Result<Self> {
-        let docker = match Docker::connect_with_local_defaults() {
-            Ok(d) => Some(d),
-            Err(_) => None,
-        };
+        let docker = Docker::connect_with_local_defaults().ok();
         Ok(Self {
             docker,
             network: "codery-net".into(),
@@ -43,6 +41,7 @@ impl WorkerProvider for DockerProvider {
         let mut env = vec![
             format!("WORKER_ID={}", spec.job_id),
             format!("JOB_ID={}", spec.job_id),
+            format!("TRAILHEAD_URL={}", spec.trailhead_url),
             format!("LLM_PROVIDER={}", spec.llm_provider),
             format!("LLM_MODEL={}", spec.llm_model),
             format!("LLM_API_KEY={}", spec.llm_api_key),
@@ -58,8 +57,9 @@ impl WorkerProvider for DockerProvider {
             .unwrap_or("/tmp/workspace");
 
         let config = Config {
-            image: Some(spec.agent_runner_image.clone()),
+            image: Some(spec.worker_image.clone()),
             env: Some(env),
+            exposed_ports: Some(StdMap::from([("8080/tcp".into(), StdMap::new())])),
             host_config: Some(HostConfig {
                 binds: Some(vec![format!("{}:{}:rw", workspace_str, "/workspace")]),
                 network_mode: Some(self.network.clone()),
@@ -87,7 +87,7 @@ impl WorkerProvider for DockerProvider {
         Ok(WorkerHandle {
             id: container_name,
             provider_id: result.id,
-            status: trailhead_core::types::WorkerStatus::Running,
+            status: WorkerStatus::Creating,
             ip_address: None,
         })
     }
@@ -109,7 +109,7 @@ impl WorkerProvider for DockerProvider {
         Ok(())
     }
 
-    async fn get_status(&self, id: &str) -> Result<trailhead_core::types::WorkerStatus> {
+    async fn get_status(&self, id: &str) -> Result<WorkerStatus> {
         let docker = self.docker.as_ref()
             .ok_or_else(|| anyhow::anyhow!("Docker not available"))?;
         let info = docker
@@ -122,13 +122,13 @@ impl WorkerProvider for DockerProvider {
         let status_val = state.status;
 
         if running {
-            Ok(trailhead_core::types::WorkerStatus::Running)
+            Ok(WorkerStatus::Running)
         } else if status_val == Some(bollard::models::ContainerStateStatusEnum::CREATED) {
-            Ok(trailhead_core::types::WorkerStatus::Creating)
+            Ok(WorkerStatus::Creating)
         } else if status_val == Some(bollard::models::ContainerStateStatusEnum::EXITED) && exit_code == 0 {
-            Ok(trailhead_core::types::WorkerStatus::Stopped)
+            Ok(WorkerStatus::Stopped)
         } else {
-            Ok(trailhead_core::types::WorkerStatus::Failed(format!(
+            Ok(WorkerStatus::Failed(format!(
                 "exit code {}",
                 exit_code
             )))
@@ -178,7 +178,7 @@ impl WorkerProvider for DockerProvider {
                 handles.push(WorkerHandle {
                     id: name,
                     provider_id: c.id.unwrap_or_default(),
-                    status: trailhead_core::types::WorkerStatus::Running,
+                    status: WorkerStatus::Running,
                     ip_address: None,
                 });
             }

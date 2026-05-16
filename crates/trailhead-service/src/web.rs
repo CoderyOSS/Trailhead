@@ -25,7 +25,6 @@ struct CreateJobBody {
 
 #[derive(Deserialize)]
 struct CreateProjectBody {
-    name: String,
     repo_url: String,
     branch: Option<String>,
 }

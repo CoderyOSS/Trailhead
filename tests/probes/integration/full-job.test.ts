@@ -1,79 +1,24 @@
 import { describe, expect } from "bun:test";
 import { p } from "@codery/probes";
-import { test, seedProject, createJob, createWorker, isRecord } from "../helpers";
+import { test, seedProject, createJob, isRecord } from "../helpers";
 
 describe("full job lifecycle", () => {
-  test("create project → create job → register worker → complete", async () => {
+  test("create project → create job → verify via HTTP and SQL", async () => {
     const projectId = await seedProject();
     const jobId = await createJob(projectId, "Full lifecycle test");
 
-    const dbRows1 = await p.sql.read({ table: "jobs", where: { id: jobId } });
-    expect(dbRows1[0]["status"]).toBe("queued");
+    const dbRows = await p.sql.read({ table: "jobs", where: { id: jobId } });
+    expect(dbRows[0]["status"]).toBe("queued");
 
-    const workerId = await createWorker(jobId);
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body: { job_id: jobId },
+    const httpRes = await p.http.send({
+      method: "GET",
+      path: `/api/v1/jobs/${jobId}`,
     });
-
-    const dbRows2 = await p.sql.read({ table: "jobs", where: { id: jobId } });
-    expect(dbRows2[0]["status"]).toBe("running");
-
-    const dbWorker = await p.sql.read({ table: "workers", where: { id: workerId } });
-    expect(dbWorker[0]["status"]).toBe("running");
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/heartbeat`,
-      body: {
-        status: "running",
-        current_stage: "plan",
-        token_usage: { prompt_tokens: 100, completion_tokens: 50 },
-        files_changed: 0,
-        tool_calls_made: 1,
-        message: "Planning",
-      },
-    });
-
-    const workerAfterHb = await p.sql.read({ table: "workers", where: { id: workerId } });
-    expect(workerAfterHb[0]["heartbeat_at"]).not.toBeNull();
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/checkpoint`,
-      body: {
-        stage: "plan",
-        response: { complexity: "simple" },
-        session_path: "/workspace/.codery/session.json",
-        git_sha: "abc123",
-        token_usage: { prompt_tokens: 100, completion_tokens: 50 },
-        files_changed: [],
-        next_stage: "done",
-      },
-    });
-
-    const jobAfterCp = await p.sql.read({ table: "jobs", where: { id: jobId } });
-    expect(jobAfterCp[0]["current_stage"]).toBe("done");
-
-    const checkpoints = await p.sql.read({ table: "checkpoints", where: { job_id: jobId } });
-    expect(checkpoints.length).toBe(1);
-    expect(checkpoints[0]["git_sha"]).toBe("abc123");
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/complete`,
-      body: { result: "Job completed successfully" },
-    });
-
-    const finalJob = await p.sql.read({ table: "jobs", where: { id: jobId } });
-    expect(finalJob[0]["status"]).toBe("completed");
-    expect(finalJob[0]["result"]).toBe("Job completed successfully");
-
-    const finalWorker = await p.sql.read({ table: "workers", where: { id: workerId } });
-    expect(finalWorker.length).toBe(1);
-    expect(finalWorker[0]["status"]).toBe("stopped");
+    expect(httpRes.status).toBe(200);
+    if (isRecord(httpRes.body)) {
+      expect(httpRes.body["status"]).toBe("queued");
+      expect(httpRes.body["project_id"]).toBe(projectId);
+    }
   });
 
   test("lists jobs and workers via HTTP matches DB", async () => {

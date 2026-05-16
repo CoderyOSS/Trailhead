@@ -15,7 +15,6 @@ use crate::workflow::resolver;
 pub struct SchedulerConfig {
     pub max_global_workers: usize,
     pub max_workers_per_project: usize,
-    pub heartbeat_timeout_secs: u64,
     pub job_timeout_secs: u64,
     pub max_retries: u32,
     pub interval_secs: u64,
@@ -32,10 +31,6 @@ impl Default for SchedulerConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(1),
-            heartbeat_timeout_secs: std::env::var("HEARTBEAT_TIMEOUT_SECS")
-                .ok()
-                .and_then(|v| v.parse().ok())
-                .unwrap_or(180),
             job_timeout_secs: std::env::var("JOB_TIMEOUT_SECS")
                 .ok()
                 .and_then(|v| v.parse().ok())
@@ -85,7 +80,6 @@ impl Scheduler {
     }
 
     async fn tick(&self) -> anyhow::Result<()> {
-        self.detect_stuck_workers().await?;
         self.detect_timed_out_jobs().await?;
         self.schedule_queued_jobs().await?;
         Ok(())
@@ -171,40 +165,6 @@ impl Scheduler {
             }
         });
 
-        Ok(())
-    }
-
-    async fn detect_stuck_workers(&self) -> anyhow::Result<()> {
-        let workers = self.db.list_workers()?;
-        let now = chrono::Utc::now();
-        for worker in workers {
-            if worker.status != "running" {
-                continue;
-            }
-            if let Some(ref hb) = worker.heartbeat_at {
-                if let Ok(hb_time) = chrono::DateTime::parse_from_rfc3339(hb) {
-                    let elapsed = (now - hb_time.to_utc()).num_seconds() as u64;
-                    if elapsed > self.config.heartbeat_timeout_secs {
-                        warn!("worker {} heartbeat timeout ({}s)", worker.id, elapsed);
-                        if let Some(ref job_id) = worker.job_id {
-                            if let Ok(Some(job)) = self.db.get_job(job_id) {
-                                if job.attempt < job.max_attempts {
-                                    self.db
-                                        .fail_job(job_id, "heartbeat timeout", "failed_retryable")?;
-                                } else {
-                                    self.db.fail_job(
-                                        job_id,
-                                        "heartbeat timeout (max retries)",
-                                        "failed_final",
-                                    )?;
-                                }
-                            }
-                        }
-                        self.db.update_worker_status(&worker.id, "stopped")?;
-                    }
-                }
-            }
-        }
         Ok(())
     }
 

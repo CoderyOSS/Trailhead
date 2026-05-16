@@ -46,87 +46,14 @@ describe("database operations", () => {
     expect(rows[0]["status"]).toBe("queued");
   });
 
-  test("stores checkpoint and verifies via SQL", async () => {
+  test("creates worker record in DB", async () => {
     const projectId = await seedProject();
-    const jobId = await createJob(projectId, "Checkpoint test");
+    const jobId = await createJob(projectId, "Worker DB test");
     const workerId = await createWorker(jobId);
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body: { job_id: jobId },
-    });
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/checkpoint`,
-      body: {
-        stage: "plan",
-        response: { complexity: "simple" },
-        session_path: "/tmp/session.json",
-        git_sha: "abc123",
-        token_usage: { prompt_tokens: 100, completion_tokens: 50 },
-        files_changed: ["src/main.rs"],
-        next_stage: "done",
-      },
-    });
-
-    const jobRows = await p.sql.read({ table: "jobs", where: { id: jobId } });
-    expect(jobRows[0]["current_stage"]).toBe("done");
-
-    const cpRows = await p.sql.read({ table: "checkpoints", where: { job_id: jobId } });
-    expect(cpRows.length).toBe(1);
-    expect(cpRows[0]["stage"]).toBe("plan");
-    expect(cpRows[0]["git_sha"]).toBe("abc123");
-  });
-
-  test("tracks worker heartbeat in DB", async () => {
-    const projectId = await seedProject();
-    const jobId = await createJob(projectId, "Heartbeat test");
-    const workerId = await createWorker(jobId);
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body: { job_id: jobId },
-    });
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/heartbeat`,
-      body: {
-        status: "running",
-        current_stage: "plan",
-        token_usage: { prompt_tokens: 100, completion_tokens: 50 },
-        files_changed: 0,
-        tool_calls_made: 3,
-        message: "working",
-      },
-    });
-
-    const rows = await p.sql.read({ table: "workers", where: { id: workerId } });
-    expect(rows[0]["heartbeat_at"]).not.toBeNull();
-  });
-
-  test("destroyed workers removed from DB", async () => {
-    const projectId = await seedProject();
-    const jobId = await createJob(projectId, "Destroy test");
-    const workerId = await createWorker(jobId);
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body: { job_id: jobId },
-    });
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/complete`,
-      body: { result: "done" },
-    });
 
     const rows = await p.sql.read({ table: "workers", where: { id: workerId } });
     expect(rows.length).toBe(1);
-    expect(rows[0]["status"]).toBe("stopped");
+    expect(rows[0]["job_id"]).toBe(jobId);
+    expect(rows[0]["status"]).toBe("creating");
   });
 });

@@ -10,11 +10,6 @@ export interface ServiceAdapter {
   resumeJob(jobId: string): Promise<void>;
   createWorker(params: { job_id: string; provider?: string }): Promise<string>;
   listWorkers(): Promise<Record<string, unknown>[]>;
-  workerRegister(workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerHeartbeat(workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerCheckpoint(workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerComplete(workerId: string, body: Record<string, unknown>): Promise<void>;
-  workerFail(workerId: string, body: Record<string, unknown>): Promise<void>;
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -106,45 +101,5 @@ export const adapter: ServiceAdapter = {
     });
     if (isRecordArray(res.body)) return res.body;
     throw new Error("Expected record array response");
-  },
-
-  async workerRegister(workerId, body) {
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body,
-    });
-  },
-
-  async workerHeartbeat(workerId, body) {
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/heartbeat`,
-      body,
-    });
-  },
-
-  async workerCheckpoint(workerId, body) {
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/checkpoint`,
-      body,
-    });
-  },
-
-  async workerComplete(workerId, body) {
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/complete`,
-      body,
-    });
-  },
-
-  async workerFail(workerId, body) {
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/fail`,
-      body,
-    });
   },
 };

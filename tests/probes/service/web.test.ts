@@ -48,12 +48,6 @@ describe("dashboard API", () => {
     const jobId = await createJob(projectId, "Worker list test");
     const workerId = await createWorker(jobId);
 
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body: { job_id: jobId },
-    });
-
     const res = await p.http.send({
       method: "GET",
       path: "/api/v1/workers",
@@ -69,26 +63,6 @@ describe("dashboard API", () => {
 
     const rows = await p.sql.read({ table: "workers", where: { id: workerId } });
     expect(rows[0]["job_id"]).toBe(jobId);
-  });
-
-  test("POST /api/v1/jobs/{id}/pause changes status in DB", async () => {
-    const projectId = await seedProject();
-    const jobId = await createJob(projectId, "Pause via dashboard");
-    const workerId = await createWorker(jobId);
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/workers/${workerId}/register`,
-      body: { job_id: jobId },
-    });
-
-    await p.http.send({
-      method: "POST",
-      path: `/api/v1/jobs/${jobId}/pause`,
-    });
-
-    const rows = await p.sql.read({ table: "jobs", where: { id: jobId } });
-    expect(rows[0]["status"]).toBe("paused");
   });
 
   test("POST /api/v1/jobs/{id}/cancel changes status in DB", async () => {

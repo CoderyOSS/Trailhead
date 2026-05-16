@@ -527,43 +527,6 @@ impl Database {
         Ok(())
     }
 
-    pub fn get_worker(&self, id: &str) -> Result<Option<WorkerRow>> {
-        match &self.backend {
-            Backend::Local(_) => {
-                let conn = self.local_conn()?;
-                let row = conn.query_row(
-                    "SELECT id, job_id, provider, provider_id, status, ip_address, workspace_path, heartbeat_at, created_at, destroyed_at FROM workers WHERE id = ?1",
-                    params![id],
-                    |row| {
-                        Ok(WorkerRow {
-                            id: row.get(0)?,
-                            job_id: row.get(1)?,
-                            provider: row.get(2)?,
-                            provider_id: row.get(3)?,
-                            status: row.get(4)?,
-                            ip_address: row.get(5)?,
-                            workspace_path: row.get(6)?,
-                            heartbeat_at: row.get(7)?,
-                            created_at: row.get(8)?,
-                            destroyed_at: row.get(9)?,
-                        })
-                    },
-                );
-                match row {
-                    Ok(r) => Ok(Some(r)),
-                    Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
-                    Err(e) => Err(e.into()),
-                }
-            }
-            Backend::Remote { .. } => {
-                self.remote_query_one(
-                    "SELECT id, job_id, provider, provider_id, status, ip_address, workspace_path, heartbeat_at, created_at, destroyed_at FROM workers WHERE id = ?1",
-                    vec![serde_json::json!(id)],
-                )
-            }
-        }
-    }
-
     pub fn list_workers(&self) -> Result<Vec<WorkerRow>> {
         const SQL: &str = "SELECT id, job_id, provider, provider_id, status, ip_address, workspace_path, heartbeat_at, created_at, destroyed_at FROM workers ORDER BY created_at";
         match &self.backend {
@@ -594,77 +557,6 @@ impl Database {
         }
     }
 
-    pub fn update_worker_status(&self, id: &str, status: &str) -> Result<()> {
-        match &self.backend {
-            Backend::Local(_) => {
-                let conn = self.local_conn()?;
-                conn.execute(
-                    "UPDATE workers SET status = ?1 WHERE id = ?2",
-                    params![status, id],
-                )?;
-            }
-            Backend::Remote { .. } => {
-                self.remote_exec(
-                    "UPDATE workers SET status = ?1 WHERE id = ?2",
-                    vec![serde_json::json!(status), serde_json::json!(id)],
-                )?;
-            }
-        }
-        Ok(())
-    }
-
-    pub fn update_worker_heartbeat(&self, id: &str) -> Result<()> {
-        let now = Utc::now().to_rfc3339();
-        match &self.backend {
-            Backend::Local(_) => {
-                let conn = self.local_conn()?;
-                conn.execute(
-                    "UPDATE workers SET heartbeat_at = ?1 WHERE id = ?2",
-                    params![now, id],
-                )?;
-            }
-            Backend::Remote { .. } => {
-                self.remote_exec(
-                    "UPDATE workers SET heartbeat_at = ?1 WHERE id = ?2",
-                    vec![serde_json::json!(now), serde_json::json!(id)],
-                )?;
-            }
-        }
-        Ok(())
-    }
-
-    pub fn get_workers_by_job(&self, job_id: &str) -> Result<Vec<WorkerRow>> {
-        const SQL: &str = "SELECT id, job_id, provider, provider_id, status, ip_address, workspace_path, heartbeat_at, created_at, destroyed_at FROM workers WHERE job_id = ?1 ORDER BY created_at";
-        match &self.backend {
-            Backend::Local(_) => {
-                let conn = self.local_conn()?;
-                let mut stmt = conn.prepare(SQL)?;
-                let rows = stmt.query_map(params![job_id], |row| {
-                    Ok(WorkerRow {
-                        id: row.get(0)?,
-                        job_id: row.get(1)?,
-                        provider: row.get(2)?,
-                        provider_id: row.get(3)?,
-                        status: row.get(4)?,
-                        ip_address: row.get(5)?,
-                        workspace_path: row.get(6)?,
-                        heartbeat_at: row.get(7)?,
-                        created_at: row.get(8)?,
-                        destroyed_at: row.get(9)?,
-                    })
-                })?;
-                let mut result = Vec::new();
-                for r in rows {
-                    result.push(r?);
-                }
-                Ok(result)
-            }
-            Backend::Remote { .. } => {
-                self.remote_query(SQL, vec![serde_json::json!(job_id)])
-            }
-        }
-    }
-
     pub fn destroy_worker(&self, id: &str) -> Result<()> {
         let now = Utc::now().to_rfc3339();
         match &self.backend {
@@ -683,68 +575,6 @@ impl Database {
             }
         }
         Ok(())
-    }
-
-    #[allow(clippy::too_many_arguments)]
-    pub fn save_checkpoint(
-        &self,
-        id: &str,
-        job_id: &str,
-        stage: &str,
-        response: &str,
-        session_path: &str,
-        git_sha: &str,
-        token_usage: &str,
-        files_changed: &str,
-    ) -> Result<()> {
-        let now = Utc::now().to_rfc3339();
-        match &self.backend {
-            Backend::Local(_) => {
-                let conn = self.local_conn()?;
-                conn.execute(
-                    "INSERT INTO checkpoints (id, job_id, stage, response, session_path, git_sha, token_usage, files_changed, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-                    params![id, job_id, stage, response, session_path, git_sha, token_usage, files_changed, now],
-                )?;
-            }
-            Backend::Remote { .. } => {
-                self.remote_exec(
-                    "INSERT INTO checkpoints (id, job_id, stage, response, session_path, git_sha, token_usage, files_changed, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9)",
-                    vec![serde_json::json!(id), serde_json::json!(job_id), serde_json::json!(stage), serde_json::json!(response), serde_json::json!(session_path), serde_json::json!(git_sha), serde_json::json!(token_usage), serde_json::json!(files_changed), serde_json::json!(now)],
-                )?;
-            }
-        }
-        Ok(())
-    }
-
-    pub fn get_checkpoints(&self, job_id: &str) -> Result<Vec<CheckpointRow>> {
-        const SQL: &str = "SELECT id, job_id, stage, response, session_path, git_sha, token_usage, files_changed, created_at FROM checkpoints WHERE job_id = ?1 ORDER BY created_at";
-        match &self.backend {
-            Backend::Local(_) => {
-                let conn = self.local_conn()?;
-                let mut stmt = conn.prepare(SQL)?;
-                let rows = stmt.query_map(params![job_id], |row| {
-                    Ok(CheckpointRow {
-                        id: row.get(0)?,
-                        job_id: row.get(1)?,
-                        stage: row.get(2)?,
-                        response: row.get(3)?,
-                        session_path: row.get(4)?,
-                        git_sha: row.get(5)?,
-                        token_usage: row.get(6)?,
-                        files_changed: row.get(7)?,
-                        created_at: row.get(8)?,
-                    })
-                })?;
-                let mut result = Vec::new();
-                for r in rows {
-                    result.push(r?);
-                }
-                Ok(result)
-            }
-            Backend::Remote { .. } => {
-                self.remote_query(SQL, vec![serde_json::json!(job_id)])
-            }
-        }
     }
 
     pub fn save_workflow(

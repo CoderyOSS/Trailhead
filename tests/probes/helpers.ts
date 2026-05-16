@@ -67,14 +67,23 @@ export async function createWorker(jobId: string): Promise<string> {
   throw new Error(`createWorker failed: ${JSON.stringify(res.body)}`);
 }
 
-export async function setupRunningJob(): Promise<{ projectId: string; jobId: string; workerId: string }> {
-  const projectId = await seedProject();
-  const jobId = await createJob(projectId, "E2E test job");
-  const workerId = await createWorker(jobId);
-  await p.http.send({
-    method: "POST",
-    path: `/api/v1/workers/${workerId}/register`,
-    body: { job_id: jobId },
+export async function createJobWithStatus(projectId: string, description: string, status: string, workflow?: string): Promise<string> {
+  const id = uniqueId();
+  const now = new Date().toISOString();
+  await p.sql.put({
+    table: "jobs",
+    rows: [{
+      id,
+      project_id: projectId,
+      description,
+      status,
+      workflow_name: workflow ?? null,
+      stage_history: "[]",
+      attempt: 1,
+      max_attempts: 3,
+      created_at: now,
+      updated_at: now,
+    }],
   });
-  return { projectId, jobId, workerId };
+  return id;
 }

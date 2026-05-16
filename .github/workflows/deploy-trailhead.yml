@@ -3,19 +3,15 @@ name: Deploy Trailhead
 on:
   workflow_dispatch:
 
-env:
-  CARGO_TERM_COLOR: always
-
 jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - uses: Swatinem/rust-cache@v2
-
-      - name: Build release binary
-        run: cargo build --release -p trailhead-service
+      - uses: actions/download-artifact@v4
+        with:
+          name: trailhead-service-binary
+      - run: chmod +x trailhead-service
 
       - name: Deploy to VPS
         env:
@@ -28,11 +24,10 @@ jobs:
           SCP="scp -i /tmp/deploy_key -o StrictHostKeyChecking=accept-new"
 
           SHA=$(git rev-parse --short HEAD)
-          BINARY="target/release/trailhead-service"
 
           $SSH "sudo mkdir -p /opt/codery/trailhead/bin /opt/codery/trailhead/skills /opt/codery/trailhead/workflows"
 
-          $SCP "$BINARY" "deploy@${DEPLOY_HOST}:/tmp/trailhead-service-$SHA"
+          $SCP trailhead-service "deploy@${DEPLOY_HOST}:/tmp/trailhead-service-$SHA"
           $SSH "sudo mv /tmp/trailhead-service-$SHA /opt/codery/trailhead/bin/trailhead-service-$SHA && sudo chmod +x /opt/codery/trailhead/bin/trailhead-service-$SHA"
           $SSH "sudo ln -sf /opt/codery/trailhead/bin/trailhead-service-$SHA /opt/codery/trailhead/bin/current"
 

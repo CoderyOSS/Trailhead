@@ -8,9 +8,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Get latest build run ID
+        id: build-run
+        run: |
+          RUN_ID=$(gh run list --repo ${{ github.repository }} --workflow=build.yml --status=completed --limit=1 --json databaseId -q '.[0].databaseId')
+          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
       - uses: actions/download-artifact@v4
         with:
           name: trailhead-service-binary
+          run-id: ${{ steps.build-run.outputs.run_id }}
       - run: chmod +x trailhead-service
 
       - name: Deploy to VPS

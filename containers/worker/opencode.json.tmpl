@@ -1,0 +1,30 @@
+{
+  "provider": {
+    "LLM_PROVIDER": {
+      "options": {
+        "apiKey": "LLM_API_KEY",
+        "baseURL": "LLM_BASE_URL"
+      }
+    }
+  },
+  "permission": {
+    "read": { "*": "allow" },
+    "glob": { "*": "allow" },
+    "grep": { "*": "allow" },
+    "list": { "*": "allow" },
+    "bash": { "*": "ask" },
+    "edit": { "*": "ask" },
+    "write": { "*": "ask" },
+    "webfetch": "deny",
+    "websearch": "deny",
+    "question": "deny",
+    "doom_loop": "deny"
+  },
+  "mcp": {
+    "trailhead": {
+      "type": "remote",
+      "url": "TRAILHEAD_URL/mcp/sse"
+    }
+  },
+  "instructions": ["AGENTS.md"]
+}

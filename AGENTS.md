@@ -17,7 +17,7 @@ E2E probe tests run from sandbox directly: `cd tests/probes && bun test`
 | Action | Command |
 |--------|---------|
 | Check workspace | `ssh gem@apps 'export PATH="$HOME/.cargo/bin:$PATH" && cd /home/gem/projects/CoderyTrailhead && cargo check 2>&1'` |
-| Check one crate | same but `cargo check -p agent-runner 2>&1` or `cargo check -p trailhead-service 2>&1` |
+| Check one crate | same but `cargo check -p trailhead-service 2>&1` |
 | Build | `ssh gem@apps 'export PATH="$HOME/.cargo/bin:$PATH" && cd /home/gem/projects/CoderyTrailhead && cargo build 2>&1'` |
 | Clippy | `ssh gem@apps 'export PATH="$HOME/.cargo/bin:$PATH" && cd /home/gem/projects/CoderyTrailhead && cargo clippy 2>&1'` |
 | Unit tests | `ssh gem@apps 'export PATH="$HOME/.cargo/bin:$PATH" && cd /home/gem/projects/CoderyTrailhead && cargo test 2>&1'` |
@@ -26,24 +26,12 @@ E2E probe tests run from sandbox directly: `cd tests/probes && bun test`
 
 ## Project Structure
 
-Cargo workspace with three crates. Separate builds — keep them clearly segregated.
+Cargo workspace with single crate (`trailhead-service`). Worker containers run `opencode serve` — no custom agent-runner binary.
 
 ```
 ~/projects/CoderyTrailhead/
 ├── Cargo.toml                          # Workspace root
 ├── crates/
-│   ├── trailhead-core/                 # Shared types (JobId, WorkerId, JobStatus, TokenUsage, etc.)
-│   │   ├── Cargo.toml
-│   │   └── src/lib.rs
-│   ├── agent-runner/                   # Runs INSIDE worker containers
-│   │   ├── Cargo.toml
-│   │   └── src/
-│   │       ├── main.rs                 # CLI: run, resume
-│   │       ├── lib.rs
-│   │       ├── agent/                  # Message types, agent loop
-│   │       ├── provider/               # LLM provider trait + Anthropic/OpenAI impls
-│   │       ├── tools/                  # bash, read, write, edit, glob, grep
-│   │       └── session.rs              # JSON session persistence
 │   └── trailhead-service/              # Runs on VPS host
 │       ├── Cargo.toml
 │       ├── src/
@@ -52,6 +40,7 @@ Cargo workspace with three crates. Separate builds — keep them clearly segrega
 │       │   ├── jobs.rs                 # Job state machine
 │       │   ├── scheduler.rs            # Round-robin scheduling loop
 │       │   ├── workers.rs              # Worker lifecycle
+│       │   ├── worker/                 # Worker container management (opencode-based)
 │       │   ├── workflow/               # Parser, resolver (minijinja), router (CEL)
 │       │   ├── provider/               # WorkerProvider trait + Docker impl
 │       │   ├── ide/                    # IDE adapters (opencode, cursor, vscode, shell, ssh)
@@ -82,6 +71,8 @@ Cargo workspace with three crates. Separate builds — keep them clearly segrega
 │               ├── JobList.tsx
 │               ├── WorkerList.tsx
 │               └── types.ts
+├── containers/
+│   └── worker/                         # Dockerfile for opencode-based worker containers
 ├── tests/
 │   └── probes/                         # E2E test suite (CoderyProbes)
 ├── docs/
@@ -93,11 +84,9 @@ Cargo workspace with three crates. Separate builds — keep them clearly segrega
 
 | Crate | Binary | Runs Where | Build Target |
 |-------|--------|------------|-------------|
-| `trailhead-core` | library (shared) | n/a | Linked into both below |
-| `agent-runner` | `agent-runner` | Worker containers | Standalone binary, minimal deps |
 | `trailhead-service` | `trailhead-service` | VPS host | Full binary with all features |
 
-**Shared code goes in `trailhead-core`.** Do not create cross-dependencies between `agent-runner` and `trailhead-service`. Do not duplicate types that exist in `trailhead-core` (e.g. `TokenUsage`) — import from the shared crate.
+Worker containers use pre-built `opencode` binary — no Rust compilation needed for workers.
 
 ## Key Configuration
 
@@ -163,10 +152,6 @@ tests/probes/
 ├── adapter.ts                     # Wire protocol adapter for trailhead-service
 ├── helpers.ts                     # Test utilities, proof recording
 ├── fixtures/                      # Shared test data (seed SQL, YAML configs)
-├── agent-runner/                  # Tests for agent-runner binary
-│   ├── tools.test.ts              # Tool execution tests (bash, read, write, edit, glob, grep)
-│   ├── agent-loop.test.ts         # Agent loop behavior
-│   └── session.test.ts            # Session persistence
 ├── workflow/                      # Tests for workflow engine
 │   ├── parser.test.ts             # YAML parsing + validation
 │   ├── resolver.test.ts           # Template variable resolution
@@ -186,7 +171,7 @@ tests/probes/
 
 - One test file per component/feature
 - File name = component being tested: `tools.test.ts`, `parser.test.ts`
-- Directory groups related tests: `workflow/`, `service/`, `agent-runner/`
+- Directory groups related tests: `workflow/`, `service/`
 - Fixtures in `fixtures/` — shared seed data, config files
 
 ### CoderyProbes Usage

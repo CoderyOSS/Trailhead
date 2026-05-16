@@ -685,6 +685,7 @@ impl Database {
         Ok(())
     }
 
+    #[allow(clippy::too_many_arguments)]
     pub fn save_checkpoint(
         &self,
         id: &str,

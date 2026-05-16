@@ -1,7 +1,5 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/trailhead-core",
-    "crates/agent-runner",
     "crates/trailhead-service",
 ]

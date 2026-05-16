@@ -13,6 +13,7 @@ use crate::db::Database;
 #[derive(Debug, Clone)]
 pub struct TrailheadMcpServer {
     db: Arc<Database>,
+    #[allow(dead_code)]
     tool_router: ToolRouter<Self>,
 }
 
@@ -49,6 +50,13 @@ pub struct AddProjectParams {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct WorkflowNameParams {
     pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct SubmitResultParams {
+    pub job_id: String,
+    pub stage: String,
+    pub output: serde_json::Value,
 }
 
 impl TrailheadMcpServer {
@@ -209,6 +217,26 @@ impl TrailheadMcpServer {
         }
     }
 
+    #[tool(description = "Submit structured output for a completed workflow stage")]
+    pub async fn submit_result(&self, Parameters(params): Parameters<SubmitResultParams>) -> String {
+        match self.db.get_job(&params.job_id) {
+            Ok(Some(_job)) => {
+                let result_json = params.output.to_string();
+                match self.db.complete_job(&params.job_id, &result_json) {
+                    Ok(()) => serde_json::json!({
+                        "status": "submitted",
+                        "job_id": params.job_id,
+                        "stage": params.stage,
+                    })
+                    .to_string(),
+                    Err(e) => format!("error: {e}"),
+                }
+            }
+            Ok(None) => "job not found".into(),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
     #[tool(description = "Show workflow content")]
     pub async fn workflows_show(&self, Parameters(params): Parameters<WorkflowNameParams>) -> String {
         match self.db.get_workflow(&params.name) {
@@ -219,7 +247,19 @@ impl TrailheadMcpServer {
     }
 }
 
-pub async fn start_mcp_server(db: Arc<Database>) -> anyhow::Result<()> {
-    let _server = TrailheadMcpServer::new(db);
-    Ok(())
+use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
+use rmcp::transport::{StreamableHttpServerConfig, StreamableHttpService};
+
+pub fn create_mcp_service(
+    db: Arc<Database>,
+) -> StreamableHttpService<TrailheadMcpServer, LocalSessionManager> {
+    let session_manager = Arc::new(LocalSessionManager::default());
+    StreamableHttpService::new(
+        {
+            let db = db.clone();
+            move || Ok(TrailheadMcpServer::new(db.clone()))
+        },
+        session_manager,
+        StreamableHttpServerConfig::default(),
+    )
 }

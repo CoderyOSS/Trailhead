@@ -2,29 +2,10 @@ name: Release
 on:
   push:
     tags:
-      - "trailhead-service-v*"
       - "worker-v*"
 
 jobs:
-  release-trailhead-service:
-    if: startsWith(github.ref, 'refs/tags/trailhead-service-v')
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dtolnay/rust-toolchain@stable
-      - run: cargo build --release -p trailhead-service
-      - uses: actions/upload-artifact@v4
-        with:
-          name: trailhead-service-linux-x86_64
-          path: target/release/trailhead-service
-      - uses: softprops/action-gh-release@v2
-        with:
-          files: target/release/trailhead-service
-
   build-worker-image:
-    if: startsWith(github.ref, 'refs/tags/worker-v')
     runs-on: ubuntu-latest
     permissions:
       packages: write
@@ -38,7 +19,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
       - uses: docker/build-push-action@v6
         with:
-          context: .
+          context: containers/worker
           file: containers/worker/Dockerfile
           push: true
           tags: |

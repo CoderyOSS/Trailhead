@@ -15,15 +15,70 @@ jobs:
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
 
-  build-service:
-    runs-on: ubuntu-latest
+  release:
     needs: check
-    if: github.event_name == 'push'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Check for relevant changes
+        id: changes
+        run: |
+          if git diff --name-only HEAD~1 HEAD | grep -qE '^(crates/|Cargo\.(toml|lock)|containers/worker/)'; then
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "release=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Determine next version
+        if: steps.changes.outputs.release == 'true'
+        id: version
+        run: |
+          LATEST_TAG=$(git tag -l 'trailhead-service-v*' --sort=-version:refname | head -1)
+          if [ -n "$LATEST_TAG" ]; then
+            V="${LATEST_TAG#trailhead-service-v}"
+            IFS='.' read -r major minor patch <<< "$V"
+            NEW="${major}.${minor}.$((patch + 1))"
+          else
+            NEW="0.1.0"
+          fi
+          echo "version=${NEW}" >> "$GITHUB_OUTPUT"
+          echo "tag=trailhead-service-v${NEW}" >> "$GITHUB_OUTPUT"
+
+      - name: Stamp Cargo.toml version
+        if: steps.changes.outputs.release == 'true'
+        run: |
+          sed -i "s/^version = \".*\"/version = \"${{ steps.version.outputs.version }}\"/" \
+            crates/trailhead-service/Cargo.toml
+
       - uses: dtolnay/rust-toolchain@stable
+        if: steps.changes.outputs.release == 'true'
       - uses: Swatinem/rust-cache@v2
-      - run: cargo build --release -p trailhead-service
+        if: steps.changes.outputs.release == 'true'
+
+      - name: Build release binary
+        if: steps.changes.outputs.release == 'true'
+        run: cargo build --release -p trailhead-service
+
+      - name: Rename binary
+        if: steps.changes.outputs.release == 'true'
+        run: |
+          cp target/release/trailhead-service trailhead-service-linux-x86_64
+          chmod +x trailhead-service-linux-x86_64
+
+      - name: Create GitHub Release
+        if: steps.changes.outputs.release == 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          files: trailhead-service-linux-x86_64
+          generate_release_notes: true
 
   build-frontend:
     runs-on: ubuntu-latest

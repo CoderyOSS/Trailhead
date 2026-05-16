@@ -3,25 +3,24 @@ name: Deploy Trailhead
 on:
   workflow_dispatch:
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
   deploy:
+    name: Deploy trailhead-service to VPS
     runs-on: ubuntu-latest
+    environment: production
+
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-      - name: Get latest build run ID
-        id: build-run
-        run: |
-          RUN_ID=$(gh run list --repo ${{ github.repository }} --workflow=build.yml --status=completed --limit=1 --json databaseId -q '.[0].databaseId')
-          echo "run_id=$RUN_ID" >> "$GITHUB_OUTPUT"
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
 
-      - uses: actions/download-artifact@v4
-        with:
-          name: trailhead-service-binary
-          run-id: ${{ steps.build-run.outputs.run_id }}
-      - run: chmod +x trailhead-service
+      - name: Build release binary
+        run: cargo build --release -p trailhead-service
 
       - name: Deploy to VPS
         env:
@@ -37,23 +36,25 @@ jobs:
 
           $SSH "sudo mkdir -p /opt/codery/trailhead/bin /opt/codery/trailhead/skills /opt/codery/trailhead/workflows"
 
-          $SCP trailhead-service "deploy@${DEPLOY_HOST}:/tmp/trailhead-service-$SHA"
-          $SSH "sudo mv /tmp/trailhead-service-$SHA /opt/codery/trailhead/bin/trailhead-service-$SHA && sudo chmod +x /opt/codery/trailhead/bin/trailhead-service-$SHA"
-          $SSH "sudo ln -sf /opt/codery/trailhead/bin/trailhead-service-$SHA /opt/codery/trailhead/bin/current"
+          $SCP target/release/trailhead-service "deploy@${DEPLOY_HOST}:/opt/codery/trailhead/bin/trailhead-service-$SHA"
+          $SSH "sudo chmod +x /opt/codery/trailhead/bin/trailhead-service-$SHA && sudo ln -sf /opt/codery/trailhead/bin/trailhead-service-$SHA /opt/codery/trailhead/bin/current"
 
           $SSH "test -f /opt/codery/trailhead/trailhead.toml || printf 'model = \"anthropic/claude-sonnet-4-20250514\"\\n\\n[provider.anthropic]\\napi = \"anthropic\"\\nenv = [\"ANTHROPIC_API_KEY\"]\\n' | sudo tee /opt/codery/trailhead/trailhead.toml"
 
           for f in crates/trailhead-service/skills/*.md; do
-            $SCP "$f" "deploy@${DEPLOY_HOST}:/tmp/$(basename "$f")"
-            $SSH "sudo mv /tmp/$(basename "$f") /opt/codery/trailhead/skills/"
+            $SCP "$f" "deploy@${DEPLOY_HOST}:/opt/codery/trailhead/skills/$(basename "$f")"
           done
 
           for f in crates/trailhead-service/workflows/*.yaml; do
-            $SCP "$f" "deploy@${DEPLOY_HOST}:/tmp/$(basename "$f")"
-            $SSH "sudo mv /tmp/$(basename "$f") /opt/codery/trailhead/workflows/"
+            $SCP "$f" "deploy@${DEPLOY_HOST}:/opt/codery/trailhead/workflows/$(basename "$f")"
           done
 
-          $SSH "test -f /etc/supervisor/conf.d/trailhead.conf || printf '[program:trailhead]\\ncommand=/opt/codery/trailhead/bin/current daemon --db /opt/codery/trailhead.db --config /opt/codery/trailhead/trailhead.toml\\nuser=root\\nautostart=true\\nautorestart=true\\npriority=50\\nstdout_logfile=/var/log/supervisor/trailhead.log\\nstdout_logfile_maxbytes=10MB\\nstdout_logfile_backups=3\\nstderr_logfile=/var/log/supervisor/trailhead.log\\nstderr_logfile_maxbytes=10MB\\nstderr_logfile_backups=3\\n' | sudo tee /etc/supervisor/conf.d/trailhead.conf"
+          printf '[program:trailhead]\ncommand=/opt/codery/trailhead/bin/current daemon --db /opt/codery/trailhead.db --config /opt/codery/trailhead/trailhead.toml\nuser=root\nautostart=true\nautorestart=true\npriority=50\nstdout_logfile=/var/log/supervisor/trailhead.log\nstdout_logfile_maxbytes=10MB\nstdout_logfile_backups=3\nstderr_logfile=/var/log/supervisor/trailhead.log\nstderr_logfile_maxbytes=10MB\nstderr_logfile_backups=3\n' > /tmp/trailhead.conf
+          $SCP /tmp/trailhead.conf "deploy@${DEPLOY_HOST}:/tmp/trailhead.conf"
+          $SSH "sudo mv /tmp/trailhead.conf /etc/supervisor/conf.d/trailhead.conf && sudo chmod 644 /etc/supervisor/conf.d/trailhead.conf"
 
-          $SSH "sudo supervisorctl reread && sudo supervisorctl update"
-          $SSH "sudo supervisorctl restart trailhead"
+          $SSH "supervisorctl -c /etc/supervisor/supervisord.conf update"
+          $SSH "supervisorctl -c /etc/supervisor/supervisord.conf restart trailhead 2>/dev/null || supervisorctl -c /etc/supervisor/supervisord.conf start trailhead"
+          $SSH "supervisorctl -c /etc/supervisor/supervisord.conf status trailhead | grep -q RUNNING"
+
+          rm -f /tmp/deploy_key

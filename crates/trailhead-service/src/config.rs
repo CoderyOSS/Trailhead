@@ -25,7 +25,6 @@ pub struct ResolvedModel {
     pub model_id: String,
     pub api: String,
     pub base_url: String,
-    pub api_key: String,
 }
 
 impl TrailheadConfig {
@@ -55,17 +54,11 @@ impl TrailheadConfig {
             })
             .ok_or_else(|| anyhow::anyhow!("no base_url for provider {}", provider_id))?;
 
-        let api_key = provider.env.iter()
-            .filter_map(|var_name| std::env::var(var_name).ok())
-            .next()
-            .ok_or_else(|| anyhow::anyhow!("no API key found for provider {}: set one of {:?}", provider_id, provider.env))?;
-
         Ok(ResolvedModel {
             provider_id: provider_id.to_string(),
             model_id: model_id.to_string(),
             api: provider.api.clone(),
             base_url,
-            api_key,
         })
     }
 }

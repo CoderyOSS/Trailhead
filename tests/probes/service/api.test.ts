@@ -37,7 +37,6 @@ describe("worker HTTP API", () => {
       expect(typeof res.body["model"]).toBe("string");
       expect(typeof res.body["provider"]).toBe("string");
       expect(typeof res.body["base_url"]).toBe("string");
-      expect(typeof res.body["api_key"]).toBe("string");
     }
   });
 

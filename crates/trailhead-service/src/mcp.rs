@@ -1,3 +1,4 @@
+use std::os::unix::fs::PermissionsExt;
 use std::sync::Arc;
 
 use rmcp::{
@@ -50,6 +51,12 @@ pub struct AddProjectParams {
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct WorkflowNameParams {
     pub name: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct SecretParams {
+    pub name: String,
+    pub value: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -242,6 +249,52 @@ impl TrailheadMcpServer {
         match self.db.get_workflow(&params.name) {
             Ok(Some(wf)) => wf.content,
             Ok(None) => format!("workflow '{}' not found", params.name),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    #[tool(description = "List all secrets")]
+    pub async fn secrets_list(&self) -> String {
+        let dir = std::path::Path::new("/opt/codery/secrets");
+        if !dir.is_dir() {
+            return serde_json::json!([]).to_string();
+        }
+        let mut names = Vec::new();
+        match std::fs::read_dir(dir) {
+            Ok(entries) => {
+                for e in entries.flatten() {
+                    if let Some(name) = e.file_name().to_str() {
+                        names.push(name.to_string());
+                    }
+                }
+                serde_json::to_string_pretty(&names).unwrap_or_else(|e| format!("serialize error: {e}"))
+            }
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    #[tool(description = "Set a secret value")]
+    pub async fn secrets_set(&self, Parameters(params): Parameters<SecretParams>) -> String {
+        let dir = std::path::Path::new("/opt/codery/secrets");
+        if let Err(e) = std::fs::create_dir_all(dir) {
+            return format!("error creating secrets dir: {e}");
+        }
+        let path = dir.join(&params.name);
+        match std::fs::write(&path, &params.value) {
+            Ok(()) => {
+                let _ = std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o600));
+                format!("secret '{}' set", params.name)
+            }
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    #[tool(description = "Delete a secret")]
+    pub async fn secrets_delete(&self, Parameters(params): Parameters<WorkflowNameParams>) -> String {
+        let path = std::path::Path::new("/opt/codery/secrets").join(&params.name);
+        match std::fs::remove_file(&path) {
+            Ok(()) => format!("secret '{}' deleted", params.name),
+            Err(e) if e.kind() == std::io::ErrorKind::NotFound => format!("secret '{}' not found", params.name),
             Err(e) => format!("error: {e}"),
         }
     }

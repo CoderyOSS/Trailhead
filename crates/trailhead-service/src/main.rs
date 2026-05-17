@@ -100,6 +100,7 @@ async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
 
     let db = Arc::new(db::Database::open(&db_path)?);
     db.seed_builtin_workflows(std::path::Path::new("/opt/codery/trailhead/workflows"))?;
+    let _ = std::fs::create_dir_all("/opt/codery/secrets");
     let provider = Arc::new(provider::docker::DockerProvider::new()?);
     let app_config = Arc::new(app_config);
 

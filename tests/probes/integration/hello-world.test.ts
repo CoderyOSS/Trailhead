@@ -28,7 +28,6 @@ describe("hello-world pipeline", () => {
       expect(typeof res.body["max_tokens"]).toBe("number");
       expect(typeof res.body["model"]).toBe("string");
       expect(typeof res.body["provider"]).toBe("string");
-      expect(typeof res.body["api_key"]).toBe("string");
     }
   });
 });

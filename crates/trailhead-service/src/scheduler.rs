@@ -140,7 +140,6 @@ impl Scheduler {
             env: HashMap::new(),
             llm_provider: resolved.provider_id.clone(),
             llm_model: format!("{}/{}", resolved.provider_id, resolved.model_id),
-            llm_api_key: resolved.api_key.clone(),
             llm_base_url: resolved.base_url.clone(),
             trailhead_url: "http://host.docker.internal:4050".to_string(),
         };

@@ -27,7 +27,6 @@ struct JobConfigResponse {
     model: String,
     provider: String,
     base_url: String,
-    api_key: String,
 }
 
 type AppState = (Arc<Database>, Arc<TrailheadConfig>);
@@ -140,7 +139,6 @@ async fn job_config(
         model: resolved.model_id,
         provider: resolved.api,
         base_url: resolved.base_url,
-        api_key: resolved.api_key,
     }))
 }
 

@@ -19,10 +19,13 @@ if [ -n "$LLM_PROVIDER" ]; then
     sed -i "s/\"LLM_PROVIDER\"/\"$LLM_PROVIDER\"/g" "$OUTPUT"
 fi
 
-if [ -n "$LLM_API_KEY" ]; then
-    MASKED="${LLM_API_KEY:0:4}****"
-    sed -i "s/\"LLM_API_KEY\"/\"$LLM_API_KEY\"/g" "$OUTPUT"
-    echo "trailhead-worker: set api key ($MASKED)" >&2
+KEY_FILE="/etc/secrets/${LLM_PROVIDER}_api_key"
+if [ -f "$KEY_FILE" ]; then
+    API_KEY=$(cat "$KEY_FILE" | tr -d '\n')
+    sed -i "s/\"LLM_API_KEY\"/\"$API_KEY\"/g" "$OUTPUT"
+    echo "trailhead-worker: set api key from $KEY_FILE" >&2
+else
+    echo "trailhead-worker: warning: no key file at $KEY_FILE" >&2
 fi
 
 if [ -n "$LLM_BASE_URL" ]; then

@@ -21,7 +21,6 @@ pub struct WorkerSpec {
     pub env: HashMap<String, String>,
     pub llm_provider: String,
     pub llm_model: String,
-    pub llm_api_key: String,
     pub llm_base_url: String,
     pub trailhead_url: String,
 }

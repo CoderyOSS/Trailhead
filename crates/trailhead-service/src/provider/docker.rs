@@ -44,7 +44,6 @@ impl WorkerProvider for DockerProvider {
             format!("TRAILHEAD_URL={}", spec.trailhead_url),
             format!("LLM_PROVIDER={}", spec.llm_provider),
             format!("LLM_MODEL={}", spec.llm_model),
-            format!("LLM_API_KEY={}", spec.llm_api_key),
             format!("LLM_BASE_URL={}", spec.llm_base_url),
         ];
         for (k, v) in &spec.env {
@@ -61,7 +60,10 @@ impl WorkerProvider for DockerProvider {
             env: Some(env),
             exposed_ports: Some(StdMap::from([("8080/tcp".into(), StdMap::new())])),
             host_config: Some(HostConfig {
-                binds: Some(vec![format!("{}:{}:rw", workspace_str, "/workspace")]),
+                binds: Some(vec![
+                    format!("{}:{}:rw", workspace_str, "/workspace"),
+                    "/opt/codery/secrets:/etc/secrets:ro".into(),
+                ]),
                 network_mode: Some(self.network.clone()),
                 extra_hosts: Some(vec!["host.docker.internal:host-gateway".into()]),
                 ..Default::default()

@@ -63,6 +63,7 @@ impl WorkerProvider for DockerProvider {
             host_config: Some(HostConfig {
                 binds: Some(vec![format!("{}:{}:rw", workspace_str, "/workspace")]),
                 network_mode: Some(self.network.clone()),
+                extra_hosts: Some(vec!["host.docker.internal:host-gateway".into()]),
                 ..Default::default()
             }),
             working_dir: Some("/workspace".into()),

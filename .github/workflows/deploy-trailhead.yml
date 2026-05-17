@@ -32,10 +32,15 @@ jobs:
           mv trailhead-service-linux-x86_64 trailhead-service
           chmod +x trailhead-service
 
+      - name: Lowercase owner
+        id: owner
+        run: echo "value=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')" >> "$GITHUB_OUTPUT"
+
       - name: Deploy to VPS
         env:
           DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
           VERSION: ${{ steps.release.outputs.version }}
+          GHCR_IMAGE: ghcr.io/${{ steps.owner.outputs.value }}/trailhead:worker-latest
         run: |
           trap 'rm -f /tmp/deploy_key' EXIT
           printf '%s\n' "${{ secrets.DEPLOY_SSH_KEY }}" > /tmp/deploy_key
@@ -43,7 +48,7 @@ jobs:
           SSH="ssh -i /tmp/deploy_key -o StrictHostKeyChecking=accept-new deploy@${DEPLOY_HOST}"
           SCP="scp -i /tmp/deploy_key -o StrictHostKeyChecking=accept-new"
 
-          $SSH "sudo mkdir -p /opt/codery/trailhead/bin /opt/codery/trailhead/skills /opt/codery/trailhead/workflows"
+          $SSH "sudo mkdir -p /opt/codery/trailhead/bin /opt/codery/trailhead/skills /opt/codery/trailhead/workflows /opt/codery/workspaces"
 
           $SCP trailhead-service "deploy@${DEPLOY_HOST}:/tmp/trailhead-service-${VERSION}"
           $SSH "sudo mv /tmp/trailhead-service-${VERSION} /opt/codery/trailhead/bin/trailhead-service-${VERSION} && sudo chmod +x /opt/codery/trailhead/bin/trailhead-service-${VERSION} && sudo ln -sf /opt/codery/trailhead/bin/trailhead-service-${VERSION} /opt/codery/trailhead/bin/current"
@@ -63,6 +68,8 @@ jobs:
           printf '[program:trailhead]\ncommand=/opt/codery/trailhead/bin/current daemon --db /opt/codery/trailhead.db --config /opt/codery/trailhead/trailhead.toml\nuser=root\nautostart=true\nautorestart=true\npriority=50\nstdout_logfile=/var/log/supervisor/trailhead.log\nstdout_logfile_maxbytes=10MB\nstdout_logfile_backups=3\nstderr_logfile=/var/log/supervisor/trailhead.log\nstderr_logfile_maxbytes=10MB\nstderr_logfile_backups=3\n' > /tmp/trailhead.conf
           $SCP /tmp/trailhead.conf "deploy@${DEPLOY_HOST}:/tmp/trailhead.conf"
           $SSH "sudo mv /tmp/trailhead.conf /etc/supervisor/conf.d/trailhead.conf && sudo chmod 644 /etc/supervisor/conf.d/trailhead.conf"
+
+          $SSH "source /opt/codery/.env 2>/dev/null; docker login ghcr.io -u \"\${GHCR_USERNAME}\" -p \"\${GHCR_TOKEN}\" 2>/dev/null; docker pull ${GHCR_IMAGE} && docker tag ${GHCR_IMAGE} opencode-worker:latest"
 
           $SSH "supervisorctl -c /etc/supervisor/supervisord.conf update"
           $SSH "supervisorctl -c /etc/supervisor/supervisord.conf restart trailhead 2>/dev/null || supervisorctl -c /etc/supervisor/supervisord.conf start trailhead"

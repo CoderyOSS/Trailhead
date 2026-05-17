@@ -66,6 +66,7 @@ pub struct CheckpointRow {
 pub struct WorkflowRow {
     pub name: String,
     pub content: String,
+    pub content_hash: Option<String>,
     pub source: String,
     pub project_id: Option<String>,
     pub created_at: String,
@@ -95,6 +96,7 @@ impl Database {
             let conn = rusqlite::Connection::open(path)?;
             conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
             conn.execute_batch(SCHEMA)?;
+            let _ = conn.execute_batch(MIGRATIONS);
             Ok(Self {
                 backend: Backend::Local(Mutex::new(conn)),
             })
@@ -581,6 +583,7 @@ impl Database {
         &self,
         name: &str,
         content: &str,
+        content_hash: &str,
         source: &str,
         project_id: Option<&str>,
     ) -> Result<()> {
@@ -589,14 +592,14 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 conn.execute(
-                    "INSERT OR REPLACE INTO workflows (name, content, source, project_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                    params![name, content, source, project_id, now, now],
+                    "INSERT OR REPLACE INTO workflows (name, content, content_hash, source, project_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                    params![name, content, content_hash, source, project_id, now, now],
                 )?;
             }
             Backend::Remote { .. } => {
                 self.remote_exec(
-                    "INSERT OR REPLACE INTO workflows (name, content, source, project_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
-                    vec![serde_json::json!(name), serde_json::json!(content), serde_json::json!(source), serde_json::json!(project_id), serde_json::json!(now), serde_json::json!(now)],
+                    "INSERT OR REPLACE INTO workflows (name, content, content_hash, source, project_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
+                    vec![serde_json::json!(name), serde_json::json!(content), serde_json::json!(content_hash), serde_json::json!(source), serde_json::json!(project_id), serde_json::json!(now), serde_json::json!(now)],
                 )?;
             }
         }
@@ -608,16 +611,17 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 let row = conn.query_row(
-                    "SELECT name, content, source, project_id, created_at, updated_at FROM workflows WHERE name = ?1",
+                    "SELECT name, content, content_hash, source, project_id, created_at, updated_at FROM workflows WHERE name = ?1",
                     params![name],
                     |row| {
                         Ok(WorkflowRow {
                             name: row.get(0)?,
                             content: row.get(1)?,
-                            source: row.get(2)?,
-                            project_id: row.get(3)?,
-                            created_at: row.get(4)?,
-                            updated_at: row.get(5)?,
+                            content_hash: row.get(2)?,
+                            source: row.get(3)?,
+                            project_id: row.get(4)?,
+                            created_at: row.get(5)?,
+                            updated_at: row.get(6)?,
                         })
                     },
                 );
@@ -629,7 +633,7 @@ impl Database {
             }
             Backend::Remote { .. } => {
                 self.remote_query_one(
-                    "SELECT name, content, source, project_id, created_at, updated_at FROM workflows WHERE name = ?1",
+                    "SELECT name, content, content_hash, source, project_id, created_at, updated_at FROM workflows WHERE name = ?1",
                     vec![serde_json::json!(name)],
                 )
             }
@@ -637,7 +641,7 @@ impl Database {
     }
 
     pub fn list_workflows(&self) -> Result<Vec<WorkflowRow>> {
-        const SQL: &str = "SELECT name, content, source, project_id, created_at, updated_at FROM workflows ORDER BY name";
+        const SQL: &str = "SELECT name, content, content_hash, source, project_id, created_at, updated_at FROM workflows ORDER BY name";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -646,10 +650,11 @@ impl Database {
                     Ok(WorkflowRow {
                         name: row.get(0)?,
                         content: row.get(1)?,
-                        source: row.get(2)?,
-                        project_id: row.get(3)?,
-                        created_at: row.get(4)?,
-                        updated_at: row.get(5)?,
+                        content_hash: row.get(2)?,
+                        source: row.get(3)?,
+                        project_id: row.get(4)?,
+                        created_at: row.get(5)?,
+                        updated_at: row.get(6)?,
                     })
                 })?;
                 let mut result = Vec::new();
@@ -659,6 +664,80 @@ impl Database {
                 Ok(result)
             }
             Backend::Remote { .. } => self.remote_query(SQL, vec![]),
+        }
+    }
+
+    pub fn seed_builtin_workflows(&self, dir: &std::path::Path) -> Result<()> {
+        if !dir.is_dir() {
+            tracing::warn!("workflows directory not found: {}", dir.display());
+            return Ok(());
+        }
+        for entry in std::fs::read_dir(dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if path.extension().and_then(|e| e.to_str()) != Some("yaml") {
+                continue;
+            }
+            let name = path
+                .file_stem()
+                .and_then(|s| s.to_str())
+                .ok_or_else(|| anyhow::anyhow!("invalid filename: {}", path.display()))?;
+            let raw = std::fs::read_to_string(&path)?;
+            let hash = Self::normalize_and_hash(&raw);
+            let existing = self.get_workflow(name)?;
+            match existing {
+                None => {
+                    self.save_workflow(name, &raw.trim(), &hash, "builtin", None)?;
+                    tracing::info!("seeded workflow: {}", name);
+                }
+                Some(w) if w.content_hash.as_deref() != Some(&hash) => {
+                    self.save_workflow(name, &raw.trim(), &hash, "builtin", None)?;
+                    tracing::info!("updated workflow: {}", name);
+                }
+                Some(_) => {}
+            }
+        }
+        Ok(())
+    }
+
+    fn normalize_and_hash(content: &str) -> String {
+        let trimmed = content.trim();
+        let value: serde_yaml::Value = serde_yaml::from_str(trimmed).unwrap_or_else(|_| {
+            serde_yaml::Value::String(trimmed.to_string())
+        });
+        let sorted = Self::sort_yaml_keys(value);
+        let normalized = serde_yaml::to_string(&sorted).unwrap_or_else(|_| trimmed.to_string());
+        let lines: Vec<&str> = normalized
+            .lines()
+            .filter(|l| !l.trim().is_empty())
+            .collect();
+        let collapsed = lines.join("\n");
+        use sha2::{Sha256, Digest};
+        let mut hasher = Sha256::new();
+        hasher.update(collapsed.as_bytes());
+        format!("{:x}", hasher.finalize())
+    }
+
+    fn sort_yaml_keys(val: serde_yaml::Value) -> serde_yaml::Value {
+        match val {
+            serde_yaml::Value::Mapping(map) => {
+                let mut entries: Vec<(serde_yaml::Value, serde_yaml::Value)> = map.into_iter().collect();
+                entries.sort_by(|a, b| {
+                    match (&a.0, &b.0) {
+                        (serde_yaml::Value::String(a_s), serde_yaml::Value::String(b_s)) => a_s.cmp(b_s),
+                        _ => std::cmp::Ordering::Equal,
+                    }
+                });
+                let sorted: serde_yaml::Mapping = entries
+                    .into_iter()
+                    .map(|(k, v)| (k, Self::sort_yaml_keys(v)))
+                    .collect();
+                serde_yaml::Value::Mapping(sorted)
+            }
+            serde_yaml::Value::Sequence(seq) => {
+                serde_yaml::Value::Sequence(seq.into_iter().map(Self::sort_yaml_keys).collect())
+            }
+            other => other,
         }
     }
 }
@@ -732,6 +811,7 @@ CREATE TABLE IF NOT EXISTS prompt_history (
 CREATE TABLE IF NOT EXISTS workflows (
     name            TEXT PRIMARY KEY,
     content         TEXT NOT NULL,
+    content_hash    TEXT,
     source          TEXT NOT NULL,
     project_id      TEXT REFERENCES projects(id),
     created_at      TEXT NOT NULL,
@@ -742,4 +822,8 @@ CREATE INDEX IF NOT EXISTS idx_jobs_status ON jobs(status);
 CREATE INDEX IF NOT EXISTS idx_jobs_project ON jobs(project_id);
 CREATE INDEX IF NOT EXISTS idx_workers_job ON workers(job_id);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_job ON checkpoints(job_id);
+"#;
+
+const MIGRATIONS: &str = r#"
+ALTER TABLE workflows ADD COLUMN content_hash TEXT;
 "#;

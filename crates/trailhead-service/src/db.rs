@@ -687,11 +687,11 @@ impl Database {
             let existing = self.get_workflow(name)?;
             match existing {
                 None => {
-                    self.save_workflow(name, &raw.trim(), &hash, "builtin", None)?;
+                    self.save_workflow(name, raw.trim(), &hash, "builtin", None)?;
                     tracing::info!("seeded workflow: {}", name);
                 }
                 Some(w) if w.content_hash.as_deref() != Some(&hash) => {
-                    self.save_workflow(name, &raw.trim(), &hash, "builtin", None)?;
+                    self.save_workflow(name, raw.trim(), &hash, "builtin", None)?;
                     tracing::info!("updated workflow: {}", name);
                 }
                 Some(_) => {}

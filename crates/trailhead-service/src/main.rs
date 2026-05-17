@@ -58,6 +58,33 @@ fn print_usage() {
     eprintln!("  projects add --name ID --repo URL --branch BRANCH");
 }
 
+fn open_port_for_docker_bridges(port: u16) {
+    let port_str = port.to_string();
+    let already_open = std::process::Command::new("iptables")
+        .args(["-C", "INPUT", "-p", "tcp", "--dport", &port_str,
+               "-s", "172.16.0.0/12", "-j", "ACCEPT"])
+        .output()
+        .map(|o| o.status.success())
+        .unwrap_or(false);
+
+    if !already_open {
+        let result = std::process::Command::new("iptables")
+            .args(["-I", "INPUT", "1", "-p", "tcp", "--dport", &port_str,
+                   "-s", "172.16.0.0/12", "-j", "ACCEPT"])
+            .output();
+        match result {
+            Ok(o) if o.status.success() =>
+                tracing::info!("added iptables ACCEPT rule: Docker bridges -> port {}", port),
+            Ok(o) =>
+                tracing::warn!("iptables rule failed: {}", String::from_utf8_lossy(&o.stderr)),
+            Err(e) =>
+                tracing::warn!("iptables not available: {}", e),
+        }
+    } else {
+        tracing::info!("iptables ACCEPT rule already present for port {}", port);
+    }
+}
+
 async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
     let port: u16 = get_flag(args, "--port")
         .unwrap_or_else(|_| "4050".into())
@@ -65,6 +92,8 @@ async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
         .map_err(|e| anyhow::anyhow!("invalid port: {}", e))?;
     let db_path = get_flag(args, "--db").unwrap_or_else(|_| "/opt/codery/trailhead.db".into());
     let config_path = get_flag(args, "--config").unwrap_or_else(|_| "/opt/codery/trailhead/trailhead.toml".into());
+
+    open_port_for_docker_bridges(port);
 
     let app_config = config::TrailheadConfig::load(std::path::Path::new(&config_path))?;
     tracing::info!("loaded config from {}", config_path);

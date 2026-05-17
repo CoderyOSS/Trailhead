@@ -85,11 +85,20 @@ impl WorkerProvider for DockerProvider {
             .await
             .context("start container")?;
 
+        let inspect = docker.inspect_container(&result.id, None).await.ok();
+        let ip_address = inspect
+            .and_then(|i| i.network_settings)
+            .and_then(|n| n.networks)
+            .and_then(|mut nets| {
+                let key = nets.keys().next()?.clone();
+                nets.remove(&key).and_then(|net| net.ip_address)
+            });
+
         Ok(WorkerHandle {
             id: container_name,
             provider_id: result.id,
             status: WorkerStatus::Creating,
-            ip_address: None,
+            ip_address,
         })
     }
 

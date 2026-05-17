@@ -8,6 +8,9 @@ jobs:
     name: Deploy latest trailhead-service to VPS
     runs-on: ubuntu-latest
     environment: production
+    permissions:
+      contents: read
+      packages: read
 
     steps:
       - name: Checkout
@@ -69,7 +72,7 @@ jobs:
           $SCP /tmp/trailhead.conf "deploy@${DEPLOY_HOST}:/tmp/trailhead.conf"
           $SSH "sudo mv /tmp/trailhead.conf /etc/supervisor/conf.d/trailhead.conf && sudo chmod 644 /etc/supervisor/conf.d/trailhead.conf"
 
-          $SSH "source /opt/codery/.env 2>/dev/null; docker login ghcr.io -u \"\${GHCR_USERNAME}\" -p \"\${GHCR_TOKEN}\" 2>/dev/null; docker pull ${GHCR_IMAGE} && docker tag ${GHCR_IMAGE} opencode-worker:latest"
+          $SSH "docker login ghcr.io -u \"${{ github.actor }}\" -p \"${{ secrets.GITHUB_TOKEN }}\" 2>/dev/null && docker pull ${GHCR_IMAGE} && docker tag ${GHCR_IMAGE} opencode-worker:latest"
 
           $SSH "supervisorctl -c /etc/supervisor/supervisord.conf update"
           $SSH "supervisorctl -c /etc/supervisor/supervisord.conf restart trailhead 2>/dev/null || supervisorctl -c /etc/supervisor/supervisord.conf start trailhead"

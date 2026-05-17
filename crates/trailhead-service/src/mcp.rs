@@ -247,19 +247,20 @@ impl TrailheadMcpServer {
     }
 }
 
-use rmcp::transport::streamable_http_server::session::local::LocalSessionManager;
+use rmcp::transport::streamable_http_server::session::never::NeverSessionManager;
 use rmcp::transport::{StreamableHttpServerConfig, StreamableHttpService};
 
 pub fn create_mcp_service(
     db: Arc<Database>,
-) -> StreamableHttpService<TrailheadMcpServer, LocalSessionManager> {
-    let session_manager = Arc::new(LocalSessionManager::default());
+) -> StreamableHttpService<TrailheadMcpServer, NeverSessionManager> {
     StreamableHttpService::new(
         {
             let db = db.clone();
             move || Ok(TrailheadMcpServer::new(db.clone()))
         },
-        session_manager,
-        StreamableHttpServerConfig::default().disable_allowed_hosts(),
+        NeverSessionManager::default().into(),
+        StreamableHttpServerConfig::default()
+            .with_stateful_mode(false)
+            .disable_allowed_hosts(),
     )
 }

@@ -245,7 +245,10 @@ async fn run_stage(
 
     let messages = adapter.get_messages(&session_id).await?;
     let last_assistant = messages.iter().rev().find(|m| {
-        m.get("role").and_then(|r| r.as_str()) == Some("assistant")
+        m.get("info")
+            .and_then(|i| i.get("role"))
+            .and_then(|r| r.as_str())
+            == Some("assistant")
     });
 
     let output: serde_json::Value = match last_assistant {

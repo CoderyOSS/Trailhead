@@ -56,7 +56,7 @@ pub struct WorkflowNameParams {
 pub struct SubmitResultParams {
     pub job_id: String,
     pub stage: String,
-    pub output: serde_json::Value,
+    pub output: String,
 }
 
 impl TrailheadMcpServer {
@@ -221,7 +221,7 @@ impl TrailheadMcpServer {
     pub async fn submit_result(&self, Parameters(params): Parameters<SubmitResultParams>) -> String {
         match self.db.get_job(&params.job_id) {
             Ok(Some(_job)) => {
-                let result_json = params.output.to_string();
+                let result_json = params.output;
                 match self.db.complete_job(&params.job_id, &result_json) {
                     Ok(()) => serde_json::json!({
                         "status": "submitted",

@@ -260,6 +260,6 @@ pub fn create_mcp_service(
             move || Ok(TrailheadMcpServer::new(db.clone()))
         },
         session_manager,
-        StreamableHttpServerConfig::default(),
+        StreamableHttpServerConfig::default().disable_allowed_hosts(),
     )
 }

@@ -1,9 +1,11 @@
 name: refactor
 description: "Code refactoring workflow"
+branch: main
 
 stages:
   plan:
     skill: plan
+    commits: allowed
     prompt: "Plan refactoring for: {{input}}"
     response_schema:
       type: object
@@ -18,6 +20,7 @@ stages:
 
   implement:
     skill: implement
+    commits: required
     prompt: "Refactor: {{input}}"
     response_schema:
       type: object

@@ -38,6 +38,14 @@ if [ -n "$TRAILHEAD_URL" ]; then
     sed -i "s|\"TRAILHEAD_URL/mcp/sse\"|\"$TRAILHEAD_URL/mcp/sse\"|g" "$OUTPUT"
 fi
 
+if [ "$GIT_COMMIT_POLICY" = "prohibited" ]; then
+    sed -i "s|\"GIT_COMMIT_PERMISSION\"|\"deny\"|g" "$OUTPUT"
+    echo "trailhead-worker: git commits prohibited" >&2
+else
+    sed -i "s|\"GIT_COMMIT_PERMISSION\"|\"allow\"|g" "$OUTPUT"
+    echo "trailhead-worker: git commits allowed" >&2
+fi
+
 echo "trailhead-worker: starting opencode serve on port 8080" >&2
 
 exec opencode serve --port 8080 --hostname 0.0.0.0

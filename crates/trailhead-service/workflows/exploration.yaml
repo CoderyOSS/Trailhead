@@ -1,9 +1,11 @@
 name: exploration
 description: "Code exploration and analysis"
+branch: main
 
 stages:
   explore:
     skill: plan
+    commits: allowed
     prompt: "Explore and analyze: {{input}}"
     response_schema:
       type: object

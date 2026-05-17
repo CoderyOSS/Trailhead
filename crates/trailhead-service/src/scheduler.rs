@@ -5,11 +5,12 @@ use anyhow::Context;
 use tokio::time::{interval, Duration};
 use tracing::{error, info, warn};
 use crate::config::TrailheadConfig;
-use crate::db::Database;
+use crate::db::{Database, CheckpointParams};
 use crate::provider::{WorkerProvider, WorkerSpec};
-use crate::worker::adapter::OpencodeAdapter;
+use crate::worker::adapter::{OpencodeAdapter, PermissionRule};
 use crate::worker::permission::PermissionPolicy;
 use crate::workflow;
+use crate::workflow::{CommitInfo, CommitPolicy};
 use crate::workflow::resolver;
 
 pub struct SchedulerConfig {
@@ -79,6 +80,22 @@ impl Scheduler {
         }
     }
 
+    pub async fn shutdown(&self) -> anyhow::Result<()> {
+        info!("scheduler shutdown: destroying all workers");
+        match self.provider.list_workers().await {
+            Ok(workers) => {
+                for w in &workers {
+                    if let Err(e) = self.provider.destroy_worker(&w.id).await {
+                        warn!("shutdown: failed to destroy worker {}: {}", w.id, e);
+                    }
+                }
+                info!("shutdown: destroyed {} workers", workers.len());
+            }
+            Err(e) => warn!("shutdown: failed to list workers: {}", e),
+        }
+        Ok(())
+    }
+
     async fn tick(&self) -> anyhow::Result<()> {
         self.detect_timed_out_jobs().await?;
         self.schedule_queued_jobs().await?;
@@ -126,6 +143,34 @@ impl Scheduler {
             .ok_or_else(|| anyhow::anyhow!("workflow not found: {}", workflow_name))?;
         let wf = workflow::parser::parse_workflow(&workflow_row.content)?;
 
+        let workspace_path = PathBuf::from(format!("/opt/codery/workspaces/{}", job.project_id));
+
+        if let Err(e) = std::process::Command::new("git")
+            .args(["-C", &workspace_path.to_string_lossy(), "rev-parse", "--is-inside-work-tree"])
+            .output()
+        {
+            return Err(anyhow::anyhow!("workspace is not a git repo (or missing): {}", e));
+        }
+
+        let branch = &wf.branch;
+        let checkout = std::process::Command::new("git")
+            .args(["-C", &workspace_path.to_string_lossy(), "checkout", branch])
+            .output()
+            .context("git checkout")?;
+        if !checkout.status.success() {
+            let create_branch = std::process::Command::new("git")
+                .args(["-C", &workspace_path.to_string_lossy(), "checkout", "-b", branch])
+                .output()
+                .context("git checkout -b")?;
+            if !create_branch.status.success() {
+                let stderr = String::from_utf8_lossy(&create_branch.stderr);
+                return Err(anyhow::anyhow!("failed to checkout branch '{}': {}", branch, stderr));
+            }
+            info!("created new branch '{}' for job {}", branch, job.id);
+        } else {
+            info!("checked out branch '{}' for job {}", branch, job.id);
+        }
+
         let start_stage = job.current_stage.clone();
         let engine = workflow::Engine::new(wf, start_stage)?;
 
@@ -133,11 +178,16 @@ impl Scheduler {
             .ok_or_else(|| anyhow::anyhow!("no current stage"))?;
         let resolved = self.app_config.resolve_model(stage.model.as_deref())?;
 
+        let mut env = HashMap::new();
+        if stage.commits == CommitPolicy::Prohibited {
+            env.insert("GIT_COMMIT_POLICY".to_string(), "prohibited".to_string());
+        }
+
         let spec = WorkerSpec {
             job_id: job.id.clone(),
-            workspace_path: PathBuf::from(format!("/opt/codery/workspaces/{}", job.project_id)),
+            workspace_path: workspace_path.clone(),
             worker_image: "opencode-worker:latest".to_string(),
-            env: HashMap::new(),
+            env,
             llm_provider: resolved.provider_id.clone(),
             llm_model: format!("{}/{}", resolved.provider_id, resolved.model_id),
             llm_base_url: resolved.base_url.clone(),
@@ -157,12 +207,25 @@ impl Scheduler {
         let description = job.description.clone();
         let db = self.db.clone();
         let container_id = handle.id.clone();
+        let provider = self.provider.clone();
 
         let provider_id = resolved.provider_id.clone();
         let model_id = resolved.model_id.clone();
         tokio::spawn(async move {
-            if let Err(e) = run_stage(adapter, engine, &job_id, &description, db.clone(), container_id.clone(), &provider_id, &model_id).await {
+            if let Err(e) = run_stage(
+                adapter,
+                engine,
+                &job_id,
+                &description,
+                db.clone(),
+                container_id.clone(),
+                provider.clone(),
+                workspace_path.clone(),
+                &provider_id,
+                &model_id,
+            ).await {
                 error!("stage execution failed for job {}: {}", job_id, e);
+                let _ = provider.destroy_worker(&container_id).await;
                 let _ = db.fail_job(&job_id, &format!("stage failed: {}", e), "failed_retryable");
             }
         });
@@ -179,6 +242,9 @@ impl Scheduler {
                     let elapsed = (now - start_time.to_utc()).num_seconds() as u64;
                     if elapsed > self.config.job_timeout_secs {
                         warn!("job {} timed out ({}s)", job.id, elapsed);
+                        if let Some(ref worker_id) = job.worker_id {
+                            let _ = self.provider.destroy_worker(worker_id).await;
+                        }
                         if job.attempt < job.max_attempts {
                             self.db.fail_job(&job.id, "job timeout", "failed_retryable")?;
                         } else {
@@ -193,6 +259,80 @@ impl Scheduler {
     }
 }
 
+fn git_head_sha(workspace: &std::path::Path) -> Option<String> {
+    std::process::Command::new("git")
+        .args(["-C", &workspace.to_string_lossy(), "rev-parse", "HEAD"])
+        .output()
+        .ok()
+        .and_then(|o| {
+            if o.status.success() {
+                Some(String::from_utf8_lossy(&o.stdout).trim().to_string())
+            } else {
+                None
+            }
+        })
+}
+
+fn git_commit_count_since(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result<usize> {
+    let output = std::process::Command::new("git")
+        .args(["-C", &workspace.to_string_lossy(), "rev-list", "--count", &format!("{}..HEAD", pre_sha)])
+        .output()
+        .context("git rev-list --count")?;
+    if !output.status.success() {
+        let stdout = String::from_utf8_lossy(&output.stderr);
+        warn!("git rev-list failed for {}..HEAD: {}", pre_sha, stdout);
+        return Ok(0);
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.trim().parse::<usize>().unwrap_or(0))
+}
+
+fn git_commit_list(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result<Vec<CommitInfo>> {
+    let output = std::process::Command::new("git")
+        .args(["-C", &workspace.to_string_lossy(), "log", "--format=%H|||%h|||%s", &format!("{}..HEAD", pre_sha)])
+        .output()
+        .context("git log")?;
+    if !output.status.success() {
+        return Ok(vec![]);
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    let commits: Vec<CommitInfo> = stdout
+        .lines()
+        .filter(|line| !line.is_empty())
+        .filter_map(|line| {
+            let parts: Vec<&str> = line.split("|||").collect();
+            if parts.len() >= 3 {
+                Some(CommitInfo {
+                    sha: parts[0].to_string(),
+                    short_hash: parts[1].to_string(),
+                    message: parts[2].chars().take(72).collect(),
+                })
+            } else {
+                None
+            }
+        })
+        .collect();
+    Ok(commits)
+}
+
+fn git_changed_files(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result<Vec<String>> {
+    let output = std::process::Command::new("git")
+        .args(["-C", &workspace.to_string_lossy(), "diff", "--name-only", &format!("{}..HEAD", pre_sha)])
+        .output()
+        .context("git diff --name-only")?;
+    if !output.status.success() {
+        return Ok(vec![]);
+    }
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    Ok(stdout.lines().filter(|l| !l.is_empty()).map(|l| l.to_string()).collect())
+}
+
+fn git_deny_rules() -> Vec<PermissionRule> {
+    vec![
+        PermissionRule { permission: "bash".to_string(), pattern: "git\\s+(commit|add)".to_string(), action: "deny".to_string() },
+    ]
+}
+
 #[allow(clippy::too_many_arguments)]
 async fn run_stage(
     adapter: OpencodeAdapter,
@@ -201,9 +341,14 @@ async fn run_stage(
     description: &str,
     db: Arc<Database>,
     container_id: String,
+    provider: Arc<dyn WorkerProvider>,
+    workspace_path: PathBuf,
     provider_id: &str,
     model_id: &str,
 ) -> anyhow::Result<()> {
+    let pre_sha = git_head_sha(&workspace_path);
+    info!("stage pre-sha for job {}: {:?}", job_id, pre_sha);
+
     let mut retries = 0u32;
     loop {
         let ready = adapter.create_session(
@@ -222,20 +367,31 @@ async fn run_stage(
         retries += 1;
     }
 
-    let _ = &container_id;
+    let stage = engine.current_stage_def().ok_or_else(|| anyhow::anyhow!("no current stage"))?;
+    let commit_policy = stage.commits.clone();
+    let stage_name = engine.current_stage.clone();
 
     let project = resolver::ProjectVars {
         name: String::new(),
         repo: String::new(),
         branch: String::new(),
     };
-    let prompt = engine.resolve_stage_prompt(description, &project, &HashMap::new())?;
+    let mut prompt = engine.resolve_stage_prompt(description, &project, &HashMap::new())?;
+
+    let is_phase1_prohibited = commit_policy == CommitPolicy::Prohibited || commit_policy == CommitPolicy::Required;
+
+    let permission_rules = if is_phase1_prohibited {
+        prompt.push_str("\n\nCRITICAL RULE: Do NOT create any git commits during this stage. Do not use git add or git commit.");
+        git_deny_rules()
+    } else {
+        vec![]
+    };
 
     let session_id = adapter.create_session(
-        &format!("trailhead-{}-{}", job_id, engine.current_stage),
+        &format!("trailhead-{}-{}", job_id, stage_name),
         provider_id,
         model_id,
-        vec![],
+        permission_rules,
     ).await?;
 
     adapter.send_prompt(&session_id, &prompt).await?;
@@ -265,7 +421,118 @@ async fn run_stage(
         None => serde_json::json!({"error": "no assistant response"}),
     };
 
-    let result = engine.process_response(output)?;
+    let _phase2_commit_sha = if commit_policy == CommitPolicy::Required {
+        let commit_session_id = adapter.create_session(
+            &format!("trailhead-{}-{}-commit", job_id, stage_name),
+            provider_id,
+            model_id,
+            vec![],
+        ).await?;
+
+        let commit_prompt = "Now create exactly one git commit with all the changes you made during this stage.\n\
+            Use git add to stage the changes, then git commit with a descriptive message.\n\n\
+            After the commit is created, call submit_result with this output:\n\
+            { \"commit_sha\": \"the full commit SHA\", \"status\": \"committed\" }\n\n\
+            Do NOT make any other changes. Only stage and commit existing changes.";
+
+        adapter.send_prompt(&commit_session_id, commit_prompt).await?;
+
+        match tokio::time::timeout(
+            tokio::time::Duration::from_secs(120),
+            adapter.wait_for_idle(&commit_session_id, &policy),
+        ).await {
+            Ok(Ok(())) => {
+                let commit_messages = adapter.get_messages(&commit_session_id).await?;
+                let commit_output = commit_messages.iter().rev().find(|m| {
+                    m.get("info")
+                        .and_then(|i| i.get("role"))
+                        .and_then(|r| r.as_str())
+                        == Some("assistant")
+                });
+                commit_output
+                    .and_then(|msg| msg.get("parts").and_then(|p| p.as_array()))
+                    .and_then(|parts| parts.iter().find(|p| p.get("type").and_then(|t| t.as_str()) == Some("text")))
+                    .and_then(|p| p.get("text").and_then(|t| t.as_str()))
+                    .and_then(|text| {
+                        serde_json::from_str::<serde_json::Value>(text).ok()
+                            .and_then(|v| v.get("commit_sha").and_then(|s| s.as_str().map(|s| s.to_string())))
+                    })
+            }
+            Ok(Err(e)) => {
+                warn!("commit phase failed for job {}: {}", job_id, e);
+                None
+            }
+            Err(_) => {
+                warn!("commit phase timed out for job {}", job_id);
+                None
+            }
+        }
+    } else {
+        None
+    };
+
+    if commit_policy == CommitPolicy::Required {
+        if let Some(ref pre) = pre_sha {
+            let commit_count = git_commit_count_since(&workspace_path, pre).unwrap_or(0);
+            if commit_count == 0 {
+                return Err(anyhow::anyhow!("commits required but no commit was created"));
+            }
+        } else {
+            return Err(anyhow::anyhow!("commits required but pre-stage SHA not available"));
+        }
+    } else if commit_policy == CommitPolicy::Prohibited {
+        if let Some(ref pre) = pre_sha {
+            let commit_count = git_commit_count_since(&workspace_path, pre).unwrap_or(0);
+            if commit_count > 0 {
+                return Err(anyhow::anyhow!("commits prohibited but {} unauthorized commit(s) detected", commit_count));
+            }
+        }
+    }
+
+    let commits = if let Some(ref pre) = pre_sha {
+        git_commit_list(&workspace_path, pre).unwrap_or_default()
+    } else {
+        vec![]
+    };
+
+    let changed_files = if let Some(ref pre) = pre_sha {
+        git_changed_files(&workspace_path, pre).unwrap_or_default()
+    } else {
+        vec![]
+    };
+
+    let shas_json = serde_json::to_string(&commits.iter().map(|c| &c.sha).collect::<Vec<_>>())?;
+    let messages_json = serde_json::to_string(&commits.iter().map(|c| format!("{} {}", c.short_hash, c.message)).collect::<Vec<_>>())?;
+    let files_json = serde_json::to_string(&changed_files)?;
+
+    if commit_policy == CommitPolicy::Prohibited {
+        let _ = db.save_checkpoint(&CheckpointParams {
+            job_id: job_id.to_string(),
+            stage: stage_name.clone(),
+            response: serde_json::to_string(&output)?,
+            session_path: session_id.clone(),
+            git_shas: String::new(),
+            commit_messages: String::new(),
+            token_usage: None,
+            files_changed: files_json,
+        });
+    } else {
+        let _ = db.save_checkpoint(&CheckpointParams {
+            job_id: job_id.to_string(),
+            stage: stage_name.clone(),
+            response: serde_json::to_string(&output)?,
+            session_path: session_id.clone(),
+            git_shas: shas_json,
+            commit_messages: messages_json,
+            token_usage: None,
+            files_changed: files_json,
+        });
+    }
+
+    let result = engine.process_response_with_commits(output, commits)?;
+
+    provider.destroy_worker(&container_id).await?;
+    info!("destroyed worker {} for job {}", container_id, job_id);
 
     match result {
         workflow::AdvanceResult::Finished => {

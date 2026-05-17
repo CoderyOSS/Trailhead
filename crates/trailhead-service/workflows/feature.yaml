@@ -1,9 +1,11 @@
 name: feature
 description: "Implement a feature from spec"
+branch: main
 
 stages:
   plan:
     skill: plan
+    commits: allowed
     prompt: |
       Create an implementation plan for: {{input}}
       Project: {{project.repo}} ({{project.branch}})

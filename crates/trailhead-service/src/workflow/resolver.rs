@@ -21,6 +21,7 @@ pub struct ProjectVars {
 #[derive(Debug, Clone, Serialize)]
 pub struct StageOutput {
     pub output: String,
+    pub commits: Vec<crate::workflow::CommitInfo>,
     pub changed_files: Vec<String>,
 }
 
@@ -72,6 +73,7 @@ mod tests {
             "plan".into(),
             StageOutput {
                 output: "do thing".into(),
+                commits: vec![],
                 changed_files: vec![],
             },
         );
@@ -96,6 +98,7 @@ mod tests {
             "plan".into(),
             StageOutput {
                 output: "{\"plan\": \"do it\"}".into(),
+                commits: vec![],
                 changed_files: vec![],
             },
         );

@@ -62,6 +62,18 @@ pub struct CheckpointRow {
     pub created_at: String,
 }
 
+#[derive(Debug, Clone)]
+pub struct CheckpointParams {
+    pub job_id: String,
+    pub stage: String,
+    pub response: String,
+    pub session_path: String,
+    pub git_shas: String,
+    pub commit_messages: String,
+    pub token_usage: Option<String>,
+    pub files_changed: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct WorkflowRow {
     pub name: String,
@@ -509,6 +521,27 @@ impl Database {
         Ok(())
     }
 
+    pub fn save_checkpoint(&self, params: &CheckpointParams) -> Result<()> {
+        let id = uuid::Uuid::new_v4().to_string();
+        let now = Utc::now().to_rfc3339();
+        match &self.backend {
+            Backend::Local(_) => {
+                let conn = self.local_conn()?;
+                conn.execute(
+                    "INSERT INTO checkpoints (id, job_id, stage, response, session_path, git_sha, commit_message, token_usage, files_changed, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                    params![id, params.job_id, params.stage, params.response, params.session_path, params.git_shas, params.commit_messages, params.token_usage, params.files_changed, now],
+                )?;
+            }
+            Backend::Remote { .. } => {
+                self.remote_exec(
+                    "INSERT INTO checkpoints (id, job_id, stage, response, session_path, git_sha, commit_message, token_usage, files_changed, created_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)",
+                    vec![serde_json::json!(id), serde_json::json!(params.job_id), serde_json::json!(params.stage), serde_json::json!(params.response), serde_json::json!(params.session_path), serde_json::json!(params.git_shas), serde_json::json!(params.commit_messages), serde_json::json!(params.token_usage), serde_json::json!(params.files_changed), serde_json::json!(now)],
+                )?;
+            }
+        }
+        Ok(())
+    }
+
     pub fn create_worker(&self, id: &str, job_id: &str, provider: &str) -> Result<()> {
         let now = Utc::now().to_rfc3339();
         match &self.backend {
@@ -826,4 +859,5 @@ CREATE INDEX IF NOT EXISTS idx_checkpoints_job ON checkpoints(job_id);
 
 const MIGRATIONS: &str = r#"
 ALTER TABLE workflows ADD COLUMN content_hash TEXT;
+ALTER TABLE checkpoints ADD COLUMN commit_message TEXT DEFAULT '';
 "#;

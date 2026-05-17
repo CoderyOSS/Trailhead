@@ -12,6 +12,8 @@ pub mod worker;
 
 use std::sync::Arc;
 
+use crate::provider::WorkerProvider;
+
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
     tracing_subscriber::fmt()
@@ -102,19 +104,48 @@ async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
     db.seed_builtin_workflows(std::path::Path::new("/opt/codery/trailhead/workflows"))?;
     let _ = std::fs::create_dir_all("/opt/codery/secrets");
     let provider = Arc::new(provider::docker::DockerProvider::new()?);
+
+    tracing::info!("cleaning up orphaned worker containers from previous runs");
+    match provider.list_workers().await {
+        Ok(workers) => {
+            for w in &workers {
+                if w.id.starts_with("trailhead-worker-") {
+                    if let Err(e) = provider.destroy_worker(&w.id).await {
+                        tracing::warn!("failed to destroy orphaned worker {}: {}", w.id, e);
+                    } else {
+                        tracing::info!("destroyed orphaned worker {}", w.id);
+                    }
+                }
+            }
+        }
+        Err(e) => tracing::warn!("failed to list workers for orphan cleanup: {}", e),
+    }
+
     let app_config = Arc::new(app_config);
 
     let sched_db = db.clone();
     let sched_provider = provider.clone();
     let sched_config = app_config.clone();
+    let sched = Arc::new(scheduler::Scheduler::new(
+        sched_db,
+        sched_provider.clone(),
+        scheduler::SchedulerConfig::default(),
+        sched_config,
+    ));
+
+    let sched_clone = sched.clone();
     let sched_handle = tokio::spawn(async move {
-        let sched = scheduler::Scheduler::new(
-            sched_db,
-            sched_provider,
-            scheduler::SchedulerConfig::default(),
-            sched_config,
-        );
-        sched.run().await;
+        sched_clone.run().await;
+    });
+
+    let sched_shutdown = sched.clone();
+    tokio::spawn(async move {
+        tokio::signal::ctrl_c().await.ok();
+        tracing::info!("received SIGINT, shutting down scheduler");
+        if let Err(e) = sched_shutdown.shutdown().await {
+            tracing::error!("scheduler shutdown error: {}", e);
+        }
+        std::process::exit(0);
     });
 
     let api_router = api::api_routes(db.clone(), app_config.clone());

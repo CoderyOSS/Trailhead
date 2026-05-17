@@ -2,7 +2,7 @@ pub mod parser;
 pub mod resolver;
 pub mod router;
 
-pub use parser::{Stage, Workflow};
+pub use parser::{CommitPolicy, Stage, Workflow};
 
 use anyhow::{anyhow, Result};
 use resolver::{TemplateVars, StageOutput, resolve_prompt, resolve_input};
@@ -10,9 +10,17 @@ use router::evaluate_routes;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, serde::Serialize)]
+pub struct CommitInfo {
+    pub sha: String,
+    pub short_hash: String,
+    pub message: String,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
 pub struct StageResult {
     pub stage_name: String,
     pub response: serde_json::Value,
+    pub commits: Vec<CommitInfo>,
     pub changed_files: Vec<String>,
 }
 
@@ -69,18 +77,28 @@ impl Engine {
     }
 
     pub fn process_response(&mut self, response: serde_json::Value) -> Result<AdvanceResult> {
+        self.process_response_with_commits(response, vec![])
+    }
+
+    pub fn process_response_with_commits(
+        &mut self,
+        response: serde_json::Value,
+        commits: Vec<CommitInfo>,
+    ) -> Result<AdvanceResult> {
         let stage = self.current_stage_def().ok_or_else(|| anyhow!("no current stage"))?;
         let routes = stage.routes.clone();
         self.stage_outputs.insert(
             self.current_stage.clone(),
             StageOutput {
                 output: serde_json::to_string_pretty(&response)?,
+                commits: commits.clone(),
                 changed_files: Vec::new(),
             },
         );
         self.stage_history.push(StageResult {
             stage_name: self.current_stage.clone(),
             response: response.clone(),
+            commits,
             changed_files: Vec::new(),
         });
         let routes = match routes {

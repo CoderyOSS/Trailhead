@@ -150,9 +150,10 @@ impl Scheduler {
 
         self.db.update_job_status(&job.id, "running")?;
 
-        let adapter = OpencodeAdapter::new(
-            format!("http://{}:8080", handle.id),
-        );
+        let worker_addr = handle.ip_address
+            .map(|ip| format!("{}:8080", ip))
+            .unwrap_or_else(|| format!("{}:8080", handle.id));
+        let adapter = OpencodeAdapter::new(format!("http://{}", worker_addr));
         let job_id = job.id.clone();
         let description = job.description.clone();
         let db = self.db.clone();

@@ -9,7 +9,7 @@ afterAll(() => {
 
 beforeEach(async () => {
   await p.sql.clear({ all: true });
-  await p.sql.put({ file: "fixtures/seed.yaml" });
+  await p.sql.fixture({ file: "fixtures/seed.yaml" });
 });
 
 export const test = (name: string, fn: () => Promise<void> | void) => {
@@ -30,7 +30,7 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
 export async function seedProject(): Promise<string> {
   const id = uniqueId();
   const now = new Date().toISOString();
-  await p.sql.put({
+  await p.sql.fixture({
     table: "projects",
     rows: [{
       id,
@@ -70,7 +70,7 @@ export async function createWorker(jobId: string): Promise<string> {
 export async function createJobWithStatus(projectId: string, description: string, status: string, workflow?: string): Promise<string> {
   const id = uniqueId();
   const now = new Date().toISOString();
-  await p.sql.put({
+  await p.sql.fixture({
     table: "jobs",
     rows: [{
       id,

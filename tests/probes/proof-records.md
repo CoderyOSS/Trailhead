@@ -1,8 +1,8 @@
 # Trailhead E2E Test Suite
 
-**Date:** 2026-05-16T17:41:39.712Z
-**Events:** 101
-**Duration:** 3182ms
+**Date:** 2026-05-19T19:18:58.776Z
+**Events:** 182
+**Duration:** 3157ms
 
 ---
 
@@ -10,13 +10,305 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.576 | Send | sql.clear | `all tables` |
-| 2 | 17:41:39.593 | Send | sql.put | `2 rows` |
-| 3 | 17:41:39.614 | Send | sql.clear | `all tables` |
-| 4 | 17:41:39.619 | Send | sql.put | `2 rows` |
-| 5 | 17:41:39.692 | Send | sql.put | `1 rows` |
-| 6 | 17:41:39.692 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299691-0og84d","description":"Hello world test"}` |
-| 7 | 17:41:39.693 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:55.620 | Recv | sql:unknown | `{"changes":"batch"}` |
+| 2 | 19:18:58.635 | Recv | sql:sqlite_master | `[{"name":"projects"},{"name":"jobs"},{"name":"workers"},{"name":"checkpoints"},{"name":"prompt_history"},{"name":"workflows"}]` |
+| 3 | 19:18:58.636 | Recv | sql:projects | `{"changes":"batch"}` |
+| 4 | 19:18:58.638 | Recv | sql:jobs | `{"changes":"batch"}` |
+| 5 | 19:18:58.639 | Recv | sql:workers | `{"changes":"batch"}` |
+| 6 | 19:18:58.640 | Recv | sql:checkpoints | `{"changes":"batch"}` |
+| 7 | 19:18:58.641 | Recv | sql:prompt_history | `{"changes":"batch"}` |
+| 8 | 19:18:58.642 | Recv | sql:workflows | `{"changes":"batch"}` |
+| 9 | 19:18:58.642 | Send | sql.clear | `all tables` |
+| 10 | 19:18:58.658 | Recv | sql:sqlite_master | `{"name":"workflows"}` |
+| 11 | 19:18:58.659 | Recv | sql:workflows | `{"changes":1,"lastInsertRowid":1}` |
+| 12 | 19:18:58.659 | Recv | sql:workflows | `{"changes":1,"lastInsertRowid":2}` |
+| 13 | 19:18:58.661 | Send | sql.fixture | `2 rows` |
+| 14 | 19:18:58.671 | Recv | sql:sqlite_master | `[{"name":"projects"},{"name":"jobs"},{"name":"workers"},{"name":"checkpoints"},{"name":"prompt_history"},{"name":"workflows"}]` |
+| 15 | 19:18:58.672 | Recv | sql:projects | `{"changes":"batch"}` |
+| 16 | 19:18:58.674 | Recv | sql:jobs | `{"changes":"batch"}` |
+| 17 | 19:18:58.675 | Recv | sql:workers | `{"changes":"batch"}` |
+| 18 | 19:18:58.676 | Recv | sql:checkpoints | `{"changes":"batch"}` |
+| 19 | 19:18:58.677 | Recv | sql:prompt_history | `{"changes":"batch"}` |
+| 20 | 19:18:58.678 | Recv | sql:workflows | `{"changes":"batch"}` |
+| 21 | 19:18:58.678 | Send | sql.clear | `all tables` |
+| 22 | 19:18:58.686 | Recv | sql:sqlite_master | `{"name":"workflows"}` |
+| 23 | 19:18:58.686 | Recv | sql:workflows | `{"changes":1,"lastInsertRowid":1}` |
+| 24 | 19:18:58.686 | Recv | sql:workflows | `{"changes":1,"lastInsertRowid":2}` |
+| 25 | 19:18:58.687 | Send | sql.fixture | `2 rows` |
+| 26 | 19:18:58.752 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 27 | 19:18:58.752 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":17}` |
+| 28 | 19:18:58.753 | Send | sql.fixture | `1 rows` |
+| 29 | 19:18:58.753 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338752-1e5qhr","description":"Hello world test"}` |
+| 30 | 19:18:58.753 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:unknown</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:sqlite_master</summary>
+
+```json
+[
+  {
+    "name": "projects"
+  },
+  {
+    "name": "jobs"
+  },
+  {
+    "name": "workers"
+  },
+  {
+    "name": "checkpoints"
+  },
+  {
+    "name": "prompt_history"
+  },
+  {
+    "name": "workflows"
+  }
+]
+```
+
+</details>
+
+<details><summary>3. Recv sql:projects</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>4. Recv sql:jobs</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>5. Recv sql:workers</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>6. Recv sql:checkpoints</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>7. Recv sql:prompt_history</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>8. Recv sql:workflows</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>10. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "workflows"
+}
+```
+
+</details>
+
+<details><summary>11. Recv sql:workflows</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 1
+}
+```
+
+</details>
+
+<details><summary>12. Recv sql:workflows</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 2
+}
+```
+
+</details>
+
+<details><summary>14. Recv sql:sqlite_master</summary>
+
+```json
+[
+  {
+    "name": "projects"
+  },
+  {
+    "name": "jobs"
+  },
+  {
+    "name": "workers"
+  },
+  {
+    "name": "checkpoints"
+  },
+  {
+    "name": "prompt_history"
+  },
+  {
+    "name": "workflows"
+  }
+]
+```
+
+</details>
+
+<details><summary>15. Recv sql:projects</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>16. Recv sql:jobs</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>17. Recv sql:workers</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>18. Recv sql:checkpoints</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>19. Recv sql:prompt_history</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>20. Recv sql:workflows</summary>
+
+```json
+{
+  "changes": "batch"
+}
+```
+
+</details>
+
+<details><summary>22. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "workflows"
+}
+```
+
+</details>
+
+<details><summary>23. Recv sql:workflows</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 1
+}
+```
+
+</details>
+
+<details><summary>24. Recv sql:workflows</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 2
+}
+```
+
+</details>
+
+<details><summary>26. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>27. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 17
+}
+```
+
+</details>
 
 ---
 
@@ -24,9 +316,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.596 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.597 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299594-ckmjk4","description":"Job 1"}` |
-| 3 | 17:41:39.602 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.662 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.662 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":1}` |
+| 3 | 19:18:58.663 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.664 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338662-xebrvj","description":"Job 1"}` |
+| 5 | 19:18:58.670 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 1
+}
+```
+
+</details>
 
 ---
 
@@ -34,8 +349,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.619 | Send | http.send | `GET /api/v1/workers` |
-| 2 | 17:41:39.621 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.688 | Send | http.send | `GET /api/v1/workers` |
+| 2 | 19:18:58.689 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -43,9 +358,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.634 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.634 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299632-vd096z","description":"Dashboard test job"}` |
-| 3 | 17:41:39.634 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.694 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.694 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":1}` |
+| 3 | 19:18:58.695 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.695 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338694-vp0egd","description":"Dashboard test job"}` |
+| 5 | 19:18:58.696 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 1
+}
+```
+
+</details>
 
 ---
 
@@ -53,9 +391,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.637 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.637 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299635-sq83np","description":"Detail test"}` |
-| 3 | 17:41:39.639 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.696 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.696 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":2}` |
+| 3 | 19:18:58.698 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.698 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338696-y6miym","description":"Detail test"}` |
+| 5 | 19:18:58.698 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 2
+}
+```
+
+</details>
 
 ---
 
@@ -63,9 +424,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.642 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.642 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299640-dkzy2t","description":"Worker list test"}` |
-| 3 | 17:41:39.642 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.698 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.699 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":3}` |
+| 3 | 19:18:58.700 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.700 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338698-ylsvss","description":"Worker list test"}` |
+| 5 | 19:18:58.700 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 3
+}
+```
+
+</details>
 
 ---
 
@@ -73,9 +457,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.645 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.645 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299643-32ieq9","description":"Cancel via dashboard"}` |
-| 3 | 17:41:39.645 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.701 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.701 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":4}` |
+| 3 | 19:18:58.702 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.702 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338700-cpexdm","description":"Cancel via dashboard"}` |
+| 5 | 19:18:58.702 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 4
+}
+```
+
+</details>
 
 ---
 
@@ -83,12 +490,58 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.649 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.649 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299647-jyj2xt","description":"State machine test"}` |
-| 3 | 17:41:39.650 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
-| 4 | 17:41:39.701 | Send | sql.put | `1 rows` |
-| 5 | 17:41:39.701 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299700-jsewge","description":"Start at first stage"}` |
-| 6 | 17:41:39.701 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.704 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.705 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":5}` |
+| 3 | 19:18:58.706 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.706 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338703-9ikk5l","description":"State machine test"}` |
+| 5 | 19:18:58.710 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 6 | 19:18:58.764 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 7 | 19:18:58.764 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":19}` |
+| 8 | 19:18:58.765 | Send | sql.fixture | `1 rows` |
+| 9 | 19:18:58.765 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338764-9nwoiw","description":"Start at first stage"}` |
+| 10 | 19:18:58.766 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 5
+}
+```
+
+</details>
+
+<details><summary>6. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>7. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 19
+}
+```
+
+</details>
 
 ---
 
@@ -96,10 +549,56 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.652 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.654 | Send | sql.put | `1 rows` |
-| 3 | 17:41:39.654 | Send | http.send | `POST /api/v1/jobs/test-1778953299652-cfr845/pause` |
-| 4 | 17:41:39.655 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.711 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.711 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":6}` |
+| 3 | 19:18:58.712 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.712 | Recv | sql:sqlite_master | `{"name":"jobs"}` |
+| 5 | 19:18:58.713 | Recv | sql:jobs | `{"changes":1,"lastInsertRowid":1}` |
+| 6 | 19:18:58.714 | Send | sql.fixture | `1 rows` |
+| 7 | 19:18:58.714 | Send | http.send | `POST /api/v1/jobs/test-1779218338712-ege7ts/pause` |
+| 8 | 19:18:58.714 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 6
+}
+```
+
+</details>
+
+<details><summary>4. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "jobs"
+}
+```
+
+</details>
+
+<details><summary>5. Recv sql:jobs</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 1
+}
+```
+
+</details>
 
 ---
 
@@ -107,10 +606,56 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.658 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.659 | Send | sql.put | `1 rows` |
-| 3 | 17:41:39.659 | Send | http.send | `POST /api/v1/jobs/test-1778953299658-phzlys/resume` |
-| 4 | 17:41:39.660 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.715 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.715 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":7}` |
+| 3 | 19:18:58.716 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.716 | Recv | sql:sqlite_master | `{"name":"jobs"}` |
+| 5 | 19:18:58.716 | Recv | sql:jobs | `{"changes":1,"lastInsertRowid":2}` |
+| 6 | 19:18:58.718 | Send | sql.fixture | `1 rows` |
+| 7 | 19:18:58.718 | Send | http.send | `POST /api/v1/jobs/test-1779218338716-72colh/resume` |
+| 8 | 19:18:58.718 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 7
+}
+```
+
+</details>
+
+<details><summary>4. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "jobs"
+}
+```
+
+</details>
+
+<details><summary>5. Recv sql:jobs</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 2
+}
+```
+
+</details>
 
 ---
 
@@ -118,9 +663,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.662 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.662 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299660-a7cig4","description":"Cancel queued"}` |
-| 3 | 17:41:39.663 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.718 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.719 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":8}` |
+| 3 | 19:18:58.720 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.720 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338718-sx235n","description":"Cancel queued"}` |
+| 5 | 19:18:58.720 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 8
+}
+```
+
+</details>
 
 ---
 
@@ -128,10 +696,56 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.664 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.667 | Send | sql.put | `1 rows` |
-| 3 | 17:41:39.667 | Send | http.send | `POST /api/v1/jobs/test-1778953299665-scj2wt/cancel` |
-| 4 | 17:41:39.667 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.721 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.721 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":9}` |
+| 3 | 19:18:58.722 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.722 | Recv | sql:sqlite_master | `{"name":"jobs"}` |
+| 5 | 19:18:58.722 | Recv | sql:jobs | `{"changes":1,"lastInsertRowid":3}` |
+| 6 | 19:18:58.726 | Send | sql.fixture | `1 rows` |
+| 7 | 19:18:58.726 | Send | http.send | `POST /api/v1/jobs/test-1779218338722-rihbxo/cancel` |
+| 8 | 19:18:58.726 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 9
+}
+```
+
+</details>
+
+<details><summary>4. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "jobs"
+}
+```
+
+</details>
+
+<details><summary>5. Recv sql:jobs</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 3
+}
+```
+
+</details>
 
 ---
 
@@ -139,10 +753,56 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.670 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.673 | Send | sql.put | `1 rows` |
-| 3 | 17:41:39.673 | Send | http.send | `POST /api/v1/jobs/test-1778953299670-bj1kcj/resume` |
-| 4 | 17:41:39.677 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.726 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.727 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":10}` |
+| 3 | 19:18:58.728 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.728 | Recv | sql:sqlite_master | `{"name":"jobs"}` |
+| 5 | 19:18:58.728 | Recv | sql:jobs | `{"changes":1,"lastInsertRowid":4}` |
+| 6 | 19:18:58.729 | Send | sql.fixture | `1 rows` |
+| 7 | 19:18:58.729 | Send | http.send | `POST /api/v1/jobs/test-1779218338728-4rwhzq/resume` |
+| 8 | 19:18:58.731 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 10
+}
+```
+
+</details>
+
+<details><summary>4. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "jobs"
+}
+```
+
+</details>
+
+<details><summary>5. Recv sql:jobs</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 4
+}
+```
+
+</details>
 
 ---
 
@@ -150,9 +810,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.680 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.680 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299678-orth1z","description":"Worker create test"}` |
-| 3 | 17:41:39.681 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.735 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.735 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":11}` |
+| 3 | 19:18:58.736 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.736 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338735-g49gbm","description":"Worker create test"}` |
+| 5 | 19:18:58.737 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 11
+}
+```
+
+</details>
 
 ---
 
@@ -160,9 +843,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.682 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.682 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299681-w57sg4","description":"Config test"}` |
-| 3 | 17:41:39.683 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.737 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.737 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":12}` |
+| 3 | 19:18:58.739 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.739 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338737-zsp0ry","description":"Config test"}` |
+| 5 | 19:18:58.739 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 12
+}
+```
+
+</details>
 
 ---
 
@@ -170,9 +876,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.684 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.684 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299683-01ihm5","description":"Skill test"}` |
-| 3 | 17:41:39.684 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.740 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.740 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":13}` |
+| 3 | 19:18:58.742 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.742 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338740-7w9zyc","description":"Skill test"}` |
+| 5 | 19:18:58.742 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 13
+}
+```
+
+</details>
 
 ---
 
@@ -180,9 +909,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.687 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.687 | Send | http.send | `GET /api/v1/projects` |
-| 3 | 17:41:39.687 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.743 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.743 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":14}` |
+| 3 | 19:18:58.744 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.744 | Send | http.send | `GET /api/v1/projects` |
+| 5 | 19:18:58.745 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 14
+}
+```
+
+</details>
 
 ---
 
@@ -190,9 +942,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.688 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.689 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299688-fzz12f","description":"DB test job"}` |
-| 3 | 17:41:39.689 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.745 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.745 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":15}` |
+| 3 | 19:18:58.746 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.746 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338745-scrabh","description":"DB test job"}` |
+| 5 | 19:18:58.748 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 15
+}
+```
+
+</details>
 
 ---
 
@@ -200,9 +975,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.690 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.690 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299689-nsgta5","description":"Worker DB test"}` |
-| 3 | 17:41:39.690 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.749 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.749 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":16}` |
+| 3 | 19:18:58.750 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.750 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338749-2ti0au","description":"Worker DB test"}` |
+| 5 | 19:18:58.750 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 16
+}
+```
+
+</details>
 
 ---
 
@@ -210,9 +1008,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.695 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.695 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299693-jb67d5","description":"Full lifecycle test"}` |
-| 3 | 17:41:39.695 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.755 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.755 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":18}` |
+| 3 | 19:18:58.758 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.758 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338755-exfq6f","description":"Full lifecycle test"}` |
+| 5 | 19:18:58.758 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 18
+}
+```
+
+</details>
 
 ---
 
@@ -220,8 +1041,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.696 | Send | http.send | `GET /api/v1/jobs` |
-| 2 | 17:41:39.696 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.759 | Send | http.send | `GET /api/v1/jobs` |
+| 2 | 19:18:58.759 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -229,8 +1050,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.696 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: test\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash]\n routes: null\n"}` |
-| 2 | 17:41:39.696 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.759 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: test\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash]\n routes: null\n"}` |
+| 2 | 19:18:58.759 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -238,8 +1059,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.696 | Send | http.send | `POST /api/v1/workflows/validate {"content":"name: bad\nstages: {}\n"}` |
-| 2 | 17:41:39.696 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.759 | Send | http.send | `POST /api/v1/workflows/validate {"content":"name: bad\nstages: {}\n"}` |
+| 2 | 19:18:58.759 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -247,8 +1068,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.697 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: numeric-route\ndescription: \"Numeric routing\"\nstages:\n check:\n skill: plan\n prompt: \"Check\"\n tools: [bash]\n max_tokens: 8000\n routes:\...` |
-| 2 | 17:41:39.697 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.761 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: numeric-route\ndescription: \"Numeric routing\"\nstages:\n check:\n skill: plan\n prompt: \"Check\"\n tools: [bash]\n max_tokens: 8000\n routes:\...` |
+| 2 | 19:18:58.761 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -256,8 +1077,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.698 | Send | http.send | `POST /api/v1/workflows/validate {"content":"name: bad\nstages: {}\n"}` |
-| 2 | 17:41:39.698 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.761 | Send | http.send | `POST /api/v1/workflows/validate {"content":"name: bad\nstages: {}\n"}` |
+| 2 | 19:18:58.761 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -265,8 +1086,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.699 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: simple\ndescription: \"Simple workflow\"\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash, read]\n max_tokens: 8000\n ...` |
-| 2 | 17:41:39.699 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.762 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: simple\ndescription: \"Simple workflow\"\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash, read]\n max_tokens: 8000\n ...` |
+| 2 | 19:18:58.762 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -274,8 +1095,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.699 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: empty\ndescription: \"No stages\"\nstages: {}\n"}` |
-| 2 | 17:41:39.699 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.762 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: empty\ndescription: \"No stages\"\nstages: {}\n"}` |
+| 2 | 19:18:58.763 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -283,8 +1104,8 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.699 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: minimal\ndescription: \"One stage\"\nstages:\n work:\n prompt: \"Do it\"\n tools: [bash]\n max_tokens: 4000\n routes: null\n"}` |
-| 2 | 17:41:39.699 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.763 | Send | http.send | `POST /api/v1/workflows/validate {"content":"\nname: minimal\ndescription: \"One stage\"\nstages:\n work:\n prompt: \"Do it\"\n tools: [bash]\n max_tokens: 4000\n routes: null\n"}` |
+| 2 | 19:18:58.763 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
 
 ---
 
@@ -292,9 +1113,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.703 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.703 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299702-2q7hq6","description":"Workflow job","workflow":"feature"}` |
-| 3 | 17:41:39.703 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.766 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.766 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":20}` |
+| 3 | 19:18:58.767 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.767 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338766-vc6giy","description":"Workflow job","workflow":"feature"}` |
+| 5 | 19:18:58.767 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 20
+}
+```
+
+</details>
 
 ---
 
@@ -302,9 +1146,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.705 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.705 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299704-1552gb","description":"Add a hello world function","workflow":"simple"}` |
-| 3 | 17:41:39.705 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.768 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.768 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":21}` |
+| 3 | 19:18:58.771 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.771 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338768-ysy3yi","description":"Add a hello world function","workflow":"simple"}` |
+| 5 | 19:18:58.771 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 21
+}
+```
+
+</details>
 
 ---
 
@@ -312,9 +1179,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.706 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.706 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299705-2xbhc1","description":"Build feature X","workflow":"feature"}` |
-| 3 | 17:41:39.707 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.772 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.772 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":22}` |
+| 3 | 19:18:58.772 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.772 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338771-x0zmxq","description":"Build feature X","workflow":"feature"}` |
+| 5 | 19:18:58.773 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 22
+}
+```
+
+</details>
 
 ---
 
@@ -322,9 +1212,32 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.708 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.708 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299707-jywdim","description":"Plan the feature","workflow":"simple"}` |
-| 3 | 17:41:39.708 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.773 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 2 | 19:18:58.773 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":23}` |
+| 3 | 19:18:58.773 | Send | sql.fixture | `1 rows` |
+| 4 | 19:18:58.773 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338773-eglilj","description":"Plan the feature","workflow":"simple"}` |
+| 5 | 19:18:58.774 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 23
+}
+```
+
+</details>
 
 ---
 
@@ -332,9 +1245,61 @@
 
 | # | Time | Direction | Step | Detail |
 |---|------|-----------|------|--------|
-| 1 | 17:41:39.711 | Send | sql.put | `1 rows` |
-| 2 | 17:41:39.711 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1778953299710-oooedw","description":"Test","workflow":"simple"}` |
-| 3 | 17:41:39.712 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+| 1 | 19:18:58.774 | Recv | sql:sqlite_master | `{"name":"workflows"}` |
+| 2 | 19:18:58.774 | Recv | sql:workflows | `[{"name":"simple","content":"name: simple\ndescription: \"Simple two-stage workflow for testing\"\nstages:\n plan:\n skill: plan\n prompt: \"Plan: {{input}}\"\n tools: [bash, read, glob, grep]\n max_tokens: 8000\n routes:\n - when: 'response.complexity == \"simple\"'\n next: done\n - when: 'true'...` |
+| 3 | 19:18:58.775 | Recv | sql:sqlite_master | `{"name":"projects"}` |
+| 4 | 19:18:58.775 | Recv | sql:projects | `{"changes":1,"lastInsertRowid":24}` |
+| 5 | 19:18:58.775 | Send | sql.fixture | `1 rows` |
+| 6 | 19:18:58.775 | Send | http.send | `POST /api/v1/jobs {"project_id":"test-1779218338774-k7yk9l","description":"Test","workflow":"simple"}` |
+| 7 | 19:18:58.775 | Response | http response | `error: Unable to connect. Is the computer able to access the url?` |
+
+<details><summary>1. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "workflows"
+}
+```
+
+</details>
+
+<details><summary>2. Recv sql:workflows</summary>
+
+```json
+[
+  {
+    "name": "simple",
+    "content": "name: simple\ndescription: \"Simple two-stage workflow for testing\"\nstages:\n  plan:\n    skill: plan\n    prompt: \"Plan: {{input}}\"\n    tools: [bash, read, glob, grep]\n    max_tokens: 8000\n    routes:\n      - when: 'response.complexity == \"simple\"'\n        next: done\n      - when: 'true'\n        next: done\n  done:\n    skill: pause\n    prompt: \"Done\"\n    routes: null\n",
+    "source": "builtin",
+    "project_id": null,
+    "created_at": "2026-01-01T00:00:00Z",
+    "updated_at": "2026-01-01T00:00:00Z"
+  }
+]
+```
+
+</details>
+
+<details><summary>3. Recv sql:sqlite_master</summary>
+
+```json
+{
+  "name": "projects"
+}
+```
+
+</details>
+
+<details><summary>4. Recv sql:projects</summary>
+
+```json
+{
+  "changes": 1,
+  "lastInsertRowid": 24
+}
+```
+
+</details>
 
 ---
 

@@ -224,7 +224,40 @@ The deploy workflow should restart trailhead-service. If manual restart needed:
 **Purpose:** Verify end-to-end workflow execution after fixes.
 
 **Files:**
+- Modify: `/opt/codery/trailhead.service` (add WORKSPACE_BASE env var)
 - None (API test only)
+
+**Setup:** Dummy repo + bind mount approach avoids full git clones. Worker containers mount host directory directly at `/workspace`.
+
+- [ ] **Step 0: Create dummy workspace on host**
+
+```bash
+# On host (via SSH or docker exec)
+mkdir -p /opt/codery/workspaces/test-project
+cd /opt/codery/workspaces/test-project
+git init
+git config user.email "test@codery.dev"
+git config user.name "Test User"
+echo "# Test Workspace" > README.md
+git add README.md
+git commit -m "init"
+git branch -m main  # workflows use 'main' branch
+```
+
+Expected: Git repo created at `/opt/codery/workspaces/test-project`
+
+- [ ] **Step 0.5: Configure workspace base path**
+
+```bash
+# On host, update service config to use configurable workspace
+# Add to /etc/supervisor/conf.d/trailhead.conf or environment:
+environment=WORKSPACE_BASE="/opt/codery/workspaces"
+
+# Restart service
+sudo supervisorctl restart trailhead
+```
+
+Expected: Service starts with WORKSPACE_BASE configured
 
 - [ ] **Step 1: Create hello-world job**
 
@@ -234,7 +267,7 @@ export TRAILHEAD_URL="http://172.17.0.1:4050"
 curl -s -X POST "$TRAILHEAD_URL/api/v1/jobs" \
   -H "content-type: application/json" \
   -d '{
-    "project_id": "012f809a-6d05-40b7-bbcd-d92568c2fe72",
+    "project_id": "test-project",
     "description": "E2E verification test",
     "workflow": "hello-world"
   }' | jq -r '.id'

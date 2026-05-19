@@ -186,7 +186,7 @@ impl Scheduler {
         let spec = WorkerSpec {
             job_id: job.id.clone(),
             workspace_path: workspace_path.clone(),
-            worker_image: "opencode-worker:latest".to_string(),
+            worker_image: "ghcr.io/coderyoss/trailhead:worker-latest".to_string(),
             env,
             llm_provider: resolved.provider_id.clone(),
             llm_model: format!("{}/{}", resolved.provider_id, resolved.model_id),

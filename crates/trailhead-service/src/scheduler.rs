@@ -143,9 +143,13 @@ impl Scheduler {
             .ok_or_else(|| anyhow::anyhow!("workflow not found: {}", workflow_name))?;
         let wf = workflow::parser::parse_workflow(&workflow_row.content)?;
 
-        let workspace_base = std::env::var("WORKSPACE_BASE")
-            .unwrap_or_else(|_| "/opt/codery/workspaces".to_string());
-        let workspace_path = PathBuf::from(format!("{}/{}", workspace_base, job.project_id));
+        let workspace_path = if let Some(ref ws) = job.workspace_path {
+            PathBuf::from(ws)
+        } else {
+            let workspace_base = std::env::var("WORKSPACE_BASE")
+                .unwrap_or_else(|_| "/opt/codery/workspaces".to_string());
+            PathBuf::from(format!("{}/{}", workspace_base, job.project_id))
+        };
 
         if let Err(e) = std::process::Command::new("git")
             .args(["-C", &workspace_path.to_string_lossy(), "rev-parse", "--is-inside-work-tree"])

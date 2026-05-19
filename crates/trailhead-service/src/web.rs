@@ -21,6 +21,7 @@ struct CreateJobBody {
     description: String,
     workflow: Option<String>,
     branch: Option<String>,
+    workspace_path: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -68,7 +69,7 @@ async fn create_job(
     Json(body): Json<CreateJobBody>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let id = uuid::Uuid::new_v4().to_string();
-    db.create_job(&id, &body.project_id, &body.description, body.workflow.as_deref(), body.branch.as_deref())
+    db.create_job(&id, &body.project_id, &body.description, body.workflow.as_deref(), body.branch.as_deref(), body.workspace_path.as_deref())
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(serde_json::json!({"job_id": id})))
 }

@@ -24,29 +24,37 @@
 
 ---
 
-## Task 0: SSH to Host and Diagnose Docker
+## Task 0: Verify Worker Image Exists in Registry
 
-**Purpose:** Access the host where trailhead-service runs to diagnose why container creation fails.
+**Purpose:** Check if the worker image has been built and pushed to GHCR.
 
 **Files:** None (diagnostic commands only)
 
-- [ ] **Step 1: SSH to apps server and check Docker daemon**
+- [ ] **Step 1: Check if worker image exists in GHCR**
 
 ```bash
-ssh gem@apps
-docker ps
-docker info
+# From sandbox, check via API
+curl -sI "https://ghcr.io/v2/coderyoss/trailhead/manifests/worker-latest" | head -5
 ```
 
-Expected: Docker responds with version info. If "command not found" or "daemon not running", start Docker.
+Expected: `200 OK` if image exists. If `404`, need to trigger build (Task 1).
 
-- [ ] **Step 2: Check for opencode-worker image**
+- [ ] **Step 2: Check recent GitHub Actions runs**
 
 ```bash
-docker images | grep opencode
+# Via GitHub CLI or browser
+gh run list --workflow=build.yml --limit 5
+# Or visit: https://github.com/CoderyOSS/Trailhead/actions
 ```
 
-Expected: `opencode-worker` or `opencode-worker:latest` listed. If missing, image needs to be built (Task 1).
+Expected: Recent successful `build-worker-image` run. If failed or missing, trigger new run.
+
+- [ ] **Step 3: Note findings**
+
+Document:
+- Image exists in GHCR: yes/no
+- Last successful build: date/run-id
+- Any build errors from logs
 
 - [ ] **Step 3: Check network configuration**
 
@@ -81,149 +89,133 @@ Document:
 
 ---
 
-## Task 1: Build Worker Container Image
+## Task 1: Fix Worker Image Reference in Scheduler
 
-**Purpose:** If opencode-worker image is missing, build and tag it.
-
-**Files:**
-- Modify: `containers/worker/Dockerfile`
-- Modify: `containers/worker/entrypoint.sh`
-
-- [ ] **Step 1: Check Dockerfile from project**
-
-```bash
-cd /home/gem/projects/CoderyTrailhead
-cat containers/worker/Dockerfile
-```
-
-Expected content:
-```dockerfile
-FROM node:22-bookworm-slim
-RUN apt-get update && apt-get install -y --no-install-recommends git ripgrep && rm -rf /var/lib/apt/lists/*
-RUN npm install -g opencode-ai@latest
-WORKDIR /workspace
-COPY opencode.json.tmpl /etc/opencode/opencode.json.tmpl
-COPY AGENTS.md /etc/opencode/AGENTS.md
-COPY entrypoint.sh /usr/local/bin/entrypoint.sh
-RUN chmod +x /usr/local/bin/entrypoint.sh
-ENV OPENCODE_SERVER_PASSWORD=""
-ENV PORT=8080
-EXPOSE 8080
-ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]
-```
-
-- [ ] **Step 2: Check entrypoint.sh exists and is executable**
-
-```bash
-cat containers/worker/entrypoint.sh
-ls -l containers/worker/entrypoint.sh
-```
-
-Expected: executable script with `chmod +x` in Dockerfile.
-
-- [ ] **Step 3: Build the image**
-
-```bash
-cd /home/gem/projects/CoderyTrailhead
-docker build -t opencode-worker:latest -f containers/worker/Dockerfile .
-```
-
-Expected: Build completes successfully with image ID.
-
-- [ ] **Step 4: Verify image built**
-
-```bash
-docker images | grep opencode-worker
-```
-
-Expected: `opencode-worker latest <image-id> <size>`
-
-- [ ] **Step 5: Test container startup manually**
-
-```bash
-docker run --rm -e DEEPSEEK_API_KEY=sk-test -e LLM_BASE_URL=https://api.deepseek.com/v1 opencode-worker:latest &
-sleep 5
-docker ps
-```
-
-Expected: Container running, listening on port 8080. Clean up:
-
-```bash
-docker ps -q | xargs docker stop
-```
-
-- [ ] **Step 6: Commit image to registry (optional)**
-
-If using GHCR or another registry:
-
-```bash
-# Tag for registry
-docker tag opencode-worker:latest ghcr.io/coderyoss/opencode-worker:latest
-
-# Push (requires GH_TOKEN)
-echo $GH_TOKEN | docker login ghcr.io -u USERNAME --password-stdin
-docker push ghcr.io/coderyoss/opencode-worker:latest
-```
-
----
-
-## Task 2: Fix Worker Spec if Image Name Mismatch
-
-**Purpose:** Ensure scheduler uses correct image name when launching workers.
+**Purpose:** Update scheduler to use the GHCR image that the build workflow creates.
 
 **Files:**
 - Modify: `crates/trailhead-service/src/scheduler.rs`
 
-- [ ] **Step 1: Check current worker image reference**
+- [ ] **Step 1: Check current image reference**
 
 ```bash
-grep -n "worker_image\|opencode" crates/trailhead-service/src/scheduler.rs
+grep -A2 "worker_image" crates/trailhead-service/src/scheduler.rs
 ```
 
 Current code (line ~189):
 ```rust
+worker_image: "opencode-worker:latest".to_string(),
+```
+
+Problem: Build workflow creates `ghcr.io/coderyoss/trailhead:worker-latest`, not `opencode-worker:latest`.
+
+- [ ] **Step 2: Update to use GHCR image**
+
+Replace line ~189 in `crates/trailhead-service/src/scheduler.rs`:
+
+```rust
+worker_image: "ghcr.io/coderyoss/trailhead:worker-latest".to_string(),
+```
+
+Full context:
+```rust
 let spec = WorkerSpec {
     job_id: job.id.clone(),
     workspace_path: workspace_path.clone(),
-    worker_image: "opencode-worker:latest".to_string(),
-    // ...
+    worker_image: "ghcr.io/coderyoss/trailhead:worker-latest".to_string(),
+    env,
+    llm_provider: resolved.provider_id.clone(),
+    llm_model: format!("{}/{}", resolved.provider_id, resolved.model_id),
+    llm_base_url: resolved.base_url.clone(),
+    trailhead_url: "http://host.docker.internal:4050".to_string(),
 };
 ```
 
-- [ ] **Step 2: Verify image name matches built image**
+- [ ] **Step 3: Verify Docker registry auth is configured**
 
-If image built in Task 1 is `opencode-worker:latest`, no change needed.
-If using registry image, update to:
-
-```rust
-worker_image: "ghcr.io/coderyoss/opencode-worker:latest".to_string(),
-```
-
-- [ ] **Step 3: Rebuild trailhead-service if changed**
+The `build.yml` workflow uses `secrets.GITHUB_TOKEN` for auth. The Docker daemon on the host must be logged into GHCR. Check `deploy-trailhead.yml` for auth setup:
 
 ```bash
-cargo build --release -p trailhead-service
+grep -A5 "docker.*login" .github/workflows/deploy-trailhead.yml
 ```
 
-Expected: Build completes without errors.
+If not present, add to host setup:
+```bash
+# On host: echo $GH_CR_PAT | docker login ghcr.io -u USERNAME --password-stdin
+```
 
-- [ ] **Step 4: Deploy updated binary**
+- [ ] **Step 4: Commit the change**
 
 ```bash
-# If on apps server:
-sudo cp target/release/trailhead-service /opt/codery/trailhead/bin/current
-sudo supervisorctl restart trailhead
-# or
-sudo systemctl restart trailhead
+git add crates/trailhead-service/src/scheduler.rs
+git commit -m "fix(scheduler): use GHCR image for worker containers"
 ```
 
-- [ ] **Step 5: Verify service started**
+- [ ] **Step 5: Push to trigger build**
 
 ```bash
-curl -s http://localhost:4050/api/v1/jobs | head -c 100
+git push origin main
 ```
 
-Expected: JSON array of jobs returned.
+Expected: Triggers `build.yml` → `build-worker-image` job.
+
+---
+
+## Task 2: Trigger Worker Image Build
+
+**Purpose:** Ensure the worker image is built and available in GHCR.
+
+**Files:**
+- None (uses existing `.github/workflows/build.yml`)
+
+- [ ] **Step 1: Trigger the build workflow**
+
+If the workflow hasn't run automatically (last build was before scheduler change), trigger manually:
+
+```bash
+# Using GitHub CLI
+gh workflow run build.yml
+
+# Or via web UI: visit https://github.com/CoderyOSS/Trailhead/actions/workflows/build.yml
+```
+
+- [ ] **Step 2: Wait for build to complete**
+
+```bash
+# Watch the build
+gh run watch --interval 10
+
+# Or list recent runs
+gh run list --workflow=build.yml --limit 3
+```
+
+Expected: `build-worker-image` job completes successfully.
+
+- [ ] **Step 3: Verify image in registry**
+
+```bash
+# Check manifest exists
+curl -sI "https://ghcr.io/v2/coderyoss/trailhead/manifests/worker-latest" | grep "HTTP/"
+
+# Expected: 200 OK
+```
+
+- [ ] **Step 4: Wait for deploy workflow (if configured)**
+
+If `deploy-trailhead.yml` exists and deploys the binary, wait for it to complete:
+
+```bash
+gh run list --workflow=deploy-trailhead --limit 1
+```
+
+- [ ] **Step 5: Verify service restarted**
+
+The deploy workflow should restart trailhead-service. If manual restart needed:
+
+```bash
+# Via MCP tool if available, or SSH to host
+# On host: sudo supervisorctl restart trailhead
+```
 
 ---
 
@@ -237,7 +229,8 @@ Expected: JSON array of jobs returned.
 - [ ] **Step 1: Create hello-world job**
 
 ```bash
-export TRAILHEAD_URL="http://localhost:4050"
+# From sandbox container, service is on Docker host
+export TRAILHEAD_URL="http://172.17.0.1:4050"
 curl -s -X POST "$TRAILHEAD_URL/api/v1/jobs" \
   -H "content-type: application/json" \
   -d '{
@@ -267,13 +260,13 @@ done
 
 Expected: Status progresses: `queued` → `scheduled` → `running` → `completed`
 
-- [ ] **Step 3: Check worker container**
+- [ ] **Step 3: Check workers list**
 
 ```bash
-docker ps | grep trailhead-worker
+curl -s "$TRAILHEAD_URL/api/v1/workers"
 ```
 
-Expected: Container `trailhead-worker-<job-id>` running during execution.
+Expected: Worker entry appears during job execution, removed after completion.
 
 - [ ] **Step 4: Get final job result**
 
@@ -376,7 +369,7 @@ SQL
 - [ ] **Step 4: Run two-stage job**
 
 ```bash
-export TRAILHEAD_URL="http://localhost:4050"
+export TRAILHEAD_URL="http://172.17.0.1:4050"
 JOB_ID=$(curl -s -X POST "$TRAILHEAD_URL/api/v1/jobs" \
   -H "content-type: application/json" \
   -d '{
@@ -444,8 +437,9 @@ journalctl -u trailhead -n 50  # Check logs
 
 2. **Worker image missing:**
    ```bash
-   cd /home/gem/projects/CoderyTrailhead
-   docker build -t opencode-worker:latest -f containers/worker/Dockerfile .
+   # Trigger build workflow
+   gh workflow run build.yml
+   # Or check: https://github.com/CoderyOSS/Trailhead/actions
    ```
 
 3. **Network missing:**
@@ -456,13 +450,16 @@ journalctl -u trailhead -n 50  # Check logs
 ## Verify E2E
 
 ```bash
+# From sandbox container
+export TRAILHEAD_URL="http://172.17.0.1:4050"
+
 # Create test job
-curl -X POST "http://localhost:4050/api/v1/jobs" \
+curl -X POST "$TRAILHEAD_URL/api/v1/jobs" \
   -H "content-type: application/json" \
-  -d '{"project_id": "...", "description": "test", "workflow": "hello-world"}'
+  -d '{"project_id": "012f809a-6d05-40b7-bbcd-d92568c2fe72", "description": "test", "workflow": "hello-world"}'
 
 # Monitor status
-curl "http://localhost:4050/api/v1/jobs/{id}"
+curl "$TRAILHEAD_URL/api/v1/jobs/{id}"
 ```
 EOF
 ```

@@ -20,6 +20,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     max_attempts    INTEGER NOT NULL DEFAULT 3,
     result          TEXT,
     error           TEXT,
+    workspace_path  TEXT,
     created_at      TEXT NOT NULL,
     updated_at      TEXT NOT NULL,
     started_at      TEXT,

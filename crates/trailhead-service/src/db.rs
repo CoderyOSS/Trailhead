@@ -29,6 +29,7 @@ pub struct JobRow {
     pub max_attempts: i32,
     pub result: Option<String>,
     pub error: Option<String>,
+    pub workspace_path: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     pub started_at: Option<String>,
@@ -246,20 +247,21 @@ impl Database {
         description: &str,
         workflow_name: Option<&str>,
         branch: Option<&str>,
+        workspace_path: Option<&str>,
     ) -> Result<()> {
         let now = Utc::now().to_rfc3339();
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 conn.execute(
-                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7)",
-                    params![id, project_id, description, workflow_name, branch, now, now],
+                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, workspace_path, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7, ?8)",
+                    params![id, project_id, description, workflow_name, branch, workspace_path, now, now],
                 )?;
             }
             Backend::Remote { .. } => {
                 self.remote_exec(
-                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7)",
-                    vec![serde_json::json!(id), serde_json::json!(project_id), serde_json::json!(description), serde_json::json!(workflow_name), serde_json::json!(branch), serde_json::json!(now), serde_json::json!(now)],
+                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, workspace_path, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7, ?8)",
+                    vec![serde_json::json!(id), serde_json::json!(project_id), serde_json::json!(description), serde_json::json!(workflow_name), serde_json::json!(branch), serde_json::json!(workspace_path), serde_json::json!(now), serde_json::json!(now)],
                 )?;
             }
         }
@@ -271,7 +273,7 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 let row = conn.query_row(
-                    "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, created_at, updated_at, started_at, finished_at FROM jobs WHERE id = ?1",
+                    "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE id = ?1",
                     params![id],
                     |row| {
                         Ok(JobRow {
@@ -288,10 +290,11 @@ impl Database {
                             max_attempts: row.get(10)?,
                             result: row.get(11)?,
                             error: row.get(12)?,
-                            created_at: row.get(13)?,
-                            updated_at: row.get(14)?,
-                            started_at: row.get(15)?,
-                            finished_at: row.get(16)?,
+                            workspace_path: row.get(13)?,
+                            created_at: row.get(14)?,
+                            updated_at: row.get(15)?,
+                            started_at: row.get(16)?,
+                            finished_at: row.get(17)?,
                         })
                     },
                 );
@@ -311,7 +314,7 @@ impl Database {
     }
 
     pub fn list_jobs(&self) -> Result<Vec<JobRow>> {
-        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, created_at, updated_at, started_at, finished_at FROM jobs ORDER BY created_at";
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs ORDER BY created_at";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -331,10 +334,11 @@ impl Database {
                         max_attempts: row.get(10)?,
                         result: row.get(11)?,
                         error: row.get(12)?,
-                        created_at: row.get(13)?,
-                        updated_at: row.get(14)?,
-                        started_at: row.get(15)?,
-                        finished_at: row.get(16)?,
+                        workspace_path: row.get(13)?,
+                        created_at: row.get(14)?,
+                        updated_at: row.get(15)?,
+                        started_at: row.get(16)?,
+                        finished_at: row.get(17)?,
                     })
                 })?;
                 let mut result = Vec::new();
@@ -408,7 +412,7 @@ impl Database {
     }
 
     pub fn get_queued_jobs(&self) -> Result<Vec<JobRow>> {
-        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, created_at, updated_at, started_at, finished_at FROM jobs WHERE status = 'queued' ORDER BY created_at ASC";
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status = 'queued' ORDER BY created_at ASC";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -428,10 +432,11 @@ impl Database {
                         max_attempts: row.get(10)?,
                         result: row.get(11)?,
                         error: row.get(12)?,
-                        created_at: row.get(13)?,
-                        updated_at: row.get(14)?,
-                        started_at: row.get(15)?,
-                        finished_at: row.get(16)?,
+                        workspace_path: row.get(13)?,
+                        created_at: row.get(14)?,
+                        updated_at: row.get(15)?,
+                        started_at: row.get(16)?,
+                        finished_at: row.get(17)?,
                     })
                 })?;
                 let mut result = Vec::new();
@@ -445,7 +450,7 @@ impl Database {
     }
 
     pub fn get_active_jobs(&self) -> Result<Vec<JobRow>> {
-        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, created_at, updated_at, started_at, finished_at FROM jobs WHERE status IN ('scheduled', 'provisioning', 'running', 'checkpointing')";
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status IN ('scheduled', 'provisioning', 'running', 'checkpointing')";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -465,10 +470,11 @@ impl Database {
                         max_attempts: row.get(10)?,
                         result: row.get(11)?,
                         error: row.get(12)?,
-                        created_at: row.get(13)?,
-                        updated_at: row.get(14)?,
-                        started_at: row.get(15)?,
-                        finished_at: row.get(16)?,
+                        workspace_path: row.get(13)?,
+                        created_at: row.get(14)?,
+                        updated_at: row.get(15)?,
+                        started_at: row.get(16)?,
+                        finished_at: row.get(17)?,
                     })
                 })?;
                 let mut result = Vec::new();
@@ -798,6 +804,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     max_attempts    INTEGER NOT NULL DEFAULT 3,
     result          TEXT,
     error           TEXT,
+    workspace_path  TEXT,
     created_at      TEXT NOT NULL,
     updated_at      TEXT NOT NULL,
     started_at      TEXT,

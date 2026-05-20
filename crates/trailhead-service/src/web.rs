@@ -40,6 +40,12 @@ struct ValidateWorkflowBody {
     content: String,
 }
 
+#[derive(Deserialize)]
+struct CreateWorkflowBody {
+    name: String,
+    content: String,
+}
+
 pub fn web_routes(db: Arc<Database>) -> Router {
     Router::new()
         .route("/api/v1/jobs", get(list_jobs).post(create_job))
@@ -50,6 +56,7 @@ pub fn web_routes(db: Arc<Database>) -> Router {
         .route("/api/v1/jobs/{id}/attach", post(attach_job))
         .route("/api/v1/workers", get(list_workers))
         .route("/api/v1/projects", get(list_projects).post(create_project))
+        .route("/api/v1/workflows", post(create_workflow))
         .route("/api/v1/workflows/validate", post(validate_workflow))
         .route("/api/v1/events", get(events_sse))
         .fallback(serve_spa)
@@ -200,6 +207,15 @@ async fn validate_workflow(
             "error": e.to_string()
         }))),
     }
+}
+
+async fn create_workflow(
+    State(db): State<Arc<Database>>,
+    Json(body): Json<CreateWorkflowBody>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    db.save_workflow(&body.name, &body.content, "", "api", None)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(StatusCode::CREATED)
 }
 
 async fn events_sse() -> Sse<impl futures_util::Stream<Item = Result<Event, Infallible>>> {

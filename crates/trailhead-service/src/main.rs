@@ -323,7 +323,7 @@ async fn projects_cmd(args: &[String]) -> anyhow::Result<()> {
         "list" => {
             let projects = db.list_projects()?;
             for p in &projects {
-                println!("{} {} branch={}", p.id, p.repo_url, p.branch);
+                println!("{} [{}] {} branch={}", p.id, p.name, p.repo_url, p.branch);
             }
             println!("({} projects)", projects.len());
         }
@@ -331,8 +331,9 @@ async fn projects_cmd(args: &[String]) -> anyhow::Result<()> {
             let name = get_flag(args, "--name")?;
             let repo = get_flag(args, "--repo")?;
             let branch = get_flag(args, "--branch").unwrap_or_else(|_| "main".into());
-            db.create_project(&name, &repo, &branch)?;
-            println!("added project {}", name);
+            let id = uuid::Uuid::new_v4().to_string();
+            db.create_project(&id, &name, &repo, &branch)?;
+            println!("added project {} ({})", name, id);
         }
         _ => {
             eprintln!("unknown projects subcommand: {}", args[0]);

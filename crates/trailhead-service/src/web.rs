@@ -26,6 +26,7 @@ struct CreateJobBody {
 
 #[derive(Deserialize)]
 struct CreateProjectBody {
+    name: String,
     repo_url: String,
     branch: Option<String>,
 }
@@ -196,7 +197,7 @@ async fn create_project(
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let id = uuid::Uuid::new_v4().to_string();
     let branch = body.branch.as_deref().unwrap_or("main");
-    db.create_project(&id, &body.repo_url, branch)
+    db.create_project(&id, &body.name, &body.repo_url, branch)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(serde_json::json!({"project_id": id})))
 }

@@ -9,6 +9,7 @@ use tokio::sync::watch;
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectRow {
     pub id: String,
+    pub name: String,
     pub repo_url: String,
     pub branch: String,
     pub created_at: String,
@@ -171,20 +172,20 @@ impl Database {
         }
     }
 
-    pub fn create_project(&self, id: &str, repo_url: &str, branch: &str) -> Result<()> {
+    pub fn create_project(&self, id: &str, name: &str, repo_url: &str, branch: &str) -> Result<()> {
         let now = Utc::now().to_rfc3339();
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 conn.execute(
-                    "INSERT INTO projects (id, repo_url, branch, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-                    params![id, repo_url, branch, now, now],
+                    "INSERT INTO projects (id, name, repo_url, branch, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                    params![id, name, repo_url, branch, now, now],
                 )?;
             }
             Backend::Remote { .. } => {
                 self.remote_exec(
-                    "INSERT INTO projects (id, repo_url, branch, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
-                    vec![serde_json::json!(id), serde_json::json!(repo_url), serde_json::json!(branch), serde_json::json!(now), serde_json::json!(now)],
+                    "INSERT INTO projects (id, name, repo_url, branch, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6)",
+                    vec![serde_json::json!(id), serde_json::json!(name), serde_json::json!(repo_url), serde_json::json!(branch), serde_json::json!(now), serde_json::json!(now)],
                 )?;
             }
         }
@@ -196,15 +197,16 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 let mut stmt = conn.prepare(
-                    "SELECT id, repo_url, branch, created_at, updated_at FROM projects WHERE id = ?1",
+                    "SELECT id, name, repo_url, branch, created_at, updated_at FROM projects WHERE id = ?1",
                 )?;
                 let row = stmt.query_row(params![id], |row| {
                     Ok(ProjectRow {
                         id: row.get(0)?,
-                        repo_url: row.get(1)?,
-                        branch: row.get(2)?,
-                        created_at: row.get(3)?,
-                        updated_at: row.get(4)?,
+                        name: row.get(1)?,
+                        repo_url: row.get(2)?,
+                        branch: row.get(3)?,
+                        created_at: row.get(4)?,
+                        updated_at: row.get(5)?,
                     })
                 });
                 match row {
@@ -215,7 +217,7 @@ impl Database {
             }
             Backend::Remote { .. } => {
                 self.remote_query_one(
-                    "SELECT id, repo_url, branch, created_at, updated_at FROM projects WHERE id = ?1",
+                    "SELECT id, name, repo_url, branch, created_at, updated_at FROM projects WHERE id = ?1",
                     vec![serde_json::json!(id)],
                 )
             }
@@ -227,15 +229,16 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 let mut stmt = conn.prepare(
-                    "SELECT id, repo_url, branch, created_at, updated_at FROM projects ORDER BY created_at",
+                    "SELECT id, name, repo_url, branch, created_at, updated_at FROM projects ORDER BY created_at",
                 )?;
                 let rows = stmt.query_map([], |row| {
                     Ok(ProjectRow {
                         id: row.get(0)?,
-                        repo_url: row.get(1)?,
-                        branch: row.get(2)?,
-                        created_at: row.get(3)?,
-                        updated_at: row.get(4)?,
+                        name: row.get(1)?,
+                        repo_url: row.get(2)?,
+                        branch: row.get(3)?,
+                        created_at: row.get(4)?,
+                        updated_at: row.get(5)?,
                     })
                 })?;
                 let mut result = Vec::new();
@@ -246,7 +249,7 @@ impl Database {
             }
             Backend::Remote { .. } => {
                 self.remote_query(
-                    "SELECT id, repo_url, branch, created_at, updated_at FROM projects ORDER BY created_at",
+                    "SELECT id, name, repo_url, branch, created_at, updated_at FROM projects ORDER BY created_at",
                     vec![],
                 )
             }
@@ -798,6 +801,7 @@ impl Database {
 const SCHEMA: &str = r#"
 CREATE TABLE IF NOT EXISTS projects (
     id          TEXT PRIMARY KEY,
+    name        TEXT NOT NULL,
     repo_url    TEXT NOT NULL,
     branch      TEXT NOT NULL DEFAULT 'main',
     created_at  TEXT NOT NULL,
@@ -883,6 +887,7 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE checkpoints ADD COLUMN commit_message TEXT DEFAULT ''",
     "ALTER TABLE jobs ADD COLUMN workspace_path TEXT",
     "ALTER TABLE workers ADD COLUMN workspace_path TEXT",
+    "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''",
 ];
 
 #[cfg(test)]
@@ -898,7 +903,7 @@ mod tests {
         let mut rx = db.job_notify_receiver();
 
         let project_id = "test-project";
-        db.create_project(project_id, "https://github.com/test/repo", "main").unwrap();
+        db.create_project(project_id, "Test Project", "https://github.com/test/repo", "main").unwrap();
 
         let job_id = "test-job-123";
         tokio::spawn(async move {
@@ -918,7 +923,7 @@ mod tests {
         let mut rx2 = db.job_notify_receiver();
 
         let project_id = "test-project-2";
-        db.create_project(project_id, "https://github.com/test/repo2", "main").unwrap();
+        db.create_project(project_id, "Test Project 2", "https://github.com/test/repo2", "main").unwrap();
 
         db.create_job("job-1", project_id, "test", None, None, None).unwrap();
 
@@ -934,7 +939,7 @@ mod tests {
         let db = Database::open(temp_file.path().to_str().unwrap()).unwrap();
 
         let project_id = "test-project-3";
-        db.create_project(project_id, "https://github.com/test/repo3", "main").unwrap();
+        db.create_project(project_id, "Test Project 3", "https://github.com/test/repo3", "main").unwrap();
 
         let job_id = "job-456";
         db.create_job(job_id, project_id, "test description", Some("feature"), Some("dev"), None)

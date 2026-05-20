@@ -207,7 +207,7 @@ impl TrailheadMcpServer {
     pub async fn projects_add(&self, Parameters(params): Parameters<AddProjectParams>) -> String {
         let id = uuid::Uuid::new_v4().to_string();
         let branch = params.branch.as_deref().unwrap_or("main");
-        match self.db.create_project(&id, &params.repo, branch) {
+        match self.db.create_project(&id, &params.name, &params.repo, branch) {
             Ok(()) => serde_json::json!({"project_id": id, "name": params.name}).to_string(),
             Err(e) => format!("error: {e}"),
         }

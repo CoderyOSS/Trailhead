@@ -208,6 +208,7 @@ async fn jobs_cmd(args: &[String]) -> anyhow::Result<()> {
                 &description,
                 workflow.as_deref(),
                 branch.as_deref(),
+                None,
             )?;
             println!("{}", id);
         }

@@ -8,7 +8,7 @@ Trailhead Service = AI workflow orchestration. Runs multi-stage LLM workflows ac
 
 ```
 Trailhead (Rust, runs on host)
-├── Scheduler  : polls jobs, spawns workers via Docker
+├── Scheduler  : event-driven job scheduling, spawns workers via Docker
 ├── Database   : SQLite (jobs, workflows, workers, checkpoints)
 ├── MCP Server : exposes tools for IDE integration
 └── Web API    : REST endpoints for external control
@@ -77,6 +77,7 @@ stages:
 
 ```
 GET  /api/v1/jobs              - list jobs
+GET  /api/v1/version           - get service version
 POST /api/v1/jobs              - create job {project_id, description, workflow?, branch?, workspace_path?}
 GET  /api/v1/jobs/{id}         - job details
 POST /api/v1/jobs/{id}/pause   - pause job
@@ -247,7 +248,7 @@ crates/trailhead-service/
 ├── src/
 │   ├── main.rs       - CLI entry point, daemon setup
 │   ├── db.rs         - SQLite schema, migrations
-│   ├── scheduler.rs  - Job polling, worker spawning
+│   ├── scheduler.rs  - Event-driven job scheduling, worker spawning
 │   ├── provider/     - Worker provider abstraction
 │   │   └── docker.rs - Docker provider
 │   ├── workflow/     - YAML parsing

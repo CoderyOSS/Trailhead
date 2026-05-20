@@ -4,6 +4,21 @@
 
 Trailhead Service = AI workflow orchestration. Runs multi-stage LLM workflows across ephemeral worker containers. Workers code on USER projects, not Trailhead itself.
 
+## Agent Environment Setup
+
+**Critical:** Trailhead runs on the **host machine**, not inside this container. Access via:
+- MCP: `trailhead` server at `http://host.docker.internal:4050/mcp/sse`
+- API: `http://host.docker.internal:4050/api/v1/*`
+
+**MCP Tools Available:**
+- `jobs_create` - Create job {project_id, description, workflow?}
+- `jobs_list` - List all jobs
+- `workflows_list` - List available workflows
+- `projects_list` - List projects
+- `workers_list` - List active workers
+
+**Event-Driven Scheduling (v0.1.0+):** Jobs launch **instantly** on creation via `tokio::sync::watch` channel. No 30s polling delay.
+
 ## Architecture
 
 ```

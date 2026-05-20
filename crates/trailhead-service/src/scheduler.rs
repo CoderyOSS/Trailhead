@@ -18,7 +18,6 @@ pub struct SchedulerConfig {
     pub max_workers_per_project: usize,
     pub job_timeout_secs: u64,
     pub max_retries: u32,
-    pub interval_secs: u64,
 }
 
 impl Default for SchedulerConfig {
@@ -40,10 +39,6 @@ impl Default for SchedulerConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(3),
-            interval_secs: std::env::var("SCHEDULER_INTERVAL_SECS")
-                .ok()
-                .and_then(|v| v.parse().ok())
-                .unwrap_or(30),
         }
     }
 }
@@ -102,12 +97,6 @@ impl Scheduler {
             }
             Err(e) => warn!("shutdown: failed to list workers: {}", e),
         }
-        Ok(())
-    }
-
-    async fn tick(&self) -> anyhow::Result<()> {
-        self.detect_timed_out_jobs().await?;
-        self.schedule_queued_jobs().await?;
         Ok(())
     }
 

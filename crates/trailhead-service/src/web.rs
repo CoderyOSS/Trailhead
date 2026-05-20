@@ -56,7 +56,7 @@ pub fn web_routes(db: Arc<Database>) -> Router {
         .route("/api/v1/jobs/{id}/attach", post(attach_job))
         .route("/api/v1/workers", get(list_workers))
         .route("/api/v1/projects", get(list_projects).post(create_project))
-        .route("/api/v1/workflows", post(create_workflow))
+        .route("/api/v1/workflows", get(list_workflows).post(create_workflow))
         .route("/api/v1/workflows/validate", post(validate_workflow))
         .route("/api/v1/events", get(events_sse))
         .fallback(serve_spa)
@@ -170,6 +170,14 @@ async fn list_workers(
     State(db): State<Arc<Database>>,
 ) -> Result<Json<Vec<crate::db::WorkerRow>>, (StatusCode, String)> {
     db.list_workers()
+        .map(Json)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
+}
+
+async fn list_workflows(
+    State(db): State<Arc<Database>>,
+) -> Result<Json<Vec<crate::db::WorkflowRow>>, (StatusCode, String)> {
+    db.list_workflows()
         .map(Json)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))
 }

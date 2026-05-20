@@ -109,7 +109,9 @@ impl Database {
             let conn = rusqlite::Connection::open(path)?;
             conn.execute_batch("PRAGMA journal_mode=WAL; PRAGMA foreign_keys=ON; PRAGMA busy_timeout=5000;")?;
             conn.execute_batch(SCHEMA)?;
-            let _ = conn.execute_batch(MIGRATIONS);
+            for migration in MIGRATIONS {
+                let _ = conn.execute(migration, []);
+            }
             Ok(Self {
                 backend: Backend::Local(Mutex::new(conn)),
             })
@@ -864,9 +866,9 @@ CREATE INDEX IF NOT EXISTS idx_workers_job ON workers(job_id);
 CREATE INDEX IF NOT EXISTS idx_checkpoints_job ON checkpoints(job_id);
 "#;
 
-const MIGRATIONS: &str = r#"
-ALTER TABLE workflows ADD COLUMN content_hash TEXT;
-ALTER TABLE checkpoints ADD COLUMN commit_message TEXT DEFAULT '';
-ALTER TABLE jobs ADD COLUMN workspace_path TEXT;
-ALTER TABLE workers ADD COLUMN workspace_path TEXT;
-"#;
+const MIGRATIONS: &[&str] = &[
+    "ALTER TABLE workflows ADD COLUMN content_hash TEXT",
+    "ALTER TABLE checkpoints ADD COLUMN commit_message TEXT DEFAULT ''",
+    "ALTER TABLE jobs ADD COLUMN workspace_path TEXT",
+    "ALTER TABLE workers ADD COLUMN workspace_path TEXT",
+];

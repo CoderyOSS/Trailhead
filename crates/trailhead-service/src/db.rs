@@ -3,7 +3,8 @@ use chrono::Utc;
 use rusqlite::params;
 use serde::de::DeserializeOwned;
 use serde::{Deserialize, Serialize};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
+use tokio::sync::watch;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ProjectRow {
@@ -95,13 +96,18 @@ enum Backend {
 #[derive(Debug)]
 pub struct Database {
     backend: Backend,
+    job_notifier: Arc<watch::Sender<()>>,
 }
 
 impl Database {
     pub fn open(path: &str) -> Result<Self> {
+        let (tx, _) = watch::channel(());
+        let job_notifier = Arc::new(tx);
+
         if path.starts_with("http://") || path.starts_with("https://") {
             let db = Self {
                 backend: Backend::Remote { url: path.to_string() },
+                job_notifier,
             };
             db.remote_batch(SCHEMA)?;
             Ok(db)
@@ -114,8 +120,13 @@ impl Database {
             }
             Ok(Self {
                 backend: Backend::Local(Mutex::new(conn)),
+                job_notifier,
             })
         }
+    }
+
+    pub fn job_notify_receiver(&self) -> watch::Receiver<()> {
+        self.job_notifier.subscribe()
     }
 
     fn remote_url(&self) -> Result<&str> {
@@ -267,6 +278,7 @@ impl Database {
                 )?;
             }
         }
+        let _ = self.job_notifier.send(());
         Ok(())
     }
 
@@ -872,3 +884,68 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE jobs ADD COLUMN workspace_path TEXT",
     "ALTER TABLE workers ADD COLUMN workspace_path TEXT",
 ];
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use tempfile::NamedTempFile;
+    use tokio::time::{timeout, Duration};
+
+    #[tokio::test]
+    async fn test_job_create_sends_notification() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let db = Arc::new(Database::open(temp_file.path().to_str().unwrap()).unwrap());
+        let mut rx = db.job_notify_receiver();
+
+        let project_id = "test-project";
+        db.create_project(project_id, "https://github.com/test/repo", "main").unwrap();
+
+        let job_id = "test-job-123";
+        tokio::spawn(async move {
+            tokio::time::sleep(Duration::from_millis(100)).await;
+            db.create_job(job_id, project_id, "test job", None, None, None).unwrap();
+        });
+
+        let notified = timeout(Duration::from_secs(1), rx.changed()).await;
+        assert!(notified.is_ok(), "job notification should be received");
+    }
+
+    #[tokio::test]
+    async fn test_multiple_receivers_get_notifications() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let db = Arc::new(Database::open(temp_file.path().to_str().unwrap()).unwrap());
+        let mut rx1 = db.job_notify_receiver();
+        let mut rx2 = db.job_notify_receiver();
+
+        let project_id = "test-project-2";
+        db.create_project(project_id, "https://github.com/test/repo2", "main").unwrap();
+
+        db.create_job("job-1", project_id, "test", None, None, None).unwrap();
+
+        let r1 = timeout(Duration::from_secs(1), rx1.changed()).await;
+        let r2 = timeout(Duration::from_secs(1), rx2.changed()).await;
+        assert!(r1.is_ok(), "receiver 1 should get notification");
+        assert!(r2.is_ok(), "receiver 2 should get notification");
+    }
+
+    #[test]
+    fn test_create_job_and_retrieve() {
+        let temp_file = NamedTempFile::new().unwrap();
+        let db = Database::open(temp_file.path().to_str().unwrap()).unwrap();
+
+        let project_id = "test-project-3";
+        db.create_project(project_id, "https://github.com/test/repo3", "main").unwrap();
+
+        let job_id = "job-456";
+        db.create_job(job_id, project_id, "test description", Some("feature"), Some("dev"), None)
+            .unwrap();
+
+        let job = db.get_job(job_id).unwrap().unwrap();
+        assert_eq!(job.id, job_id);
+        assert_eq!(job.project_id, project_id);
+        assert_eq!(job.status, "queued");
+        assert_eq!(job.description, "test description");
+        assert_eq!(job.workflow_name.as_deref(), Some("feature"));
+        assert_eq!(job.branch.as_deref(), Some("dev"));
+    }
+}

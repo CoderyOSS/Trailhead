@@ -9,10 +9,17 @@ use std::sync::Arc;
 use crate::config::TrailheadConfig;
 use crate::db::Database;
 
+const VERSION: &str = env!("CARGO_PKG_VERSION");
+
 #[derive(Deserialize)]
 struct CreateWorkerRequest {
     job_id: String,
     provider: Option<String>,
+}
+
+#[derive(Serialize)]
+struct VersionResponse {
+    version: &'static str,
 }
 
 #[derive(Serialize)]
@@ -33,6 +40,7 @@ type AppState = (Arc<Database>, Arc<TrailheadConfig>);
 
 pub fn api_routes(db: Arc<Database>, config: Arc<TrailheadConfig>) -> Router {
     Router::new()
+        .route("/api/v1/version", get(version))
         .route("/api/v1/workers", post(create_worker))
         .route("/api/v1/jobs/{id}/config", get(job_config))
         .route("/api/v1/jobs/{id}/skill/{name}", get(skill_content))
@@ -48,6 +56,10 @@ async fn create_worker(
     db.create_worker(&id, &body.job_id, provider)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(serde_json::json!({"worker_id": id})))
+}
+
+async fn version() -> Json<VersionResponse> {
+    Json(VersionResponse { version: VERSION })
 }
 
 async fn job_config(

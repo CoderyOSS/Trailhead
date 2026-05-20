@@ -71,11 +71,20 @@ impl Scheduler {
     }
 
     pub async fn run(&self) {
-        let mut tick = interval(Duration::from_secs(self.config.interval_secs));
+        let mut rx = self.db.job_notify_receiver();
+        let mut timeout_interval = interval(Duration::from_secs(60));
         loop {
-            tick.tick().await;
-            if let Err(e) = self.tick().await {
-                error!("scheduler tick error: {}", e);
+            tokio::select! {
+                _ = rx.changed() => {
+                    if let Err(e) = self.schedule_queued_jobs().await {
+                        error!("scheduler schedule error: {}", e);
+                    }
+                }
+                _ = timeout_interval.tick() => {
+                    if let Err(e) = self.detect_timed_out_jobs().await {
+                        error!("scheduler timeout check error: {}", e);
+                    }
+                }
             }
         }
     }

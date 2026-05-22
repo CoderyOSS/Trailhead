@@ -9,14 +9,14 @@ use resolver::{TemplateVars, StageOutput, resolve_prompt, resolve_input};
 use router::evaluate_routes;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct CommitInfo {
     pub sha: String,
     pub short_hash: String,
     pub message: String,
 }
 
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct StageResult {
     pub stage_name: String,
     pub response: serde_json::Value,

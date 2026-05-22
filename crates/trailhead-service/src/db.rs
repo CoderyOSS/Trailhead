@@ -408,6 +408,27 @@ impl Database {
         Ok(())
     }
 
+    pub fn advance_job_stage(&self, id: &str, stage: &str, stage_history: &str) -> Result<()> {
+        let now = Utc::now().to_rfc3339();
+        match &self.backend {
+            Backend::Local(_) => {
+                let conn = self.local_conn()?;
+                conn.execute(
+                    "UPDATE jobs SET current_stage = ?1, stage_history = ?2, status = 'queued', updated_at = ?3 WHERE id = ?4",
+                    params![stage, stage_history, now, id],
+                )?;
+            }
+            Backend::Remote { .. } => {
+                self.remote_exec(
+                    "UPDATE jobs SET current_stage = ?1, stage_history = ?2, status = 'queued', updated_at = ?3 WHERE id = ?4",
+                    vec![serde_json::json!(stage), serde_json::json!(stage_history), serde_json::json!(now), serde_json::json!(id)],
+                )?;
+            }
+        }
+        let _ = self.job_notifier.send(());
+        Ok(())
+    }
+
     pub fn assign_worker(&self, job_id: &str, worker_id: &str) -> Result<()> {
         let now = Utc::now().to_rfc3339();
         match &self.backend {

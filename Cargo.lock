@@ -2348,7 +2348,7 @@ dependencies = [
 
 [[package]]
 name = "trailhead-service"
-version = "0.1.0"
+version = "0.3.2"
 dependencies = [
  "anyhow",
  "async-trait",
@@ -2357,6 +2357,7 @@ dependencies = [
  "cel",
  "chrono",
  "futures-util",
+ "indexmap 2.14.0",
  "minijinja",
  "reqwest",
  "rmcp",

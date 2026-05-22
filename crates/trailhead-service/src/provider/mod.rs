@@ -16,12 +16,9 @@ pub enum WorkerStatus {
 #[derive(Debug, Clone)]
 pub struct WorkerSpec {
     pub job_id: String,
-    pub workspace_path: PathBuf,
+    pub project_path: PathBuf,
     pub worker_image: String,
     pub env: HashMap<String, String>,
-    pub llm_provider: String,
-    pub llm_model: String,
-    pub llm_base_url: String,
     pub trailhead_url: String,
 }
 

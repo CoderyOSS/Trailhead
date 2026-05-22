@@ -129,6 +129,25 @@ impl TrailheadMcpServer {
         }
     }
 
+    #[tool(description = "Retry a failed_retryable job")]
+    pub async fn jobs_retry(&self, Parameters(params): Parameters<JobIdParams>) -> String {
+        match self.db.get_job(&params.job_id) {
+            Ok(Some(job)) if job.status == "failed_retryable" => {
+                match self.db.requeue_job(&params.job_id) {
+                    Ok(()) => serde_json::json!({
+                        "status": "re-queued",
+                        "job_id": params.job_id,
+                    })
+                    .to_string(),
+                    Err(e) => format!("error: {e}"),
+                }
+            }
+            Ok(Some(job)) => format!("{{\"error\": \"job is {}, not failed_retryable\"}}", job.status),
+            Ok(None) => "job not found".into(),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
     #[tool(description = "Resume a paused job")]
     pub async fn jobs_resume(&self, Parameters(params): Parameters<JobIdParams>) -> String {
         match self.db.get_job(&params.job_id) {
@@ -159,7 +178,7 @@ impl TrailheadMcpServer {
                             current_step: job.current_stage.clone().unwrap_or_default(),
                             last_agent_output: String::new(),
                             changed_files: Vec::new(),
-                            workspace_path: std::path::PathBuf::from("/tmp"),
+                            project_path: std::path::PathBuf::from("/tmp"),
                         };
                         match adapter.open_workspace(std::path::Path::new("/tmp"), &ctx) {
                             Ok(()) => format!("attached with {}", ide_name),

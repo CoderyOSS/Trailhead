@@ -253,7 +253,7 @@ async fn jobs_cmd(args: &[String]) -> anyhow::Result<()> {
                         current_step: job.current_stage.clone().unwrap_or_default(),
                         last_agent_output: String::new(),
                         changed_files: Vec::new(),
-                        workspace_path: std::path::PathBuf::from("/tmp"),
+                        project_path: std::path::PathBuf::from("/tmp"),
                     };
                     a.open_workspace(std::path::Path::new("/tmp"), &ctx)?;
                     println!("attached via {}", a.name());

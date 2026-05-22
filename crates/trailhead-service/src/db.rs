@@ -31,7 +31,8 @@ pub struct JobRow {
     pub max_attempts: i32,
     pub result: Option<String>,
     pub error: Option<String>,
-    pub workspace_path: Option<String>,
+    #[serde(alias = "workspace_path")]
+    pub project_path: Option<String>,
     pub created_at: String,
     pub updated_at: String,
     pub started_at: Option<String>,
@@ -46,7 +47,8 @@ pub struct WorkerRow {
     pub provider_id: Option<String>,
     pub status: String,
     pub ip_address: Option<String>,
-    pub workspace_path: Option<String>,
+    #[serde(alias = "workspace_path")]
+    pub project_path: Option<String>,
     pub heartbeat_at: Option<String>,
     pub created_at: String,
     pub destroyed_at: Option<String>,
@@ -263,21 +265,21 @@ impl Database {
         description: &str,
         workflow_name: Option<&str>,
         branch: Option<&str>,
-        workspace_path: Option<&str>,
+        project_path: Option<&str>,
     ) -> Result<()> {
         let now = Utc::now().to_rfc3339();
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 conn.execute(
-                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, workspace_path, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7, ?8)",
-                    params![id, project_id, description, workflow_name, branch, workspace_path, now, now],
+                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, project_path, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7, ?8)",
+                    params![id, project_id, description, workflow_name, branch, project_path, now, now],
                 )?;
             }
             Backend::Remote { .. } => {
                 self.remote_exec(
-                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, workspace_path, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7, ?8)",
-                    vec![serde_json::json!(id), serde_json::json!(project_id), serde_json::json!(description), serde_json::json!(workflow_name), serde_json::json!(branch), serde_json::json!(workspace_path), serde_json::json!(now), serde_json::json!(now)],
+                    "INSERT INTO jobs (id, project_id, description, status, workflow_name, branch, project_path, created_at, updated_at) VALUES (?1, ?2, ?3, 'queued', ?4, ?5, ?6, ?7, ?8)",
+                    vec![serde_json::json!(id), serde_json::json!(project_id), serde_json::json!(description), serde_json::json!(workflow_name), serde_json::json!(branch), serde_json::json!(project_path), serde_json::json!(now), serde_json::json!(now)],
                 )?;
             }
         }
@@ -290,7 +292,7 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 let row = conn.query_row(
-                    "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE id = ?1",
+                    "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, project_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE id = ?1",
                     params![id],
                     |row| {
                         Ok(JobRow {
@@ -307,7 +309,7 @@ impl Database {
                             max_attempts: row.get(10)?,
                             result: row.get(11)?,
                             error: row.get(12)?,
-                            workspace_path: row.get(13)?,
+                            project_path: row.get(13)?,
                             created_at: row.get(14)?,
                             updated_at: row.get(15)?,
                             started_at: row.get(16)?,
@@ -331,7 +333,7 @@ impl Database {
     }
 
     pub fn list_jobs(&self) -> Result<Vec<JobRow>> {
-        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs ORDER BY created_at";
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, project_path, created_at, updated_at, started_at, finished_at FROM jobs ORDER BY created_at";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -351,7 +353,7 @@ impl Database {
                         max_attempts: row.get(10)?,
                         result: row.get(11)?,
                         error: row.get(12)?,
-                        workspace_path: row.get(13)?,
+                        project_path: row.get(13)?,
                         created_at: row.get(14)?,
                         updated_at: row.get(15)?,
                         started_at: row.get(16)?,
@@ -429,7 +431,7 @@ impl Database {
     }
 
     pub fn get_queued_jobs(&self) -> Result<Vec<JobRow>> {
-        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status = 'queued' ORDER BY created_at ASC";
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, project_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status = 'queued' ORDER BY created_at ASC";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -449,7 +451,7 @@ impl Database {
                         max_attempts: row.get(10)?,
                         result: row.get(11)?,
                         error: row.get(12)?,
-                        workspace_path: row.get(13)?,
+                        project_path: row.get(13)?,
                         created_at: row.get(14)?,
                         updated_at: row.get(15)?,
                         started_at: row.get(16)?,
@@ -467,7 +469,7 @@ impl Database {
     }
 
     pub fn get_active_jobs(&self) -> Result<Vec<JobRow>> {
-        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, workspace_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status IN ('scheduled', 'provisioning', 'running', 'checkpointing')";
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, project_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status IN ('scheduled', 'provisioning', 'running', 'checkpointing')";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -487,7 +489,7 @@ impl Database {
                         max_attempts: row.get(10)?,
                         result: row.get(11)?,
                         error: row.get(12)?,
-                        workspace_path: row.get(13)?,
+                        project_path: row.get(13)?,
                         created_at: row.get(14)?,
                         updated_at: row.get(15)?,
                         started_at: row.get(16)?,
@@ -521,6 +523,65 @@ impl Database {
                 )?;
             }
         }
+        Ok(())
+    }
+
+    pub fn get_retryable_jobs(&self) -> Result<Vec<JobRow>> {
+        const SQL: &str = "SELECT id, project_id, description, status, worker_id, branch, workflow_name, current_stage, stage_history, attempt, max_attempts, result, error, project_path, created_at, updated_at, started_at, finished_at FROM jobs WHERE status = 'failed_retryable' AND attempt < max_attempts ORDER BY updated_at ASC";
+        match &self.backend {
+            Backend::Local(_) => {
+                let conn = self.local_conn()?;
+                let mut stmt = conn.prepare(SQL)?;
+                let rows = stmt.query_map([], |row| {
+                    Ok(JobRow {
+                        id: row.get(0)?,
+                        project_id: row.get(1)?,
+                        description: row.get(2)?,
+                        status: row.get(3)?,
+                        worker_id: row.get(4)?,
+                        branch: row.get(5)?,
+                        workflow_name: row.get(6)?,
+                        current_stage: row.get(7)?,
+                        stage_history: row.get(8)?,
+                        attempt: row.get(9)?,
+                        max_attempts: row.get(10)?,
+                        result: row.get(11)?,
+                        error: row.get(12)?,
+                        project_path: row.get(13)?,
+                        created_at: row.get(14)?,
+                        updated_at: row.get(15)?,
+                        started_at: row.get(16)?,
+                        finished_at: row.get(17)?,
+                    })
+                })?;
+                let mut result = Vec::new();
+                for r in rows {
+                    result.push(r?);
+                }
+                Ok(result)
+            }
+            Backend::Remote { .. } => self.remote_query(SQL, vec![]),
+        }
+    }
+
+    pub fn requeue_job(&self, id: &str) -> Result<()> {
+        let now = Utc::now().to_rfc3339();
+        match &self.backend {
+            Backend::Local(_) => {
+                let conn = self.local_conn()?;
+                conn.execute(
+                    "UPDATE jobs SET status = 'queued', attempt = attempt + 1, error = NULL, finished_at = NULL, started_at = NULL, worker_id = NULL, updated_at = ?1 WHERE id = ?2 AND status = 'failed_retryable'",
+                    params![now, id],
+                )?;
+            }
+            Backend::Remote { .. } => {
+                self.remote_exec(
+                    "UPDATE jobs SET status = 'queued', attempt = attempt + 1, error = NULL, finished_at = NULL, started_at = NULL, worker_id = NULL, updated_at = ?1 WHERE id = ?2 AND status = 'failed_retryable'",
+                    vec![serde_json::json!(now), serde_json::json!(id)],
+                )?;
+            }
+        }
+        let _ = self.job_notifier.send(());
         Ok(())
     }
 
@@ -586,7 +647,7 @@ impl Database {
     }
 
     pub fn list_workers(&self) -> Result<Vec<WorkerRow>> {
-        const SQL: &str = "SELECT id, job_id, provider, provider_id, status, ip_address, workspace_path, heartbeat_at, created_at, destroyed_at FROM workers ORDER BY created_at";
+        const SQL: &str = "SELECT id, job_id, provider, provider_id, status, ip_address, project_path, heartbeat_at, created_at, destroyed_at FROM workers ORDER BY created_at";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -599,7 +660,7 @@ impl Database {
                         provider_id: row.get(3)?,
                         status: row.get(4)?,
                         ip_address: row.get(5)?,
-                        workspace_path: row.get(6)?,
+                        project_path: row.get(6)?,
                         heartbeat_at: row.get(7)?,
                         created_at: row.get(8)?,
                         destroyed_at: row.get(9)?,
@@ -822,7 +883,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     max_attempts    INTEGER NOT NULL DEFAULT 3,
     result          TEXT,
     error           TEXT,
-    workspace_path  TEXT,
+    project_path    TEXT,
     created_at      TEXT NOT NULL,
     updated_at      TEXT NOT NULL,
     started_at      TEXT,
@@ -836,7 +897,7 @@ CREATE TABLE IF NOT EXISTS workers (
     provider_id     TEXT,
     status          TEXT NOT NULL DEFAULT 'creating',
     ip_address      TEXT,
-    workspace_path  TEXT,
+    project_path    TEXT,
     heartbeat_at    TEXT,
     created_at      TEXT NOT NULL,
     destroyed_at    TEXT
@@ -888,6 +949,8 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE jobs ADD COLUMN workspace_path TEXT",
     "ALTER TABLE workers ADD COLUMN workspace_path TEXT",
     "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''",
+    "ALTER TABLE jobs RENAME COLUMN workspace_path TO project_path",
+    "ALTER TABLE workers RENAME COLUMN workspace_path TO project_path",
 ];
 
 #[cfg(test)]

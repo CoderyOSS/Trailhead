@@ -21,7 +21,7 @@ struct CreateJobBody {
     description: String,
     workflow: Option<String>,
     branch: Option<String>,
-    workspace_path: Option<String>,
+    project_path: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -55,6 +55,7 @@ pub fn web_routes(db: Arc<Database>) -> Router {
         .route("/api/v1/jobs/{id}/resume", post(resume_job))
         .route("/api/v1/jobs/{id}/cancel", post(cancel_job))
         .route("/api/v1/jobs/{id}/attach", post(attach_job))
+        .route("/api/v1/jobs/{id}/retry", post(retry_job))
         .route("/api/v1/workers", get(list_workers))
         .route("/api/v1/projects", get(list_projects).post(create_project))
         .route("/api/v1/workflows", get(list_workflows).post(create_workflow))
@@ -77,7 +78,7 @@ async fn create_job(
     Json(body): Json<CreateJobBody>,
 ) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
     let id = uuid::Uuid::new_v4().to_string();
-    db.create_job(&id, &body.project_id, &body.description, body.workflow.as_deref(), body.branch.as_deref(), body.workspace_path.as_deref())
+    db.create_job(&id, &body.project_id, &body.description, body.workflow.as_deref(), body.branch.as_deref(), body.project_path.as_deref())
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(Json(serde_json::json!({"job_id": id})))
 }
@@ -157,7 +158,7 @@ async fn attach_job(
         current_step: job.current_stage.clone().unwrap_or_default(),
         last_agent_output: String::new(),
         changed_files: Vec::new(),
-        workspace_path: std::path::PathBuf::from("/tmp"),
+        project_path: std::path::PathBuf::from("/tmp"),
     };
 
     adapter
@@ -225,6 +226,22 @@ async fn create_workflow(
     db.save_workflow(&body.name, &body.content, "", "api", None)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(StatusCode::CREATED)
+}
+
+async fn retry_job(
+    Path(id): Path<String>,
+    State(db): State<Arc<Database>>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    let job = db
+        .get_job(&id)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .ok_or((StatusCode::NOT_FOUND, "job not found".into()))?;
+    if job.status != "failed_retryable" {
+        return Err((StatusCode::CONFLICT, format!("job is {}, not failed_retryable", job.status)));
+    }
+    db.requeue_job(&id)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(StatusCode::OK)
 }
 
 async fn events_sse() -> Sse<impl futures_util::Stream<Item = Result<Event, Infallible>>> {

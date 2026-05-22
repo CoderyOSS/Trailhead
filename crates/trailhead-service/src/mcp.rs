@@ -23,6 +23,7 @@ pub struct CreateJobParams {
     pub project_id: String,
     pub description: String,
     pub workflow: Option<String>,
+    pub project_path: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
@@ -93,7 +94,7 @@ impl TrailheadMcpServer {
     #[tool(description = "Create a new job")]
     pub async fn jobs_create(&self, Parameters(params): Parameters<CreateJobParams>) -> String {
         let id = uuid::Uuid::new_v4().to_string();
-        match self.db.create_job(&id, &params.project_id, &params.description, params.workflow.as_deref(), None, None) {
+        match self.db.create_job(&id, &params.project_id, &params.description, params.workflow.as_deref(), None, params.project_path.as_deref()) {
             Ok(()) => serde_json::json!({"job_id": id}).to_string(),
             Err(e) => format!("error: {e}"),
         }

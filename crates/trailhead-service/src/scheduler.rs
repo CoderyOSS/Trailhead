@@ -17,7 +17,7 @@ pub struct SchedulerConfig {
     pub max_global_workers: usize,
     pub max_workers_per_project: usize,
     pub job_timeout_secs: u64,
-    pub max_retries: u32,
+    pub retry_delay_secs: u64,
 }
 
 impl Default for SchedulerConfig {
@@ -35,10 +35,10 @@ impl Default for SchedulerConfig {
                 .ok()
                 .and_then(|v| v.parse().ok())
                 .unwrap_or(3600),
-            max_retries: std::env::var("MAX_RETRIES")
+            retry_delay_secs: std::env::var("RETRY_DELAY_SECS")
                 .ok()
                 .and_then(|v| v.parse().ok())
-                .unwrap_or(3),
+                .unwrap_or(30),
         }
     }
 }
@@ -78,6 +78,9 @@ impl Scheduler {
                 _ = timeout_interval.tick() => {
                     if let Err(e) = self.detect_timed_out_jobs().await {
                         error!("scheduler timeout check error: {}", e);
+                    }
+                    if let Err(e) = self.retry_failed_jobs().await {
+                        error!("scheduler retry check error: {}", e);
                     }
                 }
             }
@@ -141,39 +144,14 @@ impl Scheduler {
             .ok_or_else(|| anyhow::anyhow!("workflow not found: {}", workflow_name))?;
         let wf = workflow::parser::parse_workflow(&workflow_row.content)?;
 
-        let workspace_path = if let Some(ref ws) = job.workspace_path {
-            PathBuf::from(ws)
+        let project_path = if let Some(ref p) = job.project_path {
+            PathBuf::from(p)
         } else {
-            let workspace_base = std::env::var("WORKSPACE_BASE")
+            let project_base = std::env::var("PROJECT_BASE")
+                .or_else(|_| std::env::var("WORKSPACE_BASE"))
                 .unwrap_or_else(|_| "/opt/codery/workspaces".to_string());
-            PathBuf::from(format!("{}/{}", workspace_base, job.project_id))
+            PathBuf::from(format!("{}/{}", project_base, job.project_id))
         };
-
-        if let Err(e) = std::process::Command::new("git")
-            .args(["-C", &workspace_path.to_string_lossy(), "rev-parse", "--is-inside-work-tree"])
-            .output()
-        {
-            return Err(anyhow::anyhow!("workspace is not a git repo (or missing): {}", e));
-        }
-
-        let branch = &wf.branch;
-        let checkout = std::process::Command::new("git")
-            .args(["-C", &workspace_path.to_string_lossy(), "checkout", branch])
-            .output()
-            .context("git checkout")?;
-        if !checkout.status.success() {
-            let create_branch = std::process::Command::new("git")
-                .args(["-C", &workspace_path.to_string_lossy(), "checkout", "-b", branch])
-                .output()
-                .context("git checkout -b")?;
-            if !create_branch.status.success() {
-                let stderr = String::from_utf8_lossy(&create_branch.stderr);
-                return Err(anyhow::anyhow!("failed to checkout branch '{}': {}", branch, stderr));
-            }
-            info!("created new branch '{}' for job {}", branch, job.id);
-        } else {
-            info!("checked out branch '{}' for job {}", branch, job.id);
-        }
 
         let start_stage = job.current_stage.clone();
         let engine = workflow::Engine::new(wf, start_stage)?;
@@ -182,20 +160,57 @@ impl Scheduler {
             .ok_or_else(|| anyhow::anyhow!("no current stage"))?;
         let resolved = self.app_config.resolve_model(stage.model.as_deref())?;
 
+        let key_file = format!("/opt/codery/secrets/{}_api_key", resolved.provider_id);
+        let api_key = std::fs::read_to_string(&key_file)
+            .unwrap_or_default()
+            .trim()
+            .to_string();
+
+        let git_permission = if stage.commits == CommitPolicy::Prohibited { "deny" } else { "allow" };
+        let trailhead_url = "http://host.docker.internal:4050";
+
+        let opencode_config = serde_json::json!({
+            "model": format!("{}/{}", resolved.provider_id, resolved.model_id),
+            "provider": {
+                resolved.provider_id.clone(): {
+                    "api": resolved.api,
+                    "options": {
+                        "apiKey": api_key,
+                        "baseURL": resolved.base_url,
+                    }
+                }
+            },
+            "permission": {
+                "read": { "*": "allow" },
+                "glob": { "*": "allow" },
+                "grep": { "*": "allow" },
+                "list": { "*": "allow" },
+                "bash": { "*": "ask" },
+                "edit": { "*": "ask" },
+                "write": { "*": "ask" },
+                "webfetch": "deny",
+                "websearch": "deny",
+                "question": "deny",
+                "git": git_permission,
+            },
+            "mcp": {
+                "trailhead": {
+                    "type": "remote",
+                    "url": format!("{}/mcp/sse", trailhead_url)
+                }
+            },
+            "instructions": ["AGENTS.md"]
+        });
+
         let mut env = HashMap::new();
-        if stage.commits == CommitPolicy::Prohibited {
-            env.insert("GIT_COMMIT_POLICY".to_string(), "prohibited".to_string());
-        }
+        env.insert("OPENCODE_CONFIG".to_string(), opencode_config.to_string());
 
         let spec = WorkerSpec {
             job_id: job.id.clone(),
-            workspace_path: workspace_path.clone(),
+            project_path: project_path.clone(),
             worker_image: "ghcr.io/coderyoss/trailhead:worker-latest".to_string(),
             env,
-            llm_provider: resolved.provider_id.clone(),
-            llm_model: format!("{}/{}", resolved.provider_id, resolved.model_id),
-            llm_base_url: resolved.base_url.clone(),
-            trailhead_url: "http://host.docker.internal:4050".to_string(),
+            trailhead_url: trailhead_url.to_string(),
         };
 
         let handle = self.provider.create_worker(&spec).await?;
@@ -224,7 +239,7 @@ impl Scheduler {
                 db.clone(),
                 container_id.clone(),
                 provider.clone(),
-                workspace_path.clone(),
+                project_path.clone(),
                 &provider_id,
                 &model_id,
             ).await {
@@ -255,6 +270,23 @@ impl Scheduler {
                             self.db
                                 .fail_job(&job.id, "job timeout (max retries)", "failed_final")?;
                         }
+                    }
+                }
+            }
+        }
+        Ok(())
+    }
+
+    async fn retry_failed_jobs(&self) -> anyhow::Result<()> {
+        let retryable = self.db.get_retryable_jobs()?;
+        for job in retryable {
+            if let Some(ref finished_at) = job.finished_at {
+                if let Ok(finished) = chrono::DateTime::parse_from_rfc3339(finished_at) {
+                    let elapsed = (chrono::Utc::now() - finished.to_utc()).num_seconds() as u64;
+                    let delay = (job.attempt as u64) * self.config.retry_delay_secs;
+                    if elapsed >= delay {
+                        self.db.requeue_job(&job.id)?;
+                        info!("re-queued job {} (attempt {}->{})", job.id, job.attempt, job.attempt + 1);
                     }
                 }
             }
@@ -346,11 +378,11 @@ async fn run_stage(
     db: Arc<Database>,
     container_id: String,
     provider: Arc<dyn WorkerProvider>,
-    workspace_path: PathBuf,
+    project_path: PathBuf,
     provider_id: &str,
     model_id: &str,
 ) -> anyhow::Result<()> {
-    let pre_sha = git_head_sha(&workspace_path);
+    let pre_sha = git_head_sha(&project_path);
     info!("stage pre-sha for job {}: {:?}", job_id, pre_sha);
 
     let mut retries = 0u32;
@@ -477,7 +509,7 @@ async fn run_stage(
 
     if commit_policy == CommitPolicy::Required {
         if let Some(ref pre) = pre_sha {
-            let commit_count = git_commit_count_since(&workspace_path, pre).unwrap_or(0);
+            let commit_count = git_commit_count_since(&project_path, pre).unwrap_or(0);
             if commit_count == 0 {
                 return Err(anyhow::anyhow!("commits required but no commit was created"));
             }
@@ -486,7 +518,7 @@ async fn run_stage(
         }
     } else if commit_policy == CommitPolicy::Prohibited {
         if let Some(ref pre) = pre_sha {
-            let commit_count = git_commit_count_since(&workspace_path, pre).unwrap_or(0);
+            let commit_count = git_commit_count_since(&project_path, pre).unwrap_or(0);
             if commit_count > 0 {
                 return Err(anyhow::anyhow!("commits prohibited but {} unauthorized commit(s) detected", commit_count));
             }
@@ -494,13 +526,13 @@ async fn run_stage(
     }
 
     let commits = if let Some(ref pre) = pre_sha {
-        git_commit_list(&workspace_path, pre).unwrap_or_default()
+        git_commit_list(&project_path, pre).unwrap_or_default()
     } else {
         vec![]
     };
 
     let changed_files = if let Some(ref pre) = pre_sha {
-        git_changed_files(&workspace_path, pre).unwrap_or_default()
+        git_changed_files(&project_path, pre).unwrap_or_default()
     } else {
         vec![]
     };

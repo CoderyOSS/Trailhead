@@ -42,16 +42,13 @@ impl WorkerProvider for DockerProvider {
             format!("WORKER_ID={}", spec.job_id),
             format!("JOB_ID={}", spec.job_id),
             format!("TRAILHEAD_URL={}", spec.trailhead_url),
-            format!("LLM_PROVIDER={}", spec.llm_provider),
-            format!("LLM_MODEL={}", spec.llm_model),
-            format!("LLM_BASE_URL={}", spec.llm_base_url),
         ];
         for (k, v) in &spec.env {
             env.push(format!("{}={}", k, v));
         }
 
-        let workspace_str = spec
-            .workspace_path
+        let project_str = spec
+            .project_path
             .to_str()
             .unwrap_or("/tmp/workspace");
 
@@ -61,7 +58,7 @@ impl WorkerProvider for DockerProvider {
             exposed_ports: Some(StdMap::from([("8080/tcp".into(), StdMap::new())])),
             host_config: Some(HostConfig {
                 binds: Some(vec![
-                    format!("{}:{}:rw", workspace_str, "/workspace"),
+                    format!("{}:{}:rw", project_str, "/workspace"),
                     "/opt/codery/secrets:/etc/secrets:ro".into(),
                 ]),
                 network_mode: Some(self.network.clone()),

@@ -13,7 +13,7 @@ pub struct JobContext {
     pub current_step: String,
     pub last_agent_output: String,
     pub changed_files: Vec<String>,
-    pub workspace_path: PathBuf,
+    pub project_path: PathBuf,
 }
 
 pub trait IdeAdapter: Send + Sync {

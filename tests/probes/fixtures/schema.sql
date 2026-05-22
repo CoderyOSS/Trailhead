@@ -20,7 +20,7 @@ CREATE TABLE IF NOT EXISTS jobs (
     max_attempts    INTEGER NOT NULL DEFAULT 3,
     result          TEXT,
     error           TEXT,
-    workspace_path  TEXT,
+    project_path    TEXT,
     created_at      TEXT NOT NULL,
     updated_at      TEXT NOT NULL,
     started_at      TEXT,
@@ -34,7 +34,7 @@ CREATE TABLE IF NOT EXISTS workers (
     provider_id     TEXT,
     status          TEXT NOT NULL DEFAULT 'creating',
     ip_address      TEXT,
-    workspace_path  TEXT,
+    project_path    TEXT,
     heartbeat_at    TEXT,
     created_at      TEXT NOT NULL,
     destroyed_at    TEXT

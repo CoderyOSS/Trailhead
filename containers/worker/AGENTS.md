@@ -8,11 +8,11 @@ You have access to tools for reading, writing, editing files, running bash comma
 
 ## Completion
 
-When you have completed your task, you MUST call the `submit_result` tool with a JSON object matching the response schema. Do NOT just write text output — always call submit_result to signal completion.
+Complete your task and respond with your output. If a response schema is specified below, your final response must be valid JSON matching that schema. Otherwise, respond in plain text.
 
 ## Error Handling
 
-If you encounter an error you cannot resolve, call submit_result with an error status.
+If you encounter an unresolvable error, describe it clearly in your response.
 
 ## Behavior
 

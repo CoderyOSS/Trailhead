@@ -41,7 +41,7 @@ Worker Container (opencode-ai)
 - `project_id`: which repo to work on
 - `workflow_name`: which workflow YAML to run
 - `status`: queued → running → completed/failed/cancelled
-- `workspace_path`: per-job override (bind mount location)
+- `project_path`: host path to the git project, bind-mounted into worker at `/workspace`
 - `current_stage`: which step we're on
 - `attempt`: retry counter (max_attempts=3)
 
@@ -58,7 +58,7 @@ stages:
 **Worker**: Docker container instance
 - `provider`: "docker" (k8s planned)
 - `status`: creating → running → destroying
-- `workspace_path`: where code is mounted
+- `project_path`: host project path mounted at `/workspace`
 - `job_id`: links back to job
 
 ## Feature Status
@@ -69,8 +69,9 @@ stages:
 - SQLite persistence
 - Workflow YAML parser
 - MCP tool server
-- Per-job workspace_path override
-- Job state transitions (pause/resume/cancel)
+- Per-job project_path override
+- Job state transitions (pause/resume/cancel/retry)
+- Automatic retry with backoff for failed_retryable jobs
 - Worker listing/destruction
 - Project management
 
@@ -85,7 +86,6 @@ stages:
 - Human-in-the-loop approvals between stages
 - Kubernetes worker provider (swap Docker)
 - Real SSE event streaming
-- Retry with exponential backoff
 - Token usage tracking
 
 ## API Endpoints
@@ -93,11 +93,12 @@ stages:
 ```
 GET  /api/v1/jobs              - list jobs
 GET  /api/v1/version           - get service version
-POST /api/v1/jobs              - create job {project_id, description, workflow?, branch?, workspace_path?}
+POST /api/v1/jobs              - create job {project_id, description, workflow?, branch?, project_path?}
 GET  /api/v1/jobs/{id}         - job details
 POST /api/v1/jobs/{id}/pause   - pause job
 POST /api/v1/jobs/{id}/resume  - resume job
 POST /api/v1/jobs/{id}/cancel  - cancel job
+POST /api/v1/jobs/{id}/retry   - retry a failed_retryable job
 POST /api/v1/jobs/{id}/attach  - attach IDE {ide?: string}
 
 GET  /api/v1/workers           - list workers
@@ -119,6 +120,7 @@ jobs_create(params)   - create job {project_id, description, workflow?}
 jobs_cancel(id)       - cancel job
 jobs_pause(id)        - pause job
 jobs_resume(id)       - resume job
+jobs_retry(id)        - retry a failed_retryable job (also auto-retried by scheduler)
 jobs_attach(params)   - attach IDE {job_id, ide?}
 jobs_detach(id)       - detach
 
@@ -144,7 +146,8 @@ MCP server runs at `/mcp/sse`.
 
 **Environment:**
 - `TRAILHEAD_DB`: SQLite path (default: `/opt/codery/trailhead.db`)
-- `WORKSPACE_BASE`: default workspace root (default: `/opt/codery/workspaces`)
+- `PROJECT_BASE`: default project root base (default: `/opt/codery/workspaces`, also reads legacy `WORKSPACE_BASE`)
+- `RETRY_DELAY_SECS`: base retry delay in seconds per attempt (default: `30`)
 
 **Config file:** `/opt/codery/trailhead/trailhead.toml`
 ```toml
@@ -155,16 +158,16 @@ image = "opencodeai/worker:latest"
 dir = "/opt/codery/trailhead/workflows"
 ```
 
-**Per-job workspace path:**
+**Per-job project path:**
 ```json
 POST /api/v1/jobs
 {
   "project_id": "xxx",
   "description": "test job",
-  "workspace_path": "/home/gem/projects/Unbought"
+  "project_path": "/home/gem/projects/Unbought"
 }
 ```
-If set, worker uses this path directly. Otherwise: `{WORKSPACE_BASE}/{project_id}`.
+If set, the project directory is bind-mounted directly. Otherwise: `{PROJECT_BASE}/{project_id}`. The caller is responsible for having the directory in the desired state before creating the job — the scheduler does no git operations on the host.
 
 ## Deployment
 
@@ -184,8 +187,8 @@ Port 4050 firewall-opened for Docker bridge network (172.16.0.0/12).
 ## Database Schema
 
 **Key columns:**
-- `jobs.workspace_path`: per-job workspace override
-- `workers.workspace_path`: worker's mounted path
+- `jobs.project_path`: per-job project directory override (bind-mounted into worker)
+- `workers.project_path`: project path used by this worker
 - `workflows.content_hash`: for change detection
 - `checkpoints.commit_message`: for git commits
 
@@ -196,12 +199,15 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE checkpoints ADD COLUMN commit_message TEXT DEFAULT ''",
     "ALTER TABLE jobs ADD COLUMN workspace_path TEXT",
     "ALTER TABLE workers ADD COLUMN workspace_path TEXT",
+    "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''",
+    "ALTER TABLE jobs RENAME COLUMN workspace_path TO project_path",
+    "ALTER TABLE workers RENAME COLUMN workspace_path TO project_path",
 ];
 ```
 
 ## Common Tasks
 
-**Create job with custom workspace:**
+**Create job with explicit project path:**
 ```bash
 curl -X POST http://localhost:4050/api/v1/jobs \
   -H "Content-Type: application/json" \
@@ -209,8 +215,13 @@ curl -X POST http://localhost:4050/api/v1/jobs \
     "project_id": "test-project",
     "description": "Fix bug in authentication",
     "workflow": "bugfix",
-    "workspace_path": "/home/gem/projects/Unbought"
+    "project_path": "/home/gem/projects/Unbought"
   }'
+```
+
+**Retry stuck failed_retryable jobs:**
+```bash
+curl -X POST http://localhost:4050/api/v1/jobs/<job-id>/retry
 ```
 
 **List running jobs:**
@@ -236,10 +247,9 @@ curl -X POST http://localhost:4050/api/v1/workflows \
 ## Testing
 
 **E2E test approach:**
-1. Create dummy git repo
-2. Bind mount to container
-3. Set `workspace_path` to mount point
-4. Worker accesses code without full clone
+1. Use `test-workspace/` dummy git repo
+2. Set `project_path` to its absolute host path when creating jobs
+3. Worker receives it as bind mount at `/workspace`
 
 **Probe tests:** `tests/probes/`
 - Use fixtures in `tests/probes/fixtures/`
@@ -254,7 +264,6 @@ curl -X POST http://localhost:4050/api/v1/workflows \
 2. **Migration failures:** Silent failures if column exists—check logs
 3. **SSE events empty:** `/api/v1/events` returns no data
 4. **Worker logs:** Not captured centrally—check `docker logs`
-5. **No retry loop:** Scheduler picks up jobs once, no retry-on-error
 
 ## File Layout
 
@@ -280,7 +289,7 @@ tests/probes/         - Integration tests
 
 ## For Agents Working on This Code
 
-1. **Always use workspace_path** for E2E tests—don't require full git clones
+1. **Always use project_path** for E2E tests — point to `test-workspace/` on the host
 2. **Migrations**: add to `MIGRATIONS` array, execute individually
 3. **New MCP tools**: add to `TrailheadMcpServer` impl with `#[tool]` macro
 4. **Worker providers**: implement `WorkerProvider` trait (see `docker.rs`)

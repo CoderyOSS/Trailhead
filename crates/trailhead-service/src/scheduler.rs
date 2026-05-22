@@ -154,7 +154,23 @@ impl Scheduler {
         };
 
         let start_stage = job.current_stage.clone();
-        let engine = workflow::Engine::new(wf, start_stage)?;
+        let mut engine = workflow::Engine::new(wf, start_stage)?;
+
+        // Restore outputs from stages that already ran so templates like
+        // {{stages.generate.output}} resolve correctly in later stages.
+        let saved_history: Vec<workflow::StageResult> =
+            serde_json::from_str(&job.stage_history).unwrap_or_default();
+        for sr in saved_history {
+            engine.stage_outputs.insert(
+                sr.stage_name.clone(),
+                resolver::StageOutput {
+                    output: serde_json::to_string_pretty(&sr.response).unwrap_or_default(),
+                    commits: sr.commits.clone(),
+                    changed_files: sr.changed_files.clone(),
+                },
+            );
+            engine.stage_history.push(sr);
+        }
 
         let stage = engine.current_stage_def()
             .ok_or_else(|| anyhow::anyhow!("no current stage"))?;
@@ -579,8 +595,7 @@ async fn run_stage(
         }
         workflow::AdvanceResult::Advance => {
             let history = serde_json::to_string(&engine.stage_history)?;
-            db.update_job_stage(job_id, &engine.current_stage, &history)?;
-            db.update_job_status(job_id, "scheduled")?;
+            db.advance_job_stage(job_id, &engine.current_stage, &history)?;
         }
     }
 

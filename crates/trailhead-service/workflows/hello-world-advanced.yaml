@@ -1,0 +1,102 @@
+name: hello-world-advanced
+description: "Branching pipeline: generate a number, route odd/even, transform via Collatz step, then search for the result in the current timestamp and commit"
+branch: main
+
+stages:
+  generate:
+    prompt: |
+      Pick a random integer between 1 and 20 (inclusive).
+      Respond ONLY with valid JSON in exactly this format, no extra text:
+      {"number": <integer>, "parity": "<odd or even>"}
+    response_schema:
+      type: object
+      required: [number, parity]
+      properties:
+        number:
+          type: integer
+          minimum: 1
+          maximum: 20
+        parity:
+          type: string
+          enum: [odd, even]
+    max_tokens: 64
+    timeout_secs: 30
+    routes:
+      - when: 'response.parity == "odd"'
+        next: branch_odd
+      - when: 'response.parity == "even"'
+        next: branch_even
+
+  branch_odd:
+    prompt: |
+      The generate stage returned: {{stages.generate.output}}
+      The number is odd. Apply the Collatz odd step: multiply by 3, then add 1.
+      Respond ONLY with valid JSON, no extra text:
+      {"original": <original_number>, "transformed": <result>, "path": "odd"}
+    response_schema:
+      type: object
+      required: [original, transformed, path]
+      properties:
+        original: { type: integer }
+        transformed: { type: integer }
+        path: { type: string, enum: [odd] }
+    max_tokens: 64
+    timeout_secs: 30
+    routes:
+      - when: 'true'
+        next: conclude
+
+  branch_even:
+    prompt: |
+      The generate stage returned: {{stages.generate.output}}
+      The number is even. Apply the Collatz even step: divide by 2.
+      Respond ONLY with valid JSON, no extra text:
+      {"original": <original_number>, "transformed": <result>, "path": "even"}
+    response_schema:
+      type: object
+      required: [original, transformed, path]
+      properties:
+        original: { type: integer }
+        transformed: { type: integer }
+        path: { type: string, enum: [even] }
+    max_tokens: 64
+    timeout_secs: 30
+    routes:
+      - when: 'true'
+        next: conclude
+
+  conclude:
+    prompt: |
+      The previous stage output was: {{input}}
+
+      Do the following steps in order:
+      1. Run `date -u` with bash to get the current UTC date/time string.
+      2. Count how many times the "transformed" number (from the JSON above) appears as a
+         substring in that date/time string. For example, if transformed=2 and the date is
+         "2026-05-22 10:02:00 UTC", count every occurrence of the digit string "2".
+      3. Create the directory `hello-world-advanced` if it does not exist, then write the
+         file `hello-world-advanced/result.txt` with this content:
+           Original number: <original>
+           Parity: <odd or even>
+           Branch taken: <path>
+           Transformed number (Collatz step): <transformed>
+           Current UTC datetime: <date output>
+           Occurrences of <transformed> in datetime: <count>
+      4. Stage and commit the file with the message:
+           "chore: add hello-world-advanced result"
+      Respond ONLY with valid JSON once all steps are done:
+      {"original": <int>, "transformed": <int>, "path": "<odd|even>", "datetime": "<string>", "occurrences": <int>}
+    tools: [bash, write]
+    commits: required
+    response_schema:
+      type: object
+      required: [original, transformed, path, datetime, occurrences]
+      properties:
+        original: { type: integer }
+        transformed: { type: integer }
+        path: { type: string }
+        datetime: { type: string }
+        occurrences: { type: integer }
+    max_tokens: 512
+    timeout_secs: 120
+    routes: null

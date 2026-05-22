@@ -287,6 +287,23 @@ crates/trailhead-service/
 tests/probes/         - Integration tests
 ```
 
+## Versioning
+
+Version is stored in `crates/trailhead-service/Cargo.toml`. Build and deploy are **manual-only** — use the `cut_release` tool in the `github-app` MCP server to cut a release.
+
+**Semver convention:**
+
+| Bump | When |
+|------|------|
+| `patch` | Bug fixes, docs, config changes, dependency updates |
+| `minor` | New features, new API endpoints, new MCP tools (backward compatible) |
+| `major` | Breaking changes, removed endpoints, incompatible schema/API changes |
+
+**Release flow:**
+1. Review `git log` since the last `trailhead-service-v*` tag to determine bump type
+2. Call `cut_release(account, repo, bump, message)` from the `github-app` MCP — this bumps `Cargo.toml`, commits + pushes, and triggers the build workflow automatically
+3. Monitor the build run; when complete, call `deploy-trailhead` (`workflow_dispatch`) to deploy
+
 ## For Agents Working on This Code
 
 1. **Always use project_path** for E2E tests — point to `test-workspace/` on the host

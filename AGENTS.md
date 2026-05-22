@@ -11,11 +11,11 @@ Trailhead Service = AI workflow orchestration. Runs multi-stage LLM workflows ac
 - API: `http://host.docker.internal:4050/api/v1/*`
 
 **MCP Tools Available:**
-- `jobs_create` - Create job {project_id, description, workflow?}
-- `jobs_list` - List all jobs
-- `workflows_list` - List available workflows
-- `projects_list` - List projects
-- `workers_list` - List active workers
+- `jobs_create` / `jobs_list` / `jobs_cancel` / `jobs_pause` / `jobs_resume` / `jobs_retry` / `jobs_attach` / `jobs_detach`
+- `workers_list` / `workers_destroy`
+- `projects_list` / `projects_add`
+- `workflows_list` / `workflows_show`
+- `secrets_list` / `secrets_set` / `secrets_delete`
 
 **Event-Driven Scheduling (v0.1.0+):** Jobs launch **instantly** on creation via `tokio::sync::watch` channel. No 30s polling delay.
 
@@ -29,9 +29,9 @@ Trailhead (Rust, runs on host)
 └── Web API    : REST endpoints for external control
 
 Worker Container (opencode-ai)
-├── Clones/boots user project
-├── Runs workflow stages
-├── Reports back via checkpoint API
+├── project directory bind-mounted at /workspace
+├── Runs workflow stages via opencode
+├── Scheduler drives completion (not the worker)
 └── Destroyed when done
 ```
 
@@ -137,7 +137,7 @@ secrets_list()        - list secrets in /opt/codery/secrets
 secrets_set(params)   - set secret {name, value}
 secrets_delete(name)  - delete secret
 
-submit_result(params) - submit stage output {job_id, stage, output}
+submit_result(params) - mark job complete {job_id, stage, output} (scheduler-driven; workers do not call this)
 ```
 
 MCP server runs at `/mcp/sse`.
@@ -151,11 +151,12 @@ MCP server runs at `/mcp/sse`.
 
 **Config file:** `/opt/codery/trailhead/trailhead.toml`
 ```toml
-[worker]
-image = "opencodeai/worker:latest"
+model = "deepseek/deepseek-v4-flash"
 
-[workflow]
-dir = "/opt/codery/trailhead/workflows"
+[provider.deepseek]
+api = "deepseek"
+env = ["DEEPSEEK_API_KEY"]
+base_url = "https://api.deepseek.com/v1"
 ```
 
 **Per-job project path:**
@@ -175,12 +176,16 @@ Service runs on **host machine**, not in containers. Managed by supervisord:
 
 ```ini
 [program:trailhead]
-command=/usr/local/bin/trailhead-service daemon --port 4050
+command=/opt/codery/trailhead/bin/current daemon --db /opt/codery/trailhead.db --config /opt/codery/trailhead/trailhead.toml
+user=root
 autostart=true
 autorestart=true
+stdout_logfile=/var/log/supervisor/trailhead.log
 ```
 
-Logs: `/var/log/supervisord/`.
+Binary installed to `/opt/codery/trailhead/bin/` with `current` symlink pointing to the active version.
+
+Logs: `/var/log/supervisor/trailhead.log`.
 
 Port 4050 firewall-opened for Docker bridge network (172.16.0.0/12).
 

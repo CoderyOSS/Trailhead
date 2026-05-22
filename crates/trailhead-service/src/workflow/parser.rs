@@ -1,6 +1,6 @@
 use anyhow::{Context, Result, bail};
+use indexmap::IndexMap;
 use serde::{Deserialize, Serialize};
-use std::collections::HashMap;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Default)]
 #[serde(rename_all = "snake_case")]
@@ -17,7 +17,7 @@ pub struct Workflow {
     #[serde(default)]
     pub description: String,
     pub branch: String,
-    pub stages: HashMap<String, Stage>,
+    pub stages: IndexMap<String, Stage>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

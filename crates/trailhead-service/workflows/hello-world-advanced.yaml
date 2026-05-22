@@ -82,9 +82,7 @@ stages:
            Transformed number (Collatz step): <transformed>
            Current UTC datetime: <date output>
            Occurrences of <transformed> in datetime: <count>
-      4. Stage and commit the file with the message:
-           "chore: add hello-world-advanced result"
-      Respond ONLY with valid JSON once all steps are done:
+      4. Respond ONLY with valid JSON — do NOT create any git commits, that is handled automatically:
       {"original": <int>, "transformed": <int>, "path": "<odd|even>", "datetime": "<string>", "occurrences": <int>}
     tools: [bash, write]
     commits: required

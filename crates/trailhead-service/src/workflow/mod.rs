@@ -7,6 +7,7 @@ pub use parser::{CommitPolicy, Stage, Workflow};
 use anyhow::{anyhow, Result};
 use resolver::{TemplateVars, StageOutput, resolve_prompt, resolve_input};
 use router::evaluate_routes;
+use indexmap::IndexMap;
 use std::collections::HashMap;
 
 #[derive(Debug, Clone, serde::Serialize)]

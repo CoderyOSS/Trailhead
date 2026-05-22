@@ -31,7 +31,6 @@ pub struct JobRow {
     pub max_attempts: i32,
     pub result: Option<String>,
     pub error: Option<String>,
-    #[serde(alias = "workspace_path")]
     pub project_path: Option<String>,
     pub created_at: String,
     pub updated_at: String,
@@ -47,7 +46,6 @@ pub struct WorkerRow {
     pub provider_id: Option<String>,
     pub status: String,
     pub ip_address: Option<String>,
-    #[serde(alias = "workspace_path")]
     pub project_path: Option<String>,
     pub heartbeat_at: Option<String>,
     pub created_at: String,

@@ -313,7 +313,7 @@ impl Scheduler {
 
 fn git_head_sha(workspace: &std::path::Path) -> Option<String> {
     std::process::Command::new("git")
-        .args(["-C", &workspace.to_string_lossy(), "rev-parse", "HEAD"])
+        .args(["-c", "safe.directory=*", "-C", &workspace.to_string_lossy(), "rev-parse", "HEAD"])
         .output()
         .ok()
         .and_then(|o| {
@@ -327,7 +327,7 @@ fn git_head_sha(workspace: &std::path::Path) -> Option<String> {
 
 fn git_commit_count_since(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result<usize> {
     let output = std::process::Command::new("git")
-        .args(["-C", &workspace.to_string_lossy(), "rev-list", "--count", &format!("{}..HEAD", pre_sha)])
+        .args(["-c", "safe.directory=*", "-C", &workspace.to_string_lossy(), "rev-list", "--count", &format!("{}..HEAD", pre_sha)])
         .output()
         .context("git rev-list --count")?;
     if !output.status.success() {
@@ -341,7 +341,7 @@ fn git_commit_count_since(workspace: &std::path::Path, pre_sha: &str) -> anyhow:
 
 fn git_commit_list(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result<Vec<CommitInfo>> {
     let output = std::process::Command::new("git")
-        .args(["-C", &workspace.to_string_lossy(), "log", "--format=%H|||%h|||%s", &format!("{}..HEAD", pre_sha)])
+        .args(["-c", "safe.directory=*", "-C", &workspace.to_string_lossy(), "log", "--format=%H|||%h|||%s", &format!("{}..HEAD", pre_sha)])
         .output()
         .context("git log")?;
     if !output.status.success() {
@@ -369,7 +369,7 @@ fn git_commit_list(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result
 
 fn git_changed_files(workspace: &std::path::Path, pre_sha: &str) -> anyhow::Result<Vec<String>> {
     let output = std::process::Command::new("git")
-        .args(["-C", &workspace.to_string_lossy(), "diff", "--name-only", &format!("{}..HEAD", pre_sha)])
+        .args(["-c", "safe.directory=*", "-C", &workspace.to_string_lossy(), "diff", "--name-only", &format!("{}..HEAD", pre_sha)])
         .output()
         .context("git diff --name-only")?;
     if !output.status.success() {

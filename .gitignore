@@ -4,7 +4,7 @@
 *.db-wal
 node_modules/
 dist/
-ui/static/
+**/ui/static/
 !crates/trailhead-service/ui/static/index.html
 test-workspace/
 .claude/

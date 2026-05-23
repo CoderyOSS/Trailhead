@@ -1,0 +1,30 @@
+name: Build Frontend iOS
+
+on:
+  push:
+    tags:
+      - "frontend-v*"
+
+jobs:
+  build-ios:
+    runs-on: macos-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+
+      - run: cd frontend && flutter pub get
+
+      - run: cd frontend && flutter test
+
+      - name: Build iOS release
+        run: cd frontend && flutter build ios --release --no-codesign
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: frontend/build/ios/iphoneos/Runner.app
+          generate_release_notes: true

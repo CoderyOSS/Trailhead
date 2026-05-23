@@ -1,19 +1,25 @@
 use axum::{
     Router,
+    body::Body,
     extract::{Path, State},
-    http::StatusCode,
+    http::{StatusCode, header},
     response::{
         sse::{Event, Sse},
-        IntoResponse,
+        IntoResponse, Response,
     },
     routing::{get, post},
     Json,
 };
+use rust_embed::Embed;
 use serde::Deserialize;
 use std::convert::Infallible;
 use std::sync::Arc;
 
 use crate::db::Database;
+
+#[derive(Embed)]
+#[folder = "ui/dist/"]
+struct WebAssets;
 
 #[derive(Deserialize)]
 struct CreateJobBody {
@@ -248,6 +254,38 @@ async fn events_sse() -> Sse<impl futures_util::Stream<Item = Result<Event, Infa
     Sse::new(futures_util::stream::empty())
 }
 
-async fn serve_spa() -> impl IntoResponse {
-    StatusCode::NOT_FOUND
+async fn serve_spa(uri: axum::http::Uri) -> impl IntoResponse {
+    let path = uri.path().trim_start_matches('/');
+
+    if let Some(asset) = WebAssets::get(path) {
+        let mime = mime_type(path);
+        return Response::builder()
+            .header(header::CONTENT_TYPE, mime)
+            .body(Body::from(asset.data))
+            .unwrap();
+    }
+
+    if let Some(asset) = WebAssets::get("index.html") {
+        return Response::builder()
+            .header(header::CONTENT_TYPE, "text/html")
+            .body(Body::from(asset.data))
+            .unwrap();
+    }
+
+    (StatusCode::NOT_FOUND, "Frontend not embedded. Build with Flutter SDK to include the UI.").into_response()
+}
+
+fn mime_type(path: &str) -> &'static str {
+    if path.ends_with(".js") { "application/javascript" }
+    else if path.ends_with(".wasm") { "application/wasm" }
+    else if path.ends_with(".json") { "application/json" }
+    else if path.ends_with(".png") { "image/png" }
+    else if path.ends_with(".svg") { "image/svg+xml" }
+    else if path.ends_with(".ico") { "image/x-icon" }
+    else if path.ends_with(".ttf") { "font/ttf" }
+    else if path.ends_with(".otf") { "font/otf" }
+    else if path.ends_with(".woff2") { "font/woff2" }
+    else if path.ends_with(".css") { "text/css" }
+    else if path.ends_with(".html") || path.is_empty() { "text/html" }
+    else { "application/octet-stream" }
 }

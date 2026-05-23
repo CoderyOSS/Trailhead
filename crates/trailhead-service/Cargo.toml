@@ -28,6 +28,7 @@ futures-util = "0.3"
  toml = "0.8"
 sha2 = "0.10"
  reqwest = { version = "0.12", features = ["json", "stream"] }
+rust-embed = "8"
 
 [dev-dependencies]
 tempfile = "3"

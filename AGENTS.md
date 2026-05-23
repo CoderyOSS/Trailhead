@@ -1,5 +1,22 @@
 # Trailhead Service - Agent Guide
 
+## Project Layout
+
+```
+CoderyTrailhead/
+├── AGENTS.md                       ← This file (repo-level orchestration)
+├── frontend/                       ← Flutter SPA (web + iOS)
+│   ├── AGENTS.md                   ← Frontend-specific instructions
+│   └── ...
+├── crates/trailhead-service/       ← Rust backend
+│   ├── AGENTS.md                   ← Backend-specific instructions
+│   └── ...
+├── openspec/                       ← OpenSpec change proposals
+└── containers/worker/              ← Docker worker container
+```
+
+For frontend work, read `frontend/AGENTS.md`. For backend work, read `crates/trailhead-service/AGENTS.md`.
+
 ## Purpose
 
 Trailhead Service = AI workflow orchestration. Runs multi-stage LLM workflows across ephemeral worker containers. Workers code on USER projects, not Trailhead itself.

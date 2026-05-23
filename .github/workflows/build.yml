@@ -13,8 +13,24 @@ jobs:
       - run: cargo test --workspace
       - run: cargo clippy --workspace -- -D warnings
 
-  release:
+  build-frontend:
+    runs-on: ubuntu-latest
     needs: check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: "stable"
+      - run: cd frontend && flutter pub get
+      - run: cd frontend && flutter test
+      - run: cd frontend && flutter build web --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: frontend-web
+          path: frontend/build/web/
+
+  release:
+    needs: [check, build-frontend]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -29,6 +45,11 @@ jobs:
           VERSION=$(grep '^version = ' crates/trailhead-service/Cargo.toml | head -1 | sed 's/version = "//;s/"//')
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
           echo "tag=trailhead-service-v${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: frontend-web
+          path: crates/trailhead-service/ui/dist/
 
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
@@ -48,16 +69,6 @@ jobs:
           target_commitish: ${{ github.sha }}
           files: trailhead-service-linux-x86_64
           generate_release_notes: true
-
-  build-frontend:
-    runs-on: ubuntu-latest
-    needs: check
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-      - run: cd crates/trailhead-service/ui && npm install && npm run build
 
   build-worker-image:
     runs-on: ubuntu-latest

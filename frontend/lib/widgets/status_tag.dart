@@ -1,0 +1,184 @@
+import 'package:flutter/material.dart';
+import '../theme/tokens.dart';
+import '../providers/mock_data.dart';
+
+class StatusDot extends StatelessWidget {
+  final JobState status;
+  final bool pulse;
+  final double size;
+
+  const StatusDot({
+    super.key,
+    required this.status,
+    this.pulse = false,
+    this.size = 6,
+  });
+
+  Color get _color {
+    switch (status) {
+      case JobState.running:
+        return AppColors.accent;
+      case JobState.passed:
+        return AppColors.success;
+      case JobState.retrying:
+        return AppColors.warning;
+      case JobState.failed:
+        return AppColors.danger;
+      case JobState.queued:
+        return AppColors.info;
+      case JobState.cancelled:
+      case JobState.paused:
+        return AppColors.fg3;
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return pulse
+        ? _PulsingDot(color: _color, size: size)
+        : Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: _color,
+              shape: BoxShape.circle,
+            ),
+          );
+  }
+}
+
+class _PulsingDot extends StatefulWidget {
+  final Color color;
+  final double size;
+
+  const _PulsingDot({required this.color, required this.size});
+
+  @override
+  State<_PulsingDot> createState() => _PulsingDotState();
+}
+
+class _PulsingDotState extends State<_PulsingDot>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2000),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FadeTransition(
+      opacity: Tween<double>(begin: 1.0, end: 0.4).animate(_controller),
+      child: Container(
+        width: widget.size,
+        height: widget.size,
+        decoration: BoxDecoration(
+          color: widget.color,
+          shape: BoxShape.circle,
+        ),
+      ),
+    );
+  }
+}
+
+class StatusTag extends StatelessWidget {
+  final JobState status;
+
+  const StatusTag({super.key, required this.status});
+
+  Color get _color {
+    switch (status) {
+      case JobState.running:
+        return AppColors.accent;
+      case JobState.passed:
+        return AppColors.success;
+      case JobState.retrying:
+        return AppColors.warning;
+      case JobState.failed:
+        return AppColors.danger;
+      case JobState.queued:
+        return AppColors.info;
+      case JobState.cancelled:
+      case JobState.paused:
+        return AppColors.fg3;
+    }
+  }
+
+  Color get _softBg {
+    switch (status) {
+      case JobState.running:
+        return AppColors.accent.withValues(alpha: 0.15);
+      case JobState.passed:
+        return AppColors.success.withValues(alpha: 0.15);
+      case JobState.retrying:
+        return AppColors.warning.withValues(alpha: 0.15);
+      case JobState.failed:
+        return AppColors.danger.withValues(alpha: 0.15);
+      case JobState.queued:
+        return AppColors.info.withValues(alpha: 0.15);
+      case JobState.cancelled:
+      case JobState.paused:
+        return AppColors.bg3;
+    }
+  }
+
+  String get _label {
+    switch (status) {
+      case JobState.running:
+        return 'running';
+      case JobState.passed:
+        return 'passed';
+      case JobState.retrying:
+        return 'retrying';
+      case JobState.failed:
+        return 'failed';
+      case JobState.queued:
+        return 'queued';
+      case JobState.cancelled:
+        return 'cancelled';
+      case JobState.paused:
+        return 'paused';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+      decoration: BoxDecoration(
+        color: _softBg,
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          StatusDot(
+            status: status,
+            pulse: status == JobState.running,
+          ),
+          const SizedBox(width: 6),
+          Text(
+            _label,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11,
+              fontWeight: FontWeight.w500,
+              color: _color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}

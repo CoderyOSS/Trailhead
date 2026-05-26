@@ -187,6 +187,12 @@ POST /api/v1/jobs
 ```
 If set, the project directory is bind-mounted directly. Otherwise: `{PROJECT_BASE}/{project_id}`. The caller is responsible for having the directory in the desired state before creating the job — the scheduler does no git operations on the host.
 
+## Active Changes
+
+- **multi-provider-workers**: `openspec/changes/multi-provider-workers/` — adds
+  Daytona VM, k3s pod, and localhost process providers alongside the existing
+  Docker provider. See `design.md` for integration details.
+
 ## Deployment
 
 Service runs on **host machine**, not in containers. Managed by supervisord:

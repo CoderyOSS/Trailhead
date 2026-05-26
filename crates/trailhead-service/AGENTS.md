@@ -37,6 +37,12 @@ ssh gem@apps 'export PATH="$HOME/.cargo/bin:$PATH" && cd /home/gem/projects/Code
 - **Scheduler**: Event-driven via `tokio::sync::watch`. Drives job lifecycle in `src/scheduler.rs`
 - **Routes in web.rs**: API routes (`/api/v1/*`) + fallback serves embedded Flutter SPA at `ui/static/`
 
+## Active Changes
+
+- **multi-provider-workers**: `openspec/changes/multi-provider-workers/` — adds
+  Daytona VM, k3s pod, and localhost process providers alongside the existing
+  Docker provider. See `design.md` for integration details.
+
 ## Frontend
 
 Flutter frontend lives at `frontend/` (separate project, independent version). Web build output is embedded in the Rust binary at compile time via `build.rs` + `rust-embed`.

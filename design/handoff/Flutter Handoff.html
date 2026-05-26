@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-accent="orange" data-theme-variant="slate">
+<head>
+<meta charset="utf-8">
+<title>Trailhead — Flutter handoff</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="assets/codery-glyph.svg">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="themes.css">
+<style>
+  html, body { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--co-bg-0);
+    color: var(--co-text);
+    font-family: var(--co-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * { box-sizing: border-box; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--co-bg-4); border: 2px solid transparent; background-clip: padding-box; border-radius: 999px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--co-bg-5); background-clip: padding-box; }
+  input:focus, textarea:focus, select:focus {
+    box-shadow: var(--co-shadow-focus);
+    border-color: var(--co-accent) !important;
+  }
+  button { font-family: var(--co-font-sans); }
+
+  @keyframes co-pulse  { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
+  @keyframes co-blink  { 0%, 50% { opacity: 1 } 50.01%, 100% { opacity: 0 } }
+  @keyframes co-slide-in { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  @keyframes co-spin    { to { transform: rotate(360deg); } }
+
+  html { scroll-behavior: smooth; }
+  .co-loading {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--co-text-subtle);
+    font-family: var(--co-font-mono); font-size: 12px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+
+  /* Sticky TOC width tighter on smaller screens */
+  @media (max-width: 1180px) {
+    nav { display: none !important; }
+  }
+</style>
+<script>
+  // Patch ResizeObserver to debounce callbacks through requestAnimationFrame.
+  // This breaks the synchronous "callback mutates layout → observer fires
+  // again" loop the browser flags as "ResizeObserver loop completed with
+  // undelivered notifications". Functionally equivalent to the unpatched
+  // observer (still gets called with up-to-date entries); just on the next
+  // frame instead of synchronously.
+  (function () {
+    if (typeof ResizeObserver !== 'function') return;
+    const Native = ResizeObserver;
+    window.ResizeObserver = class PatchedRO {
+      constructor(cb) {
+        let pending = null;
+        this._inner = new Native((entries, obs) => {
+          if (pending) cancelAnimationFrame(pending);
+          pending = requestAnimationFrame(() => { pending = null; try { cb(entries, obs); } catch (e) {} });
+        });
+      }
+      observe(...a)   { return this._inner.observe(...a); }
+      unobserve(...a) { return this._inner.unobserve(...a); }
+      disconnect()    { return this._inner.disconnect(); }
+    };
+  })();
+
+  // Also swallow the warning if it still leaks through (e.g. from a
+  // browser-native observer we don't control).
+  const __isRObserverNoise = (m) => typeof m === "string" && /ResizeObserver loop/i.test(m);
+  window.addEventListener("error", (e) => {
+    if (__isRObserverNoise(e.message)) { e.stopImmediatePropagation(); e.preventDefault(); return false; }
+  }, true);
+  const __origOnError = window.onerror;
+  window.onerror = function (msg, src, line, col, err) {
+    if (__isRObserverNoise(msg)) return true;
+    return __origOnError ? __origOnError.apply(this, arguments) : false;
+  };
+  const __origConsoleError = console.error.bind(console);
+  console.error = (...args) => { if (args.length && __isRObserverNoise(args[0])) return; __origConsoleError(...args); };
+</script>
+</head>
+<body>
+  <div id="root"><div class="co-loading">loading handoff…</div></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <!-- The handoff loads the entire live-app component tree so visuals match exactly. -->
+  <script type="text/babel" src="src/Common.jsx"></script>
+  <script type="text/babel" src="src/data.js"></script>
+  <script type="text/babel" src="src/Rail.jsx"></script>
+  <script type="text/babel" src="src/WorkflowsSidebar.jsx"></script>
+  <script type="text/babel" src="src/JobsSidebar.jsx"></script>
+  <script type="text/babel" src="src/TopBar.jsx"></script>
+  <script type="text/babel" src="src/Canvas.jsx"></script>
+  <script type="text/babel" src="src/BuilderOverlay.jsx"></script>
+  <script type="text/babel" src="src/StageDrawer.jsx"></script>
+  <script type="text/babel" src="src/Filmstrip.jsx"></script>
+  <script type="text/babel" src="src/RunsView.jsx"></script>
+
+  <!-- Handoff-specific shell and sections -->
+  <script type="text/babel" src="handoff/src/handoff-shell.jsx"></script>
+  <script type="text/babel" src="handoff/src/handoff-tokens-section.jsx"></script>
+  <script type="text/babel" src="handoff/src/handoff-components-section.jsx"></script>
+  <script type="text/babel" src="handoff/src/handoff-layouts-section.jsx"></script>
+  <script type="text/babel" src="handoff/src/handoff-doc.jsx"></script>
+</body>
+</html>

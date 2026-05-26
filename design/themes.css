@@ -1,0 +1,227 @@
+/* ============================================================
+   Trailhead — theme variants
+   Layer on top of colors_and_type.css. The default ("hearth")
+   uses the file's existing dark palette unchanged. The three
+   variants below remap the bg/fg/border/grad/shadow/syntax
+   tokens so every component picks up the new mood with zero
+   per-component plumbing.
+   ============================================================ */
+
+/* ── SLATE — neutral cool greys, near-black. Linear / n8n territory. */
+:root[data-theme-variant="slate"] {
+  --co-bg-0: #0c0d10;
+  --co-bg-1: #14161b;
+  --co-bg-2: #1a1d23;
+  --co-bg-3: #22262d;
+  --co-bg-4: #2b303a;
+  --co-bg-5: #353b46;
+
+  --co-fg-0: #f3f4f6;
+  --co-fg-1: #d8dade;
+  --co-fg-2: #a5a9b1;
+  --co-fg-3: #777b84;
+  --co-fg-4: #565a62;
+  --co-fg-5: #3d4148;
+
+  --co-border-1: #21242a;
+  --co-border-2: #2e323a;
+  --co-border-3: #40454f;
+
+  --co-success: #6fbf73;
+  --co-success-soft: color-mix(in oklab, #6fbf73 16%, transparent);
+  --co-warning: #e6b341;
+  --co-warning-soft: color-mix(in oklab, #e6b341 18%, transparent);
+  --co-danger:  #e26464;
+  --co-danger-soft:  color-mix(in oklab, #e26464 18%, transparent);
+  --co-info:    #6ea8d9;
+  --co-info-soft:    color-mix(in oklab, #6ea8d9 18%, transparent);
+
+  --co-syn-keyword:  #c98a5e;
+  --co-syn-string:   #a0c97b;
+  --co-syn-number:   #e6b341;
+  --co-syn-comment:  #6a6e76;
+  --co-syn-function: #7eb6e6;
+  --co-syn-type:     #d4a3d4;
+  --co-syn-punct:    #777b84;
+
+  --co-grad-hearth:
+    radial-gradient(ellipse 110% 75% at 50% -10%,
+      #1d2027 0%, #14161b 45%, #0c0d10 100%);
+  --co-grad-loaf:
+    linear-gradient(180deg, #1a1d23 0%, #1f232a 100%);
+  --co-grad-oven:
+    radial-gradient(ellipse 80% 60% at 50% 0%,
+      rgba(110, 168, 217, 0.10) 0%,
+      transparent 70%);
+
+  --co-shadow-1: 0 1px 0 0 rgba(255,255,255,0.04) inset, 0 2px 6px rgba(0,0,0,0.5);
+  --co-shadow-2: 0 6px 18px rgba(0,0,0,0.55), 0 1px 0 0 rgba(255,255,255,0.04) inset;
+  --co-shadow-3: 0 16px 40px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.05);
+
+  --co-chart-grid: #21242a;
+}
+
+/* ── TRAILHEAD — deep forest greens, mossy canvas. */
+:root[data-theme-variant="trailhead"] {
+  --co-bg-0: #0a120c;
+  --co-bg-1: #0f1a12;
+  --co-bg-2: #142319;
+  --co-bg-3: #1c2e21;
+  --co-bg-4: #253a2c;
+  --co-bg-5: #2f4737;
+
+  --co-fg-0: #ecf2e0;
+  --co-fg-1: #d3deb9;
+  --co-fg-2: #a8b88a;
+  --co-fg-3: #7d8d63;
+  --co-fg-4: #586645;
+  --co-fg-5: #3d4831;
+
+  --co-border-1: #1a2b1f;
+  --co-border-2: #25392c;
+  --co-border-3: #36513e;
+
+  --co-success: #a4c97a;
+  --co-success-soft: color-mix(in oklab, #a4c97a 16%, transparent);
+  --co-warning: #e6c241;
+  --co-warning-soft: color-mix(in oklab, #e6c241 18%, transparent);
+  --co-danger:  #dc6555;
+  --co-danger-soft:  color-mix(in oklab, #dc6555 18%, transparent);
+  --co-info:    #8fc4d6;
+  --co-info-soft:    color-mix(in oklab, #8fc4d6 18%, transparent);
+
+  --co-syn-keyword:  #d6c258;
+  --co-syn-string:   #b5d189;
+  --co-syn-number:   #e6c241;
+  --co-syn-comment:  #586645;
+  --co-syn-function: #8fc4d6;
+  --co-syn-type:     #e0b8a8;
+  --co-syn-punct:    #7d8d63;
+
+  --co-grad-hearth:
+    radial-gradient(ellipse 110% 75% at 50% -10%,
+      #1f3326 0%, #142319 45%, #0a120c 100%);
+  --co-grad-loaf:
+    linear-gradient(180deg, #142319 0%, #18291d 100%);
+  --co-grad-oven:
+    radial-gradient(ellipse 80% 60% at 50% 0%,
+      rgba(164, 201, 122, 0.12) 0%,
+      transparent 70%);
+
+  --co-shadow-1: 0 1px 0 0 rgba(196,212,154,0.05) inset, 0 2px 6px rgba(0,0,0,0.45);
+  --co-shadow-2: 0 6px 18px rgba(0,0,0,0.5), 0 1px 0 0 rgba(196,212,154,0.06) inset;
+  --co-shadow-3: 0 16px 40px rgba(0,0,0,0.55), 0 0 0 1px rgba(196,212,154,0.07);
+
+  --co-chart-grid: #1a2b1f;
+}
+
+/* ── PAPER — light mode. Off-white, ink-dark text. */
+:root[data-theme-variant="paper"] {
+  --co-bg-0: #f5f2ec;
+  --co-bg-1: #fdfbf6;
+  --co-bg-2: #f3efe6;
+  --co-bg-3: #e8e3d6;
+  --co-bg-4: #dcd6c4;
+  --co-bg-5: #c9c2ad;
+
+  --co-fg-0: #1a1814;
+  --co-fg-1: #3a352d;
+  --co-fg-2: #5d564a;
+  --co-fg-3: #837b6c;
+  --co-fg-4: #a8a193;
+  --co-fg-5: #c9c2ad;
+
+  --co-border-1: #ebe6d8;
+  --co-border-2: #d8d2c0;
+  --co-border-3: #b5ad96;
+
+  /* In light mode, shift the orange accent darker so it reads on cream. */
+  --co-accent-200: #f0bd80;
+  --co-accent-300: #d68c3d;
+  --co-accent-400: #b86a1a;
+  --co-accent-500: #944f0c;
+  --co-accent-600: #6b3a08;
+  --co-accent:     #b86a1a;
+  --co-accent-ink: #ffffff;
+  --co-accent-soft: color-mix(in oklab, #b86a1a 14%, transparent);
+
+  --co-trail-400: #5e7340;
+  --co-trail-500: #455429;
+  --co-trail-soft: color-mix(in oklab, #5e7340 14%, transparent);
+
+  --co-success: #5e8a3f;
+  --co-success-soft: color-mix(in oklab, #5e8a3f 12%, transparent);
+  --co-warning: #b8780f;
+  --co-warning-soft: color-mix(in oklab, #b8780f 12%, transparent);
+  --co-danger:  #b8331f;
+  --co-danger-soft:  color-mix(in oklab, #b8331f 12%, transparent);
+  --co-info:    #325f8a;
+  --co-info-soft:    color-mix(in oklab, #325f8a 12%, transparent);
+
+  --co-syn-keyword:  #944f0c;
+  --co-syn-string:   #5e8a3f;
+  --co-syn-number:   #a04400;
+  --co-syn-comment:  #a8a193;
+  --co-syn-function: #325f8a;
+  --co-syn-type:     #7a3eba;
+  --co-syn-punct:    #837b6c;
+
+  --co-grad-hearth:
+    radial-gradient(ellipse 110% 75% at 50% -10%,
+      #fdfbf6 0%, #f5f2ec 50%, #ede8d8 100%);
+  --co-grad-loaf:
+    linear-gradient(180deg, #fdfbf6 0%, #f7f3e8 100%);
+  --co-grad-oven:
+    radial-gradient(ellipse 80% 60% at 50% 0%,
+      rgba(184, 106, 26, 0.10) 0%,
+      transparent 70%);
+  --co-grad-crust:
+    linear-gradient(135deg, #f0bd80 0%, #d68c3d 35%, #b86a1a 70%, #944f0c 100%);
+  --co-grad-trail:
+    linear-gradient(135deg, #c4d49a 0%, #7a8d4a 50%, #455429 100%);
+
+  --co-shadow-1: 0 1px 2px rgba(74, 47, 26, 0.06);
+  --co-shadow-2: 0 4px 12px rgba(74, 47, 26, 0.10), 0 1px 0 0 rgba(74, 47, 26, 0.04);
+  --co-shadow-3: 0 16px 40px rgba(74, 47, 26, 0.16);
+  --co-shadow-glow:
+    0 0 0 1px color-mix(in oklab, #b86a1a 25%, transparent),
+    0 8px 20px color-mix(in oklab, #b86a1a 28%, transparent);
+  --co-shadow-focus:
+    0 0 0 1px var(--co-bg-1),
+    0 0 0 3px color-mix(in oklab, #b86a1a 50%, transparent);
+
+  --co-chart-grid: #e8e3d6;
+
+  color-scheme: light;
+}
+
+/* ──────────────────────────────────────────────────────────────────
+   ACCENT axis — orthogonal to theme. data-accent="green" remaps
+   the accent tokens to Trailhead foliage. Works inside any theme.
+   Re-declared here (rather than in index.html) so all four themes
+   share a single source of truth.
+   ────────────────────────────────────────────────────────────────── */
+:root[data-accent="green"] {
+  --co-accent-200: #c4d49a;
+  --co-accent-300: #a4b475;
+  --co-accent-400: #7a8d4a;
+  --co-accent-500: #5e7340;
+  --co-accent-600: #455429;
+  --co-accent:     #7a8d4a;
+  --co-accent-ink: #fbf3e6;
+  --co-accent-soft: color-mix(in oklab, #7a8d4a 22%, transparent);
+  --co-grad-crust: linear-gradient(135deg, #c4d49a 0%, #a4b475 30%, #7a8d4a 60%, #5e7340 100%);
+  --co-shadow-glow:
+    0 0 0 1px color-mix(in oklab, #7a8d4a 30%, transparent),
+    0 8px 24px color-mix(in oklab, #7a8d4a 35%, transparent);
+  --co-shadow-focus:
+    0 0 0 1px var(--co-bg-1),
+    0 0 0 3px color-mix(in oklab, #7a8d4a 60%, transparent);
+}
+
+/* Paper + green: shift even darker so green reads on cream */
+:root[data-theme-variant="paper"][data-accent="green"] {
+  --co-accent-400: #455429;
+  --co-accent:     #455429;
+  --co-accent-soft: color-mix(in oklab, #455429 14%, transparent);
+}

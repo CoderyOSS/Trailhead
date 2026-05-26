@@ -106,8 +106,8 @@ class _BrandGlyph extends StatelessWidget {
       ),
       child: SvgPicture.asset(
         'assets/images/trailhead-logo.svg',
-        width: 28,
-        height: 28,
+        width: 32,
+        height: 32,
       ),
     );
   }

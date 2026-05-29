@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:frontend/theme/tokens.dart';
 
@@ -22,11 +23,13 @@ class DotGridPainter extends CustomPainter {
     final startX = pan.dx % spacing;
     final startY = pan.dy % spacing;
 
+    final dots = <Offset>[];
     for (double x = startX; x < size.width; x += spacing) {
       for (double y = startY; y < size.height; y += spacing) {
-        canvas.drawLine(Offset(x, y), Offset(x, y), paint);
+        dots.add(Offset(x, y));
       }
     }
+    canvas.drawPoints(PointMode.points, dots, paint);
   }
 
   @override

@@ -29,7 +29,6 @@ class GraphCanvas extends ConsumerWidget {
                   zoom: viewport.zoom,
                   pan: viewport.pan,
                 ),
-                size: Size.infinite,
               ),
             ),
           ],

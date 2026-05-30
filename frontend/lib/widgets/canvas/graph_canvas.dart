@@ -25,40 +25,42 @@ class GraphCanvas extends ConsumerWidget {
         decoration: const BoxDecoration(
           gradient: AppColors.hearthGradient,
         ),
-        child: Stack(
-          children: [
-            Positioned.fill(
-              child: CustomPaint(
-                painter: DotGridPainter(
-                  zoom: viewport.zoom,
-                  pan: viewport.pan,
+        child: ClipRect(
+          child: Stack(
+            children: [
+              Positioned.fill(
+                child: CustomPaint(
+                  painter: DotGridPainter(
+                    zoom: viewport.zoom,
+                    pan: viewport.pan,
+                  ),
                 ),
               ),
-            ),
-            Transform.translate(
-              offset: viewport.pan,
-              child: Transform.scale(
-                scale: viewport.zoom,
-                alignment: Alignment.topLeft,
-                child: Stack(
-                  children: workflow.nodes.map((node) {
-                    return Positioned(
-                      left: node.x,
-                      top: node.y,
-                      child: WorkerNode(
-                        node: node,
-                        selected: selectedNodeId == node.id,
-                        onTap: () {
-                          ref.read(selectedNodeProvider.notifier).state =
-                              selectedNodeId == node.id ? null : node.id;
-                        },
-                      ),
-                    );
-                  }).toList(),
+              Transform.translate(
+                offset: viewport.pan,
+                child: Transform.scale(
+                  scale: viewport.zoom,
+                  alignment: Alignment.topLeft,
+                  child: Stack(
+                    children: workflow.nodes.map((node) {
+                      return Positioned(
+                        left: node.x,
+                        top: node.y,
+                        child: WorkerNode(
+                          node: node,
+                          selected: selectedNodeId == node.id,
+                          onTap: () {
+                            ref.read(selectedNodeProvider.notifier).state =
+                                selectedNodeId == node.id ? null : node.id;
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

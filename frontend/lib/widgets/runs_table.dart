@@ -9,9 +9,16 @@ import 'view_toggle.dart';
 class RunsTable extends ConsumerWidget {
   const RunsTable({super.key});
 
+  static const _historyStatuses = <JobState>{
+    JobState.passed,
+    JobState.failed,
+    JobState.cancelled,
+  };
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final jobs = ref.watch(jobsProvider);
+    final allJobs = ref.watch(jobsProvider);
+    final jobs = allJobs.where((j) => _historyStatuses.contains(j.state)).toList();
     final viewMode = ref.watch(runsTableViewModeProvider);
     final activeId = ref.watch(selectedJobProvider)?.id;
 

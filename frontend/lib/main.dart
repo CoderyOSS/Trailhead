@@ -7,6 +7,7 @@ import 'widgets/top_bar.dart';
 import 'widgets/workflows_sidebar.dart';
 import 'widgets/jobs_sidebar.dart';
 import 'widgets/canvas/graph_canvas.dart';
+import 'widgets/runs_table.dart';
 
 void main() {
   runApp(const TrailheadApp());
@@ -36,18 +37,22 @@ class TrailheadShell extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(modeProvider);
+    final job = ref.watch(selectedJobProvider);
+    final showSidebar = mode != AppMode.history || job != null;
 
     return Scaffold(
       body: Row(
         children: [
           const ModeRail(activeCount: 3),
-          _buildSidebar(mode, ref),
+          if (showSidebar) _buildSidebar(mode, ref),
           Expanded(
             child: Column(
               children: [
                 const TopBar(),
-                const Expanded(
-                  child: GraphCanvas(),
+                Expanded(
+                  child: mode == AppMode.history && job == null
+                      ? const RunsTable()
+                      : const GraphCanvas(),
                 ),
               ],
             ),

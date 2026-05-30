@@ -17,3 +17,7 @@ final jobsProvider = StateProvider<List<JobSummary>>(
 );
 
 final sidebarViewModeProvider = StateProvider<String>((ref) => 'grouped');
+
+final selectedNodeProvider = StateProvider<String?>((ref) => null);
+
+final runsTableViewModeProvider = StateProvider<String>((ref) => 'flat');

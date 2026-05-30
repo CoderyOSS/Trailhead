@@ -3,8 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart';
+import '../models/workflow_node.dart';
 import 'app_button.dart';
 import 'status_tag.dart';
+import 'mode_rail.dart';
 
 class WorkflowsSidebar extends ConsumerWidget {
   final String? activeId;
@@ -31,7 +33,30 @@ class WorkflowsSidebar extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          _Header(count: workflows.length),
+          _Header(
+            count: workflows.length,
+            onNew: () {
+              final id = 'wf_untitled_${DateTime.now().millisecondsSinceEpoch}';
+              final newWf = WorkflowSummary(
+                id: id,
+                name: 'Untitled',
+                version: 1,
+                updated: 'just now',
+                nodes: const [
+                  WorkflowNode(
+                    id: 'entrypoint',
+                    kind: 'worker',
+                    label: 'entrypoint',
+                    x: 400,
+                    y: 300,
+                  ),
+                ],
+              );
+              ref.read(workflowsProvider.notifier).update((list) => [...list, newWf]);
+              ref.read(workflowProvider.notifier).state = newWf;
+              ref.read(modeProvider.notifier).state = AppMode.build;
+            },
+          ),
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(vertical: 8),
@@ -79,8 +104,9 @@ String _commaFormat(int n) {
 
 class _Header extends StatelessWidget {
   final int count;
+  final VoidCallback onNew;
 
-  const _Header({required this.count});
+  const _Header({required this.count, required this.onNew});
 
   @override
   Widget build(BuildContext context) {
@@ -113,15 +139,15 @@ class _Header extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 10),
-          SizedBox(
-            width: double.infinity,
-            child: AppButton(
-              label: 'new workflow',
-              variant: AppButtonVariant.secondary,
-              size: AppButtonSize.sm,
-              onTap: () {},
+            SizedBox(
+              width: double.infinity,
+              child: AppButton(
+                label: 'new workflow',
+                variant: AppButtonVariant.secondary,
+                size: AppButtonSize.sm,
+                onTap: onNew,
+              ),
             ),
-          ),
         ],
       ),
     );

@@ -97,7 +97,10 @@ function App() {
       />
     );
   } else {
-    sidebar = (
+    // History: the sidebar is a navigator between jobs — only useful once
+    // you've drilled into one. With no selection we show the full table
+    // alone, so the sidebar would just duplicate it.
+    sidebar = historyJobId ? (
       <JobsSidebar
         kind="history"
         jobs={JOBS_LOG}
@@ -106,7 +109,7 @@ function App() {
         activeId={historyJobId}
         onPick={(id) => { setHistoryJobId(id); setHistoryStage(null); }}
       />
-    );
+    ) : null;
   }
 
   // ── Main canvas + filmstrip column (drawer is a sibling, not overlay) ──
@@ -158,6 +161,8 @@ function App() {
           jobs={historyJobs}
           onPick={(id) => { setHistoryJobId(id); setHistoryStage(null); }}
           activeId={historyJobId}
+          viewMode={historyJobsView}
+          onViewMode={setHistoryJobsView}
         />
       );
     } else {

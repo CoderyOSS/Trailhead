@@ -18,6 +18,14 @@ function NodeShell({ status, selected, glow, density, children, onClick, style }
   const statusColor = status && status !== "queued" && status !== "skipped"
     ? `var(--co-${status === "passed" ? "success" : status === "failed" ? "danger" : status === "running" ? "accent" : status === "retrying" ? "warning" : "info"})`
     : "var(--co-border-2)";
+  // Use inset box-shadow for the status rail so it's clipped by border-radius at corners.
+  const railShadow = (status === "queued" || status === "skipped")
+    ? `inset 3px 0 0 color-mix(in oklab, ${statusColor} 40%, transparent)`
+    : `inset 3px 0 0 ${statusColor}`;
+  const outlineShadow = selected
+    ? "0 0 0 1px var(--co-accent), 0 0 0 4px color-mix(in oklab, var(--co-accent) 22%, transparent), 0 6px 16px rgba(0,0,0,0.4)"
+    : status === "running" ? `0 0 18px color-mix(in oklab, var(--co-accent) 30%, transparent), 0 4px 12px rgba(0,0,0,0.4)`
+    : "var(--co-shadow-1)";
   return (
     <div
       onClick={onClick}
@@ -28,10 +36,7 @@ function NodeShell({ status, selected, glow, density, children, onClick, style }
           : "var(--co-grad-loaf)",
         border: `1px solid ${selected ? "var(--co-accent)" : status === "running" ? statusColor : "var(--co-border-2)"}`,
         borderRadius: 10,
-        boxShadow: selected
-          ? "0 0 0 1px var(--co-accent), 0 0 0 4px color-mix(in oklab, var(--co-accent) 22%, transparent), 0 6px 16px rgba(0,0,0,0.4)"
-          : status === "running" ? `0 0 18px color-mix(in oklab, var(--co-accent) 30%, transparent), 0 4px 12px rgba(0,0,0,0.4)`
-          : "var(--co-shadow-1)",
+        boxShadow: `${railShadow}, ${outlineShadow}`,
         cursor: "pointer",
         userSelect: "none",
         transition: "border-color 140ms, box-shadow 200ms, transform 100ms",
@@ -39,13 +44,6 @@ function NodeShell({ status, selected, glow, density, children, onClick, style }
       }}
       onMouseDown={e => e.stopPropagation()}
     >
-      {/* status rail */}
-      <div style={{
-        position: "absolute", left: 0, top: 0, bottom: 0, width: 3,
-        background: statusColor,
-        borderRadius: "10px 0 0 10px",
-        opacity: status === "queued" || status === "skipped" ? 0.4 : 1,
-      }} />
       {children}
     </div>
   );
@@ -699,4 +697,4 @@ function FlowTokens({ d, mode }) {
   );
 }
 
-Object.assign(window, { Canvas });
+Object.assign(window, { Canvas, WorkerNode, RoutingNode });

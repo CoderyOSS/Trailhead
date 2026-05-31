@@ -456,7 +456,7 @@ function SidebarsCard() {
   return (
     <Card
       title="Sidebars"
-      description="Two sidebar variants — Workflows (Build mode) and Jobs (Active + History modes). The Jobs sidebar is shared across both modes: Active shows live jobs (running/paused/queued/retrying) with a live badge in the footer; History shows completed jobs (passed/failed/cancelled) with a filter button and 'no search yet' footer. Both support grouped/flat view toggle."
+      description="Two sidebar variants — Workflows (Build mode) and Jobs (Active + History modes). The Jobs sidebar is shared across both modes: Active shows live jobs (running/paused/queued/retrying) with a live badge in the footer; History shows completed jobs (passed/failed/cancelled) with a filter button and 'no search yet' footer. Both support grouped/flat view toggle. Note: in History the sidebar is hidden until a run is selected — with no selection the runs table fills the width on its own, so the sidebar acts purely as a job-to-job navigator once you drill in."
       dartImport="lib/widgets/sidebars/{workflows,jobs}_sidebar.dart"
     >
       <SubBlock label="workflows sidebar · Build mode · 240px">
@@ -744,15 +744,20 @@ function SingleSnap({ id }) {
 // ════════════════════════════════════════════════════════════════════════
 
 function RunsTableCard() {
+  const [view, setView] = React.useState("grouped");
   return (
     <Card
       title="Runs table (History)"
-      description="Sortable table of past jobs. Mode badge in the header, status filter pills, then a 9-column table: status dot, run id, input, status tag, started, duration, tokens, cost, by. No search yet — sort by clicking column headers."
+      description="The default History surface — shown full-width with NO jobs sidebar when nothing is selected (the sidebar only appears once you drill into a run, as a job-to-job navigator). Mode badge in the header, status filter pills, a grouped/flat view toggle (same control as the jobs sidebar), then a 9-column table: status dot, run id, input, status tag, started, duration, tokens, cost, by. Grouped inserts a workflow header row before each group; flat is a plain list. No search yet."
       dartImport="lib/widgets/runs_table.dart"
       fullBleed
     >
       <Constrained width="100%" height={500} allowScroll>
-        <RunsView jobs={JOBS_LOG.filter(j => ["passed","failed","cancelled"].includes(j.status))} onPick={() => {}} activeId={null} />
+        <RunsView
+          jobs={JOBS_LOG.filter(j => ["passed","failed","cancelled"].includes(j.status))}
+          onPick={() => {}} activeId={null}
+          viewMode={view} onViewMode={setView}
+        />
       </Constrained>
       <div style={{ padding: 18 }}>
         <H3>tokens</H3>
@@ -761,6 +766,8 @@ function RunsTableCard() {
           { name: "header.font",  value: "AppType.mono · 10px · UPPERCASE · letterSpacing 0.06em" },
           { name: "header.color", value: "palette.textSubtle" },
           { name: "body.font",    value: "AppType.sans 12.5px · ids in mono" },
+          { name: "view toggle",  value: "grouped ↔ flat · shared ViewToggle · sits after the filter pills, divider before" },
+          { name: "group header", value: "colSpan 9 · bg-1 · workflow name · dot · count · grouped mode only" },
           { name: "row.hover",    value: "palette.surface" },
           { name: "row.active",   value: "palette.surface (sticky)" },
           { name: "filter pill",  value: "border-1 / surfaceRaised when active · counts in subtle text" },

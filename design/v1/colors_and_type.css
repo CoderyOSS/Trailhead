@@ -1,0 +1,498 @@
+/* ============================================================
+   Codery — Colors, Type & Gradients
+   Bakery palette: warm orange crust, deep coffee brown, cream parchment.
+   Dark-first; light theme override at the bottom.
+   Sub-brand: Trailhead inherits Codery tokens but accent slides toward
+   forest green for "outdoor / pipeline" personality.
+   ============================================================ */
+
+/* ---- Fonts -------------------------------------------------- */
+@import url("https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,500;12..96,600;12..96,700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap");
+
+:root {
+  /* ---- Type families -------------------------------------- */
+  /* Display: Bricolage Grotesque — rounded, friendly, sized via opsz */
+  --co-font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  /* Sans: Plus Jakarta Sans — warm geometric, good for body */
+  --co-font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, -apple-system,
+    "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  /* Mono: JetBrains Mono — readable, slightly playful, matches the bakery tone */
+  --co-font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+
+  /* ---- Type scale ----------------------------------------- */
+  --co-text-3xs: 10px;
+  --co-text-2xs: 11px;
+  --co-text-xs: 12px;
+  --co-text-sm: 13px;
+  --co-text-base: 14px;
+  --co-text-md: 15px;
+  --co-text-lg: 17px;
+  --co-text-xl: 20px;
+  --co-text-2xl: 24px;
+  --co-text-3xl: 30px;
+  --co-text-4xl: 38px;
+  --co-text-5xl: 52px;
+  --co-text-6xl: 72px;
+  --co-text-7xl: 96px;
+
+  --co-leading-tight: 1.08;
+  --co-leading-snug: 1.25;
+  --co-leading-normal: 1.5;
+  --co-leading-relaxed: 1.65;
+
+  --co-tracking-tight: -0.025em;
+  --co-tracking-snug: -0.015em;
+  --co-tracking-normal: 0;
+  --co-tracking-wide: 0.04em;
+  --co-tracking-caps: 0.08em;
+
+  --co-weight-regular: 400;
+  --co-weight-medium: 500;
+  --co-weight-semibold: 600;
+  --co-weight-bold: 700;
+
+  /* ---- Spacing (4px base) --------------------------------- */
+  --co-space-1: 2px;
+  --co-space-2: 4px;
+  --co-space-3: 6px;
+  --co-space-4: 8px;
+  --co-space-5: 12px;
+  --co-space-6: 16px;
+  --co-space-7: 20px;
+  --co-space-8: 24px;
+  --co-space-9: 32px;
+  --co-space-10: 40px;
+  --co-space-11: 48px;
+  --co-space-12: 64px;
+  --co-space-13: 80px;
+  --co-space-14: 96px;
+
+  /* ---- Radii — softer than before, matches bun roundness -- */
+  --co-radius-xs: 4px;
+  --co-radius-sm: 6px;
+  --co-radius-md: 10px;
+  --co-radius-lg: 14px;
+  --co-radius-xl: 20px;
+  --co-radius-2xl: 28px;
+  --co-radius-pill: 999px;
+
+  --co-border-hair: 1px;
+  --co-border-thin: 1.5px;
+  --co-border-thick: 2px;
+
+  /* ---- Motion --------------------------------------------- */
+  --co-ease-out:    cubic-bezier(0.2, 0.8, 0.2, 1);
+  --co-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --co-ease-snap:   cubic-bezier(0.32, 0.72, 0, 1);
+  --co-ease-soft:   cubic-bezier(0.34, 1.1, 0.64, 1); /* a tiny bit of bounce — like dough rising */
+  --co-dur-instant: 80ms;
+  --co-dur-fast: 160ms;
+  --co-dur-base: 240ms;
+  --co-dur-slow: 380ms;
+}
+
+/* ============================================================
+   DARK THEME (default) — "evening bakery"
+   Deep cocoa shell + warm orange crust accent.
+   ============================================================ */
+:root,
+[data-theme="dark"] {
+  /* Background — deep cocoa, warm undertone */
+  --co-bg-0: #160d07;  /* page floor   — darkest cocoa */
+  --co-bg-1: #1e140c;  /* app shell    */
+  --co-bg-2: #281a10;  /* cards        */
+  --co-bg-3: #342214;  /* raised       */
+  --co-bg-4: #422c1a;  /* popovers     */
+  --co-bg-5: #533720;  /* hover        */
+
+  /* Foreground — warm cream */
+  --co-fg-0: #fbf3e6;  /* primary text — parchment */
+  --co-fg-1: #ecd9b8;  /* body         */
+  --co-fg-2: #c9aa84;  /* secondary    */
+  --co-fg-3: #99765a;  /* tertiary     */
+  --co-fg-4: #6b513c;  /* disabled     */
+  --co-fg-5: #4a3526;  /* placeholder  */
+
+  /* Borders — subtle warm browns */
+  --co-border-1: #2e1e12; /* divider     */
+  --co-border-2: #3d2a1c; /* default     */
+  --co-border-3: #56401f; /* strong      */
+
+  /* Accent — Codery orange (pulled from the bun) */
+  --co-accent-50:  #fef3e2;
+  --co-accent-100: #fde0b8;
+  --co-accent-200: #fac788;
+  --co-accent-300: #f4a955;  /* fresh-bun */
+  --co-accent-400: #e8923a;  /* PRIMARY  ★ matches "Codery"/"head" */
+  --co-accent-500: #c66e1f;  /* crust    */
+  --co-accent-600: #9c4f0e;  /* deep crust */
+  --co-accent-700: #6e3608;
+  --co-accent: var(--co-accent-400);
+  --co-accent-ink: #2d1810;   /* text on accent (dark brown, like logo) */
+  --co-accent-soft: color-mix(in oklab, var(--co-accent-400) 22%, transparent);
+
+  /* Sub-brand: Trailhead — forest green secondary accent */
+  --co-trail-100: #d4dfa8;
+  --co-trail-300: #a4b475;
+  --co-trail-400: #7a8d4a;  /* PRIMARY — backpack / foliage */
+  --co-trail-500: #5e7340;
+  --co-trail-600: #455429;
+  --co-trail-soft: color-mix(in oklab, #7a8d4a 22%, transparent);
+
+  /* Coffee — the dark logo brown, used for type contrast on cream */
+  --co-coffee-400: #6b4226;
+  --co-coffee-500: #4a2f1a;
+  --co-coffee-600: #3d2418;
+  --co-coffee-700: #2d1810;
+
+  /* Parchment — light cream surface used to plaque the logos on dark */
+  --co-parchment: #fbf3e6;
+  --co-parchment-warm: #f4e0c0;
+  --co-parchment-deep: #e8caa0;
+
+  /* Semantic — warm, not screaming */
+  --co-success: #8fb56a;   /* sage green, not lab green */
+  --co-success-soft: color-mix(in oklab, #8fb56a 18%, transparent);
+  --co-warning: #f0b340;   /* honey */
+  --co-warning-soft: color-mix(in oklab, #f0b340 22%, transparent);
+  --co-danger:  #dc5a4a;   /* paprika */
+  --co-danger-soft: color-mix(in oklab, #dc5a4a 20%, transparent);
+  --co-info:    #7aa6cc;   /* steam blue */
+  --co-info-soft: color-mix(in oklab, #7aa6cc 20%, transparent);
+
+  /* Diff / code semantic */
+  --co-diff-add-bg: rgba(143, 181, 106, 0.14);
+  --co-diff-add-fg: #b5d189;
+  --co-diff-del-bg: rgba(220, 90, 74, 0.14);
+  --co-diff-del-fg: #f08576;
+
+  /* Syntax — warm, lower contrast */
+  --co-syn-keyword:  #f4a955;
+  --co-syn-string:   #b5d189;
+  --co-syn-number:   #f0b340;
+  --co-syn-comment:  #7a5d44;
+  --co-syn-function: #7aa6cc;
+  --co-syn-type:     #e0a8d4;
+  --co-syn-punct:    #99765a;
+
+  /* ---- Gradients — the brand's new visual signature ---- */
+  /* Crust: the iconic bun-baking gradient — use on hero, CTA, primary accents */
+  --co-grad-crust:
+    linear-gradient(135deg, #fac788 0%, #f4a955 30%, #e8923a 60%, #c66e1f 100%);
+  /* Oven: warm radial glow — use behind hero text, around feature icons */
+  --co-grad-oven:
+    radial-gradient(ellipse 80% 60% at 50% 0%,
+      rgba(232, 146, 58, 0.18) 0%,
+      rgba(232, 146, 58, 0.06) 35%,
+      transparent 70%);
+  /* Hearth: deep cocoa-to-orange backdrop — page-level mood */
+  --co-grad-hearth:
+    radial-gradient(ellipse 100% 70% at 50% -10%,
+      #3d2418 0%, #281a10 40%, #160d07 100%);
+  /* Loaf: subtle card gradient — like fresh-baked surface */
+  --co-grad-loaf:
+    linear-gradient(180deg,
+      color-mix(in oklab, var(--co-bg-2) 100%, transparent) 0%,
+      color-mix(in oklab, var(--co-bg-2) 92%, #422c1a) 100%);
+  /* Parchment: the light surface used to hold our light-mode logos on dark */
+  --co-grad-parchment:
+    linear-gradient(180deg, #fbf3e6 0%, #f0dcb8 100%);
+  /* Trail: green-to-sky for the Trailhead sub-brand */
+  --co-grad-trail:
+    linear-gradient(135deg, #a4b475 0%, #7a8d4a 50%, #5e7340 100%);
+  /* Sunset: ambient accent gradient — softer than crust */
+  --co-grad-sunset:
+    linear-gradient(135deg, #f4d4a3 0%, #f4a955 50%, #dc5a4a 100%);
+
+  /* Shadows — warm, never neutral grey */
+  --co-shadow-1:
+    0 1px 0 0 rgba(255, 219, 165, 0.04) inset,
+    0 2px 6px rgba(0, 0, 0, 0.4);
+  --co-shadow-2:
+    0 6px 18px rgba(0, 0, 0, 0.5),
+    0 1px 0 0 rgba(255, 219, 165, 0.05) inset;
+  --co-shadow-3:
+    0 16px 40px rgba(0, 0, 0, 0.55),
+    0 0 0 1px rgba(255, 219, 165, 0.06);
+  /* Glow — for primary CTAs and accent dots */
+  --co-shadow-glow:
+    0 0 0 1px color-mix(in oklab, var(--co-accent-400) 30%, transparent),
+    0 8px 24px color-mix(in oklab, var(--co-accent-400) 35%, transparent);
+  --co-shadow-focus:
+    0 0 0 1px var(--co-bg-1),
+    0 0 0 3px color-mix(in oklab, var(--co-accent-400) 60%, transparent);
+
+  /* Plaque — what we put logos on so they read on dark backgrounds */
+  --co-plaque-bg: var(--co-grad-parchment);
+  --co-plaque-border: rgba(74, 47, 26, 0.15);
+  --co-plaque-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.4) inset,
+    0 -2px 0 0 rgba(74, 47, 26, 0.06) inset,
+    0 6px 16px rgba(0, 0, 0, 0.5);
+
+  --co-chart-1: #e8923a;
+  --co-chart-2: #7aa6cc;
+  --co-chart-3: #7a8d4a;
+  --co-chart-4: #f0b340;
+  --co-chart-5: #dc5a4a;
+  --co-chart-6: #e0a8d4;
+  --co-chart-grid: #2e1e12;
+}
+
+/* ============================================================
+   LIGHT THEME — "fresh out of the oven"
+   Cream parchment + deep coffee text + same orange.
+   ============================================================ */
+[data-theme="light"] {
+  --co-bg-0: #fdf8f0;   /* paper */
+  --co-bg-1: #fbf3e6;
+  --co-bg-2: #f6ead4;
+  --co-bg-3: #f0deb8;
+  --co-bg-4: #e8caa0;
+  --co-bg-5: #dcb88a;
+
+  --co-fg-0: #2d1810;   /* deep coffee — matches logo brown */
+  --co-fg-1: #4a2f1a;
+  --co-fg-2: #6b4226;
+  --co-fg-3: #8a6248;
+  --co-fg-4: #a8836a;
+  --co-fg-5: #c4a48a;
+
+  --co-border-1: #eed8b5;
+  --co-border-2: #e0c596;
+  --co-border-3: #c4a06e;
+
+  /* Accent is the same warm orange — it's a brand color, not a theme color */
+  --co-accent-400: #c66e1f;   /* shifts darker for AA on cream */
+  --co-accent-500: #9c4f0e;
+  --co-accent: var(--co-accent-400);
+  --co-accent-ink: #ffffff;
+  --co-accent-soft: color-mix(in oklab, #e8923a 18%, transparent);
+
+  --co-trail-400: #5e7340;
+  --co-trail-soft: color-mix(in oklab, #7a8d4a 16%, transparent);
+
+  --co-coffee-500: #4a2f1a;
+  --co-coffee-600: #3d2418;
+  --co-coffee-700: #2d1810;
+
+  --co-success: #5e8a3f;
+  --co-success-soft: color-mix(in oklab, #5e8a3f 12%, transparent);
+  --co-warning: #b8780f;
+  --co-warning-soft: color-mix(in oklab, #b8780f 14%, transparent);
+  --co-danger:  #b8331f;
+  --co-danger-soft:  color-mix(in oklab, #b8331f 12%, transparent);
+  --co-info:    #325f8a;
+  --co-info-soft:  color-mix(in oklab, #325f8a 12%, transparent);
+
+  --co-diff-add-bg: rgba(94, 138, 63, 0.12);
+  --co-diff-add-fg: #406527;
+  --co-diff-del-bg: rgba(184, 51, 31, 0.10);
+  --co-diff-del-fg: #8a2615;
+
+  --co-syn-keyword:  #9c4f0e;
+  --co-syn-string:   #5e8a3f;
+  --co-syn-number:   #a04400;
+  --co-syn-comment:  #a8836a;
+  --co-syn-function: #325f8a;
+  --co-syn-type:     #7a3eba;
+  --co-syn-punct:    #8a6248;
+
+  /* Gradients tuned warmer for light surfaces */
+  --co-grad-crust:
+    linear-gradient(135deg, #fdd9a8 0%, #f4a955 30%, #e8923a 60%, #c66e1f 100%);
+  --co-grad-oven:
+    radial-gradient(ellipse 80% 60% at 50% 0%,
+      rgba(232, 146, 58, 0.22) 0%,
+      rgba(232, 146, 58, 0.06) 40%,
+      transparent 70%);
+  --co-grad-hearth:
+    linear-gradient(180deg, #fbf3e6 0%, #f6ead4 100%);
+  --co-grad-loaf:
+    linear-gradient(180deg, #fbf3e6 0%, #f6ead4 100%);
+  --co-grad-parchment:
+    linear-gradient(180deg, #fbf3e6 0%, #f0dcb8 100%);
+  --co-grad-sunset:
+    linear-gradient(135deg, #fde0b8 0%, #f4a955 50%, #dc5a4a 100%);
+  --co-grad-trail:
+    linear-gradient(135deg, #c4d49a 0%, #7a8d4a 50%, #455429 100%);
+
+  --co-shadow-1: 0 1px 2px rgba(74, 47, 26, 0.08);
+  --co-shadow-2: 0 4px 10px rgba(74, 47, 26, 0.10),
+                 0 1px 0 0 rgba(74, 47, 26, 0.04);
+  --co-shadow-3: 0 16px 36px rgba(74, 47, 26, 0.18);
+  --co-shadow-glow:
+    0 0 0 1px color-mix(in oklab, var(--co-accent-400) 25%, transparent),
+    0 8px 20px color-mix(in oklab, var(--co-accent-400) 30%, transparent);
+  --co-shadow-focus: 0 0 0 1px var(--co-bg-1),
+                     0 0 0 3px color-mix(in oklab, var(--co-accent-400) 50%, transparent);
+
+  --co-plaque-bg: linear-gradient(180deg, #ffffff 0%, #fbf3e6 100%);
+  --co-plaque-border: rgba(74, 47, 26, 0.1);
+  --co-plaque-shadow:
+    0 1px 0 0 rgba(255, 255, 255, 0.6) inset,
+    0 1px 3px rgba(74, 47, 26, 0.1);
+}
+
+/* ============================================================
+   Semantic element tokens — use these in components
+   ============================================================ */
+:root {
+  --co-page-bg: var(--co-bg-0);
+  --co-page-fg: var(--co-fg-1);
+  --co-surface: var(--co-bg-2);
+  --co-surface-raised: var(--co-bg-3);
+  --co-surface-overlay: var(--co-bg-4);
+  --co-surface-hover: var(--co-bg-3);
+  --co-text-strong: var(--co-fg-0);
+  --co-text: var(--co-fg-1);
+  --co-text-muted: var(--co-fg-2);
+  --co-text-subtle: var(--co-fg-3);
+  --co-text-disabled: var(--co-fg-4);
+  --co-divider: var(--co-border-1);
+  --co-border: var(--co-border-2);
+  --co-border-strong: var(--co-border-3);
+  --co-code-bg: var(--co-bg-2);
+  --co-code-fg: var(--co-fg-1);
+}
+
+/* ============================================================
+   Element defaults — opt in by adding `co-typeset` to a wrapper
+   ============================================================ */
+.co-typeset,
+.co-typeset * {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+.co-typeset {
+  font-family: var(--co-font-sans);
+  font-size: var(--co-text-base);
+  line-height: var(--co-leading-normal);
+  color: var(--co-text);
+  background: var(--co-page-bg);
+}
+
+.co-typeset h1, .co-h1 {
+  font-family: var(--co-font-display);
+  font-size: var(--co-text-5xl);
+  line-height: var(--co-leading-tight);
+  letter-spacing: var(--co-tracking-tight);
+  font-weight: var(--co-weight-bold);
+  color: var(--co-text-strong);
+}
+.co-typeset h2, .co-h2 {
+  font-family: var(--co-font-display);
+  font-size: var(--co-text-3xl);
+  line-height: var(--co-leading-snug);
+  letter-spacing: var(--co-tracking-snug);
+  font-weight: var(--co-weight-semibold);
+  color: var(--co-text-strong);
+}
+.co-typeset h3, .co-h3 {
+  font-family: var(--co-font-display);
+  font-size: var(--co-text-xl);
+  line-height: var(--co-leading-snug);
+  font-weight: var(--co-weight-semibold);
+  color: var(--co-text-strong);
+}
+.co-typeset h4, .co-h4 {
+  font-size: var(--co-text-base);
+  font-weight: var(--co-weight-semibold);
+  letter-spacing: var(--co-tracking-snug);
+  color: var(--co-text-strong);
+}
+.co-typeset p, .co-p {
+  font-size: var(--co-text-base);
+  line-height: var(--co-leading-relaxed);
+  color: var(--co-text);
+}
+.co-typeset small, .co-small {
+  font-size: var(--co-text-xs);
+  color: var(--co-text-muted);
+}
+
+.co-eyebrow {
+  font-family: var(--co-font-mono);
+  font-size: var(--co-text-2xs);
+  letter-spacing: var(--co-tracking-caps);
+  text-transform: uppercase;
+  color: var(--co-accent);
+  font-weight: var(--co-weight-medium);
+}
+.co-label {
+  font-size: var(--co-text-xs);
+  font-weight: var(--co-weight-medium);
+  color: var(--co-text-muted);
+  letter-spacing: var(--co-tracking-snug);
+}
+
+.co-mono { font-family: var(--co-font-mono); }
+.co-num  { font-variant-numeric: tabular-nums; }
+
+/* Display gradient text — for hero headlines */
+.co-grad-text {
+  background: var(--co-grad-crust);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: transparent;
+}
+
+/* Plaque — light parchment container that holds our light-mode logos on dark */
+.co-plaque {
+  background: var(--co-plaque-bg);
+  border: 1px solid var(--co-plaque-border);
+  border-radius: var(--co-radius-md);
+  box-shadow: var(--co-plaque-shadow);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.co-typeset code, .co-code {
+  font-family: var(--co-font-mono);
+  font-size: 0.92em;
+  background: var(--co-code-bg);
+  color: var(--co-code-fg);
+  padding: 1px 6px;
+  border-radius: var(--co-radius-xs);
+  border: 1px solid var(--co-border-1);
+}
+.co-typeset pre, .co-pre {
+  font-family: var(--co-font-mono);
+  font-size: var(--co-text-sm);
+  line-height: var(--co-leading-snug);
+  background: var(--co-code-bg);
+  color: var(--co-code-fg);
+  border: 1px solid var(--co-border-1);
+  border-radius: var(--co-radius-md);
+  padding: var(--co-space-6);
+  overflow-x: auto;
+}
+
+.co-focus-ring:focus-visible {
+  outline: none;
+  box-shadow: var(--co-shadow-focus);
+}
+
+/* Keyframes used across the system */
+@keyframes co-pulse {
+  0%, 100% { opacity: 1 }
+  50%      { opacity: 0.4 }
+}
+@keyframes co-steam {
+  /* like rising oven steam — used near the bun mascot or "running" states */
+  0%   { transform: translateY(0) scaleX(1); opacity: 0; }
+  20%  { opacity: 0.8; }
+  100% { transform: translateY(-14px) scaleX(0.7); opacity: 0; }
+}
+@keyframes co-shimmer {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+@keyframes co-blink {
+  0%, 50%       { opacity: 1 }
+  50.01%, 100%  { opacity: 0 }
+}

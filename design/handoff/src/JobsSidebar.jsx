@@ -333,4 +333,4 @@ function EmptyState({ kind }) {
   );
 }
 
-Object.assign(window, { JobsSidebar });
+Object.assign(window, { JobsSidebar, ViewToggle });

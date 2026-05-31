@@ -42,6 +42,7 @@ class GraphCanvas extends ConsumerWidget {
                   scale: viewport.zoom,
                   alignment: Alignment.topLeft,
                   child: Stack(
+                    clipBehavior: Clip.none,
                     children: workflow.nodes.map((node) {
                       return Positioned(
                         left: node.x,

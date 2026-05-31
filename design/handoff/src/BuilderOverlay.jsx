@@ -457,4 +457,4 @@ function BuilderOverlay({
   );
 }
 
-Object.assign(window, { BuilderOverlay, BuilderTips, OperatorPicker });
+Object.assign(window, { BuilderOverlay, BuilderTips, OperatorPicker, OutputHandle, NodeToolbar, EdgeAffordance });

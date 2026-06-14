@@ -3,6 +3,7 @@ import '../../models/workflow_node.dart';
 import '../../providers/mock_data.dart';
 import '../../theme/tokens.dart';
 import '../icons.dart';
+import '../delete_button.dart';
 
 class RoutingNode extends StatelessWidget {
   /// Full footprint matching the WorkerNode and the canvas grid.
@@ -140,30 +141,15 @@ class RoutingNode extends StatelessWidget {
             // Delete button
             if (selected && onDelete != null)
               Positioned(
-                top: -8,
-                left: 24,
+                top: -17,
+                left: 15,
                 child: GestureDetector(
                   onTap: onDelete,
-                  child: Container(
-                    width: 18,
-                    height: 18,
-                    decoration: BoxDecoration(
-                      color: AppColors.bg2,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.border2),
-                      boxShadow: const [
-                        BoxShadow(
-                          color: Color(0x66000000),
-                          blurRadius: 4,
-                        ),
-                      ],
-                    ),
-                    child: const Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.x,
-                        size: 9,
-                        color: AppColors.fg2,
-                      ),
+                  child: const SizedBox(
+                    width: 36,
+                    height: 36,
+                    child: Center(
+                      child: DeleteButton(),
                     ),
                   ),
                 ),

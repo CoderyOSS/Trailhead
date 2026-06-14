@@ -19,6 +19,7 @@ enum TrailheadIconData {
   gitBranch,
   forEach,
   merge,
+  zap,
 }
 
 class TrailheadIcon extends StatelessWidget {
@@ -135,4 +136,7 @@ const Map<TrailheadIconData, String> _bodies = {
       '<circle cx="4" cy="19" r="2"/>'
       '<circle cx="20" cy="12" r="2"/>'
       '<path d="M6 5h6M6 12h6M6 19h6M12 5v14M12 12h6"/>',
+
+  TrailheadIconData.zap:
+      '<polygon points="13,2 3,14 12,14 11,22 21,10 12,10 13,2"/>',
 };

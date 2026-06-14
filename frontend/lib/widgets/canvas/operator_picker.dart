@@ -105,19 +105,19 @@ class OperatorPicker extends StatelessWidget {
 }
 
 enum OperatorType {
-  worker(label: 'worker', desc: 'skills · prompt · result', icon: TrailheadIconData.play),
-  switch_(label: 'switch', desc: 'n-way enum routing', icon: TrailheadIconData.gitBranch),
-  branch(label: 'branch', desc: 'if / else', icon: TrailheadIconData.gitBranch),
-  map(label: 'for-each', desc: 'iterate a list, fan-out', icon: TrailheadIconData.forEach),
-  loop(label: 'loop', desc: 're-enter while condition', icon: TrailheadIconData.refresh),
-  join(label: 'join', desc: 'wait for N upstreams', icon: TrailheadIconData.merge);
+  worker(kind: 'worker', label: 'worker', desc: 'skills \u00b7 prompt \u00b7 result', icon: TrailheadIconData.zap),
+  branch(kind: 'branch', label: 'branch', desc: 'conditional routing', icon: TrailheadIconData.gitBranch),
+  fan(kind: 'fan', label: 'fan', desc: 'fan-out a list, fan-in results', icon: TrailheadIconData.forEach);
 
   const OperatorType({
+    required this.kind,
     required this.label,
     required this.desc,
     required this.icon,
   });
 
+  /// Internal kind string used in [WorkflowNode.kind].
+  final String kind;
   final String label;
   final String desc;
   final TrailheadIconData icon;

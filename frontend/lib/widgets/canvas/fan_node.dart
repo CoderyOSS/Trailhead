@@ -3,7 +3,7 @@ import '../../models/workflow_node.dart';
 import '../../providers/mock_data.dart';
 import '../../theme/tokens.dart';
 import '../icons.dart';
-import '../delete_button.dart';
+
 
 class FanNode extends StatelessWidget {
   final WorkflowNode node;
@@ -11,8 +11,6 @@ class FanNode extends StatelessWidget {
   final bool selected;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
-  final VoidCallback? onDelete;
-
   const FanNode({
     super.key,
     required this.node,
@@ -20,7 +18,6 @@ class FanNode extends StatelessWidget {
     this.selected = false,
     this.onEnter,
     this.onExit,
-    this.onDelete,
   });
 
   @override
@@ -251,22 +248,7 @@ class FanNode extends StatelessWidget {
                   ),
                 ),
               ),
-            // Delete button
-            if (selected && onDelete != null)
-              Positioned(
-                top: -17,
-                left: -17,
-                child: GestureDetector(
-                  onTap: onDelete,
-                  child: const SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: Center(
-                      child: DeleteButton(),
-                    ),
-                  ),
-                ),
-              ),
+
           ],
         ),
       ),

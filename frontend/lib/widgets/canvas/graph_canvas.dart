@@ -15,6 +15,7 @@ import '../../widgets/mode_rail.dart';
 import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
 import 'operator_picker.dart';
+import '../delete_button.dart';
 import 'fan_node.dart';
 import 'routing_node.dart';
 import 'worker_node.dart';
@@ -209,7 +210,6 @@ class GraphCanvas extends ConsumerWidget {
                                     ref.read(hoveredNodeProvider.notifier).state =
                                         (hoveredNodeId == node.id) ? null : hoveredNodeId;
                                   },
-                                  onDelete: (editable && node.id != 'entrypoint') ? () => deleteNode(node.id) : null,
                                 )
                               : node.kind == 'fan'
                                   ? FanNode(
@@ -222,7 +222,6 @@ class GraphCanvas extends ConsumerWidget {
                                         ref.read(hoveredNodeProvider.notifier).state =
                                             (hoveredNodeId == node.id) ? null : hoveredNodeId;
                                       },
-                                      onDelete: (editable && node.id != 'entrypoint') ? () => deleteNode(node.id) : null,
                                     )
                                    : RoutingNode(
                                       node: node,
@@ -234,7 +233,6 @@ class GraphCanvas extends ConsumerWidget {
                                         ref.read(hoveredNodeProvider.notifier).state =
                                             (hoveredNodeId == node.id) ? null : hoveredNodeId;
                                       },
-                                      onDelete: (editable && node.id != 'entrypoint') ? () => deleteNode(node.id) : null,
                                     );
 
                           return AnimatedPositioned(
@@ -243,7 +241,7 @@ class GraphCanvas extends ConsumerWidget {
                             top: displayY,
                             duration: isDragging ? Duration.zero : _snapDuration,
                             curve: Curves.easeOutCubic,
-                            child: Stack(
+                            child: MultiHitStack(
                               clipBehavior: Clip.none,
                               children: [
                                 GestureDetector(
@@ -333,6 +331,22 @@ class GraphCanvas extends ConsumerWidget {
                                                       : RoutingNode.pillVCenter),
                                         ),
                                         node.id,
+                                      ),
+                                    ),
+                                  ),
+                                if (isSelected && editable && node.id != 'entrypoint')
+                                  Positioned(
+                                    top: node.kind == 'routing' ? -17 : -17,
+                                    left: node.kind == 'routing' ? 15 : -17,
+                                    child: GestureDetector(
+                                      behavior: HitTestBehavior.translucent,
+                                      onTap: () => deleteNode(node.id),
+                                      child: const SizedBox(
+                                        width: 36,
+                                        height: 36,
+                                        child: Center(
+                                          child: DeleteButton(),
+                                        ),
                                       ),
                                     ),
                                   ),
@@ -473,5 +487,81 @@ class _RenderUnboundedHitStack extends RenderStack {
       return true;
     }
     return false;
+  }
+}
+
+/// A [Stack] that tests **all** children for hit-test, not just the first one.
+///
+/// Flutter's default [RenderStack.hitTestChildren] walks children in reverse
+/// paint order and returns `true` on the first hit. That blocks overlapping
+/// siblings (e.g. a large invisible touch-target on top of a smaller body)
+/// from ever receiving pointer events.
+///
+/// This widget tests every child and returns `true` if *any* child was hit,
+/// letting all overlapping recognizers enter the gesture arena.
+class MultiHitStack extends Stack {
+  const MultiHitStack({
+    super.key,
+    super.alignment,
+    super.textDirection,
+    super.fit,
+    super.clipBehavior,
+    super.children,
+  });
+
+  @override
+  RenderStack createRenderObject(BuildContext context) {
+    return _RenderMultiHitStack(
+      alignment: alignment,
+      textDirection: textDirection ?? Directionality.maybeOf(context),
+      fit: fit,
+      clipBehavior: clipBehavior,
+    );
+  }
+
+  @override
+  void updateRenderObject(BuildContext context, RenderStack renderObject) {
+    renderObject
+      ..alignment = alignment
+      ..textDirection = textDirection ?? Directionality.maybeOf(context)
+      ..fit = fit
+      ..clipBehavior = clipBehavior;
+  }
+}
+
+class _RenderMultiHitStack extends RenderStack {
+  _RenderMultiHitStack({
+    super.alignment,
+    super.textDirection,
+    super.fit,
+    super.clipBehavior,
+  });
+
+  @override
+  bool hitTest(BoxHitTestResult result, {required Offset position}) {
+    if (hitTestChildren(result, position: position) || hitTestSelf(position)) {
+      result.add(BoxHitTestEntry(this, position));
+      return true;
+    }
+    return false;
+  }
+
+  @override
+  bool hitTestChildren(BoxHitTestResult result, {required Offset position}) {
+    bool anyHit = false;
+    RenderBox? child = lastChild;
+    while (child != null) {
+      final StackParentData childParentData = child.parentData! as StackParentData;
+      final bool isHit = result.addWithPaintOffset(
+        offset: Offset(childParentData.left ?? 0.0, childParentData.top ?? 0.0),
+        position: position,
+        hitTest: (BoxHitTestResult result, Offset transformed) {
+          return child!.hitTest(result, position: transformed);
+        },
+      );
+      if (isHit) anyHit = true;
+      child = childParentData.previousSibling as RenderBox?;
+    }
+    return anyHit;
   }
 }

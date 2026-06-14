@@ -3,7 +3,6 @@ import '../../models/workflow_node.dart';
 import '../../providers/mock_data.dart';
 import '../../theme/tokens.dart';
 import '../icons.dart';
-import '../delete_button.dart';
 import '../status_tag.dart';
 
 class WorkerNode extends StatelessWidget {
@@ -12,8 +11,6 @@ class WorkerNode extends StatelessWidget {
   final bool selected;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
-  final VoidCallback? onDelete;
-
   const WorkerNode({
     super.key,
     required this.node,
@@ -21,7 +18,6 @@ class WorkerNode extends StatelessWidget {
     this.selected = false,
     this.onEnter,
     this.onExit,
-    this.onDelete,
   });
 
   @override
@@ -204,22 +200,7 @@ class WorkerNode extends StatelessWidget {
                   ),
                 ),
               ),
-            // Delete button
-            if (selected && onDelete != null)
-              Positioned(
-                top: -17,
-                left: -17,
-                child: GestureDetector(
-                  onTap: onDelete,
-                  child: const SizedBox(
-                    width: 36,
-                    height: 36,
-                    child: Center(
-                      child: DeleteButton(),
-                    ),
-                  ),
-                ),
-              ),
+
           ],
         ),
       ),

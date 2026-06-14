@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en" data-theme="dark" data-accent="orange" data-theme-variant="slate">
+<head>
+<meta charset="utf-8">
+<title>Fan-out / fan-in container — concepts</title>
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<link rel="icon" href="assets/codery-glyph.svg">
+<link rel="stylesheet" href="colors_and_type.css">
+<link rel="stylesheet" href="themes.css">
+<style>
+  html, body, #root { height: 100%; }
+  body {
+    margin: 0;
+    background: var(--co-bg-0);
+    color: var(--co-text);
+    font-family: var(--co-font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  * { box-sizing: border-box; }
+
+  /* expand/collapse content reveal */
+  @keyframes fanFade {
+    from { opacity: 0; transform: translateY(4px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes co-spin { to { transform: rotate(360deg); } }
+
+  .co-loading {
+    position: fixed; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--co-text-subtle);
+    font-family: var(--co-font-mono); font-size: 12px;
+    letter-spacing: 0.06em; text-transform: uppercase;
+  }
+</style>
+</head>
+<body>
+  <div id="root"><div class="co-loading">loading concepts…</div></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="src/Common.jsx"></script>
+  <script type="text/babel" src="src-fan/design-canvas.jsx"></script>
+  <script type="text/babel" src="src-fan/kit.jsx"></script>
+  <script type="text/babel" src="src-fan/concepts1.jsx"></script>
+  <script type="text/babel" src="src-fan/concepts2.jsx"></script>
+  <script type="text/babel" src="src-fan/FanApp.jsx"></script>
+</body>
+</html>

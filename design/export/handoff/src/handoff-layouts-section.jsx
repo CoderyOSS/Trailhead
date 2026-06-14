@@ -143,7 +143,7 @@ function SchematicLayout({ mode, openDrawer }) {
   const W = 1080;
   const H = mode === "history-list" ? 540 : 620;
   const railW = 52;
-  const sbW = mode === "build" ? 240 : 260;
+  const sbW = mode === "build" ? 240 : mode === "history-list" ? 0 : 260;
   const topH = mode === "build" || mode === "history-list" ? 56 : 64;
   const filmH = mode === "active" || mode === "history" ? 200 : 0;
   const drawerW = openDrawer ? 460 : 0;
@@ -196,7 +196,8 @@ function SchematicLayout({ mode, openDrawer }) {
         })}
       </Region>
 
-      {/* Sidebar */}
+      {/* Sidebar — hidden in History list (no selection): the table fills the width */}
+      {mode !== "history-list" && (
       <Region bg={REGION_BG.sidebar} border style={{ left: railW, top: 0, bottom: 0, width: sbW, padding: 0, borderRight: "1px solid var(--co-border-1)" }}>
         <div style={{ padding: 14, borderBottom: "1px solid var(--co-border-1)" }}>
           <Label accent>{mode === "build" ? "WORKFLOWS" : mode === "active" ? "ACTIVE JOBS" : "HISTORY"}</Label>
@@ -222,6 +223,7 @@ function SchematicLayout({ mode, openDrawer }) {
           )}
         </div>
       </Region>
+      )}
 
       {/* Top bar */}
       <Region bg={REGION_BG.topbar} border style={{
@@ -306,7 +308,7 @@ function SchematicLayout({ mode, openDrawer }) {
             <FakeNode x={400 + 5} y={62}  w={92} label="quick-review"  status={mode === "active" ? "skipped" : "queued"} />
             <FakeNode x={400 + 5} y={130} w={92} label="security-scan" status={mode === "active" ? "running" : "queued"} running={mode === "active"} />
             <FakeNode x={500 + 1} y={92}  w={88} label="full-review"   status={mode === "active" ? "running" : "queued"} running={mode === "active"} selected={openDrawer} />
-            <FakeNode x={695 + 0} y={95}  w={88} h={24} label="join"   status="queued" />
+            <FakeNode x={695 + 0} y={92}  w={88} label="fan"    status="queued" />
             <FakeNode x={790 + 0} y={92}  w={88} label="critic"       status="queued" />
           </Region>
 
@@ -364,8 +366,8 @@ function SchematicLayout({ mode, openDrawer }) {
               <span style={{ fontFamily: "var(--co-font-display)", fontSize: 17, color: "var(--co-text-strong)", fontWeight: 600 }}>jobs · pr-reviewer</span>
               <div style={{ marginTop: 2, fontFamily: "var(--co-font-mono)", fontSize: 10, color: "var(--co-text-subtle)" }}>13 runs · last 24h</div>
             </div>
-            <div style={{ display: "flex", gap: 6 }}>
-              {["all 13","running 1","passed 4","failed 1","cancelled 1"].map((p, i) => (
+            <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              {["all 13","passed 4","failed 1","cancelled 1"].map((p, i) => (
                 <span key={i} style={{
                   padding: "3px 8px",
                   fontFamily: "var(--co-font-mono)", fontSize: 10,
@@ -375,6 +377,11 @@ function SchematicLayout({ mode, openDrawer }) {
                   borderRadius: 999,
                 }}>{p}</span>
               ))}
+              <span style={{ width: 1, height: 16, background: "var(--co-border-1)", margin: "0 2px" }} />
+              <span style={{ display: "inline-flex", background: "var(--co-bg-3)", border: "1px solid var(--co-border-1)", borderRadius: 5, padding: 2, gap: 1 }}>
+                <span style={{ padding: "0 7px", background: "var(--co-bg-4)", borderRadius: 4, fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-strong)", display: "flex", alignItems: "center" }}>grouped</span>
+                <span style={{ padding: "0 7px", color: "var(--co-text-subtle)", fontFamily: "var(--co-font-mono)", fontSize: 9.5, display: "flex", alignItems: "center" }}>flat</span>
+              </span>
             </div>
           </div>
           <div style={{
@@ -606,16 +613,15 @@ function LayoutsSection() {
       />
       <LayoutCard
         title="History · list view"
-        description="No job selected. Jobs sidebar shows history (passed/failed/cancelled). Main pane is the full RunsView table — sortable, no search."
+        description="No job selected. The jobs sidebar is hidden — the full RunsView table fills the width (rail → table, no sidebar between). The table carries its own grouped/flat toggle beside the status filter pills. Selecting a run brings the sidebar back as a job-to-job navigator."
         mode="history-list"
         tree={`Scaffold
 └─ Row
    ├─ ModeRail
-   ├─ JobsSidebar (kind: 'history')
-   └─ Expanded
+   └─ Expanded            // no sidebar until a run is selected
       └─ Column
          ├─ TopBar (HistoryListBar — 1 row)
-         └─ Expanded → RunsView (sortable table, no search)`}
+         └─ Expanded → RunsView (grouped/flat toggle, no search)`}
       />
       <LayoutCard
         title="History · selected job · review past run"

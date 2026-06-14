@@ -170,13 +170,13 @@ function Card({ title, description, dartImport, children, fullBleed, minHeight }
 
 // ── Stage — the canvas a component sits in for isolation viewing ─────────
 
-function Stage({ children, label, bg, height, padding = 24 }) {
+function Stage({ children, label, bg, height, padding = 24, gridSize = 16 }) {
   return (
     <div style={{
       position: "relative",
       background: bg ?? "var(--co-bg-0)",
       backgroundImage: !bg ? `radial-gradient(circle, var(--co-border-1) 1px, transparent 1px)` : "none",
-      backgroundSize: "16px 16px",
+      backgroundSize: `${gridSize}px ${gridSize}px`,
       border: "1px solid var(--co-border-1)",
       borderRadius: 10,
       padding,

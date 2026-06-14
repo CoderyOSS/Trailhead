@@ -5,15 +5,20 @@ const { useState: useStateCV, useRef: useRefCV, useEffect: useEffectCV, useMemo:
 // Node visuals — worker stage card + routing operator diamond.
 // ──────────────────────────────────────────────────────────────────────────
 
-const ROUTING_KIND_META = {
-  // `switch` is no longer an addable operator (branch covers routing), but the
-  // meta stays so any legacy workflow that still holds a switch node renders.
-  switch: { label: "switch", icon: "gitBranch" },
-  branch: { label: "branch", icon: "gitBranch" },
-  map:    { label: "for-each", icon: "forEach" },
-  loop:   { label: "loop", icon: "refresh" },
-  join:   { label: "join", icon: "merge" },
-};
+
+
+// ── Node geometry ──────────────────────────────────────────────────────────
+// Every node — worker OR operator — is the same height. The operator node is
+// exactly 2 grid cells tall, so the dot-grid spacing is half the node height
+// and the horizontal edge (which exits at the vertical center) runs straight
+// along a row of grid dots.
+const NODE_H   = 64;          // layout cell height — the shared vertical center every node hangs off of
+const GRID     = NODE_H / 2;  // 32 — dot spacing = half the cell height
+const WORKER_W = 160;         // worker width = 5 grid gaps → both ends land on a column of grid dots
+const WORKER_H = GRID;        // 32 — worker body is exactly one grid gap tall
+const WORKER_TOP = (NODE_H - WORKER_H) / 2; // 16 — centers the body on the cell's mid row (a grid row), so the
+                                            // body's center line + its left/right ends + the output dot all sit on grid dots
+const OP_W     = 32;          // operator node — rounded square, same height as the worker body, centered in the worker column
 
 function NodeShell({ status, selected, glow, density, children, onClick, style }) {
   const compact = density === "compact";
@@ -57,8 +62,6 @@ function NodeShell({ status, selected, glow, density, children, onClick, style }
 
 function WorkerNode({ stage, status, info, selected, density, onClick }) {
   const compact = density === "compact";
-  const w = compact ? 168 : 192;
-  const h = compact ? 60 : 80;
   const running = status?.status === "running";
   return (
     <NodeShell
@@ -68,60 +71,28 @@ function WorkerNode({ stage, status, info, selected, density, onClick }) {
       density={density}
       onClick={onClick}
       style={{
-        left: info.x, top: info.y,
-        width: w, height: h,
-        padding: compact ? "8px 10px 8px 12px" : "10px 12px 10px 14px",
+        left: info.x, top: info.y + WORKER_TOP,
+        width: WORKER_W, height: WORKER_H,
+        padding: "0 10px",
+        display: "flex", alignItems: "center",
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", height: "100%", gap: compact ? 1 : 2 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-          <span style={{
-            fontFamily: "var(--co-font-mono)",
-            fontSize: compact ? 12 : 13,
-            fontWeight: 600,
-            color: "var(--co-text-strong)",
-            overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-            flex: 1,
-          }}>{stage.label}</span>
-          {stage.model && !compact && (
-            <span style={{
-              fontFamily: "var(--co-font-mono)", fontSize: 9,
-              padding: "1px 5px", borderRadius: 3,
-              background: "var(--co-bg-4)", color: "var(--co-text-muted)",
-              letterSpacing: "0.02em",
-            }}>{stage.model}</span>
-          )}
-        </div>
-        <div style={{
-          fontSize: compact ? 10.5 : 11.5,
-          color: "var(--co-text-subtle)",
-          overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        }}>
-          {stage.sub}
-        </div>
-        {!compact && (
-          <div style={{ marginTop: "auto", display: "flex", alignItems: "center", gap: 5, flexWrap: "nowrap", overflow: "hidden" }}>
-            {(stage.skills || []).slice(0, 3).map(sk => (
-              <span key={sk} style={{
-                fontFamily: "var(--co-font-mono)", fontSize: 9,
-                padding: "1px 5px", borderRadius: 3,
-                background: "var(--co-bg-3)", color: "var(--co-fg-2)",
-                border: "1px solid var(--co-border-1)",
-              }}>{sk}</span>
-            ))}
-            {(stage.skills || []).length > 3 && (
-              <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9, color: "var(--co-text-subtle)" }}>
-                +{stage.skills.length - 3}
-              </span>
-            )}
-          </div>
-        )}
-      </div>
+      {/* Worker shows only what you need to read it at a glance: its title,
+          plus the run status (the straddling pill below). */}
+      <span style={{
+        fontFamily: "var(--co-font-mono)",
+        fontSize: compact ? 13 : 14,
+        fontWeight: 600,
+        color: "var(--co-text-strong)",
+        textAlign: "center",
+        overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
+        flex: 1,
+      }}>{stage.label}</span>
 
       {/* in-flight progress bar */}
       {running && status.progress != null && (
         <div style={{
-          position: "absolute", left: 6, right: 6, bottom: 3,
+          position: "absolute", left: 12, right: 12, bottom: 6,
           height: 2, background: "var(--co-bg-4)", borderRadius: 1, overflow: "hidden",
         }}>
           <div style={{
@@ -171,61 +142,122 @@ function WorkerNode({ stage, status, info, selected, density, onClick }) {
   );
 }
 
-function RoutingNode({ stage, status, info, selected, density, onClick }) {
-  const compact = density === "compact";
-  const w = compact ? 110 : 124;
-  const h = compact ? 44 : 50;
-  const meta = ROUTING_KIND_META[stage.kind] || ROUTING_KIND_META.switch;
+// ──────────────────────────────────────────────────────────────────────────
+// Operator node — for-each / join. A small rounded-square icon node the same
+// height as a worker body, centered in the worker column. Icon-only (no text).
+// ──────────────────────────────────────────────────────────────────────────
+
+function OperatorNode({ stage, status, info, selected, onClick, onContextMenu }) {
   const running = status?.status === "running";
-  // Routing operators use diamond-cut corners via a clip-path on a layered box.
+  const icon = stage.kind === "join" ? "merge" : "forEach";
   return (
     <div
       onClick={onClick}
+      onContextMenu={onContextMenu}
       onMouseDown={e => e.stopPropagation()}
+      title={stage.kind === "join" ? "join · right-click to remove" : "for-each · right-click to remove"}
       style={{
         position: "absolute",
-        left: info.x + ((WORKER_DEFAULT_W - w) / 2), // align center with worker
-        top: info.y + ((WORKER_DEFAULT_H - h) / 2),
-        width: w, height: h,
-        cursor: "pointer",
-        userSelect: "none",
+        left: info.x + (WORKER_W - OP_W) / 2,
+        top: info.y + WORKER_TOP,
+        width: OP_W, height: OP_W,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: running
+          ? "linear-gradient(180deg, color-mix(in oklab, var(--co-accent) 16%, var(--co-bg-3)) 0%, var(--co-bg-3) 100%)"
+          : "var(--co-bg-3)",
+        border: `1px solid ${selected ? "var(--co-accent)" : running ? "var(--co-accent)" : "var(--co-border-3)"}`,
+        borderRadius: 9,
+        boxShadow: selected
+          ? "0 0 0 3px color-mix(in oklab, var(--co-accent) 22%, transparent), 0 4px 10px rgba(0,0,0,0.4)"
+          : running ? "0 0 14px color-mix(in oklab, var(--co-accent) 30%, transparent)" : "var(--co-shadow-1)",
+        color: running ? "var(--co-accent)" : "var(--co-text-strong)",
+        cursor: "pointer", userSelect: "none",
+        transition: "border-color 140ms, box-shadow 200ms",
       }}
     >
-      <div style={{
-        position: "absolute", inset: 0,
-        background: running ? `linear-gradient(180deg, color-mix(in oklab, var(--co-accent) 14%, var(--co-bg-3)) 0%, var(--co-bg-3) 100%)` : "var(--co-bg-3)",
-        border: `1px solid ${selected ? "var(--co-accent)" : running ? "var(--co-accent)" : "var(--co-border-3)"}`,
-        borderRadius: 999,
-        boxShadow: selected ? `0 0 0 3px color-mix(in oklab, var(--co-accent) 22%, transparent), 0 4px 10px rgba(0,0,0,0.4)`
-                  : running ? `0 0 14px color-mix(in oklab, var(--co-accent) 30%, transparent)` : "var(--co-shadow-1)",
-        transition: "border-color 140ms, box-shadow 200ms",
-      }} />
-      <div style={{
-        position: "absolute", inset: 0,
-        display: "flex", alignItems: "center", justifyContent: "center", gap: 5,
-        fontFamily: "var(--co-font-mono)",
-        fontSize: compact ? 11 : 12,
-        fontWeight: 600,
-        color: running ? "var(--co-accent)" : "var(--co-text-strong)",
-      }}>
-        <Icon name={meta.icon} size={compact ? 11 : 12} />
-        <span>{meta.label}</span>
-      </div>
-      {/* sub label below */}
-      <div style={{
-        position: "absolute", left: 0, right: 0, top: "100%",
-        textAlign: "center", marginTop: 4,
-        fontFamily: "var(--co-font-mono)",
-        fontSize: 9.5,
-        color: "var(--co-text-subtle)",
-        letterSpacing: "0.02em",
-      }}>{stage.sub}</div>
+      <Icon name={icon} size={18} />
     </div>
   );
 }
 
-const WORKER_DEFAULT_W = 192;
-const WORKER_DEFAULT_H = 80;
+// ──────────────────────────────────────────────────────────────────────────
+// Context menu — right-click an arrow to insert an operator, or right-click an
+// operator node to remove it (reconnecting the arrow it sat on).
+// ──────────────────────────────────────────────────────────────────────────
+
+function ContextMenu({ menu, onInsert, onRemove, onDuplicate, onRemoveCollapse, onDelete, onClose }) {
+  let items;
+  if (menu.kind === "edge") {
+    items = [
+      { icon: "forEach", label: "insert for-each", onClick: () => onInsert(menu.edgeKey, "map") },
+      { icon: "merge",   label: "insert join",     onClick: () => onInsert(menu.edgeKey, "join") },
+    ];
+  } else if (menu.kind === "operator") {
+    items = [
+      { icon: "collapseLink", label: "remove · keep arrow", onClick: () => onRemove(menu.nodeId) },
+    ];
+  } else {
+    // worker node
+    items = [
+      { icon: "copy",         label: "duplicate",         desc: "clone this node downstream",     onClick: () => onDuplicate(menu.nodeId) },
+      { icon: "collapseLink", label: "remove + collapse", desc: "delete & rewire parent → child", onClick: () => onRemoveCollapse(menu.nodeId) },
+      { divider: true },
+      { icon: "x",            label: "delete node",       desc: "removes its connections too",    danger: true, onClick: () => onDelete(menu.nodeId) },
+    ];
+  }
+  return (
+    <>
+      <div
+        onClick={onClose}
+        onContextMenu={(e) => { e.preventDefault(); onClose(); }}
+        style={{ position: "fixed", inset: 0, zIndex: 60 }}
+      />
+      <div style={{
+        position: "fixed", left: menu.x, top: menu.y, zIndex: 65,
+        minWidth: 196,
+        background: "var(--co-bg-1)",
+        border: "1px solid var(--co-border-2)",
+        borderRadius: 8,
+        boxShadow: "var(--co-shadow-3)",
+        padding: 4,
+        transform: "translate(2px, 2px)",
+      }}>
+        {items.map((it, i) => it.divider
+          ? <span key={i} style={{ display: "block", height: 1, margin: "4px 6px", background: "var(--co-border-1)" }} />
+          : (
+          <button
+            key={i}
+            type="button"
+            onClick={(e) => { e.stopPropagation(); it.onClick(); }}
+            style={{
+              width: "100%",
+              display: "grid", gridTemplateColumns: it.desc ? "20px 1fr" : "18px 1fr", alignItems: "center", gap: 9,
+              padding: it.desc ? "6px 8px" : "7px 9px",
+              background: "transparent", border: "none", borderRadius: 5,
+              cursor: "pointer", textAlign: "left",
+              color: it.danger ? "var(--co-danger)" : "var(--co-text)",
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.background = it.danger ? "var(--co-danger-soft)" : "var(--co-bg-3)"; }}
+            onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+          >
+            <span style={{ display: "flex", alignItems: "center", justifyContent: "center", color: it.danger ? "currentColor" : "var(--co-accent)" }}>
+              <Icon name={it.icon} size={14} color="currentColor" />
+            </span>
+            {it.desc ? (
+              <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
+                <span style={{ fontFamily: "var(--co-font-sans)", fontSize: 12, fontWeight: 500 }}>{it.label}</span>
+                <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: it.danger ? "color-mix(in oklab, var(--co-danger) 70%, var(--co-text-subtle))" : "var(--co-text-subtle)" }}>{it.desc}</span>
+              </span>
+            ) : (
+              <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 12, fontWeight: 500 }}>{it.label}</span>
+            )}
+          </button>
+          )
+        )}
+      </div>
+    </>
+  );
+}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Layout — computes (x, y) per stage based on canvas style.
@@ -244,10 +276,11 @@ function computeLayout(workflow, style) {
   }
 
   if (style === "swimlane") {
-    // left → right: column = x-step (260px), lane = y-step (130px from center)
-    const colW = 260;
-    const laneH = 130;
-    const baseY = 320;
+    // left → right: column = x-step, lane = y-step. Lane spacing is a multiple
+    // of GRID so every lane's center lands on a row of grid dots.
+    const colW = 256;
+    const laneH = 4 * GRID;   // 128
+    const baseY = 10 * GRID;  // 320
     for (const s of stages) {
       out[s.id] = {
         x: 80 + s.column * colW,
@@ -259,18 +292,20 @@ function computeLayout(workflow, style) {
   }
 
   if (style === "tree") {
-    // top → down: column → row (depth), lane → x.
-    const rowH = 130;
-    const laneW = 240;
-    const baseX = 700;
+    // top → down: column → row (depth), lane → x. All offsets are GRID
+    // multiples so the vertical trunk threads through the dot columns.
+    const rowH = 4 * GRID;    // 128
+    const laneW = 8 * GRID;   // 256
+    const baseX = 22 * GRID;  // 704 → +WORKER_W/2 lands a column of dots
+    const baseY = 2 * GRID;   // 64
     for (const s of stages) {
       out[s.id] = {
         x: baseX + s.lane * laneW,
-        y: 60 + s.column * rowH,
+        y: baseY + s.column * rowH,
       };
     }
     const maxCol = Math.max(...stages.map(s => s.column));
-    return { positions: out, width: 1700, height: 60 + (maxCol + 1) * rowH + 60 };
+    return { positions: out, width: 1700, height: baseY + (maxCol + 1) * rowH + 60 };
   }
 
   return { positions: out, width: 1800, height: 700 };
@@ -281,19 +316,23 @@ function computeLayout(workflow, style) {
 // ──────────────────────────────────────────────────────────────────────────
 
 function edgeAnchor(stage, layoutPos, side, style, isRouting) {
-  // returns the (x,y) at which an edge connects to a stage's node
-  const w = isRouting ? 124 : WORKER_DEFAULT_W;
-  const h = isRouting ? 50  : WORKER_DEFAULT_H;
-  const cx = layoutPos.x + (isRouting ? (WORKER_DEFAULT_W / 2) : WORKER_DEFAULT_W / 2);
-  const cy = layoutPos.y + (isRouting ? (WORKER_DEFAULT_H / 2) : WORKER_DEFAULT_H / 2);
+  // returns the (x,y) at which an edge connects to a stage's node. Every node
+  // shares NODE_H and the same vertical center, so horizontal edges are flat.
+  const w = isRouting ? OP_W : WORKER_W;
+  const cx = layoutPos.x + WORKER_W / 2;
+  const cy = layoutPos.y + NODE_H / 2;
   // For tree (top-down), use top/bottom; for swimlane/graph use left/right
   const flow = style === "tree" ? "vertical" : "horizontal";
   if (flow === "horizontal") {
-    if (side === "out") return { x: layoutPos.x + (isRouting ? (WORKER_DEFAULT_W + w) / 2 : w), y: cy };
-    return                 { x: layoutPos.x + (isRouting ? (WORKER_DEFAULT_W - w) / 2 : 0),    y: cy };
+    if (side === "out") return { x: layoutPos.x + (isRouting ? (WORKER_W + w) / 2 : w), y: cy };
+    return                 { x: layoutPos.x + (isRouting ? (WORKER_W - w) / 2 : 0),    y: cy };
   } else {
-    if (side === "out") return { x: cx, y: layoutPos.y + (isRouting ? (WORKER_DEFAULT_H + h) / 2 : h) };
-    return                 { x: cx, y: layoutPos.y + (isRouting ? (WORKER_DEFAULT_H - h) / 2 : 0) };
+    // Tree (top-down): edges meet the body's top / bottom edge. The worker body
+    // is shorter than the cell, so use its real edges; routing fills the cell.
+    const topY = layoutPos.y + WORKER_TOP;
+    const botY = layoutPos.y + WORKER_TOP + WORKER_H;
+    if (side === "out") return { x: cx, y: botY };
+    return                 { x: cx, y: topY };
   }
 }
 
@@ -341,20 +380,99 @@ function pathBetween(a, b, edgeStyle, flow, loop) {
 // ──────────────────────────────────────────────────────────────────────────
 
 function Canvas({
-  workflow, job, view, selectedId, onSelect,
+  workflow: workflowProp, job, view, selectedId, onSelect,
   canvasStyle, edgeStyle, density, inflightAnim,
   drawerOpen,
 }) {
+  // Local, mutable copy so right-click insert/remove can edit the graph.
+  const [workflow, setWorkflow] = useStateCV(workflowProp);
+  useEffectCV(() => { setWorkflow(workflowProp); }, [workflowProp]);
   const wrapRef = useRefCV(null);
   const [pan, setPan] = useStateCV({ x: 0, y: 0 });
   const [zoom, setZoom] = useStateCV(0.7);
   const dragRef = useRefCV(null);
+  const longPressRef = useRefCV(null);
 
   // Builder-mode hover/selection state.
   const [hoveredNodeId, setHoveredNodeId] = useStateCV(null);
   const [hoveredEdgeKey, setHoveredEdgeKey] = useStateCV(null);
   const [selectedEdgeKey, setSelectedEdgeKey] = useStateCV(null);
   const [picker, setPicker] = useStateCV(null);
+  const [ctxMenu, setCtxMenu] = useStateCV(null);
+
+  // Right-click affordances. Insert an operator into an arrow (splitting it),
+  // or remove an operator node and reconnect the arrow it sat on.
+  const openEdgeMenu = (e, edgeKey) => {
+    e.preventDefault(); e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY, kind: "edge", edgeKey });
+  };
+  const openNodeMenu = (e, nodeId, isOperator) => {
+    e.preventDefault(); e.stopPropagation();
+    setCtxMenu({ x: e.clientX, y: e.clientY, kind: isOperator ? "operator" : "worker", nodeId });
+  };
+  // Long-press (touch) opens the same context menu at the touch point.
+  const openNodeMenuAt = (clientX, clientY, nodeId, isOperator) => {
+    setCtxMenu({ x: clientX, y: clientY, kind: isOperator ? "operator" : "worker", nodeId });
+  };
+  const insertOperator = (edgeKey, opKind) => {
+    setCtxMenu(null);
+    setWorkflow(prev => {
+      const arrow = prev.edges.find(ed => `${ed.from}→${ed.to}` === edgeKey);
+      if (!arrow) return prev;
+      const id = `${opKind}_${Math.random().toString(36).slice(2, 6)}`;
+      const pf = positions[arrow.from], pt = positions[arrow.to];
+      const pos = (pf && pt)
+        ? { x: Math.round((pf.x + pt.x) / 2), y: Math.round((pf.y + pt.y) / 2) }
+        : { x: 600, y: 320 };
+      const src = prev.stages.find(s => s.id === arrow.from) || {};
+      const newStage = {
+        id, kind: opKind,
+        label: opKind === "join" ? "join" : "for-each",
+        pos, column: (src.column ?? 0) + 1, lane: src.lane ?? 0,
+      };
+      const edges = prev.edges.filter(ed => ed !== arrow);
+      edges.push({ from: arrow.from, to: id });
+      edges.push({ from: id, to: arrow.to, ...(arrow.case ? { case: arrow.case } : {}), ...(arrow.loop ? { loop: arrow.loop } : {}) });
+      return { ...prev, stages: [...prev.stages, newStage], edges };
+    });
+  };
+  const removeOperator = (nodeId) => {
+    setCtxMenu(null);
+    if (selectedId === nodeId) onSelect(null);
+    setWorkflow(prev => {
+      const incoming = prev.edges.filter(ed => ed.to === nodeId);
+      const outgoing = prev.edges.filter(ed => ed.from === nodeId);
+      const edges = prev.edges.filter(ed => ed.from !== nodeId && ed.to !== nodeId);
+      for (const i of incoming) for (const o of outgoing) {
+        edges.push({ from: i.from, to: o.to, ...(o.case ? { case: o.case } : {}), ...(o.loop ? { loop: o.loop } : {}) });
+      }
+      return { ...prev, stages: prev.stages.filter(s => s.id !== nodeId), edges };
+    });
+  };
+
+  // Worker node actions (context menu). Duplicate clones the node and wires the
+  // original straight into the clone; delete removes the node and its edges.
+  const duplicateNode = (nodeId) => {
+    setCtxMenu(null);
+    setWorkflow(prev => {
+      const src = prev.stages.find(s => s.id === nodeId);
+      if (!src) return prev;
+      const id = `${src.kind}_${Math.random().toString(36).slice(2, 6)}`;
+      const pos = src.pos ? { x: src.pos.x, y: src.pos.y + 4 * 32 } : { x: 600, y: 320 };
+      const clone = { ...src, id, label: `${src.label}-copy`, pos,
+        column: (src.column ?? 0) + 1, lane: (src.lane ?? 0) };
+      return { ...prev, stages: [...prev.stages, clone], edges: [...prev.edges, { from: nodeId, to: id }] };
+    });
+  };
+  const deleteNode = (nodeId) => {
+    setCtxMenu(null);
+    if (selectedId === nodeId) onSelect(null);
+    setWorkflow(prev => ({
+      ...prev,
+      stages: prev.stages.filter(s => s.id !== nodeId),
+      edges: prev.edges.filter(ed => ed.from !== nodeId && ed.to !== nodeId),
+    }));
+  };
 
   // Selecting a node clears the edge selection (and vice versa).
   useEffectCV(() => { if (selectedId) setSelectedEdgeKey(null); }, [selectedId]);
@@ -434,7 +552,7 @@ function Canvas({
 
   // Edge map: { "from→to:case": status }
   const stageById = useMemoCV(() => Object.fromEntries(workflow.stages.map(s => [s.id, s])), [workflow]);
-  const isRouting = (s) => s && s.kind !== "worker";
+  const isRouting = (s) => s && s.kind !== "worker" && s.kind !== "fan";
 
   const flow = canvasStyle === "tree" ? "vertical" : "horizontal";
 
@@ -466,12 +584,14 @@ function Canvas({
         cursor: dragRef.current ? "grabbing" : "grab",
       }}
     >
-      {/* dot grid */}
+      {/* dot grid — spacing is half the node height (a node spans exactly 2
+          cells); offset by half a cell so the dots land on node tops, centers
+          and bottoms, and horizontal edges thread straight through a dot row. */}
       <div style={{
         position: "absolute", inset: 0,
         backgroundImage: `radial-gradient(circle, var(--co-border-2) 1px, transparent 1px)`,
-        backgroundSize: `${24 * zoom}px ${24 * zoom}px`,
-        backgroundPosition: `${pan.x}px ${pan.y}px`,
+        backgroundSize: `${GRID * zoom}px ${GRID * zoom}px`,
+        backgroundPosition: `${pan.x - (GRID / 2) * zoom}px ${pan.y - (GRID / 2) * zoom}px`,
         opacity: 0.35,
         pointerEvents: "none",
       }} />
@@ -550,6 +670,7 @@ function Canvas({
                       setSelectedEdgeKey(k => k === edgeKey ? null : edgeKey);
                       onSelect(null);
                     }}
+                    onContextMenu={(e) => openEdgeMenu(e, edgeKey)}
                   />
                 )}
 
@@ -588,17 +709,31 @@ function Canvas({
           const p = positions[s.id];
           if (!p) return null;
           const status = showInflight ? job.stageStatus[s.id] : null;
-          const node = s.kind === "worker"
-            ? <WorkerNode  key={s.id} stage={s} status={status} info={p} selected={selectedId === s.id} density={density} onClick={() => onSelect(s.id)} />
-            : <RoutingNode key={s.id} stage={s} status={status} info={p} selected={selectedId === s.id} density={density} onClick={() => onSelect(s.id)} />;
+          const isOp = s.kind !== "worker" && s.kind !== "fan";
           return (
             <div
               key={s.id}
               data-node
               onMouseEnter={() => isBuilder && setHoveredNodeId(s.id)}
               onMouseLeave={() => isBuilder && setHoveredNodeId(id => id === s.id ? null : id)}
+              onContextMenu={isBuilder ? (e) => openNodeMenu(e, s.id, isOp) : undefined}
+              onTouchStart={isBuilder ? (e) => {
+                const t = e.touches[0];
+                const cx = t.clientX, cy = t.clientY;
+                if (longPressRef.current) clearTimeout(longPressRef.current);
+                longPressRef.current = setTimeout(() => {
+                  longPressRef.current = null;
+                  openNodeMenuAt(cx, cy, s.id, isOp);
+                }, 480);
+              } : undefined}
+              onTouchMove={isBuilder ? () => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } } : undefined}
+              onTouchEnd={isBuilder ? () => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } } : undefined}
             >
-              {node}
+              {s.kind === "fan"
+                ? <FanNode stage={s} status={status} info={p} selected={selectedId === s.id} view={view} onClick={() => onSelect(s.id)} />
+                : isOp
+                ? <OperatorNode stage={s} status={status} info={p} selected={selectedId === s.id} onClick={() => onSelect(s.id)} />
+                : <WorkerNode stage={s} status={status} info={p} selected={selectedId === s.id} density={density} onClick={() => onSelect(s.id)} />}
             </div>
           );
         })}
@@ -636,6 +771,19 @@ function Canvas({
           anchor={picker.anchor}
           context={picker.kind === "insert-edge" ? "insert" : "after"}
           onClose={() => setPicker(null)}
+        />
+      )}
+
+      {/* Right-click context menu — screen-space, outside the world transform. */}
+      {isBuilder && ctxMenu && (
+        <ContextMenu
+          menu={ctxMenu}
+          onInsert={insertOperator}
+          onRemove={removeOperator}
+          onDuplicate={duplicateNode}
+          onRemoveCollapse={removeOperator}
+          onDelete={deleteNode}
+          onClose={() => setCtxMenu(null)}
         />
       )}
 
@@ -719,4 +867,113 @@ function FlowTokens({ d, mode }) {
   );
 }
 
-Object.assign(window, { Canvas });
+// ──────────────────────────────────────────────────────────────────────────
+// Fan node — the fan-out / fan-in container (concept "capsule reactor").
+// Replaces the standalone for-each + join operators. A capsule that occupies
+// the worker column (WORKER_W wide, centered on the cell midline so edges
+// stay flat). Collapses to one node; the header chevron expands it in place
+// to reveal the per-item body.
+//
+// Header is the state indicator ("toasted header"): deselected it bakes down
+// to a muted cocoa-orange; the full crust gradient re-ignites on selection or
+// while running. The shell stays neutral so the accent outline + halo remain
+// selection-only signals, exactly like a worker node.
+//
+// Connectors are completely standard: edges hit the left border with the
+// usual arrowhead, and build mode renders the same dot output handle on the
+// right border as any worker — no special inlet/outlet badges.
+// ──────────────────────────────────────────────────────────────────────────
+const fanChipStyle = {
+  display: "inline-flex", alignItems: "center", height: 16, padding: "0 6px",
+  borderRadius: 999,
+  background: "color-mix(in oklab, var(--co-accent) 14%, transparent)",
+  color: "var(--co-accent)",
+  border: "1px solid color-mix(in oklab, var(--co-accent) 34%, transparent)",
+  fontFamily: "var(--co-font-mono)", fontSize: 9, fontWeight: 600, whiteSpace: "nowrap",
+};
+
+function FanNode({ stage, status, info, selected, view, onClick, defaultOpen }) {
+  const [open, setOpen] = useStateCV(!!defaultOpen);
+  const job = view === "job" ? status : null;
+  const st = status?.status;
+  const cy = info.y + NODE_H / 2;
+  const W = WORKER_W;                 // 160 — sits in the worker column
+  const H = open ? 152 : 76;
+  const top = cy - H / 2;
+  const count = stage.count ?? 0;
+  const done = job?.done ?? 0;
+  const running = st === "running";
+  const dim = !!job && st !== "running" && st !== "passed";
+
+  const borderColor = selected || running ? "var(--co-accent)" : "var(--co-border-2)";
+  const boxShadow = selected
+    ? "0 0 0 3px color-mix(in oklab, var(--co-accent) 22%, transparent), 0 6px 16px rgba(0,0,0,0.4)"
+    : running ? "0 0 18px color-mix(in oklab, var(--co-accent) 30%, transparent), 0 4px 12px rgba(0,0,0,0.4)"
+    : "var(--co-shadow-1)";
+  // Toasted header — full crust only when lit (selected or running).
+  const lit = selected || running;
+  const headerBg = lit
+    ? "var(--co-grad-crust)"
+    : "linear-gradient(135deg, color-mix(in oklab, var(--co-accent) 32%, var(--co-bg-4)) 0%, color-mix(in oklab, var(--co-accent) 18%, var(--co-bg-3)) 100%)";
+  const headerFg = lit ? "var(--co-accent-ink)" : "var(--co-accent-200)";
+  const chipBg = lit ? "rgba(0,0,0,0.18)" : "rgba(0,0,0,0.22)";
+
+  return (
+    <>
+      <div
+        onClick={onClick}
+        onMouseDown={e => e.stopPropagation()}
+        style={{
+          position: "absolute", left: info.x, top, width: W, height: H,
+          borderRadius: 13, overflow: "hidden",
+          background: "var(--co-bg-2)",
+          border: `1px solid ${borderColor}`,
+          boxShadow,
+          cursor: "pointer", userSelect: "none",
+          transition: "height 260ms var(--co-ease-out), top 260ms var(--co-ease-out), border-color 140ms, box-shadow 200ms",
+        }}
+      >
+        {/* toasted header — muted when idle, crust gradient when lit */}
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 9px", height: 26, background: headerBg, filter: dim ? "saturate(0.7) brightness(0.92)" : "none" }}>
+          <Icon name="forEach" size={13} color={headerFg} />
+          <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, fontWeight: 700, color: headerFg, letterSpacing: "0.02em" }}>map</span>
+          <span style={{ flex: 1 }} />
+          <span style={{
+            display: "inline-flex", alignItems: "center", gap: 4, height: 16, padding: "0 6px",
+            borderRadius: 999, background: chipBg, color: headerFg,
+            fontFamily: "var(--co-font-mono)", fontSize: 9.5, fontWeight: 700, whiteSpace: "nowrap",
+          }}>
+            {running && <span style={{ width: 5, height: 5, borderRadius: 999, background: headerFg }} />}
+            {job ? `${done} / ${count}` : `×${count}`}
+          </span>
+          <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
+            title={open ? "collapse" : "expand internal workflow"}
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, border: "none", background: "transparent", color: headerFg, cursor: "pointer", padding: 0 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" style={{ transform: open ? "rotate(90deg)" : "none", transition: "transform 240ms var(--co-ease-out)" }}><polyline points="9,6 15,12 9,18" /></svg>
+          </button>
+        </div>
+
+        {/* body */}
+        {!open ? (
+          <div style={{ padding: "0 11px", height: 50, display: "flex", flexDirection: "column", justifyContent: "center", gap: 2 }}>
+            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 13, fontWeight: 600, color: "var(--co-text-strong)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{stage.body.label}</span>
+            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>over {stage.over}</span>
+          </div>
+        ) : (
+          <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 7 }}>
+            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>runs per item</span>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: 30, borderRadius: 8, background: "var(--co-bg-0)", border: "1px solid var(--co-border-2)" }}>
+              <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 7, background: "var(--co-grad-loaf)", border: "1px solid var(--co-border-2)", boxShadow: "inset 3px 0 0 var(--co-accent)", fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)", whiteSpace: "nowrap" }}>{stage.body.label}</span>
+            </div>
+            <div style={{ display: "flex", gap: 5 }}>
+              <span style={fanChipStyle}>{stage.concurrency} parallel</span>
+              <span style={fanChipStyle}>join · {stage.joinMode}</span>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+Object.assign(window, { Canvas, WorkerNode, FanNode });

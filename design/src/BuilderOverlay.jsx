@@ -18,17 +18,15 @@ const { useState: useStateBO } = React;
 // mutate the workflow. This is a click-through prototype.
 // ──────────────────────────────────────────────────────────────────────────
 
-const NODE_W = 192;
-const NODE_H = 80;
-const ROUTING_W = 124;
-const ROUTING_H = 50;
+const NODE_W = 160;
+const NODE_H = 64;
+const WORKER_BODY_H = 32;                        // worker body is one grid gap tall
+const WORKER_BODY_TOP = (NODE_H - WORKER_BODY_H) / 2; // 16 — body centered in the cell
+const ROUTING_W = 32;
+const ROUTING_H = 32;
 
 const STAGE_TYPES = [
-  { kind: "worker", label: "worker",  icon: "zap",     desc: "skills · prompt · result" },
-  { kind: "branch", label: "branch",  icon: "gitBranch", desc: "conditional routing" },
-  { kind: "map",    label: "for-each",icon: "forEach", desc: "iterate a list, fan-out" },
-  { kind: "loop",   label: "loop",    icon: "refresh", desc: "re-enter while condition" },
-  { kind: "join",   label: "join",    icon: "merge",   desc: "wait for N upstreams" },
+  { kind: "worker", label: "worker", icon: "zap", desc: "skills · prompt · result" },
 ];
 
 // ── helpers ───────────────────────────────────────────────────────────────
@@ -54,13 +52,13 @@ function edgeMidpoint(d) {
 
 function OutputHandle({ stage, pos, isHovered, isSelected, flow, zoom, onAdd }) {
   const horizontal = flow !== "vertical";
-  const isRouting = stage.kind !== "worker";
+  const isRouting = stage.kind !== "worker" && stage.kind !== "fan";
   const w = isRouting ? ROUTING_W : NODE_W;
   const h = isRouting ? ROUTING_H : NODE_H;
   const cx = pos.x + (NODE_W / 2);
   const cy = pos.y + (NODE_H / 2);
   const x = horizontal ? pos.x + (isRouting ? (NODE_W + w) / 2 : w) : cx;
-  const y = horizontal ? cy : pos.y + (isRouting ? (NODE_H + h) / 2 : h);
+  const y = horizontal ? cy : pos.y + (isRouting ? (NODE_H + h) / 2 : (WORKER_BODY_TOP + WORKER_BODY_H));
 
   if (!isHovered && !isSelected) return null;
   const inv = 1 / zoom;
@@ -112,125 +110,6 @@ function OutputHandle({ stage, pos, isHovered, isSelected, flow, zoom, onAdd }) 
         </button>
       </div>
     </div>
-  );
-}
-
-function NodeToolbar({ stage, pos, zoom, onDuplicate, onDelete, onRemoveCollapse }) {
-  const cx = pos.x + (NODE_W / 2);
-  const inv = 1 / zoom;
-  const [menuOpen, setMenuOpen] = useStateBO(false);
-  return (
-    <div style={{
-      position: "absolute",
-      left: cx, top: pos.y,
-      width: 0, height: 0,
-      pointerEvents: "auto",
-    }}>
-      <div style={{
-        position: "absolute", left: 0, top: 0,
-        transform: `scale(${inv}) translate(-50%, calc(-100% - 14px))`,
-        transformOrigin: "0 0",
-      }}>
-        {/* relative wrapper anchors the dropdown under the trigger */}
-        <div style={{ position: "relative", display: "inline-block" }}>
-          <ToolbarTrigger active={menuOpen} onClick={() => setMenuOpen(o => !o)} />
-          {menuOpen && (
-            <ToolbarMenu
-              onClose={() => setMenuOpen(false)}
-              items={[
-                { icon: "copy", label: "duplicate", desc: "clone this node downstream", onClick: onDuplicate },
-                { icon: "collapseLink", label: "remove + collapse", desc: "delete & rewire parent → child", onClick: onRemoveCollapse },
-                { divider: true },
-                { icon: "x", label: "delete node", desc: "removes its connections too", danger: true, onClick: onDelete },
-              ]}
-            />
-          )}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function ToolbarMenu({ items, onClose }) {
-  return (
-    <>
-      {/* click-away catcher */}
-      <div onClick={(e) => { e.stopPropagation(); onClose(); }}
-        style={{ position: "fixed", inset: 0, zIndex: 1 }} />
-      <div style={{
-        position: "absolute", left: 0, top: "100%", marginTop: 6,
-        zIndex: 2,
-        minWidth: 196,
-        background: "var(--co-bg-1)",
-        border: "1px solid var(--co-border-2)",
-        borderRadius: 8,
-        boxShadow: "var(--co-shadow-3)",
-        padding: 4,
-        whiteSpace: "nowrap",
-      }}>
-        {items.map((it, i) => it.divider
-          ? <span key={i} style={{ display: "block", height: 1, margin: "4px 6px", background: "var(--co-border-1)" }} />
-          : <MenuItem key={i} {...it} onClose={onClose} />
-        )}
-      </div>
-    </>
-  );
-}
-
-function MenuItem({ icon, label, desc, danger, onClick, onClose }) {
-  const [hover, setHover] = useStateBO(false);
-  return (
-    <button
-      type="button"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={(e) => { e.stopPropagation(); onClick?.(); onClose?.(); }}
-      style={{
-        width: "100%",
-        display: "grid", gridTemplateColumns: "20px 1fr", alignItems: "center", gap: 9,
-        padding: "6px 8px",
-        background: hover ? (danger ? "var(--co-danger-soft)" : "var(--co-bg-3)") : "transparent",
-        border: "none", borderRadius: 5,
-        cursor: "pointer", textAlign: "left",
-        color: danger ? "var(--co-danger)" : "var(--co-text)",
-      }}
-    >
-      <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <Icon name={icon} size={14} color="currentColor" />
-      </span>
-      <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
-        <span style={{ fontFamily: "var(--co-font-sans)", fontSize: 12, fontWeight: 500 }}>{label}</span>
-        <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: danger ? "color-mix(in oklab, var(--co-danger) 70%, var(--co-text-subtle))" : "var(--co-text-subtle)" }}>{desc}</span>
-      </span>
-    </button>
-  );
-}
-
-function ToolbarTrigger({ active, onClick }) {
-  const [hover, setHover] = useStateBO(false);
-  return (
-    <button
-      type="button"
-      title="node actions"
-      onMouseEnter={() => setHover(true)}
-      onMouseLeave={() => setHover(false)}
-      onClick={(e) => { e.stopPropagation(); onClick?.(); }}
-      style={{
-        display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 4,
-        height: 28, padding: "0 9px",
-        background: (active || hover) ? "var(--co-bg-3)" : "var(--co-bg-1)",
-        border: "1px solid var(--co-border-2)",
-        borderRadius: 6,
-        boxShadow: "var(--co-shadow-2)",
-        color: active ? "var(--co-text-strong)" : "var(--co-text)",
-        cursor: "pointer",
-        fontFamily: "var(--co-font-sans)", fontSize: 11, fontWeight: 500,
-        whiteSpace: "nowrap",
-      }}
-    >
-      <Icon name="moreVertical" size={14} color="currentColor" />
-      actions
-    </button>
   );
 }
 
@@ -445,7 +324,7 @@ function BuilderTips() {
       <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
         <TipRow icon="+" label="select a node" desc="tap the handle dot to add a stage downstream, or drag it to connect" />
         <TipRow icon="+" label="select a connection" desc="tap + to insert an operator on the edge" />
-        <TipRow icon="×" label="click a node or edge" desc="floating actions menu to duplicate, collapse, or delete" />
+        <TipRow icon="×" label="long-press or right-click a node" desc="opens a menu to duplicate, collapse, or delete" />
       </div>
     </div>
   );
@@ -496,14 +375,6 @@ function BuilderOverlay({
               flow={flow}
               onAdd={(anchor) => setPicker({ kind: "after-node", anchor, stageId: s.id })}
             />
-            {selected && (
-              <NodeToolbar
-                stage={s} pos={p} zoom={zoom}
-                onDuplicate={() => {}}
-                onDelete={() => {}}
-                onRemoveCollapse={() => {}}
-              />
-            )}
           </React.Fragment>
         );
       })}
@@ -519,14 +390,14 @@ function BuilderOverlay({
         const srcStage = workflow.stages.find(st => st.id === edge.from);
         let srcAnchor = null;
         if (srcPos) {
-          const isRouting = srcStage && srcStage.kind !== "worker";
+          const isRouting = srcStage && srcStage.kind !== "worker" && srcStage.kind !== "fan";
           const w = isRouting ? ROUTING_W : NODE_W;
           const h = isRouting ? ROUTING_H : NODE_H;
           const cx = srcPos.x + (NODE_W / 2);
           const cy = srcPos.y + (NODE_H / 2);
           srcAnchor = (flow !== "vertical")
             ? { x: srcPos.x + (isRouting ? (NODE_W + w) / 2 : w), y: cy }
-            : { x: cx, y: srcPos.y + (isRouting ? (NODE_H + h) / 2 : h) };
+            : { x: cx, y: srcPos.y + (isRouting ? (NODE_H + h) / 2 : (WORKER_BODY_TOP + WORKER_BODY_H)) };
         }
         const parentSelected = selectedNodeId === edge.from;
         return (

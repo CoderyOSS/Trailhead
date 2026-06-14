@@ -95,7 +95,7 @@ function ModeRail({ mode, onMode, activeCount }) {
         display: "flex", alignItems: "center", justifyContent: "center",
         borderBottom: "1px solid var(--co-border-1)",
       }}>
-        <img src="assets/trailhead-logo.png" alt="Trailhead" width="28" height="28" />
+        <img src="assets/trailhead-logo.svg" alt="Trailhead" width="28" height="28" />
       </div>
 
       {/* Modes */}

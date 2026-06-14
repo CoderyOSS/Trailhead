@@ -1,11 +1,22 @@
-/* global React, Icon, StatusDot, StatusTag, Tag */
+/* global React, Icon, StatusDot, StatusTag, Tag, ViewToggle */
+const { useMemo: useMemoRuns } = React;
 
 // ──────────────────────────────────────────────────────────────────────────
 // Runs (jobs log) view — flat table, no search, sortable by header click.
 // ──────────────────────────────────────────────────────────────────────────
 
-function RunsView({ jobs, onPick, activeId }) {
+function RunsView({ jobs, onPick, activeId, viewMode = "flat", onViewMode }) {
   const totalRuns = jobs.length;
+
+  // Group by workflow for grouped mode — same grouping the sidebar uses.
+  const groups = useMemoRuns(() => {
+    const m = new Map();
+    for (const j of jobs) {
+      if (!m.has(j.workflow)) m.set(j.workflow, []);
+      m.get(j.workflow).push(j);
+    }
+    return [...m.entries()].map(([name, items]) => ({ name, items }));
+  }, [jobs]);
   return (
     <div style={{ flex: 1, overflow: "auto", background: "var(--co-bg-0)" }}>
       <div style={{
@@ -25,10 +36,15 @@ function RunsView({ jobs, onPick, activeId }) {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
           <Pill label="all" count={totalRuns} active />
-          <Pill label="running" count={1} />
           <Pill label="passed"  count={4} />
           <Pill label="failed"  count={1} />
           <Pill label="cancelled" count={1} />
+          {onViewMode && (
+            <>
+              <span style={{ width: 1, height: 18, background: "var(--co-border-1)", margin: "0 2px" }} />
+              <ViewToggle value={viewMode} onChange={onViewMode} />
+            </>
+          )}
         </div>
       </div>
 
@@ -52,46 +68,34 @@ function RunsView({ jobs, onPick, activeId }) {
           </tr>
         </thead>
         <tbody>
-          {jobs.map(j => (
-            <tr key={j.id}
-              onClick={() => onPick(j.id)}
-              style={{
-                cursor: "pointer",
-                background: j.id === activeId ? "var(--co-bg-2)" : "transparent",
-                borderBottom: "1px solid var(--co-border-1)",
-              }}
-              onMouseEnter={e => { if (j.id !== activeId) e.currentTarget.style.background = "var(--co-bg-2)"; }}
-              onMouseLeave={e => { if (j.id !== activeId) e.currentTarget.style.background = "transparent"; }}
-            >
-              <td style={{ padding: "10px 14px", textAlign: "center", width: 30 }}>
-                <StatusDot status={j.status} pulse={j.status === "running"} />
-              </td>
-              <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text-strong)" }}>
-                {j.id}
-              </td>
-              <td style={{ padding: "10px 14px", color: "var(--co-text)" }}>
-                <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 11.5 }}>{j.input}</span>
-              </td>
-              <td style={{ padding: "10px 14px" }}>
-                <StatusTag status={j.status} />
-              </td>
-              <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text)", fontVariantNumeric: "tabular-nums" }}>
-                {j.started}
-              </td>
-              <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text)", fontVariantNumeric: "tabular-nums" }}>
-                {j.dur}
-              </td>
-              <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text-muted)", fontVariantNumeric: "tabular-nums" }}>
-                {(Math.random() * 80 + 20 | 0) + ".4k"}
-              </td>
-              <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text)", fontVariantNumeric: "tabular-nums" }}>
-                {j.cost}
-              </td>
-              <td style={{ padding: "10px 14px", color: "var(--co-text-muted)", fontSize: 12 }}>
-                {j.by}
-              </td>
-            </tr>
-          ))}
+          {viewMode === "grouped"
+            ? groups.map(g => (
+                <React.Fragment key={g.name}>
+                  <tr>
+                    <td colSpan={9} style={{
+                      padding: "9px 14px 5px",
+                      background: "var(--co-bg-1)",
+                      borderBottom: "1px solid var(--co-border-1)",
+                    }}>
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 7,
+                        fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600,
+                        color: "var(--co-text-strong)",
+                      }}>
+                        <span style={{ width: 4, height: 4, borderRadius: 999, background: "var(--co-fg-3)" }} />
+                        {g.name}
+                        <span style={{ color: "var(--co-text-subtle)", fontWeight: 400 }}>{g.items.length}</span>
+                      </span>
+                    </td>
+                  </tr>
+                  {g.items.map(j => (
+                    <RunRow key={j.id} job={j} active={j.id === activeId} onPick={onPick} />
+                  ))}
+                </React.Fragment>
+              ))
+            : jobs.map(j => (
+                <RunRow key={j.id} job={j} active={j.id === activeId} onPick={onPick} />
+              ))}
         </tbody>
       </table>
 
@@ -104,6 +108,54 @@ function RunsView({ jobs, onPick, activeId }) {
         showing {jobs.length} of {totalRuns.toLocaleString()} · no search yet
       </div>
     </div>
+  );
+}
+
+function RunRow({ job: j, active, onPick }) {
+  return (
+    <tr
+      onClick={() => onPick(j.id)}
+      style={{
+        cursor: "pointer",
+        background: active ? "var(--co-bg-2)" : "transparent",
+        borderBottom: "1px solid var(--co-border-1)",
+      }}
+      onMouseEnter={e => { if (!active) e.currentTarget.style.background = "var(--co-bg-2)"; }}
+      onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+    >
+      <td style={{ padding: "10px 14px", textAlign: "center", width: 30 }}>
+        <StatusDot status={j.status} pulse={j.status === "running"} />
+      </td>
+      <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text-strong)" }}>
+        {j.id}
+      </td>
+      <td style={{ padding: "10px 14px", color: "var(--co-text)" }}>
+        <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 11.5 }}>{j.input}</span>
+      </td>
+      <td style={{ padding: "10px 14px" }}>
+        <StatusTag status={j.status} />
+      </td>
+      <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text)", fontVariantNumeric: "tabular-nums" }}>
+        {j.started}
+      </td>
+      <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text)", fontVariantNumeric: "tabular-nums" }}>
+        {j.dur}
+      </td>
+      <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text-muted)", fontVariantNumeric: "tabular-nums" }}>
+        {(() => {
+          // Stable pseudo-token count derived from the id (no real field in the
+          // mock). Deterministic so it doesn't flicker when the view re-renders.
+          let h = 0; for (const c of j.id) h = (h * 31 + c.charCodeAt(0)) | 0;
+          return (Math.abs(h) % 80 + 20).toFixed(0) + ".4k";
+        })()}
+      </td>
+      <td style={{ padding: "10px 14px", fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text)", fontVariantNumeric: "tabular-nums" }}>
+        {j.cost}
+      </td>
+      <td style={{ padding: "10px 14px", color: "var(--co-text-muted)", fontSize: 12 }}>
+        {j.by}
+      </td>
+    </tr>
   );
 }
 

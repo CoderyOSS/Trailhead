@@ -62,23 +62,10 @@ const WORKFLOW = {
           security_relevant: { type: "boolean" },
         },
       },
-      pos: { x: 300, y: 320 },
+      pos: { x: 340, y: 320 },
       column: 1, lane: 0,
     },
-    {
-      id: "route_risk",
-      kind: "switch",
-      label: "switch",
-      sub: "on classify.risk",
-      on: "{{classify.risk}}",
-      cases: [
-        { match: "low",  to: ["quick_review"], label: "low" },
-        { match: "med",  to: ["full_review"],  label: "med" },
-        { match: "high", to: ["full_review", "security_scan"], label: "high" },
-      ],
-      pos: { x: 520, y: 320 },
-      column: 2, lane: 0,
-    },
+
     {
       id: "quick_review",
       kind: "worker",
@@ -93,8 +80,8 @@ const WORKFLOW = {
         type: "object",
         properties: { comments: { type: "array" } },
       },
-      pos: { x: 740, y: 160 },
-      column: 3, lane: -1,
+      pos: { x: 660, y: 160 },
+      column: 2, lane: -1,
     },
     {
       id: "full_review",
@@ -115,8 +102,8 @@ const WORKFLOW = {
           blocking: { type: "boolean" },
         },
       },
-      pos: { x: 740, y: 320 },
-      column: 3, lane: 0,
+      pos: { x: 660, y: 320 },
+      column: 2, lane: 0,
     },
     {
       id: "security_scan",
@@ -130,47 +117,40 @@ const WORKFLOW = {
         type: "object",
         properties: { findings: { type: "array" } },
       },
-      pos: { x: 740, y: 480 },
-      column: 3, lane: 1,
+      pos: { x: 660, y: 480 },
+      column: 2, lane: 1,
     },
+
     {
-      id: "per_file",
-      kind: "map",
-      label: "for-each",
-      sub: "over ingest.files",
-      over: "{{ingest.files}}",
-      body: "comment_file",
-      pos: { x: 960, y: 320 },
+      // Fan-out / fan-in container. Replaces the standalone for-each (map)
+      // operator, its per-item body worker, and the join: one capsule that
+      // fans `over` a list, runs `body` per item at `concurrency`, and fans
+      // results back in at the output (`joinMode`).
+      id: "commenter",
+      kind: "fan",
+      label: "comment-files",
+      sub: "fan-out · per file",
+      over: "ingest.files",
+      count: 7,
+      concurrency: 8,
+      joinMode: "all",
+      body: {
+        label: "comment-file",
+        sub: "per-file inline comment",
+        skills: ["code.review.inline"],
+        model: "haiku-4.5",
+        prompt:
+          "Write an inline comment for file `{{item}}` using\n" +
+          "{{full_review.comments}} as ground truth. Be terse.",
+        schema: {
+          type: "object",
+          properties: { path: "string", line: "integer", body: "string" },
+        },
+      },
+      pos: { x: 1180, y: 320 },
       column: 4, lane: 0,
     },
-    {
-      id: "comment_file",
-      kind: "worker",
-      label: "comment-file",
-      sub: "per-file inline comment",
-      skills: ["code.review.inline"],
-      model: "haiku-4.5",
-      prompt:
-        "Write an inline comment for file `{{item}}` using\n" +
-        "{{full_review.comments}} as ground truth. Be terse.",
-      schema: {
-        type: "object",
-        properties: { path: "string", line: "integer", body: "string" },
-      },
-      pos: { x: 960, y: 500 },
-      column: 4, lane: 1,
-      inside: "per_file",
-    },
-    {
-      id: "join_reviews",
-      kind: "join",
-      label: "join",
-      sub: "wait for 2 / 3",
-      waits_for: ["per_file", "full_review", "security_scan"],
-      mode: "any-2",
-      pos: { x: 1180, y: 320 },
-      column: 5, lane: 0,
-    },
+
     {
       id: "critic",
       kind: "worker",
@@ -180,7 +160,7 @@ const WORKFLOW = {
       model: "sonnet-4.5",
       prompt:
         "Read {{full_review.summary}} and the per-file comments\n" +
-        "{{per_file.results}}. Is the review specific, kind, and actionable?\n" +
+        "{{commenter.results}}. Is the review specific, kind, and actionable?\n" +
         "Score 1-5. If <4, request a redo with notes.",
       schema: {
         type: "object",
@@ -190,22 +170,10 @@ const WORKFLOW = {
           accept: { type: "boolean" },
         },
       },
-      pos: { x: 1400, y: 320 },
+      pos: { x: 1620, y: 320 },
       column: 6, lane: 0,
     },
-    {
-      id: "satisfied",
-      kind: "branch",
-      label: "branch",
-      sub: "critic.accept",
-      cond: "{{critic.accept}}",
-      branches: [
-        { match: "true",  to: ["post"],          label: "ship" },
-        { match: "false", to: ["full_review"],   label: "redo", loop: true },
-      ],
-      pos: { x: 1620, y: 320 },
-      column: 7, lane: 0,
-    },
+
     {
       id: "post",
       kind: "worker",
@@ -213,32 +181,27 @@ const WORKFLOW = {
       sub: "github.comment",
       skills: ["github.comment", "github.label"],
       prompt:
-        "Post the comments from {{per_file.results}} to {{inputs.repo}}#{{inputs.pr_number}}.\n" +
+        "Post the comments from {{commenter.results}} to {{inputs.repo}}#{{inputs.pr_number}}.\n" +
         "Add label `triaged:{{classify.risk}}`.",
       schema: {
         type: "object",
         properties: { posted: { type: "integer" } },
       },
-      pos: { x: 1840, y: 320 },
-      column: 8, lane: 0,
+      pos: { x: 1860, y: 320 },
+      column: 7, lane: 0,
     },
   ],
   edges: [
-    { from: "ingest",        to: "classify"      },
-    { from: "classify",      to: "route_risk"    },
-    { from: "route_risk",    to: "quick_review",  case: "low"  },
-    { from: "route_risk",    to: "full_review",   case: "med · high"  },
-    { from: "route_risk",    to: "security_scan", case: "high" },
-    { from: "quick_review",  to: "join_reviews"  },
-    { from: "full_review",   to: "per_file"      },
-    { from: "per_file",      to: "comment_file", kind: "map-body"   },
-    { from: "comment_file",  to: "per_file",     kind: "map-return" },
-    { from: "per_file",      to: "join_reviews"  },
-    { from: "security_scan", to: "join_reviews"  },
-    { from: "join_reviews",  to: "critic"        },
-    { from: "critic",        to: "satisfied"     },
-    { from: "satisfied",     to: "post",         case: "ship" },
-    { from: "satisfied",     to: "full_review",  case: "redo", loop: true },
+    { from: "ingest",        to: "classify"    },
+    { from: "classify",      to: "quick_review",  case: "low" },
+    { from: "classify",      to: "full_review",   case: "med · high" },
+    { from: "classify",      to: "security_scan", case: "high" },
+    { from: "full_review",   to: "commenter"    },
+    { from: "quick_review",  to: "critic"       },
+    { from: "commenter",     to: "critic"       },
+    { from: "security_scan", to: "critic"       },
+    { from: "critic",        to: "post",          case: "ship" },
+    { from: "critic",        to: "full_review",   case: "redo", loop: true },
   ],
 };
 
@@ -259,36 +222,27 @@ const JOB = {
   inputs: { pr_number: 1428, repo: "acme/ledger", base_sha: "a3f912e" },
   // status by stage id
   stageStatus: {
-    ingest:        { status: "passed",    durMs: 1200, tokens: 8400  },
-    classify:      { status: "passed",    durMs:  900, tokens: 3100, value: "high" },
-    route_risk:    { status: "passed",    durMs:   12, tokens:    0, chose: ["full_review", "security_scan"] },
-    quick_review:  { status: "skipped",   durMs:    0, tokens:    0 },
-    full_review:   { status: "running",   durMs:  ~~(0), progress: 0.62, tokens: 38_400 },
-    security_scan: { status: "running",   durMs:  ~~(0), progress: 0.81, tokens: 14_900 },
-    per_file:      { status: "queued",    durMs:    0, tokens:    0, items: 7, done: 0 },
-    comment_file:  { status: "queued",    durMs:    0, tokens:    0 },
-    join_reviews:  { status: "queued",    durMs:    0, tokens:    0 },
-    critic:        { status: "queued",    durMs:    0, tokens:    0 },
-    satisfied:     { status: "queued",    durMs:    0, tokens:    0 },
-    post:          { status: "queued",    durMs:    0, tokens:    0 },
+    ingest:        { status: "passed",  durMs: 1200, tokens: 8400  },
+    classify:      { status: "passed",  durMs:  900, tokens: 3100, value: "high" },
+    quick_review:  { status: "skipped", durMs:    0, tokens:    0 },
+    full_review:   { status: "running", durMs:    0, progress: 0.62, tokens: 38_400 },
+    security_scan: { status: "running", durMs:    0, progress: 0.81, tokens: 14_900 },
+    commenter:     { status: "queued",  durMs:    0, tokens:    0, items: 7, done: 0 },
+    critic:        { status: "queued",  durMs:    0, tokens:    0 },
+    post:          { status: "queued",  durMs:    0, tokens:    0 },
   },
   // which edges have actually been traversed / are flowing tokens now
   edgeStatus: {
-    "ingest→classify":        "done",
-    "classify→route_risk":    "done",
-    "route_risk→quick_review":"skipped",
-    "route_risk→full_review": "active",
-    "route_risk→security_scan":"active",
-    "full_review→per_file":   "pending",
-    "per_file→comment_file":  "pending",
-    "comment_file→per_file":  "pending",
-    "quick_review→join_reviews":"skipped",
-    "per_file→join_reviews":  "pending",
-    "security_scan→join_reviews":"pending",
-    "join_reviews→critic":    "pending",
-    "critic→satisfied":       "pending",
-    "satisfied→post":         "pending",
-    "satisfied→full_review":  "pending",
+    "ingest→classify":         "done",
+    "classify→quick_review":   "skipped",
+    "classify→full_review":    "active",
+    "classify→security_scan":  "active",
+    "full_review→commenter":   "pending",
+    "quick_review→critic":     "skipped",
+    "commenter→critic":        "pending",
+    "security_scan→critic":    "pending",
+    "critic→post":             "pending",
+    "critic→full_review":      "pending",
   },
 };
 
@@ -326,19 +280,7 @@ const SNAPSHOTS = [
     input: "7 files · 412+/-118 · auth + db migration touched",
     result: { risk: "high", reasons: ["db migration", "auth touched", "no tests added"], security_relevant: true },
   },
-  {
-    id: "s2",
-    at: "+00:34",
-    stageId: "route_risk",
-    stageLabel: "switch · route_risk",
-    kind: "auto",
-    status: "passed",
-    durMs: 12,
-    tokens: 0,
-    tools: [],
-    input: 'classify.risk = "high"',
-    result: { chose: ["full_review", "security_scan"], skipped: ["quick_review"] },
-  },
+
   {
     id: "s3",
     at: "+01:48",
@@ -450,19 +392,7 @@ const STAGE_EXECUTIONS = {
       },
     },
   ],
-  route_risk: [
-    {
-      id: "ex_route_1",
-      label: "execution",
-      status: "passed",
-      startedAt: "+00:34",
-      durMs: 12,
-      tokens: 0,
-      tools: [],
-      renderedPrompt: null,    // routing operator
-      result: { chose: ["full_review", "security_scan"], skipped: ["quick_review"] },
-    },
-  ],
+
   full_review: [
     {
       id: "ex_full_1",
@@ -526,17 +456,12 @@ const STAGE_EXECUTIONS = {
   quick_review: [
     { id: "ex_quick_0", label: "execution", status: "skipped", startedAt: "+00:35", durMs: 0, tokens: 0, tools: [], skipReason: "route_risk chose [full_review, security_scan]" },
   ],
-  per_file: [
-    { id: "ex_map_iter", label: "fan-out · 0/7 iterations done", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] },
+
+  commenter: [
+    { id: "ex_fan_q", label: "fan-out · 0 / 7 iterations done", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] },
   ],
-  comment_file: [
-    { id: "ex_cf_q", label: "map body · queued", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] },
-  ],
-  join_reviews: [
-    { id: "ex_join_q", label: "execution", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [], waitsFor: ["full_review", "security_scan", "per_file"] },
-  ],
+
   critic:    [{ id: "ex_critic_q",    label: "execution", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] }],
-  satisfied: [{ id: "ex_satisfied_q", label: "execution", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] }],
   post:      [{ id: "ex_post_q",      label: "execution", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] }],
 };
 
@@ -569,7 +494,7 @@ const ATTACHED_CONFIGS = {
   ingest: [],
   post:   [],
   quick_review: [],
-  comment_file: [],
+  commenter: [],
 };
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -637,6 +562,11 @@ function workflowToYaml(wf) {
     } else if (s.kind === "join") {
       lines.push(`    waits_for: [${s.waits_for.join(", ")}]`);
       lines.push(`    mode: ${s.mode}`);
+    } else if (s.kind === "fan") {
+      lines.push(`    over: "${s.over}"`);
+      lines.push(`    concurrency: ${s.concurrency}`);
+      lines.push(`    join: ${s.joinMode}`);
+      lines.push(`    body: ${s.body.label}`);
     }
   }
   return lines.join("\n");

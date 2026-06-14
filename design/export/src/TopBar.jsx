@@ -93,7 +93,7 @@ function ModeBadge({ mode }) {
   );
 }
 
-function BuildBar({ workflow }) {
+function BuildBar({ workflow, onYaml, yamlActive }) {
   return (
     <div style={{
       flex: 1,
@@ -132,7 +132,7 @@ function BuildBar({ workflow }) {
 
       <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8, flex: "0 0 auto" }}>
         <Button variant="ghost" size="sm" icon="copy">duplicate</Button>
-        <Button variant="ghost" size="sm" icon="file">YAML</Button>
+        <Button variant={yamlActive ? "secondary" : "ghost"} size="sm" icon="file" onClick={onYaml}>YAML</Button>
         <span style={{ width: 1, height: 22, background: "var(--co-border-1)", margin: "0 2px" }} />
         <Button variant="secondary" size="sm">save draft</Button>
         <Button variant="trail" size="sm" icon="play">launch</Button>
@@ -141,7 +141,7 @@ function BuildBar({ workflow }) {
   );
 }
 
-function JobBar({ job, mode, jobState, onPlay, onPause, onStop, onRestart, onSnapshot, onClear }) {
+function JobBar({ job, mode, jobState, onPlay, onPause, onStop, onRestart, onSnapshot, onClear, onYaml, yamlActive }) {
   if (!job) {
     return (
       <div style={{ flex: 1, display: "flex", alignItems: "center", gap: 12 }}>
@@ -210,11 +210,14 @@ function JobBar({ job, mode, jobState, onPlay, onPause, onStop, onRestart, onSna
         {/* Actions — always pinned to the right of row 1 */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, flex: "0 0 auto" }}>
           {mode === "active" && (
-            <JobControls state={jobState} onPlay={onPlay} onPause={onPause} onStop={onStop} onRestart={onRestart} onSnapshot={onSnapshot} />
+            <>
+              <Button variant={yamlActive ? "secondary" : "ghost"} size="sm" icon="file" onClick={onYaml}>YAML</Button>
+              <JobControls state={jobState} onPlay={onPlay} onPause={onPause} onStop={onStop} onRestart={onRestart} onSnapshot={onSnapshot} />
+            </>
           )}
           {mode === "history" && (
             <>
-              <Button variant="ghost" size="sm" icon="file">YAML</Button>
+              <Button variant={yamlActive ? "secondary" : "ghost"} size="sm" icon="file" onClick={onYaml}>YAML</Button>
               <Button variant="secondary" size="sm" icon="refresh">rerun</Button>
             </>
           )}
@@ -283,7 +286,7 @@ function HistoryListBar({ count }) {
 function TopBar({
   mode, workflow, job, jobState,
   onPlay, onPause, onStop, onRestart, onSnapshot, onClearJob,
-  historyCount,
+  historyCount, onYaml, yamlActive,
 }) {
   // The job header needs two rows to fit identity + stats + actions at any
   // width. Build/list headers only need one — but keep min-height consistent
@@ -301,12 +304,12 @@ function TopBar({
       position: "relative",
       zIndex: 30,
     }}>
-      {mode === "build" && <BuildBar workflow={workflow} />}
+      {mode === "build" && <BuildBar workflow={workflow} onYaml={onYaml} yamlActive={yamlActive} />}
       {mode === "active" && (
         <JobBar
           job={job} mode="active" jobState={jobState}
           onPlay={onPlay} onPause={onPause} onStop={onStop} onRestart={onRestart} onSnapshot={onSnapshot}
-          onClear={onClearJob}
+          onClear={onClearJob} onYaml={onYaml} yamlActive={yamlActive}
         />
       )}
       {mode === "history" && !job && <HistoryListBar count={historyCount} />}
@@ -314,7 +317,7 @@ function TopBar({
         <JobBar
           job={job} mode="history" jobState={jobState}
           onPlay={onPlay} onPause={onPause} onStop={onStop} onRestart={onRestart} onSnapshot={onSnapshot}
-          onClear={onClearJob}
+          onClear={onClearJob} onYaml={onYaml} yamlActive={yamlActive}
         />
       )}
     </header>

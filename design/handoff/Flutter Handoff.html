@@ -93,7 +93,7 @@
   <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
   <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
-  <!-- The handoff loads the entire live-app component tree so visuals match exactly. -->
+  <!-- Live app component tree — these files render the exact same visuals as the running app. -->
   <script type="text/babel" src="src/Common.jsx"></script>
   <script type="text/babel" src="src/data.js"></script>
   <script type="text/babel" src="src/Rail.jsx"></script>
@@ -106,7 +106,7 @@
   <script type="text/babel" src="src/Filmstrip.jsx"></script>
   <script type="text/babel" src="src/RunsView.jsx"></script>
 
-  <!-- Handoff-specific shell and sections -->
+  <!-- Handoff-specific shell and sections — all under src/ so the archive is self-contained. -->
   <script type="text/babel" src="src/handoff-shell.jsx"></script>
   <script type="text/babel" src="src/handoff-tokens-section.jsx"></script>
   <script type="text/babel" src="src/handoff-components-section.jsx"></script>

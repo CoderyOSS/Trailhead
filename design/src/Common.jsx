@@ -74,6 +74,11 @@ const ICONS = {
   moreVertical: 'circle:12,5,1.3|circle:12,12,1.3|circle:12,19,1.3',
   // remove + collapse — parent wired straight through to child
   collapseLink: 'circle:3.2,12,2.2|circle:20.8,12,2.2|line:5.4,12,18.6,12',
+  // file / external-file / save-to-file — subworkflow file linkage
+  file:     'path:M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z|polyline:14,2,14,8,20,8',
+  fileOpen: 'path:M15 3h6v6|line:10,14,21,3|path:M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
+  save:     'path:M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z|polyline:17,21,17,13,7,13,7,21|polyline:7,3,7,8,15,8',
+  lock:     'rect:3,11,18,11,2,2|path:M7 11V7a5 5 0 0 1 10 0v4',
 };
 
 function Icon({ name, size = 16, color = "currentColor", strokeWidth = 1.5, style }) {

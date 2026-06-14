@@ -1,7 +1,7 @@
 /* global React, Card, Stage, StatesGrid, TokensList, StageSplit, SubBlock, H3, AnatomyLegend,
    Button, IconButton, Icon, StatusDot, StatusTag, Tag, Eyebrow,
-   ModeRail, WorkflowsSidebar, JobsSidebar, TopBar, StageDrawer, Filmstrip, RunsView,
-   Canvas, WorkerNode, RoutingNode, BuilderTips, OperatorPicker,
+   ModeRail, WorkflowsSidebar, JobsSidebar, TopBar, StageDrawer, YamlDrawer, Filmstrip, RunsView,
+   Canvas, WorkerNode, BuilderTips, OperatorPicker,
    WORKFLOW, JOB, JOBS_LOG, SNAPSHOTS, STAGE_EXECUTIONS */
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -456,7 +456,7 @@ function SidebarsCard() {
   return (
     <Card
       title="Sidebars"
-      description="Two sidebar variants — Workflows (Build mode) and Jobs (Active + History modes). Jobs sidebar has a grouped/flat toggle. Both share the same header structure: title, subtitle, optional secondary controls."
+      description="Two sidebar variants — Workflows (Build mode) and Jobs (Active + History modes). The Jobs sidebar is shared across both modes: Active shows live jobs (running/paused/queued/retrying) with a live badge in the footer; History shows completed jobs (passed/failed/cancelled) with a filter button and 'no search yet' footer. Both support grouped/flat view toggle. Note: in History the sidebar is hidden until a run is selected — with no selection the runs table fills the width on its own, so the sidebar acts purely as a job-to-job navigator once you drill in."
       dartImport="lib/widgets/sidebars/{workflows,jobs}_sidebar.dart"
     >
       <SubBlock label="workflows sidebar · Build mode · 240px">
@@ -492,26 +492,64 @@ function SidebarsCard() {
           )}
           right={(
             <AnatomyLegend items={[
-              { label: "title block", desc: "Active jobs · subtitle counts" },
+              { label: "title block", desc: "Active jobs · subtitle 'N running · paused · queued'" },
               { label: "view toggle", desc: "grouped (workflow → jobs) ↔ flat (jobs + workflow tag)" },
-              { label: "group header", desc: "workflow name · chevron · count" },
-              { label: "job row · grouped", desc: "status dot · input string · timestamp" },
-              { label: "footer", desc: "showing N · live badge on Active · 'no search yet' on History" },
+              { label: "group header", desc: "workflow name · chevron · count · collapses on click" },
+              { label: "job row · grouped", desc: "status dot · input string · run id suffix · timestamp · accent left rail when selected" },
+              { label: "footer · Active", desc: "'showing N' on left · pulsing live badge on right" },
             ]} />
           )}
         />
       </SubBlock>
 
-      <SubBlock label="jobs sidebar · flat view (workflow appears as a tag chip on each row)" last>
+      <SubBlock label="jobs sidebar · History mode · 260px · grouped view">
+        <StageSplit
+          leftFlex={1.2}
+          left={(
+            <Constrained width={260} height={460}>
+              <JobsSidebar
+                kind="history" jobs={JOBS_LOG}
+                viewMode="grouped" onViewMode={() => {}}
+                activeId="r_8f29442" onPick={() => {}}
+              />
+            </Constrained>
+          )}
+          right={(
+            <AnatomyLegend items={[
+              { label: "title block", desc: "History · subtitle 'N completed · last 24h'" },
+              { label: "filter button", desc: "gear icon + 'filter' label · 1px border-1 · sits beside the view toggle · no search implemented yet" },
+              { label: "group header", desc: "workflow name · count · same structure as Active" },
+              { label: "job row", desc: "passed/failed/cancelled status dot · input string · run id suffix · timestamp" },
+              { label: "footer · History", desc: "'showing N' on left · 'no search yet' on right (no live badge)" },
+            ]} />
+          )}
+        />
+      </SubBlock>
+
+      <SubBlock label="jobs sidebar · History mode · flat view · workflow shown as tag chip per row">
         <Stage padding={18} height={300}>
           <Constrained width={260} height={260}>
             <JobsSidebar
-              kind="active" jobs={JOBS_LOG}
+              kind="history" jobs={JOBS_LOG}
               viewMode="flat" onViewMode={() => {}}
-              activeId="r_8f2a91c" onPick={() => {}}
+              activeId="r_8f29442" onPick={() => {}}
             />
           </Constrained>
         </Stage>
+      </SubBlock>
+
+      <SubBlock label="tokens" last>
+        <TokensList tokens={[
+          { name: "width",          value: "CompSidebar.workflowWidth · 240 · jobsWidth · 260" },
+          { name: "header.font",    value: "AppType.display · 15px · weight 600 for title" },
+          { name: "subtitle.font",  value: "AppType.mono · 10.5px · palette.textSubtle" },
+          { name: "viewToggle.bg",  value: "palette.bg3 + 1px border1 · active item: palette.bg4" },
+          { name: "filterBtn.bg",   value: "transparent · 1px palette.border1 · radius 5 · History only" },
+          { name: "groupHeader",    value: "AppType.mono · 11px · weight 600 · chevron 9px" },
+          { name: "row.active.bg",  value: "palette.bg3 · 2px accent left rail at absolute left" },
+          { name: "footer.font",    value: "AppType.mono · 10px · palette.textSubtle" },
+          { name: "footer.live",    value: "StatusDot running + pulse · Active mode only" },
+        ]} />
       </SubBlock>
     </Card>
   );
@@ -647,6 +685,66 @@ const listStyle = {
 };
 
 // ════════════════════════════════════════════════════════════════════════
+//  YAML drawer (read-only spec viewer)
+// ════════════════════════════════════════════════════════════════════════
+
+function YamlDrawerCard() {
+  return (
+    <Card
+      title="YAML drawer"
+      description="The alternative right slide-over. Where the Stage drawer inspects one stage, this shows the whole spec compiled to YAML — read-only, because the visual builder is the source of truth. Opened from the YAML button in the top bar. In Build mode it shows the workflow draft; in Active/History it shows the exact spec a run executed, prefixed with a run-metadata comment block. Shares the drawer slot with the Stage drawer and takes precedence when open; selecting a stage swaps back."
+      dartImport="lib/widgets/yaml_drawer/yaml_drawer.dart"
+    >
+      <SubBlock label="Build mode · workflow draft spec">
+        <Stage padding={0} height={580}>
+          <Constrained width={460} height={580} allowScroll>
+            <YamlDrawer workflow={WORKFLOW} view="workflow" onClose={() => {}} interactive={false} />
+          </Constrained>
+        </Stage>
+      </SubBlock>
+
+      <SubBlock label="Active / History · resolved run spec · run-metadata preface">
+        <Stage padding={0} height={580}>
+          <Constrained width={460} height={580} allowScroll>
+            <YamlDrawer workflow={WORKFLOW} job={{ ...JOB, status: "running", workflowVersion: 14 }} view="job" onClose={() => {}} interactive={false} />
+          </Constrained>
+        </Stage>
+
+        <div style={{ height: 18 }} />
+        <H3>tokens</H3>
+        <TokensList tokens={[
+          { name: "width",          value: "CompDrawer.width · 460 (shared with stage drawer)" },
+          { name: "header.height",  value: "CompDrawer.headerHeight · 56 + 38 toolbar row" },
+          { name: "footer.height",  value: "CompDrawer.footerHeight · ~32 · lock + contract note" },
+          { name: "bg",             value: "palette.appShell · 1px left border · shadow-3 to the left" },
+          { name: "code.font",      value: "AppType.mono · 12.5px · line-height 1.65" },
+          { name: "line numbers",   value: "palette.textSubtle · 0.55 opacity · tabular · right-aligned" },
+          { name: "syntax.key",     value: "syn.function (accent-ish)" },
+          { name: "syntax.type",    value: "syn.type · int/string/bool/object/array/enum" },
+          { name: "syntax.number",  value: "syn.number" },
+          { name: "syntax.keyword", value: "syn.keyword · true/false/null · block-scalar |" },
+          { name: "syntax.string",  value: "syn.string · quoted values" },
+          { name: "syntax.comment", value: "syn.comment · italic · # lines + trailing comments" },
+          { name: "find.highlight", value: "accent 14% row wash on matching lines" },
+        ]} />
+      </SubBlock>
+
+      <SubBlock label="behavior" last>
+        <ul style={listStyle}>
+          <li>Opens with the same 240ms slide-in as the Stage drawer; occupies the same right slot.</li>
+          <li>Strictly read-only — no editing. The canvas compiles the YAML, so the source of truth is the stage graph, never this text.</li>
+          <li>Header: filename (<code>{"<workflow>.yaml"}</code> or <code>{"<run>.resolved.yaml"}</code>), a read-only lock pill, and line-count · byte-size · provenance.</li>
+          <li>Toolbar: copy (full spec to clipboard, confirms with a check), download (<code>.yaml</code> file), and a find toggle (⌘F) that washes matching lines.</li>
+          <li>Job view prepends a <code>#</code> comment block: run id, workflow version, input, status — then the pinned spec.</li>
+          <li>Footer restates the contract: "the canvas compiles this — edit stages to change it" (build) / "rerun to change it" (job).</li>
+          <li>Mutually exclusive with the Stage drawer: opening YAML hides a selected stage's editor; selecting a stage closes YAML.</li>
+        </ul>
+      </SubBlock>
+    </Card>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
 //  Snapshot filmstrip card
 // ════════════════════════════════════════════════════════════════════════
 
@@ -706,15 +804,20 @@ function SingleSnap({ id }) {
 // ════════════════════════════════════════════════════════════════════════
 
 function RunsTableCard() {
+  const [view, setView] = React.useState("grouped");
   return (
     <Card
       title="Runs table (History)"
-      description="Sortable table of past jobs. Mode badge in the header, status filter pills, then a 9-column table: status dot, run id, input, status tag, started, duration, tokens, cost, by. No search yet — sort by clicking column headers."
+      description="The default History surface — shown full-width with NO jobs sidebar when nothing is selected (the sidebar only appears once you drill into a run, as a job-to-job navigator). Mode badge in the header, status filter pills, a grouped/flat view toggle (same control as the jobs sidebar), then a 9-column table: status dot, run id, input, status tag, started, duration, tokens, cost, by. Grouped inserts a workflow header row before each group; flat is a plain list. No search yet."
       dartImport="lib/widgets/runs_table.dart"
       fullBleed
     >
       <Constrained width="100%" height={500} allowScroll>
-        <RunsView jobs={JOBS_LOG.filter(j => ["passed","failed","cancelled"].includes(j.status))} onPick={() => {}} activeId={null} />
+        <RunsView
+          jobs={JOBS_LOG.filter(j => ["passed","failed","cancelled"].includes(j.status))}
+          onPick={() => {}} activeId={null}
+          viewMode={view} onViewMode={setView}
+        />
       </Constrained>
       <div style={{ padding: 18 }}>
         <H3>tokens</H3>
@@ -723,6 +826,8 @@ function RunsTableCard() {
           { name: "header.font",  value: "AppType.mono · 10px · UPPERCASE · letterSpacing 0.06em" },
           { name: "header.color", value: "palette.textSubtle" },
           { name: "body.font",    value: "AppType.sans 12.5px · ids in mono" },
+          { name: "view toggle",  value: "grouped ↔ flat · shared ViewToggle · sits after the filter pills, divider before" },
+          { name: "group header", value: "colSpan 9 · bg-1 · workflow name · dot · count · grouped mode only" },
           { name: "row.hover",    value: "palette.surface" },
           { name: "row.active",   value: "palette.surface (sticky)" },
           { name: "filter pill",  value: "border-1 / surfaceRaised when active · counts in subtle text" },
@@ -744,24 +849,465 @@ const DEMO_WORKER = {
   skills: ["git.diff", "code.review.semantic", "sec.semgrep"],
 };
 
-function WNodeWrap({ stage, status, selected, density }) {
-  const compact = density === "compact";
-  const w = compact ? 168 : 192;
-  const h = compact ? 60  : 80;
+// A dot-grid background anchored so a grid dot lands exactly on (ax, ay) in the
+// element's own coordinate space — used to show the node sitting on the canvas
+// grid no matter how the scene is centered.
+function dotField(ax, ay, size = 32) {
+  return {
+    backgroundImage: "radial-gradient(circle, var(--co-border-1) 1px, transparent 1.5px)",
+    backgroundSize: `${size}px ${size}px`,
+    backgroundPosition: `${ax - size / 2}px ${ay - size / 2}px`,
+  };
+}
+
+function WNodeWrap({ stage, status, selected, density, grid }) {
+  // 160×64 footprint = 5×2 grid cells. The worker body is one grid gap tall and
+  // centered on the mid row, so its center line + both ends sit on grid dots.
   return (
-    <div style={{ position: "relative", width: w, height: h, flexShrink: 0 }}>
+    <div style={{ position: "relative", width: 160, height: 64, flexShrink: 0,
+      ...(grid ? dotField(0, 32) : null) }}>
       <WorkerNode stage={stage} status={status || null} info={{ x: 0, y: 0 }}
         selected={!!selected} density={density || "default"} onClick={() => {}} />
     </div>
   );
 }
 
-function RNodeWrap({ stage, selected }) {
+function MiniNode({ x, y, w, h = 24, label }) {
   return (
-    <div style={{ position: "relative", width: 192, height: 80, flexShrink: 0 }}>
-      <RoutingNode stage={stage} status={null} info={{ x: 0, y: 0 }}
-        selected={!!selected} density="default" onClick={() => {}} />
+    <g>
+      <rect x={x} y={y} width={w} height={h} rx={7}
+        fill="var(--co-bg-2)" stroke="var(--co-border-2)" strokeWidth={1} />
+      <text x={x + w / 2} y={y + h / 2 + 3.5} textAnchor="middle"
+        style={{ fontFamily: "var(--co-font-mono)", fontSize: 9, fontWeight: 600, fill: "var(--co-text-strong)" }}>
+        {label}
+      </text>
+    </g>
+  );
+}
+
+function MiniOpNode({ cx, cy, kind }) {
+  const size = 24; // same height as the worker MiniNode body (h=24)
+  const icon = kind === "join" ? "merge" : "forEach";
+  return (
+    <g>
+      <rect x={cx - size / 2} y={cy - size / 2} width={size} height={size} rx={7}
+        fill="var(--co-bg-3)" stroke="var(--co-border-3)" strokeWidth={1} />
+      <g transform={`translate(${cx - 9}, ${cy - 9})`}>
+        <Icon name={icon} size={18} color="var(--co-text-strong)" strokeWidth={1.8} />
+      </g>
+    </g>
+  );
+}
+
+function ModifierDotPreview({ kind }) {
+  const isForEach = kind === "forEach";
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 8 }}>
+      {isForEach ? (
+        <svg width={320} height={48} style={{ overflow: "visible" }}>
+          <defs>
+            <marker id="opArrowFe" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--co-fg-3)" />
+            </marker>
+          </defs>
+          <MiniNode x={4} y={12} w={88} label="full-review" />
+          <line x1={92} y1={24} x2={123} y2={24} stroke="var(--co-fg-3)" strokeWidth={1.5} markerEnd="url(#opArrowFe)" />
+          <MiniOpNode cx={140} cy={24} kind="map" />
+          <line x1={157} y1={24} x2={214} y2={24} stroke="var(--co-fg-3)" strokeWidth={1.5} markerEnd="url(#opArrowFe)" />
+          <MiniNode x={218} y={12} w={96} label="comment-file" />
+        </svg>
+      ) : (
+        <svg width={320} height={96} style={{ overflow: "visible" }}>
+          <defs>
+            <marker id="opArrowJn" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--co-fg-3)" />
+            </marker>
+          </defs>
+          <MiniNode x={4} y={2}  w={92} label="quick-review" />
+          <MiniNode x={4} y={33} w={92} label="security-scan" />
+          <MiniNode x={4} y={64} w={92} label="comment-file" />
+          <line x1={96} y1={14} x2={158} y2={45} stroke="var(--co-fg-3)" strokeWidth={1.5} />
+          <line x1={96} y1={45} x2={158} y2={45} stroke="var(--co-fg-3)" strokeWidth={1.5} />
+          <line x1={96} y1={76} x2={158} y2={45} stroke="var(--co-fg-3)" strokeWidth={1.5} />
+          <MiniOpNode cx={172} cy={45} kind="join" />
+          <line x1={189} y1={45} x2={232} y2={45} stroke="var(--co-fg-3)" strokeWidth={1.5} markerEnd="url(#opArrowJn)" />
+          <MiniNode x={236} y={33} w={72} label="critic" />
+        </svg>
+      )}
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)" }}>
+          {isForEach ? "for-each node" : "join node"}
+        </div>
+        <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", marginTop: 2 }}>
+          {isForEach ? "fans the source's output over a list" : "waits for N upstreams to converge"}
+        </div>
+      </div>
     </div>
+  );
+}
+
+function FanContainerPreview({ open }) {
+  const stage = {
+    kind: "fan", label: "comment-files", over: "ingest.files",
+    count: 7, concurrency: 8, joinMode: "all",
+    body: { label: "comment-file", model: "haiku-4.5", skills: ["code.review.inline"] },
+  };
+  return (
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+      <div style={{ position: "relative", width: 184, height: 172 }}>
+        <FanNode stage={stage} status={null} info={{ x: 12, y: 54 }} selected={false} view="builder" defaultOpen={open} onClick={() => {}} />
+      </div>
+      <div style={{ textAlign: "center" }}>
+        <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)" }}>
+          {open ? "expanded" : "collapsed"}
+        </div>
+        <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", marginTop: 2 }}>
+          {open ? "reveals the per-item body" : "one node · ×7 over the list"}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  Fan container — the expanded form is a modal workflow editor
+//  Collapsed it is a single capsule node; expanding opens a centered modal
+//  that hosts an editable internal-workflow canvas + a save / cancel /
+//  undo-redo / settings toolbar.
+// ════════════════════════════════════════════════════════════════════════
+
+const FAN_EDITOR_STAGE = {
+  kind: "fan", label: "comment-files", over: "ingest.files",
+  count: 7, concurrency: 8, joinMode: "all", timeout: 600,
+  body: { label: "comment-file", model: "haiku-4.5", skills: ["code.review.inline"] },
+};
+
+// The per-item body is a real worker node — identical component + geometry to
+// the worker states above (160×32, 1 grid gap tall).
+const FAN_BODY_STAGE = { id: "fan_body", kind: "worker", label: "comment-file" };
+
+// File path the linked-file variant points at.
+const FAN_FILE_REF = { path: "flows/comment-file.flow.yaml" };
+
+const fanEditorChip = {
+  display: "inline-flex", alignItems: "center", height: 19, padding: "0 7px",
+  borderRadius: 999, fontFamily: "var(--co-font-mono)", fontSize: 10, fontWeight: 600,
+  whiteSpace: "nowrap", letterSpacing: "0.01em",
+};
+
+// Square chrome button used in the modal toolbar (undo / redo / settings / close).
+function FanToolBtn({ children, title, onClick, disabled, active }) {
+  const [hov, setHov] = React.useState(false);
+  return (
+    <button type="button" title={title} onClick={onClick} disabled={disabled}
+      onMouseEnter={() => setHov(true)} onMouseLeave={() => setHov(false)}
+      style={{
+        width: 30, height: 30, display: "inline-flex", alignItems: "center", justifyContent: "center",
+        borderRadius: 8, padding: 0,
+        background: active ? "var(--co-bg-4)" : (hov && !disabled) ? "var(--co-bg-3)" : "transparent",
+        color: disabled ? "var(--co-text-disabled)" : active ? "var(--co-accent)" : "var(--co-text-muted)",
+        border: "1px solid " + (active ? "color-mix(in oklab, var(--co-accent) 40%, transparent)" : "transparent"),
+        cursor: disabled ? "not-allowed" : "pointer",
+        transition: "background 140ms var(--co-ease-out), color 140ms, border-color 140ms",
+      }}>{children}</button>
+  );
+}
+
+const UndoSvg = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M9 14 4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+  </svg>
+);
+const RedoSvg = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+    <path d="m15 14 5-5-5-5" /><path d="M20 9H9.5a5.5 5.5 0 0 0 0 11H13" />
+  </svg>
+);
+
+// One endpoint of the internal lane (fan-out source / fan-in sink).
+function LaneEndpoint({ icon, label, sub }) {
+  return (
+    <div style={{ position: "relative", width: 36, flex: "0 0 auto" }}>
+      <div style={{
+        width: 36, height: 36, borderRadius: 10, display: "flex", alignItems: "center", justifyContent: "center",
+        background: "var(--co-bg-3)", border: "1px solid var(--co-accent)", color: "var(--co-accent)",
+        boxShadow: "var(--co-shadow-1)",
+      }}>
+        <Icon name={icon} size={18} />
+      </div>
+      <div style={{ position: "absolute", top: "calc(100% + 7px)", left: "50%", transform: "translateX(-50%)", textAlign: "center", whiteSpace: "nowrap" }}>
+        <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>{label}</div>
+        <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 10, color: "var(--co-text-muted)", marginTop: 1 }}>{sub}</div>
+      </div>
+    </div>
+  );
+}
+
+// The connector edge between lane items.
+function LaneEdge() {
+  return (
+    <div style={{ flex: 1, minWidth: 26, height: 2, position: "relative", borderRadius: 2,
+      background: "color-mix(in oklab, var(--co-accent) 50%, transparent)" }}>
+      <span style={{ position: "absolute", left: -1, top: "50%", transform: "translateY(-50%)", width: 5, height: 5, borderRadius: 999, background: "var(--co-accent)" }} />
+      <span style={{ position: "absolute", right: -7, top: "50%", transform: "translateY(-50%)", display: "flex", color: "var(--co-accent)" }}>
+        <Icon name="chevRight" size={13} strokeWidth={2.4} />
+      </span>
+    </div>
+  );
+}
+
+// The per-item body — the real worker node (160×32, 1 grid gap tall), so the
+// body reads identically to every other worker node in the spec.
+function EditorBodyNode() {
+  return (
+    <div style={{ position: "relative", width: 160, height: 64, flexShrink: 0 }}>
+      <WorkerNode stage={FAN_BODY_STAGE} status={null} info={{ x: 0, y: 0 }} selected={false} density="default" onClick={() => {}} />
+    </div>
+  );
+}
+
+function FanSettingsField({ label, value }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+      <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>{label}</span>
+      <div style={{ display: "flex", alignItems: "center", height: 30, padding: "0 10px", borderRadius: 8, background: "var(--co-bg-0)", border: "1px solid var(--co-border-2)",
+        fontFamily: "var(--co-font-mono)", fontSize: 12, color: "var(--co-text-strong)" }}>{value}</div>
+    </div>
+  );
+}
+
+// The editor region: an internal-workflow canvas (hearth + dot grid) hosting
+// the fan-out → body → fan-in lane, a zoom indicator, and an optional
+// settings panel that slides in from the right.
+function FanEditorRegion({ settingsOpen }) {
+  return (
+    <div style={{ display: "flex", minHeight: 256, borderTop: "1px solid var(--co-border-1)", borderBottom: "1px solid var(--co-border-1)" }}>
+      <div style={{
+        position: "relative", flex: 1, overflow: "hidden",
+        background: "var(--co-grad-hearth)",
+        backgroundColor: "var(--co-bg-0)",
+        backgroundImage: "radial-gradient(circle, var(--co-border-1) 1px, transparent 1px)",
+        backgroundSize: "32px 32px",
+        backgroundPosition: "center",
+      }}>
+        <span style={{ position: "absolute", top: 10, left: 12, fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>internal workflow</span>
+
+        <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "0 26px", height: "100%" }}>
+          <LaneEndpoint icon="forEach" label="fan-out" sub="ingest.files" />
+          <LaneEdge />
+          <EditorBodyNode />
+          <LaneEdge />
+          <LaneEndpoint icon="merge" label="fan-in" sub="→ results" />
+        </div>
+
+        {/* editor floating toolbar */}
+        <div style={{ position: "absolute", left: "50%", bottom: 12, transform: "translateX(-50%)",
+          display: "flex", alignItems: "center", gap: 4, padding: 4, borderRadius: 10,
+          background: "color-mix(in oklab, var(--co-bg-1) 88%, transparent)", border: "1px solid var(--co-border-2)",
+          backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)", boxShadow: "var(--co-shadow-2)" }}>
+          <span style={{ display: "inline-flex", alignItems: "center", height: 26, padding: "0 8px", fontFamily: "var(--co-font-mono)", fontSize: 11, color: "var(--co-text-subtle)" }}>100%</span>
+        </div>
+      </div>
+
+      {settingsOpen && (
+        <div style={{ width: 224, flex: "0 0 auto", borderLeft: "1px solid var(--co-border-1)", background: "var(--co-bg-1)", padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <Icon name="settings" size={14} color="var(--co-accent)" />
+            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-muted)", fontWeight: 600 }}>fan settings</span>
+          </div>
+          <FanSettingsField label="concurrency" value="8 parallel" />
+          <FanSettingsField label="join mode" value="all" />
+          <FanSettingsField label="per-item timeout" value="600s" />
+          <FanSettingsField label="on item error" value="continue" />
+        </div>
+      )}
+    </div>
+  );
+}
+
+// File-linkage bar — the subworkflow can live in an external file or be a
+// local-only graph. Linked → shows the path + an "open file" button;
+// local-only → shows a "save to file" option.
+function FanFileBar({ fileRef }) {
+  const linked = !!fileRef;
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "0 14px", height: 42,
+      borderTop: "1px solid var(--co-border-1)",
+      background: linked ? "color-mix(in oklab, var(--co-accent) 7%, var(--co-bg-2))" : "var(--co-bg-2)" }}>
+      <Icon name="file" size={15} color={linked ? "var(--co-accent)" : "var(--co-text-subtle)"} />
+      {linked ? (
+        <>
+          <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 11.5, color: "var(--co-text-strong)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fileRef.path}</span>
+          <span style={{ ...fanEditorChip, height: 16, fontSize: 8.5, letterSpacing: "0.06em", textTransform: "uppercase",
+            background: "color-mix(in oklab, var(--co-accent) 14%, transparent)", color: "var(--co-accent)", border: "1px solid color-mix(in oklab, var(--co-accent) 32%, transparent)" }}>linked file</span>
+        </>
+      ) : (
+        <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 11.5, color: "var(--co-text-muted)", whiteSpace: "nowrap" }}>
+          local subworkflow&nbsp;·&nbsp;<span style={{ color: "var(--co-text-subtle)" }}>not saved to a file</span>
+        </span>
+      )}
+      <span style={{ flex: 1 }} />
+      {linked
+        ? <Button size="sm" variant="secondary" icon="fileOpen">open file</Button>
+        : <Button size="sm" variant="secondary" icon="save">save to file</Button>}
+    </div>
+  );
+}
+
+// The modal panel itself — toolbar header, file bar, editor region, action footer.
+function FanEditorPanel({ onClose, fileRef }) {
+  const [hist, setHist] = React.useState(2);   // 0..2 — start at latest edit
+  const [dirty, setDirty] = React.useState(false);
+  const [settingsOpen, setSettingsOpen] = React.useState(false);
+  const canUndo = hist > 0, canRedo = hist < 2;
+  const onCancel = () => { if (onClose) onClose(); };
+  return (
+    <div style={{
+      width: "100%", background: "var(--co-bg-1)",
+      border: "1px solid var(--co-border-2)", borderRadius: 18,
+      boxShadow: "0 24px 64px rgba(0,0,0,0.55), inset 0 1px 0 color-mix(in oklab, var(--co-parchment) 14%, transparent)",
+      overflow: "hidden", display: "flex", flexDirection: "column",
+    }}>
+      {/* toolbar header */}
+      <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "13px 14px", height: 60 }}>
+        <div style={{ width: 32, height: 32, borderRadius: 9, flex: "0 0 auto", display: "flex", alignItems: "center", justifyContent: "center", background: "var(--co-grad-crust)", boxShadow: "0 3px 10px color-mix(in oklab, var(--co-accent) 32%, transparent)" }}>
+          <Icon name="forEach" size={17} color="var(--co-accent-ink)" />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
+            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 14, fontWeight: 700, color: "var(--co-text-strong)", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>comment-files</span>
+            <span style={{ ...fanEditorChip, height: 17, background: "color-mix(in oklab, var(--co-accent) 15%, transparent)", color: "var(--co-accent)", border: "1px solid color-mix(in oklab, var(--co-accent) 32%, transparent)" }}>×7</span>
+          </div>
+          <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-text-subtle)", marginTop: 2, whiteSpace: "nowrap" }}>fan-out / fan-in · capsule reactor</div>
+        </div>
+        <span style={{ flex: 1 }} />
+        <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
+          <FanToolBtn title="undo" disabled={!canUndo} onClick={() => { setHist(h => Math.max(0, h - 1)); setDirty(true); }}><UndoSvg /></FanToolBtn>
+          <FanToolBtn title="redo" disabled={!canRedo} onClick={() => { setHist(h => Math.min(2, h + 1)); setDirty(true); }}><RedoSvg /></FanToolBtn>
+          <span style={{ width: 1, height: 18, background: "var(--co-border-2)", margin: "0 5px" }} />
+          <FanToolBtn title="settings" active={settingsOpen} onClick={() => setSettingsOpen(o => !o)}><Icon name="settings" size={16} /></FanToolBtn>
+          <FanToolBtn title="close" onClick={onCancel}><Icon name="x" size={16} /></FanToolBtn>
+        </div>
+      </div>
+
+      <FanFileBar fileRef={fileRef} />
+
+      <FanEditorRegion settingsOpen={settingsOpen} />
+
+      {/* action footer */}
+      <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", height: 58 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flexWrap: "wrap" }}>
+          <span style={{ ...fanEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>over ingest.files</span>
+          <span style={{ ...fanEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>8 parallel</span>
+          <span style={{ ...fanEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>join · all</span>
+          {dirty && (
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-warning)" }}>
+              <span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--co-warning)" }} /> edited
+            </span>
+          )}
+        </div>
+        <span style={{ flex: 1 }} />
+        <Button variant="ghost" onClick={onCancel}>cancel</Button>
+        <Button variant="primary" icon="check" onClick={() => setDirty(false)}>save changes</Button>
+      </div>
+    </div>
+  );
+}
+
+// Collapsed capsule — the single canvas node, shown deselected. 160×64 =
+// exactly 2 grid gaps tall (the worker is 1 gap; the fan capsule is double),
+// sitting on the 32px grid. Toasted header: deselected it bakes down to a
+// muted cocoa-orange over a neutral shell; the full crust gradient + accent
+// outline appear only on selection (or while running). Connectors are the
+// standard worker affordances — arrow in at the left border, dot output
+// handle on the right. Its chevron opens the modal.
+function FanCollapsedTrigger({ onExpand }) {
+  return (
+    <div style={{ position: "relative", width: 224, height: 128, ...dotField(32, 64) }}>
+      <div style={{
+        position: "absolute", left: 32, top: 32, width: 160, height: 64, borderRadius: 13, overflow: "hidden",
+        background: "var(--co-bg-2)", border: "1px solid var(--co-border-2)",
+        boxShadow: "var(--co-shadow-1)",
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 6, padding: "0 9px", height: 26, background: "linear-gradient(135deg, color-mix(in oklab, var(--co-accent) 32%, var(--co-bg-4)) 0%, color-mix(in oklab, var(--co-accent) 18%, var(--co-bg-3)) 100%)" }}>
+          <Icon name="forEach" size={13} color="var(--co-accent-200)" />
+          <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, fontWeight: 700, color: "var(--co-accent-200)", letterSpacing: "0.02em" }}>map</span>
+          <span style={{ flex: 1 }} />
+          <span style={{ display: "inline-flex", alignItems: "center", height: 16, padding: "0 6px", borderRadius: 999, background: "rgba(0,0,0,0.22)", color: "var(--co-accent-200)", fontFamily: "var(--co-font-mono)", fontSize: 9.5, fontWeight: 700 }}>×7</span>
+          <button type="button" onClick={onExpand} title="expand to editor"
+            style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, border: "none", background: "transparent", color: "var(--co-accent-200)", cursor: "pointer", padding: 0 }}>
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="9,6 15,12 9,18" /></svg>
+          </button>
+        </div>
+        <div style={{ padding: "0 11px", height: 38, display: "flex", flexDirection: "column", justifyContent: "center", gap: 1 }}>
+          <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 13, fontWeight: 600, color: "var(--co-text-strong)" }}>comment-file</span>
+          <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)" }}>over ingest.files</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Full-screen overlay version (the live, interactive modal).
+function FanEditorOverlay({ onClose, fileRef }) {
+  React.useEffect(() => {
+    const h = (e) => { if (e.key === "Escape") onClose(); };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, [onClose]);
+  return (
+    <div onClick={onClose} style={{
+      position: "fixed", inset: 0, zIndex: 9000, display: "flex", alignItems: "center", justifyContent: "center", padding: 24,
+      background: "rgba(10,6,3,0.62)", backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+      animation: "co-slide-in 180ms var(--co-ease-out)",
+    }}>
+      <div onClick={(e) => e.stopPropagation()} style={{ width: 760, maxWidth: "94vw" }}>
+        <FanEditorPanel onClose={onClose} fileRef={fileRef} />
+      </div>
+    </div>
+  );
+}
+
+// A static specimen of the modal as it sits over the dimmed canvas.
+function FanModalSpecimen({ fileRef, label }) {
+  return (
+    <div style={{ position: "relative", marginTop: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--co-border-1)" }}>
+      <div style={{ position: "absolute", inset: 0, background: "var(--co-grad-hearth)", backgroundColor: "var(--co-bg-0)" }} />
+      <div style={{ position: "absolute", inset: 0, background: "rgba(8,5,3,0.5)" }} />
+      <div style={{ position: "relative", padding: "34px 22px 30px", display: "flex", justifyContent: "center" }}>
+        <div style={{ width: "100%", maxWidth: 740 }}>
+          <FanEditorPanel onClose={() => {}} fileRef={fileRef} />
+        </div>
+      </div>
+      <span style={{ position: "absolute", top: 10, left: 12, fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>{label}</span>
+    </div>
+  );
+}
+
+// The SubBlock body: collapsed trigger (opens the live overlay) + two static
+// specimens of the modal — one linked to an external file, one local-only.
+function FanContainerBlock() {
+  const [open, setOpen] = React.useState(false);
+  return (
+    <SubBlock label="fan container · expand → workflow editor modal">
+      <Stage padding={24} height={224} bg="var(--co-bg-0)">
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
+          <FanCollapsedTrigger onExpand={() => setOpen(true)} />
+          <div style={{ textAlign: "center" }}>
+            <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)" }}>collapsed · one node · 160×64 (2 grid gaps)</div>
+            <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", marginTop: 2 }}>deselected · toasted header · click the chevron to open the editor</div>
+          </div>
+        </div>
+      </Stage>
+      {open && <FanEditorOverlay onClose={() => setOpen(false)} fileRef={FAN_FILE_REF} />}
+
+      <FanModalSpecimen fileRef={FAN_FILE_REF} label="expanded · modal editor — linked to an external file" />
+      <FanModalSpecimen fileRef={null} label="expanded · modal editor — local-only subworkflow" />
+
+      <p style={{ margin: "12px 2px 0", fontSize: 11.5, lineHeight: 1.5, color: "var(--co-text-subtle)" }}>
+        The <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>fan container</strong> collapses to a single capsule node — <span style={{ fontFamily: "var(--co-font-mono)" }}>160×64</span>, exactly two grid gaps tall (the worker is one), sitting on the 32px grid with the standard worker connectors — arrow in at the left border, dot output handle on the right. Deselected it wears a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>toasted header</strong> (muted cocoa-orange) over a neutral shell; selection re-ignites the full crust gradient and adds the accent outline + halo, so accent chrome stays a selection-only signal. Expanding opens a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>centered modal</strong> over the dimmed canvas. Its <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>internal-workflow region</strong> hosts the fan-out source, the per-item body, and the fan-in sink; the body is the <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>same worker node</strong> used everywhere else (160×32). The contained subworkflow can live in its own file: a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>file bar</strong> shows the linked path with an <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>open file</strong> button, or — for a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>local-only</strong> graph — offers <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>save to file</strong>. The toolbar carries <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>undo / redo</strong> and <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>settings</strong> (concurrency, join mode, timeouts slide in from the right); the footer has <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>cancel</strong> and a primary <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>save changes</strong>. Edits are staged and only committed on save; cancel or <span style={{ fontFamily: "var(--co-font-mono)" }}>Esc</span> discards them.
+      </p>
+    </SubBlock>
   );
 }
 
@@ -769,48 +1315,36 @@ function GraphNodesCard() {
   return (
     <Card
       title="Graph nodes"
-      description="Two node shapes live on the canvas. Worker nodes are rounded rectangles — the primary stage type holding a prompt, skills, and config. Routing nodes are pill-shaped capsules for control-flow operators."
-      dartImport="lib/widgets/canvas/worker_node.dart · routing_node.dart"
+      description="Two node shapes live on the canvas. Worker nodes are compact rounded rectangles holding a prompt, skills, and config. The fan container is a toasted-header capsule that fans a list out over its body and fans every result back in — replacing the old for-each and join operators with a single node that collapses to one node and expands into a modal workflow editor. It wires in and out with the same arrow-input and dot-output connectors as a worker."
+      dartImport="lib/widgets/canvas/worker_node.dart · fan_node.dart"
     >
-      <SubBlock label="worker node · all states · 192×80px default">
+      <SubBlock label="worker node · all states · 160×32px (1 grid gap tall)">
         <StatesGrid columns={4} items={[
-          { label: "default",                 children: <WNodeWrap stage={DEMO_WORKER} /> },
-          { label: "selected",                children: <WNodeWrap stage={DEMO_WORKER} selected /> },
-          { label: "running · glow",          children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "running", progress: 0.55 }} /> },
-          { label: "compact · 168×60",        children: <WNodeWrap stage={DEMO_WORKER} density="compact" /> },
-          { label: "passed",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "passed" }} /> },
-          { label: "failed",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "failed" }} /> },
-          { label: "selected · passed",       children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "passed" }} selected /> },
-          { label: "selected · failed",       children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "failed" }} selected /> },
+          { label: "default",                 children: <WNodeWrap stage={DEMO_WORKER} grid /> },
+          { label: "selected",                children: <WNodeWrap stage={DEMO_WORKER} selected grid /> },
+          { label: "running · progress",      children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "running", progress: 0.55 }} grid /> },
+          { label: "running · spinner",       children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "running" }} grid /> },
+          { label: "queued",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "queued" }} grid /> },
+          { label: "passed",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "passed" }} grid /> },
+          { label: "failed",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "failed" }} grid /> },
+          { label: "selected · passed",       children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "passed" }} selected grid /> },
         ]} />
+        <p style={{ margin: "12px 2px 0", fontSize: 11.5, lineHeight: 1.5, color: "var(--co-text-subtle)" }}>
+          <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Compact + grid-locked.</strong> The worker body is a rounded rectangle one grid gap tall (32px), centered on a grid row — so its center line, both ends, and the output dot on its right edge all sit on grid dots. It shows only its title; run status lives in the solid pill straddling the top border (passed / failed / running / skipped), the colored 3px left rail, and (when determinate) a 2px progress strip. <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Running vs selected</strong> never read alike: selected is a static crisp accent ring; running is a breathing accent halo plus the running pill with a rotating ring spinner. A selected node also surfaces the output-handle dot, and a long-press / right-click opens its context menu. See <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Builder affordances</strong> below.
+        </p>
       </SubBlock>
 
-      <SubBlock label="routing operators · pill-shaped · 124×50px in a 192×80 footprint">
-        <Stage padding={20}>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: 16 }}>
-            {[
-              { kind: "switch", sub: "model.tier",  label: "switch" },
-              { kind: "branch", sub: "score ≥ 0.8", label: "branch" },
-              { kind: "map",    sub: "file list",   label: "map" },
-              { kind: "loop",   sub: "max 5 iters", label: "loop" },
-              { kind: "join",   sub: "wait all",    label: "join" },
-            ].map(s => <RNodeWrap key={s.kind} stage={{ id: s.kind, ...s }} />)}
-          </div>
-        </Stage>
-      </SubBlock>
+      <FanContainerBlock />
 
       <SubBlock label="anatomy · worker node">
         <StageSplit
           left={<WNodeWrap stage={DEMO_WORKER} status={{ status: "running", progress: 0.62 }} />}
           right={(
             <AnatomyLegend items={[
-              { label: "status rail",   desc: "3px left edge · colored by run status · full height" },
-              { label: "label",         desc: "mono 13px (compact 12px) · weight 600 · truncated" },
-              { label: "model badge",   desc: "mono 9px · bg4 · hidden in compact density" },
-              { label: "sub",           desc: "11.5px (compact 10.5px) · textSubtle · single line" },
-              { label: "skills row",    desc: "mono 9px chips · first 3 shown + overflow count · hidden compact" },
-              { label: "progress bar",  desc: "2px bottom strip · accent gradient · running only" },
-              { label: "status badge",  desc: "9px pill top-right · passed / failed / skipped only" },
+              { label: "status rail",   desc: "3px left edge · colored by run status · full height · follows the rounded-rect corners" },
+              { label: "status tag",    desc: "top-right · solid-fill pill straddling the top border · passed / failed / running / skipped · label centered on the border line" },
+              { label: "label",         desc: "mono 14px · weight 600 · centered · truncated with ellipsis" },
+              { label: "progress bar",  desc: "2px bottom strip · accent gradient · determinate running only" },
             ]} />
           )}
         />
@@ -818,17 +1352,31 @@ function GraphNodesCard() {
 
       <SubBlock label="tokens" last>
         <TokensList tokens={[
-          { name: "worker.size",       value: "192 × 80px · compact: 168 × 60px" },
-          { name: "routing.size",      value: "124 × 50px · footprint 192 × 80 (centered)" },
-          { name: "routing.shape",     value: "borderRadius: 999 (pill · capsule)" },
+          { name: "node.cell",         value: "64px tall layout cell · shared vertical center for all nodes" },
+          { name: "worker.size",       value: "160 × 32px body · rounded rectangle (1 grid gap tall, centered on the cell)" },
+          { name: "worker.shape",      value: "borderRadius: 10 · rounded rectangle" },
+          { name: "grid.lock",         value: "body center line + both ends + output dot all land on 32px grid dots" },
+          { name: "fan.size",          value: "160 × 64px collapsed · exactly 2 grid gaps tall (worker is 1) · sits on the 32px grid · no edge connectors" },
+          { name: "fan.header",        value: "26px · crustGradient · forEach icon + 'map' + count chip + expand chevron (opens modal)" },
+          { name: "fan.expand",        value: "chevron opens a centered modal editor — no longer grows the node in place" },
+          { name: "modal.panel",       value: "760px max · bg1 · 1px border2 · radius 18 · shadow 0 24 64 / 0.55 + 1px parchment inner highlight" },
+          { name: "modal.scrim",       value: "rgba(10,6,3,0.62) + 6px backdrop blur · co-slide-in 180ms entry · Esc / scrim-click = cancel" },
+          { name: "modal.toolbar",     value: "60px header · crustGradient icon tile + title + ×count chip · right: undo / redo · divider · settings · close (30px square btns)" },
+          { name: "modal.fileBar",     value: "42px · linked → file icon + path + 'linked file' chip + open-file btn (accent-tinted bg) · local-only → muted 'not saved to a file' + save-to-file btn" },
+          { name: "modal.editor",      value: "internal-workflow canvas · hearth + 32px dot grid · fan-out → body → fan-in lane · floating add-stage / 100% bar" },
+          { name: "modal.body",        value: "the per-item body is the same WorkerNode (160 × 32px) used in the worker states — identical component + geometry" },
+          { name: "modal.settings",    value: "224px right panel · slides in on settings toggle · concurrency / join mode / per-item timeout / on-error" },
+          { name: "modal.footer",      value: "58px · context chips (over <list> · N parallel · join · mode) + 'edited' dot · ghost cancel + primary save changes" },
+          { name: "label.padding",     value: "0 10px horizontal · text centered" },
           { name: "bg.default",        value: "palette.loafGradient" },
           { name: "bg.running",        value: "accent 12% mix into bg2 → bg2 at 70%" },
           { name: "border.default",    value: "1px palette.border2" },
           { name: "border.selected",   value: "1px accent · outer: 1px accent + 4px accent 22% + shadow-1" },
+          { name: "halo.running",      value: "breathing glow · co-node-running-glow 1.7s ease-in-out · NOT the static selected ring" },
+          { name: "statusTag",        value: "solid pill in top-right slot · h 16px · top -8 (centered on border) · mono 9px/600 · running adds a co-spin 0.8s ring · same solid treatment for passed / failed / skipped" },
           { name: "statusRail.width",  value: "3px · colorKeyed to run status" },
-          { name: "label.font",        value: "AppType.mono · 13px · weight 600" },
-          { name: "badge.font",        value: "AppType.mono · 9px · radius 999 · colorKeyed" },
-          { name: "progressBar",       value: "h 2px · bottom 3px · l/r 6px · palette.crustGradient" },
+          { name: "label.font",        value: "AppType.mono · 14px · weight 600" },
+          { name: "progressBar",       value: "h 2px · bottom 6px · l/r 12px · palette.crustGradient · determinate running only" },
         ]} />
       </SubBlock>
     </Card>
@@ -990,7 +1538,7 @@ function GraphCanvasCard() {
       <SubBlock label="tokens" last>
         <TokensList tokens={[
           { name: "bg",                value: "palette.hearthGradient (canvas fill)" },
-          { name: "dotGrid.size",      value: "24 × zoom px · radial gradient dots · border2 · opacity 0.35" },
+          { name: "dotGrid.size",      value: "32 × zoom px · half the node height · dots align to node tops & centers · border2 · opacity 0.35" },
           { name: "zoom.range",        value: "0.35× – 2.0× · default: auto-fit to node bounding box" },
           { name: "zoomControl.bg",    value: "palette.bg2 · 1px border1 · radius 8 · shadow-2 · bottom-left" },
           { name: "zoomControl.btn",   value: "22×22px · mono 13px · transparent bg · hover bg3" },
@@ -1010,11 +1558,8 @@ function GraphCanvasCard() {
 
 const PICKER_TYPES = [
   { kind: "worker", label: "worker",   icon: "zap",       desc: "skills · prompt · result" },
-  { kind: "switch", label: "switch",   icon: "gitBranch", desc: "n-way enum routing" },
-  { kind: "branch", label: "branch",   icon: "gitBranch", desc: "if / else" },
-  { kind: "map",    label: "for-each", icon: "refresh",   desc: "iterate a list, fan-out" },
-  { kind: "loop",   label: "loop",     icon: "refresh",   desc: "re-enter while condition" },
-  { kind: "join",   label: "join",     icon: "workflow",  desc: "wait for N upstreams" },
+  { kind: "branch", label: "branch",   icon: "gitBranch", desc: "conditional routing" },
+  { kind: "fan",    label: "fan",      icon: "forEach",   desc: "fan-out a list, fan-in results" },
 ];
 
 function OperatorPickerMock() {
@@ -1071,111 +1616,349 @@ function OperatorPickerMock() {
   );
 }
 
+// ── in-situ affordance scenes ───────────────────────────────────────────
+// Each affordance is shown positioned on a real node / edge exactly where it
+// renders in the live BuilderOverlay, so the "where" is unambiguous.
+
+const AFF_NODE_W = 160;
+const AFF_NODE_H = 64;
+
+const DEMO_WORKER2 = {
+  id: "demo_w2", kind: "worker",
+  label: "post_review",
+  sub: "summarize · comment",
+  model: "haiku",
+  skills: ["pr.summarize", "git.comment"],
+};
+
+// reusable affordance visuals (shared by every scene) ----------------------
+function HandleDot() {
+  return (
+    <div style={{
+      width: 12, height: 12, borderRadius: 999,
+      background: "var(--co-accent)",
+      border: "2px solid var(--co-bg-1)",
+      boxShadow: "0 0 0 1px var(--co-accent), 0 0 8px color-mix(in oklab, var(--co-accent) 50%, transparent)",
+      flexShrink: 0,
+    }} />
+  );
+}
+
+function EdgeInsertBtn() {
+  return (
+    <button type="button" style={{
+      width: 24, height: 24, padding: 0, borderRadius: 999,
+      background: "var(--co-accent)", border: "2px solid var(--co-bg-1)",
+      boxShadow: "0 0 0 1px var(--co-accent), 0 2px 8px rgba(0,0,0,0.4)",
+      color: "var(--co-accent-ink)", display: "flex", alignItems: "center", justifyContent: "center",
+      fontFamily: "var(--co-font-mono)", fontSize: 14, fontWeight: 700, cursor: "pointer", lineHeight: 1,
+    }}>+</button>
+  );
+}
+
+function EdgeDeleteBtn() {
+  return (
+    <button type="button" style={{
+      width: 20, height: 20, padding: 0, borderRadius: 999,
+      background: "var(--co-bg-1)", border: "1px solid var(--co-danger)",
+      color: "var(--co-danger)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
+    }}><Icon name="x" size={10} color="currentColor" /></button>
+  );
+}
+
+// Output handle — a SINGLE solid dot centered on the node's border. On an
+// iPad-first / touch UI a single target is more reliable than two adjacent
+// hit areas, so the one dot carries both gestures: tap = add downstream,
+// drag = wire a connection.
+function HandleOnBorder({ borderX, cy }) {
+  return (
+    <div style={{ position: "absolute", left: borderX, top: cy, transform: "translate(-50%, -50%)" }}>
+      <HandleDot />
+    </div>
+  );
+}
+
+// Context menu — invoked by long-press (touch) or right-click (mouse) on a
+// selected node. No floating button: the menu opens at the press point.
+function MiniContextMenu() {
+  return (
+    <div style={{
+      minWidth: 196,
+      background: "var(--co-bg-1)", border: "1px solid var(--co-border-2)",
+      borderRadius: 8, boxShadow: "var(--co-shadow-3)", padding: 4,
+      whiteSpace: "nowrap",
+    }}>
+      <MiniMenuItem icon="copy" label="duplicate" desc="clone this node downstream" />
+      <MiniMenuItem icon="collapseLink" label="remove + collapse" desc="delete & rewire parent → child" />
+      <span style={{ display: "block", height: 1, margin: "4px 6px", background: "var(--co-border-1)" }} />
+      <MiniMenuItem icon="x" label="delete node" desc="removes its connections too" danger />
+    </div>
+  );
+}
+
+// The point a long-press / right-click landed on — a small accent dot with a
+// soft halo ring, sitting at the menu's anchor corner.
+function PressPoint() {
+  return (
+    <>
+      <div style={{
+        position: "absolute", left: 0, top: 0, transform: "translate(-50%, -50%)",
+        width: 32, height: 32, borderRadius: 999,
+        border: "1.5px solid var(--co-accent)", opacity: 0.32,
+      }} />
+      <div style={{
+        position: "absolute", left: 0, top: 0, transform: "translate(-50%, -50%)",
+        width: 11, height: 11, borderRadius: 999,
+        background: "var(--co-accent)",
+        boxShadow: "0 0 0 4px color-mix(in oklab, var(--co-accent) 22%, transparent)",
+      }} />
+    </>
+  );
+}
+
+function MiniMenuItem({ icon, label, desc, danger }) {
+  return (
+    <div style={{
+      width: "100%",
+      display: "grid", gridTemplateColumns: "20px 1fr", alignItems: "center", gap: 9,
+      padding: "6px 8px", borderRadius: 5,
+      color: danger ? "var(--co-danger)" : "var(--co-text)",
+    }}>
+      <span style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
+        <Icon name={icon} size={14} color="currentColor" />
+      </span>
+      <span style={{ display: "flex", flexDirection: "column", lineHeight: 1.25 }}>
+        <span style={{ fontFamily: "var(--co-font-sans)", fontSize: 12, fontWeight: 500 }}>{label}</span>
+        <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: danger ? "color-mix(in oklab, var(--co-danger) 70%, var(--co-text-subtle))" : "var(--co-text-subtle)" }}>{desc}</span>
+      </span>
+    </div>
+  );
+}
+
+// "when / where / action" descriptor shown beside each scene ---------------
+function WhenWhere({ rows }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 11 }}>
+      {rows.map((r, i) => (
+        <div key={i} style={{ display: "grid", gridTemplateColumns: "58px 1fr", gap: 10, alignItems: "baseline" }}>
+          <span style={{
+            fontFamily: "var(--co-font-mono)", fontSize: 9.5, fontWeight: 600,
+            letterSpacing: "0.08em", textTransform: "uppercase",
+            color: "var(--co-accent)", paddingTop: 1,
+          }}>{r.k}</span>
+          <span style={{ fontSize: 12.5, lineHeight: 1.45, color: "var(--co-text-muted)" }}>{r.v}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// scenes -------------------------------------------------------------------
+function OutputHandleScene() {
+  const nx = 22, ny = 22;
+  const rightX = nx + AFF_NODE_W;
+  const cy = ny + AFF_NODE_H / 2;
+  // Grid anchored to the node so the dots fall on the body's center line and
+  // both ends — the output dot (right-edge midpoint) lands on a grid dot.
+  return (
+    <div style={{ position: "relative", width: 300, height: 124, ...dotField(nx, cy) }}>
+      <WorkerNode stage={DEMO_WORKER} status={null} info={{ x: nx, y: ny }} selected density="default" onClick={() => {}} />
+      <HandleOnBorder borderX={rightX} cy={cy} />
+    </div>
+  );
+}
+
+function ToolbarScene() {
+  const nx = 28, ny = 22;
+  const cx = nx + AFF_NODE_W / 2;       // node center x
+  const bodyCy = ny + AFF_NODE_H / 2;   // worker body center y
+  // The press lands on the node body; the menu opens from that point, flowing
+  // down and to the right — exactly where a right-click / long-press would.
+  const pressX = cx;
+  const pressY = bodyCy;
+  return (
+    <div style={{ position: "relative", width: 320, height: 200 }}>
+      <WorkerNode stage={DEMO_WORKER} status={null} info={{ x: nx, y: ny }} selected density="default" onClick={() => {}} />
+      {/* context menu emanates from the press point */}
+      <div style={{ position: "absolute", left: pressX + 6, top: pressY + 6 }}>
+        <MiniContextMenu />
+      </div>
+      {/* the long-press / right-click point, drawn on top at the anchor corner */}
+      <div style={{ position: "absolute", left: pressX, top: pressY }}>
+        <PressPoint />
+      </div>
+    </div>
+  );
+}
+
+function EdgeScene() {
+  const ay = 22;
+  const aR = AFF_NODE_W;       // parent node right edge (node A at x = 0)
+  const bX = 300;             // child node left edge — widened so the + (on the
+                              // parent border) and the × (edge center) sit well apart
+  const cy = ay + AFF_NODE_H / 2;
+  const midX = (aR + bX) / 2; // center of the connection
+  const W = bX + AFF_NODE_W + 8;
+  const d = `M ${aR} ${cy} C ${aR + 28} ${cy}, ${bX - 28} ${cy}, ${bX} ${cy}`;
+  return (
+    <div style={{ position: "relative", width: W, height: 124 }}>
+      <svg width={W} height={124} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
+        <defs>
+          <marker id="aff-edge-arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--co-accent)" />
+          </marker>
+        </defs>
+        <path d={d} fill="none" stroke="var(--co-accent)" strokeWidth={2} markerEnd="url(#aff-edge-arrow)" />
+      </svg>
+      <WorkerNode stage={DEMO_WORKER}  status={null} info={{ x: 0,  y: ay }} selected density="default" onClick={() => {}} />
+      <WorkerNode stage={DEMO_WORKER2} status={null} info={{ x: bX, y: ay }} density="default" onClick={() => {}} />
+      {/* + insert — centered ON the parent node's output border */}
+      <div style={{ position: "absolute", left: aR, top: cy, transform: "translate(-50%, -50%)" }}>
+        <EdgeInsertBtn />
+      </div>
+      {/* × delete — centered on the connection (edge midpoint) */}
+      <div style={{ position: "absolute", left: midX, top: cy, transform: "translate(-50%, -50%)" }}>
+        <EdgeDeleteBtn />
+      </div>
+    </div>
+  );
+}
+
+function PickerScene() {
+  const nx = 30, ny = 16;
+  const rightX = nx + AFF_NODE_W;
+  const cy = ny + AFF_NODE_H / 2;
+  // The live overlay centers the picker on the CLICK ANCHOR — for an
+  // after-node add that anchor is the node's right-edge midpoint (rightX),
+  // not the "+" glyph. Match that exactly.
+  const pickerCx = rightX;
+  return (
+    <div style={{ position: "relative", width: 380, height: 320 }}>
+      <WorkerNode stage={DEMO_WORKER} status={null} info={{ x: nx, y: ny }} selected density="default" onClick={() => {}} />
+      <HandleOnBorder borderX={rightX} cy={cy} />
+      <div style={{
+        position: "absolute", left: pickerCx, top: cy + 14,
+        transform: "translate(-50%, 0)",
+      }}>
+        <OperatorPickerMock />
+      </div>
+    </div>
+  );
+}
+
 function BuilderAffordancesCard() {
   return (
     <Card
       title="Builder affordances"
-      description="Zoom-invariant overlays that only appear in build mode. Output handles on nodes for connecting, insert/delete pins on edges, a floating node toolbar on selection, and the operator picker popover."
+      description="Zoom-invariant overlays that only appear in build mode. Each is shown in situ on a real node or edge — with when it appears and where it anchors. All overlays counter-scale (transform: scale(1/zoom)) so they keep a constant pixel size at any zoom."
       dartImport="lib/widgets/canvas/builder_overlay.dart · operator_picker.dart"
     >
-      <SubBlock label="output handle · appears on hover/select · drag dot to connect · + to add downstream">
-        <Stage padding={28} height={100}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
-            <div style={{
-              width: 12, height: 12, borderRadius: 999,
-              background: "var(--co-accent)",
-              border: "2px solid var(--co-bg-1)",
-              boxShadow: "0 0 0 1px var(--co-accent), 0 0 8px color-mix(in oklab, var(--co-accent) 50%, transparent)",
-              flexShrink: 0,
-            }} />
-            <button type="button" style={{
-              width: 22, height: 22, padding: 0, borderRadius: 999,
-              background: "var(--co-bg-2)", border: "1px dashed var(--co-accent)",
-              color: "var(--co-accent)", display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--co-font-mono)", fontSize: 14, fontWeight: 600, cursor: "pointer",
-            }}>+</button>
-            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-text-subtle)" }}>
-              counter-scaled · constant pixel size at any zoom
-            </span>
-          </div>
-        </Stage>
+      <SubBlock label="output handle · one dot · tap to add · drag to connect">
+        <StageSplit
+          leftFlex={1.5}
+          left={(
+            <Stage label="on a selected / hovered node" padding={20} height={150} bg="var(--co-bg-0)">
+              <OutputHandleScene />
+            </Stage>
+          )}
+          right={(
+            <WhenWhere rows={[
+              { k: "when",    v: "the node is hovered or selected" },
+              { k: "where",   v: "a single solid dot, centered on the node's right-edge border (bottom edge in tree layout)" },
+              { k: "tap",     v: "adds a stage downstream — opens the operator picker" },
+              { k: "drag",    v: "drags out a connection to wire this node to another" },
+              { k: "touch",   v: "iPad-first — one target, no adjacent + button to mis-hit. Visual dot is 12px; hit area is padded to ≥44px" },
+            ]} />
+          )}
+        />
       </SubBlock>
 
-      <SubBlock label="edge affordance · midpoint · + insert operator · × delete edge">
-        <Stage padding={28} height={100}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6 }}>
-            <button type="button" style={{
-              width: 24, height: 24, padding: 0, borderRadius: 999,
-              background: "var(--co-accent)", border: "2px solid var(--co-bg-1)",
-              boxShadow: "0 0 0 1px var(--co-accent), 0 2px 8px rgba(0,0,0,0.4)",
-              color: "var(--co-accent-ink)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontFamily: "var(--co-font-mono)", fontSize: 14, fontWeight: 700, cursor: "pointer",
-            }}>+</button>
-            <button type="button" style={{
-              width: 20, height: 20, padding: 0, borderRadius: 999,
-              background: "var(--co-bg-1)", border: "1px solid var(--co-danger)",
-              color: "var(--co-danger)",
-              display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer",
-            }}><Icon name="x" size={10} color="currentColor" /></button>
-            <span style={{ marginLeft: 6, fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-text-subtle)" }}>
-              24px accent insert · 20px danger delete
-            </span>
-          </div>
-        </Stage>
+      <SubBlock label="edge affordance · + on parent border · × on connection center">
+        <StageSplit
+          leftFlex={1.5}
+          left={(
+            <Stage label="parent node selected → its connections too" padding={20} height={150} gridSize={32}>
+              <EdgeScene />
+            </Stage>
+          )}
+          right={(
+            <WhenWhere rows={[
+              { k: "when",   v: "the parent node is selected — its output connections are selected with it, so there is no thin edge line to tap on its own" },
+              { k: "insert", v: "the accent + dot sits centered on the parent node's output border; tap to insert an operator into the connection" },
+              { k: "delete", v: "the danger × sits at the center of the connection; tap to remove the edge" },
+              { k: "touch",  v: "iPad-first — one selection state (node + its edges) means fewer, larger, well-separated targets" },
+            ]} />
+          )}
+        />
       </SubBlock>
 
-      <SubBlock label="node toolbar · floating above selected node · duplicate + delete">
-        <Stage padding={28} height={100}>
-          <div style={{
-            display: "inline-flex", alignItems: "center", gap: 2, padding: 3,
-            background: "var(--co-bg-1)", border: "1px solid var(--co-border-2)",
-            borderRadius: 6, boxShadow: "var(--co-shadow-2)",
-          }}>
-            {[
-              { icon: "copy", label: "duplicate", danger: false },
-              null,
-              { icon: "x",    label: "delete",    danger: true },
-            ].map((item, i) => item === null
-              ? <span key={i} style={{ width: 1, height: 16, background: "var(--co-border-1)" }} />
-              : (
-                <button key={i} type="button" style={{
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                  padding: "3px 7px", background: "transparent", border: "none", borderRadius: 4,
-                  color: item.danger ? "var(--co-danger)" : "var(--co-text)",
-                  cursor: "pointer", fontFamily: "var(--co-font-sans)", fontSize: 11,
-                }}>
-                  <Icon name={item.icon} size={11} color="currentColor" />
-                  {item.label}
-                </button>
-              )
-            )}
-          </div>
-        </Stage>
+      <SubBlock label="node context menu · long-press / right-click">
+        <StageSplit
+          leftFlex={1.5}
+          left={(
+            <Stage label="on the selected node" padding={20} height={230} gridSize={32}>
+              <ToolbarScene />
+            </Stage>
+          )}
+          right={(
+            <WhenWhere rows={[
+              { k: "when",    v: "the node is selected (does not show on hover alone)" },
+              { k: "trigger", v: "long-press (touch) or right-click (mouse) anywhere on the node — there is no floating button to mis-hit" },
+              { k: "where",   v: "opens at the press point, flowing down and to the right; flips to stay on-screen near a canvas edge" },
+              { k: "menu",    v: "duplicate — clones the node downstream. remove + collapse — deletes the node and rewires its parent's output straight into the child's input, healing the connection. delete node — removes the node and its connections (danger)." },
+            ]} />
+          )}
+        />
       </SubBlock>
 
-      <SubBlock label="operator picker · screen-space popover · shown on + click">
-        <Stage padding={20} height={330}>
-          <OperatorPickerMock />
-        </Stage>
+      <SubBlock label="operator picker · screen-space popover · shown on dot tap">
+        <StageSplit
+          leftFlex={1.5}
+          left={(
+            <Stage label="opens from a handle tap or edge +" padding={20} height={350} gridSize={32}>
+              <PickerScene />
+            </Stage>
+          )}
+          right={(
+            <WhenWhere rows={[
+              { k: "when",  v: "the output-handle dot is tapped, or an edge insert + is tapped" },
+              { k: "where", v: "screen-space, 14px below and horizontally centered on the tapped point — the handle dot (node's right edge) or the edge midpoint" },
+              { k: "note",  v: "renders outside the canvas world transform, so it never inherits zoom" },
+            ]} />
+          )}
+        />
       </SubBlock>
 
-      <SubBlock label="builder tips · dismissible help panel · top-left of canvas">
-        <Stage padding={16} height={190}>
-          <div style={{ position: "relative", height: 158 }}>
-            <BuilderTips />
-          </div>
-        </Stage>
+      <SubBlock label="builder tips · dismissible help panel">
+        <StageSplit
+          leftFlex={1.5}
+          left={(
+            <Stage label="pinned to the canvas top-left" padding={16} height={190}>
+              <div style={{ position: "relative", width: 280, height: 158 }}>
+                <BuilderTips />
+              </div>
+            </Stage>
+          )}
+          right={(
+            <WhenWhere rows={[
+              { k: "when",   v: "present whenever build mode is active" },
+              { k: "where",  v: "pinned to the top-left of the canvas, above the nodes" },
+              { k: "action", v: "collapses to a ? button; click it to reopen" },
+            ]} />
+          )}
+        />
       </SubBlock>
 
       <SubBlock label="tokens" last>
         <TokensList tokens={[
           { name: "outputHandle.dot",    value: "12px · accent fill · 2px bg1 border · accent glow ring" },
-          { name: "outputHandle.addBtn", value: "22px · bg2 · 1px dashed accent · mono 14px" },
+          { name: "outputHandle.gesture",value: "single dot · tap → add downstream · drag → connect" },
+          { name: "outputHandle.hitArea",value: "≥44px touch target padded around the 12px visual dot" },
           { name: "edgeInsert.btn",      value: "24px · accent fill · 2px bg1 ring · accent-ink color" },
           { name: "edgeDelete.btn",      value: "20px · bg1 · 1px danger border" },
-          { name: "nodeToolbar.bg",      value: "palette.bg1 · border2 · radius 6 · shadow-2" },
-          { name: "nodeToolbar.font",    value: "AppType.sans · 11px · danger color on delete" },
+          { name: "nodeMenu.trigger",   value: "long-press (touch) / right-click (mouse) on a selected node · no floating button" },
+          { name: "nodeMenu.menu",       value: "196px menu at the press point · bg1 · border2 · radius 8 · shadow-3 · duplicate / collapse / delete" },
+          { name: "menuItem",            value: "icon + label (sans 12) + mono 9.5px desc · danger row tints on hover" },
           { name: "picker.width",        value: "240px · bg2 · border2 · radius 8 · shadow-3" },
           { name: "picker.row",          value: "22px icon square · mono 11.5px label + 10px desc subtitle" },
           { name: "scaleInvariance",     value: "all overlays: transform scale(1/zoom) so px size stays constant" },
@@ -1207,6 +1990,7 @@ function ComponentsSection() {
       <SidebarsCard />
       <TopBarCard />
       <StageDrawerCard />
+      <YamlDrawerCard />
       <FilmstripCard />
       <RunsTableCard />
       <GraphNodesCard />

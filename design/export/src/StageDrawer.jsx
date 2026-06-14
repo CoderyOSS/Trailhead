@@ -339,6 +339,31 @@ function EditorSettingsTab({ stage }) {
           </Field>
         </>
       )}
+
+      {stage.kind === "fan" && (
+        <>
+          <Field label="fans over" hint="the list this container splits"><div style={preStyle}>{stage.over}</div></Field>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+            <Field label="items"><div style={preStyle}>{stage.count}</div></Field>
+            <Field label="max parallel"><input defaultValue={String(stage.concurrency)} style={inputStyle} /></Field>
+            <Field label="fan-in"><div style={preStyle}>{stage.joinMode}</div></Field>
+          </div>
+          <Field label="per-item body" hint="runs once per item, then results fan back in">
+            <div style={{ padding: 10, background: "var(--co-bg-1)", border: "1px solid var(--co-border-2)", borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <span style={{ display: "inline-flex", alignItems: "center", height: 22, padding: "0 9px", borderRadius: 6, background: "var(--co-grad-loaf)", border: "1px solid var(--co-border-2)", boxShadow: "inset 3px 0 0 var(--co-accent)", fontFamily: "var(--co-font-mono)", fontSize: 12, fontWeight: 600, color: "var(--co-text-strong)" }}>{stage.body.label}</span>
+                {stage.body.model && <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10, color: "var(--co-text-subtle)" }}>{stage.body.model}</span>}
+              </div>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: 5 }}>
+                {(stage.body.skills || []).map(sk => (
+                  <span key={sk} style={{ fontFamily: "var(--co-font-mono)", fontSize: 10, padding: "2px 6px", borderRadius: 4, background: "var(--co-bg-3)", border: "1px solid var(--co-border-1)", color: "var(--co-text-muted)" }}>{sk}</span>
+                ))}
+              </div>
+              <div style={{ ...preStyle, whiteSpace: "pre-wrap", color: "var(--co-text-muted)", lineHeight: 1.5 }}>{stage.body.prompt}</div>
+            </div>
+          </Field>
+        </>
+      )}
     </div>
   );
 }
@@ -819,6 +844,7 @@ function JobStageHeaderInfo({ stage }) {
         {stage.kind === "branch" && <Field label="cond"><div style={preStyle}>{stage.cond}</div></Field>}
         {stage.kind === "map"    && <Field label="over"><div style={preStyle}>{stage.over}</div></Field>}
         {stage.kind === "join"   && <Field label="waits for"><div style={preStyle}>{stage.waits_for.join(", ")}</div></Field>}
+        {stage.kind === "fan"    && <Field label="over"><div style={preStyle}>{stage.over}</div></Field>}
       </div>
     );
   }
@@ -934,6 +960,7 @@ function StageDrawer({ stage, status, onClose, view }) {
     stage.kind === "branch" ? "branch — if/else router" :
     stage.kind === "map"    ? "map — fan-out iterator" :
     stage.kind === "join"   ? "join — wait for upstreams" :
+    stage.kind === "fan"    ? "fan — fan-out / fan-in container" :
     "routing operator";
 
   const isBuilder = view === "builder";
@@ -943,6 +970,10 @@ function StageDrawer({ stage, status, onClose, view }) {
         { value: "settings", label: "stage" },
         { value: "prompt",   label: "prompt" },
         { value: "result",   label: "result" },
+      ]
+    : stage.kind === "fan"
+    ? [
+        { value: "settings", label: "container" },
       ]
     : [
         { value: "settings", label: "routing" },
@@ -964,12 +995,12 @@ function StageDrawer({ stage, status, onClose, view }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 28, height: 28, borderRadius: 6,
-            background: stage.kind === "worker" ? "var(--co-grad-crust)" : "var(--co-bg-3)",
-            border: stage.kind === "worker" ? "none" : "1px solid var(--co-border-3)",
+            background: (stage.kind === "worker" || stage.kind === "fan") ? "var(--co-grad-crust)" : "var(--co-bg-3)",
+            border: (stage.kind === "worker" || stage.kind === "fan") ? "none" : "1px solid var(--co-border-3)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <Icon name={stage.kind === "worker" ? "zap" : "gitBranch"} size={14}
-                  color={stage.kind === "worker" ? "var(--co-accent-ink)" : "var(--co-accent)"} />
+            <Icon name={stage.kind === "worker" ? "zap" : stage.kind === "fan" ? "forEach" : "gitBranch"} size={14}
+                  color={(stage.kind === "worker" || stage.kind === "fan") ? "var(--co-accent-ink)" : "var(--co-accent)"} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, lineHeight: 1.2 }}>

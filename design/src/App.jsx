@@ -1,7 +1,7 @@
 /* global React, ReactDOM,
    ModeRail, WorkflowsSidebar, JobsSidebar,
    TopBar, Canvas, StageDrawer, Filmstrip, RunsView,
-   TweaksPanel, TweakSection, TweakRadio, useTweaks,
+   TweaksPanel, TweakSection, TweakRadio, useTweaks, YamlDrawer,
    WORKFLOW, JOB, SNAPSHOTS, WORKFLOWS_LIST, JOBS_LOG */
 
 const { useState: useStateApp, useEffect: useEffectApp, useMemo: useMemoApp } = React;
@@ -24,6 +24,11 @@ function App() {
   // mode is the top-level concern. The rail is the only thing that mutates it.
   const [mode, setMode] = useStateApp("active");
 
+  // The YAML drawer is an alternative to the StageDrawer — it shares the
+  // right slot and takes precedence when open. Reset on mode change so it
+  // never lingers with stale context.
+  const [yamlOpen, setYamlOpen] = useStateApp(false);
+
   // Per-mode state — each mode keeps its own selection so flipping modes
   // doesn't blow away what you were looking at.
   const [activeWfId, setActiveWfId]       = useStateApp(WORKFLOW.id);
@@ -40,6 +45,7 @@ function App() {
   const [historyJobsView, setHistoryJobsView] = useStateApp("grouped");
 
   // Theme + accent → data-attrs on root.
+  useEffectApp(() => { setYamlOpen(false); }, [mode]);
   useEffectApp(() => {
     document.documentElement.dataset.themeVariant = t.theme;
     document.documentElement.dataset.theme = t.theme === "paper" ? "light" : "dark";
@@ -122,12 +128,12 @@ function App() {
         job={JOB}
         view="builder"
         selectedId={selectedStage}
-        onSelect={(id) => setSelectedStage(id === selectedStage ? null : id)}
+        onSelect={(id) => { setYamlOpen(false); setSelectedStage(id === selectedStage ? null : id); }}
         canvasStyle={t.canvasStyle}
         edgeStyle={t.edgeStyle}
         density={t.density}
         inflightAnim={t.inflightAnim}
-        drawerOpen={!!stage}
+        drawerOpen={yamlOpen || !!stage}
       />
     );
     if (stage) {
@@ -143,12 +149,12 @@ function App() {
           job={JOB}
           view="job"
           selectedId={selectedStage}
-          onSelect={(id) => setSelectedStage(id === selectedStage ? null : id)}
+          onSelect={(id) => { setYamlOpen(false); setSelectedStage(id === selectedStage ? null : id); }}
           canvasStyle={t.canvasStyle}
           edgeStyle={t.edgeStyle}
           density={t.density}
           inflightAnim={t.inflightAnim}
-          drawerOpen={!!stage}
+          drawerOpen={yamlOpen || !!stage}
         />
       );
       if (stage) drawerEl = <StageDrawer stage={stage} status={stageStatus} view="job" onClose={() => setSelectedStage(null)} />;
@@ -172,16 +178,29 @@ function App() {
           job={JOB}
           view="job"
           selectedId={selectedStage}
-          onSelect={(id) => setSelectedStage(id === selectedStage ? null : id)}
+          onSelect={(id) => { setYamlOpen(false); setSelectedStage(id === selectedStage ? null : id); }}
           canvasStyle={t.canvasStyle}
           edgeStyle={t.edgeStyle}
           density={t.density}
           inflightAnim={"off"}
-          drawerOpen={!!stage}
+          drawerOpen={yamlOpen || !!stage}
         />
       );
       if (stage) drawerEl = <StageDrawer stage={stage} status={stageStatus} view="job" onClose={() => setSelectedStage(null)} />;
     }
+  }
+
+  // YAML drawer overrides the stage drawer when open — same slot, read-only.
+  if (yamlOpen) {
+    const jobYaml = (mode === "active" || mode === "history") && currentJob;
+    drawerEl = (
+      <YamlDrawer
+        workflow={WORKFLOW}
+        job={currentJob}
+        view={jobYaml ? "job" : "workflow"}
+        onClose={() => setYamlOpen(false)}
+      />
+    );
   }
 
   // Filmstrip — only in active or history-with-selection
@@ -211,6 +230,8 @@ function App() {
           onSnapshot={() => {}}
           onClearJob={() => { if (mode === "active") setActiveJobId(null); else setHistoryJobId(null); }}
           historyCount={historyJobs.length}
+          onYaml={() => setYamlOpen(o => !o)}
+          yamlActive={yamlOpen}
         />
 
         {/* Below-header region: canvas+filmstrip column on the left,

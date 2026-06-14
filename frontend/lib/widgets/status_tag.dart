@@ -66,8 +66,8 @@ class _PulsingDotState extends State<_PulsingDot>
     super.initState();
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 2000),
-    )..repeat();
+      duration: const Duration(milliseconds: 1100),
+    )..repeat(reverse: true);
   }
 
   @override
@@ -78,16 +78,34 @@ class _PulsingDotState extends State<_PulsingDot>
 
   @override
   Widget build(BuildContext context) {
-    return FadeTransition(
-      opacity: Tween<double>(begin: 1.0, end: 0.4).animate(_controller),
-      child: Container(
-        width: widget.size,
-        height: widget.size,
-        decoration: BoxDecoration(
-          color: widget.color,
-          shape: BoxShape.circle,
-        ),
-      ),
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = Curves.easeInOut.transform(_controller.value);
+        final opacity = 0.74 + 0.26 * t;
+        final blur = 2.0 + 7.0 * t;
+        final spread = 0.0 + 2.0 * t;
+        final alpha = (0.14 * 255 + 0.54 * 255 * t).round();
+
+        return Opacity(
+          opacity: opacity,
+          child: Container(
+            width: widget.size,
+            height: widget.size,
+            decoration: BoxDecoration(
+              color: widget.color,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: widget.color.withAlpha(alpha),
+                  blurRadius: blur,
+                  spreadRadius: spread,
+                ),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

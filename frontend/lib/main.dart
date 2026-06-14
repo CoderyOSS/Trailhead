@@ -91,6 +91,10 @@ class TrailheadShell extends ConsumerWidget {
             );
             ref.read(workflowProvider.notifier).state = doc.workflow;
             ref.read(canvasControllerProvider.notifier).setViewport(doc.viewport);
+            ref.read(selectedNodeProvider.notifier).state = null;
+            ref.read(hoveredNodeProvider.notifier).state = null;
+            ref.read(draggingNodeIdProvider.notifier).state = null;
+            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
           },
         );
       case AppMode.active:

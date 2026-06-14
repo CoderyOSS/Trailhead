@@ -96,10 +96,23 @@ final mockWorkflow = WorkflowSummary(
       kind: 'worker',
       label: 'entrypoint',
       x: 0,
-      y: 0,
+      y: -16,
+    ),
+    WorkflowNode(
+      id: 'commenter',
+      kind: 'fan',
+      label: 'comment-files',
+      x: 220,
+      y: -32,
     ),
   ],
-  edges: const [],
+  edges: const [
+    WorkflowEdge(
+      id: 'edge_1',
+      sourceId: 'entrypoint',
+      targetId: 'commenter',
+    ),
+  ],
 );
 
 final mockWorkflows = <WorkflowSummary>[
@@ -113,7 +126,7 @@ final mockWorkflows = <WorkflowSummary>[
     last: '2m',
     active: 2,
       nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: 0),
+        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
       ],
       edges: const [],
   ),
@@ -126,7 +139,7 @@ final mockWorkflows = <WorkflowSummary>[
     last: '11m',
     active: 0,
       nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: 0),
+        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
       ],
       edges: const [],
   ),
@@ -139,7 +152,7 @@ final mockWorkflows = <WorkflowSummary>[
     last: '1h',
     active: 0,
       nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: 0),
+        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
       ],
       edges: const [],
   ),
@@ -152,7 +165,7 @@ final mockWorkflows = <WorkflowSummary>[
     last: '8m',
     active: 1,
       nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: 0),
+        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
       ],
       edges: const [],
   ),
@@ -165,7 +178,7 @@ final mockWorkflows = <WorkflowSummary>[
     last: '3h',
     active: 0,
       nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: 0),
+        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
       ],
       edges: const [],
   ),
@@ -178,7 +191,7 @@ final mockWorkflows = <WorkflowSummary>[
     last: '1d',
     active: 0,
       nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: 0),
+        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
       ],
       edges: const [],
   ),

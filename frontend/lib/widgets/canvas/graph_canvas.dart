@@ -14,15 +14,18 @@ import '../../widgets/mode_rail.dart';
 import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
 import 'operator_picker.dart';
+import 'fan_node.dart';
+import 'routing_node.dart';
 import 'worker_node.dart';
 
 class GraphCanvas extends ConsumerWidget {
   const GraphCanvas({super.key});
 
-  static const double _snapGrid = 24.0;
+  static const double _snapGrid = 32.0;
   static const Duration _snapDuration = Duration(milliseconds: 200);
 
   double _snap(double value) => (value / _snapGrid).round() * _snapGrid;
+  double _snapCenter(double center) => (center / _snapGrid).round() * _snapGrid;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -82,12 +85,16 @@ class GraphCanvas extends ConsumerWidget {
       );
 
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+      final sourceHeight = source.kind == 'worker' ? 32.0 : 64.0;
+      final newNodeHeight = type.kind == 'worker' ? 32.0 : 64.0;
+      final snappedX = _snap(source.x + 220);
+      final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
       final newNode = WorkflowNode(
         id: id,
-        kind: type == OperatorType.switch_ ? 'switch' : type.label,
+        kind: type.kind,
         label: type.label,
-        x: source.x + 220,
-        y: source.y,
+        x: snappedX,
+        y: snappedY,
       );
 
       final edge = WorkflowEdge(
@@ -136,18 +143,15 @@ class GraphCanvas extends ConsumerWidget {
         }
         return KeyEventResult.ignored;
       },
-      child: GestureDetector(
-        behavior: HitTestBehavior.translucent,
-        onPanUpdate: (details) {
-          // Only pan canvas if not dragging a node
-          if (draggingNodeId == null) {
-            controller.pan(details.delta);
-          }
-        },
-        onTap: () {
+                                  child: GestureDetector(
+                                    behavior: HitTestBehavior.translucent,
+                                    onTap: () {
           // Deselect when tapping empty canvas
           ref.read(selectedNodeProvider.notifier).state = null;
           ref.read(operatorPickerProvider.notifier).state = null;
+        },
+        onPanUpdate: (details) {
+          controller.pan(details.delta);
         },
         child: Container(
           decoration: const BoxDecoration(
@@ -193,21 +197,47 @@ class GraphCanvas extends ConsumerWidget {
                           final displayX = isDragging ? node.x + dragOffset.dx : node.x;
                           final displayY = isDragging ? node.y + dragOffset.dy : node.y;
 
-                          final nodeWidget = WorkerNode(
-                            node: node,
-                            selected: isSelected,
-                            onEnter: () {
-                              ref.read(hoveredNodeProvider.notifier).state = node.id;
-                            },
-                            onExit: () {
-                              ref.read(hoveredNodeProvider.notifier).state =
-                                  (hoveredNodeId == node.id) ? null : hoveredNodeId;
-                            },
-                            onDelete: editable ? () => deleteNode(node.id) : null,
-                          );
+                          final nodeWidget = node.kind == 'worker'
+                              ? WorkerNode(
+                                  node: node,
+                                  selected: isSelected,
+                                  onEnter: () {
+                                    ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                  },
+                                  onExit: () {
+                                    ref.read(hoveredNodeProvider.notifier).state =
+                                        (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                  },
+                                  onDelete: (editable && node.id != 'entrypoint') ? () => deleteNode(node.id) : null,
+                                )
+                              : node.kind == 'fan'
+                                  ? FanNode(
+                                      node: node,
+                                      selected: isSelected,
+                                      onEnter: () {
+                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                      },
+                                      onExit: () {
+                                        ref.read(hoveredNodeProvider.notifier).state =
+                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                      },
+                                      onDelete: (editable && node.id != 'entrypoint') ? () => deleteNode(node.id) : null,
+                                    )
+                                   : RoutingNode(
+                                      node: node,
+                                      selected: isSelected,
+                                      onEnter: () {
+                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                      },
+                                      onExit: () {
+                                        ref.read(hoveredNodeProvider.notifier).state =
+                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                      },
+                                      onDelete: (editable && node.id != 'entrypoint') ? () => deleteNode(node.id) : null,
+                                    );
 
                           return AnimatedPositioned(
-                            key: ValueKey(node.id),
+                            key: ValueKey('${workflow.id}_${node.id}'),
                             left: displayX,
                             top: displayY,
                             duration: isDragging ? Duration.zero : _snapDuration,
@@ -216,7 +246,7 @@ class GraphCanvas extends ConsumerWidget {
                               clipBehavior: Clip.none,
                               children: [
                                 GestureDetector(
-                                  behavior: HitTestBehavior.translucent,
+                                  behavior: HitTestBehavior.opaque,
                                   onTap: () {
                                     ref.read(selectedNodeProvider.notifier).state =
                                         isSelected ? null : node.id;
@@ -246,8 +276,9 @@ class GraphCanvas extends ConsumerWidget {
                                       ? (_) {
                                           if (draggingNodeId == node.id) {
                                             final offset = ref.read(dragOffsetProvider);
+                                            final nodeHeight = node.kind == 'worker' ? 32.0 : 64.0;
                                             final snappedX = _snap(node.x + offset.dx);
-                                            final snappedY = _snap(node.y + offset.dy);
+                                            final snappedY = _snapCenter(node.y + offset.dy + nodeHeight / 2) - nodeHeight / 2;
                                             final newNodes = workflow.nodes.map((n) {
                                               if (n.id == node.id) {
                                                 return n.copyWith(x: snappedX, y: snappedY);
@@ -271,12 +302,35 @@ class GraphCanvas extends ConsumerWidget {
                                 ),
                                 if (isSelected && editable)
                                   Positioned(
-                                    left: 192.0 - 22.0 / viewport.zoom,
-                                    top: 40.0 - 22.0 / viewport.zoom,
+                                    left: (node.kind == 'worker'
+                                            ? 160.0
+                                            : node.kind == 'fan'
+                                                ? 160.0
+                                                : RoutingNode.pillRight) -
+                                        44.0 / viewport.zoom,
+                                    top: (node.kind == 'worker'
+                                            ? 16.0
+                                            : node.kind == 'fan'
+                                                ? 32.0
+                                                : RoutingNode.pillVCenter) -
+                                        44.0 / viewport.zoom,
                                     child: _OutputHandle(
                                       inverseZoom: 1.0 / viewport.zoom,
                                       onTap: () => showPicker(
-                                        Offset(displayX + 192.0, displayY + 40.0),
+                                        Offset(
+                                          displayX +
+                                              (node.kind == 'worker'
+                                                  ? 160.0
+                                                  : node.kind == 'fan'
+                                                      ? 160.0
+                                                      : RoutingNode.pillRight),
+                                          displayY +
+                                              (node.kind == 'worker'
+                                                  ? 16.0
+                                                  : node.kind == 'fan'
+                                                      ? 32.0
+                                                      : RoutingNode.pillVCenter),
+                                        ),
                                         node.id,
                                       ),
                                     ),
@@ -321,7 +375,7 @@ class _OutputHandle extends StatelessWidget {
   Widget build(BuildContext context) {
     // Direct world-space sizing so hit area exactly matches visual area.
     // 44 screen-px hit area = 44 * inverseZoom world units.
-    final size = 44.0 * inverseZoom;
+    final size = 88.0 * inverseZoom;
     final dotSize = 12.0 * inverseZoom;
     final borderWidth = 2.0 * inverseZoom;
     final ringSpread = 1.0 * inverseZoom;

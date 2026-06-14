@@ -49,8 +49,8 @@ class WorkflowsSidebar extends ConsumerWidget {
                     id: 'entrypoint',
                     kind: 'worker',
                     label: 'entrypoint',
-                    x: 400,
-                    y: 300,
+                    x: 0,
+                    y: -16,
                   ),
                 ],
               );

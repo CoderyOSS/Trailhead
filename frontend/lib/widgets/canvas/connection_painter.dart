@@ -10,10 +10,17 @@ class ConnectionPainter extends CustomPainter {
   final String? draggingNodeId;
   final Offset dragOffset;
 
-  static const double _nodeWidth = 192.0;
-  static const double _nodeHeight = 80.0;
+  static const double _workerWidth = 160.0;
+  static const double _workerHeight = 32.0;
+  static const double _fanWidth = 160.0;
+  static const double _fanHeight = 64.0;
   static const double _controlMin = 40.0;
   static const double _controlMax = 150.0;
+
+  // Routing-node pill geometry (same as RoutingNode constants)
+  static const double _pillLeft = 34.0;
+  static const double _pillRight = 158.0;   // 34 + 124
+  static const double _pillVCenter = 32.0;  // centered in 64
 
   ConnectionPainter({
     required this.nodes,
@@ -27,6 +34,24 @@ class ConnectionPainter extends CustomPainter {
       return Offset(node.x + dragOffset.dx, node.y + dragOffset.dy);
     }
     return Offset(node.x, node.y);
+  }
+
+  Offset _exitPoint(WorkflowNode node) {
+    final pos = _nodePos(node);
+    return switch (node.kind) {
+      'worker' => Offset(pos.dx + _workerWidth, pos.dy + _workerHeight / 2),
+      'fan'    => Offset(pos.dx + _fanWidth,    pos.dy + _fanHeight / 2),
+      _        => Offset(pos.dx + _pillRight,   pos.dy + _pillVCenter),
+    };
+  }
+
+  Offset _entryPoint(WorkflowNode node) {
+    final pos = _nodePos(node);
+    return switch (node.kind) {
+      'worker' => Offset(pos.dx,              pos.dy + _workerHeight / 2),
+      'fan'    => Offset(pos.dx,              pos.dy + _fanHeight / 2),
+      _        => Offset(pos.dx + _pillLeft,  pos.dy + _pillVCenter),
+    };
   }
 
   @override
@@ -43,25 +68,13 @@ class ConnectionPainter extends CustomPainter {
       ..color = AppColors.border3
       ..style = PaintingStyle.fill;
 
-    final dotPaint = Paint()
-      ..color = AppColors.accent
-      ..style = PaintingStyle.fill;
-
-    final dotBorderPaint = Paint()
-      ..color = AppColors.bg1
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 2.0;
-
     for (final edge in edges) {
       final source = nodeMap[edge.sourceId];
       final target = nodeMap[edge.targetId];
       if (source == null || target == null) continue;
 
-      final sPos = _nodePos(source);
-      final tPos = _nodePos(target);
-
-      final p0 = Offset(sPos.dx + _nodeWidth, sPos.dy + _nodeHeight / 2);
-      final p3 = Offset(tPos.dx, tPos.dy + _nodeHeight / 2);
+      final p0 = _exitPoint(source);
+      final p3 = _entryPoint(target);
 
       final dx = (p3.dx - p0.dx).abs();
       final controlLen = dx.clamp(_controlMin, _controlMax);
@@ -79,10 +92,8 @@ class ConnectionPainter extends CustomPainter {
       final tangent = Offset(p3.dx - p2.dx, p3.dy - p2.dy);
       _drawArrowhead(canvas, p3, tangent, arrowPaint);
 
-      // Midpoint dot at t=0.5
+      // Midpoint for label placement
       final mid = _bezierPoint(p0, p1, p2, p3, 0.5);
-      canvas.drawCircle(mid, 4.0, dotBorderPaint);
-      canvas.drawCircle(mid, 3.0, dotPaint);
 
       // Midpoint pill label if present
       if (edge.label != null && edge.label!.isNotEmpty) {

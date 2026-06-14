@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:frontend/theme/tokens.dart';
+import '../../theme/tokens.dart';
 
 class DotGridPainter extends CustomPainter {
   final double zoom;
@@ -12,7 +12,34 @@ class DotGridPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     if (size.isEmpty) return;
 
-    final spacing = 24.0 * zoom;
+    final spacing = 32.0 * zoom;
+    final originX = pan.dx;
+    final originY = pan.dy;
+
+    // Axes — always draw
+    final xAxisPaint = Paint()
+      ..color = AppColors.accent
+      ..strokeWidth = 1.5;
+    final yAxisPaint = Paint()
+      ..color = AppColors.trail
+      ..strokeWidth = 1.5;
+
+    if (originY >= 0 && originY <= size.height) {
+      canvas.drawLine(
+        Offset(0, originY),
+        Offset(size.width, originY),
+        xAxisPaint,
+      );
+    }
+    if (originX >= 0 && originX <= size.width) {
+      canvas.drawLine(
+        Offset(originX, 0),
+        Offset(originX, size.height),
+        yAxisPaint,
+      );
+    }
+
+    // Dot grid — hide when zoomed too far out
     if (spacing < 2) return;
 
     final paint = Paint()

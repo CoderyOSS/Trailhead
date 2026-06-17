@@ -212,7 +212,7 @@ class GraphCanvas extends ConsumerWidget {
                                   },
                                 )
                               : node.kind == 'fan'
-                                  ? FanNode(
+                                  ? MapNode(
                                       node: node,
                                       selected: isSelected,
                                       onEnter: () {

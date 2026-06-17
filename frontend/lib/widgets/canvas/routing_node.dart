@@ -108,27 +108,29 @@ class BranchNode extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: SizedBox.expand(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 30,
-                      decoration: const BoxDecoration(
-                        gradient: AppColors.crustGradient,
-                        border: Border(
-                          right: BorderSide(color: AppColors.border2),
-                        ),
+            SizedBox.expand(
+              child: Row(
+                children: [
+                  Container(
+                    width: 30,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.crustGradient,
+                      border: const Border(
+                        right: BorderSide(color: AppColors.border2),
                       ),
-                      child: const Center(
-                        child: TrailheadIcon(
-                          icon: TrailheadIconData.gitBranch,
-                          size: 14,
-                          color: AppColors.accentInk,
-                        ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.md),
+                        bottomLeft: Radius.circular(AppRadius.md),
                       ),
                     ),
+                    child: const Center(
+                      child: TrailheadIcon(
+                        icon: TrailheadIconData.gitBranch,
+                        size: 14,
+                        color: AppColors.accentInk,
+                      ),
+                    ),
+                  ),
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: padY),
@@ -160,7 +162,6 @@ class BranchNode extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
             // Input dot
             Positioned(
               left: -4,

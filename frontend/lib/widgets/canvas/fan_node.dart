@@ -90,44 +90,45 @@ class MapNode extends StatelessWidget {
         child: Stack(
           clipBehavior: Clip.none,
           children: [
-            ClipRRect(
-              borderRadius: BorderRadius.circular(AppRadius.md),
-              child: SizedBox.expand(
-                child: Row(
-                  children: [
-                    Container(
-                      width: 30,
-                      decoration: const BoxDecoration(
-                        gradient: AppColors.crustGradient,
-                        border: Border(
-                          right: BorderSide(color: AppColors.border2),
-                        ),
+            SizedBox.expand(
+              child: Row(
+                children: [
+                  Container(
+                    width: 30,
+                    decoration: BoxDecoration(
+                      gradient: AppColors.crustGradient,
+                      border: const Border(
+                        right: BorderSide(color: AppColors.border2),
                       ),
-                      child: const Center(
-                        child: TrailheadIcon(
-                          icon: TrailheadIconData.forEach,
-                          size: 14,
-                          color: AppColors.accentInk,
-                        ),
+                      borderRadius: BorderRadius.only(
+                        topLeft: Radius.circular(AppRadius.md),
+                        bottomLeft: Radius.circular(AppRadius.md),
                       ),
                     ),
-                    Expanded(
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 10),
-                        child: Text(
-                          node.label,
-                          style: const TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
-                            color: AppColors.fg0,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
+                    child: const Center(
+                      child: TrailheadIcon(
+                        icon: TrailheadIconData.forEach,
+                        size: 14,
+                        color: AppColors.accentInk,
                       ),
                     ),
-                  ],
-                ),
+                  ),
+                  Expanded(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 10),
+                      child: Text(
+                        node.label,
+                        style: const TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.fg0,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             _ConnectorDot(left: true),

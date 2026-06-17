@@ -171,21 +171,21 @@ class GraphCanvas extends ConsumerWidget {
         (e) => e?.targetId == nodeId,
         orElse: () => null,
       );
-      final childEdge = workflow.edges.cast<WorkflowEdge?>().firstWhere(
-        (e) => e?.sourceId == nodeId,
-        orElse: () => null,
-      );
+      final childEdges = workflow.edges.where((e) => e.sourceId == nodeId).toList();
 
       final newEdges = workflow.edges
           .where((e) => e.targetId != nodeId && e.sourceId != nodeId)
           .toList();
 
-      if (parentEdge != null && childEdge != null) {
-        newEdges.add(WorkflowEdge(
-          id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
-          sourceId: parentEdge.sourceId,
-          targetId: childEdge.targetId,
-        ));
+      if (parentEdge != null) {
+        for (final child in childEdges) {
+          newEdges.add(WorkflowEdge(
+            id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+            sourceId: parentEdge.sourceId,
+            targetId: child.targetId,
+            sourcePort: parentEdge.sourcePort,
+          ));
+        }
       }
 
       final newNodes = workflow.nodes.where((n) => n.id != nodeId).toList();
@@ -417,7 +417,7 @@ class GraphCanvas extends ConsumerWidget {
                                           final port = e.key;
                                           final top = BranchNode.padY + port * BranchNode.rowHeight;
                                           return Positioned(
-                                            left: BranchNode.width - 44.0 / viewport.zoom,
+                                            left: BranchNode.width - 22.0 / viewport.zoom,
                                             top: top,
                                             child: _OutputHandle(
                                               inverseZoom: 1.0 / viewport.zoom,

@@ -10,10 +10,10 @@ class ConnectionPainter extends CustomPainter {
   final String? draggingNodeId;
   final Offset dragOffset;
 
-  static const double _workerWidth = 160.0;
-  static const double _workerHeight = 32.0;
-  static const double _fanWidth = 160.0;
-  static const double _fanHeight = 64.0;
+  static const double _workerWidth = 168.0;
+  static const double _workerHeight = 36.0;
+  static const double _fanWidth = 168.0;
+  static const double _fanHeight = 36.0;
   static const double _controlMin = 40.0;
   static const double _controlMax = 150.0;
 

@@ -15,7 +15,8 @@ import '../../widgets/mode_rail.dart';
 import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
 import 'operator_picker.dart';
-import '../delete_button.dart';
+import '../../providers/node_menu_provider.dart';
+import 'node_context_menu.dart';
 import 'fan_node.dart';
 import 'routing_node.dart';
 import 'worker_node.dart';
@@ -41,6 +42,19 @@ class GraphCanvas extends ConsumerWidget {
     final pickerAnchor = ref.watch(operatorPickerProvider);
     final mode = ref.watch(modeProvider);
     final editable = mode == AppMode.build;
+    final menuAnchor = ref.watch(nodeMenuProvider);
+
+    double nodeWidth(String kind) => switch (kind) {
+      'worker' => 168.0,
+      'fan'    => 168.0,
+      _        => BranchNode.width,
+    };
+
+    double nodeHeight(String kind) => switch (kind) {
+      'worker' => 36.0,
+      'fan'    => 36.0,
+      _        => 126.0,
+    };
 
     // Sync in-place workflow edits to the document model and workflow list.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
@@ -87,8 +101,8 @@ class GraphCanvas extends ConsumerWidget {
       );
 
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
-      final sourceHeight = source.kind == 'worker' ? 32.0 : 64.0;
-      final newNodeHeight = type.kind == 'worker' ? 32.0 : 64.0;
+      final sourceHeight = nodeHeight(source.kind);
+      final newNodeHeight = nodeHeight(type.kind);
       final snappedX = _snap(source.x + 220);
       final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
       final newNode = WorkflowNode(
@@ -128,6 +142,59 @@ class GraphCanvas extends ConsumerWidget {
       if (hoveredNodeId == nodeId) {
         ref.read(hoveredNodeProvider.notifier).state = null;
       }
+      ref.read(nodeMenuProvider.notifier).state = null;
+    }
+
+    void duplicateNode(String nodeId) {
+      final node = workflow.nodes.firstWhere((n) => n.id == nodeId);
+      final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+      final newNode = WorkflowNode(
+        id: id,
+        kind: node.kind,
+        label: node.label,
+        x: _snap(node.x + 220),
+        y: _snap(node.y + 32),
+      );
+      ref.read(workflowProvider.notifier).state = workflow.copyWith(
+        nodes: [...workflow.nodes, newNode],
+      );
+      ref.read(selectedNodeProvider.notifier).state = id;
+      ref.read(nodeMenuProvider.notifier).state = null;
+    }
+
+    void collapseNode(String nodeId) {
+      final parentEdge = workflow.edges.cast<WorkflowEdge?>().firstWhere(
+        (e) => e?.targetId == nodeId,
+        orElse: () => null,
+      );
+      final childEdge = workflow.edges.cast<WorkflowEdge?>().firstWhere(
+        (e) => e?.sourceId == nodeId,
+        orElse: () => null,
+      );
+
+      final newEdges = workflow.edges
+          .where((e) => e.targetId != nodeId && e.sourceId != nodeId)
+          .toList();
+
+      if (parentEdge != null && childEdge != null) {
+        newEdges.add(WorkflowEdge(
+          id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+          sourceId: parentEdge.sourceId,
+          targetId: childEdge.targetId,
+        ));
+      }
+
+      final newNodes = workflow.nodes.where((n) => n.id != nodeId).toList();
+
+      ref.read(workflowProvider.notifier).state = workflow.copyWith(
+        nodes: newNodes,
+        edges: newEdges,
+      );
+
+      if (selectedNodeId == nodeId) {
+        ref.read(selectedNodeProvider.notifier).state = null;
+      }
+      ref.read(nodeMenuProvider.notifier).state = null;
     }
 
     return Focus(
@@ -254,6 +321,38 @@ class GraphCanvas extends ConsumerWidget {
                                       ref.read(operatorPickerProvider.notifier).state = null;
                                     }
                                   },
+                                  onLongPressStart: isSelected && editable
+                                      ? (details) {
+                                          final worldPos = Offset(
+                                            displayX + details.localPosition.dx,
+                                            displayY + details.localPosition.dy,
+                                          );
+                                          final screenPos = Offset(
+                                            worldPos.dx * viewport.zoom + viewport.pan.dx,
+                                            worldPos.dy * viewport.zoom + viewport.pan.dy,
+                                          );
+                                          ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
+                                            screenPos: screenPos,
+                                            nodeId: node.id,
+                                          );
+                                        }
+                                      : null,
+                                  onSecondaryTapDown: isSelected && editable
+                                      ? (details) {
+                                          final worldPos = Offset(
+                                            displayX + details.localPosition.dx,
+                                            displayY + details.localPosition.dy,
+                                          );
+                                          final screenPos = Offset(
+                                            worldPos.dx * viewport.zoom + viewport.pan.dx,
+                                            worldPos.dy * viewport.zoom + viewport.pan.dy,
+                                          );
+                                          ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
+                                            screenPos: screenPos,
+                                            nodeId: node.id,
+                                          );
+                                        }
+                                      : null,
                                   onPanStart: editable
                                       ? (_) {
                                           ref.read(draggingNodeIdProvider.notifier).state = node.id;
@@ -275,13 +374,9 @@ class GraphCanvas extends ConsumerWidget {
                                       ? (_) {
                                           if (draggingNodeId == node.id) {
                                             final offset = ref.read(dragOffsetProvider);
-                                            final nodeHeight = node.kind == 'worker'
-                                                ? 32.0
-                                                : node.kind == 'fan'
-                                                    ? 64.0
-                                                    : 126.0;
+                                            final h = nodeHeight(node.kind);
                                             final snappedX = _snap(node.x + offset.dx);
-                                            final snappedY = _snapCenter(node.y + offset.dy + nodeHeight / 2) - nodeHeight / 2;
+                                            final snappedY = _snapCenter(node.y + offset.dy + h / 2) - h / 2;
                                             final newNodes = workflow.nodes.map((n) {
                                               if (n.id == node.id) {
                                                 return n.copyWith(x: snappedX, y: snappedY);
@@ -305,52 +400,25 @@ class GraphCanvas extends ConsumerWidget {
                                 ),
                                 if (isSelected && editable)
                                   Positioned(
-                                    left: (node.kind == 'worker'
-                                            ? 160.0
-                                            : node.kind == 'fan'
-                                                ? 160.0
-                                                : BranchNode.width) -
-                                        44.0 / viewport.zoom,
-                                    top: (node.kind == 'worker'
-                                            ? 16.0
-                                            : node.kind == 'fan'
-                                                ? 32.0
-                                                : 63.0) -
-                                        44.0 / viewport.zoom,
+                                    left: 0 - 44.0 / viewport.zoom,
+                                    top: nodeHeight(node.kind) / 2 - 44.0 / viewport.zoom,
+                                    child: _InputHandle(
+                                      inverseZoom: 1.0 / viewport.zoom,
+                                      onTap: () {},
+                                    ),
+                                  ),
+                                if (isSelected && editable)
+                                  Positioned(
+                                    left: nodeWidth(node.kind) - 44.0 / viewport.zoom,
+                                    top: nodeHeight(node.kind) / 2 - 44.0 / viewport.zoom,
                                     child: _OutputHandle(
                                       inverseZoom: 1.0 / viewport.zoom,
                                       onTap: () => showPicker(
                                         Offset(
-                                          displayX +
-                                              (node.kind == 'worker'
-                                                  ? 160.0
-                                                  : node.kind == 'fan'
-                                                      ? 160.0
-                                                      : BranchNode.width),
-                                          displayY +
-                                              (node.kind == 'worker'
-                                                  ? 16.0
-                                                  : node.kind == 'fan'
-                                                      ? 32.0
-                                                      : 63.0),
+                                          displayX + nodeWidth(node.kind),
+                                          displayY + nodeHeight(node.kind) / 2,
                                         ),
                                         node.id,
-                                      ),
-                                    ),
-                                  ),
-                                if (isSelected && editable && node.id != 'entrypoint')
-                                  Positioned(
-                                    top: node.kind == 'routing' ? -17 : -17,
-                                    left: node.kind == 'routing' ? 15 : -17,
-                                    child: GestureDetector(
-                                      behavior: HitTestBehavior.translucent,
-                                      onTap: () => deleteNode(node.id),
-                                      child: const SizedBox(
-                                        width: 36,
-                                        height: 36,
-                                        child: Center(
-                                          child: DeleteButton(),
-                                        ),
                                       ),
                                     ),
                                   ),
@@ -370,6 +438,16 @@ class GraphCanvas extends ConsumerWidget {
                     onSelect: addNode,
                     onClose: () {
                       ref.read(operatorPickerProvider.notifier).state = null;
+                    },
+                  ),
+                if (menuAnchor != null)
+                  NodeContextMenu(
+                    anchor: menuAnchor.screenPos,
+                    onDuplicate: () => duplicateNode(menuAnchor.nodeId),
+                    onCollapse: () => collapseNode(menuAnchor.nodeId),
+                    onDelete: () => deleteNode(menuAnchor.nodeId),
+                    onClose: () {
+                      ref.read(nodeMenuProvider.notifier).state = null;
                     },
                   ),
               ],
@@ -423,6 +501,57 @@ class _OutputHandle extends StatelessWidget {
                 spreadRadius: ringSpread,
               ),
               // soft glow
+              BoxShadow(
+                color: AppColors.accent.withValues(alpha: 0.5),
+                blurRadius: glowBlur,
+                spreadRadius: 0,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _InputHandle extends StatelessWidget {
+  final double inverseZoom;
+  final VoidCallback onTap;
+
+  const _InputHandle({
+    required this.inverseZoom,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final size = 88.0 * inverseZoom;
+    final dotSize = 12.0 * inverseZoom;
+    final borderWidth = 2.0 * inverseZoom;
+    final ringSpread = 1.0 * inverseZoom;
+    final glowBlur = 8.0 * inverseZoom;
+
+    return GestureDetector(
+      behavior: HitTestBehavior.translucent,
+      onTap: onTap,
+      child: Container(
+        width: size,
+        height: size,
+        color: Colors.transparent,
+        alignment: Alignment.center,
+        child: Container(
+          width: dotSize,
+          height: dotSize,
+          decoration: BoxDecoration(
+            color: AppColors.accent,
+            shape: BoxShape.circle,
+            border: Border.all(color: AppColors.bg1, width: borderWidth),
+            boxShadow: [
+              BoxShadow(
+                color: AppColors.accent,
+                blurRadius: 0,
+                spreadRadius: ringSpread,
+              ),
               BoxShadow(
                 color: AppColors.accent.withValues(alpha: 0.5),
                 blurRadius: glowBlur,

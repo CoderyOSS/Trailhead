@@ -20,21 +20,26 @@ class BranchNode extends StatelessWidget {
   });
 
   static const double width = 130;
-  static const double _rowH = 27;
-  static const double _padY = 9;
+  static const double rowHeight = 27;
+  static const double padY = 9;
 
-  static const List<_Case> _cases = [
-    _Case(label: 'high', muted: false),
-    _Case(label: 'medium', muted: false),
-    _Case(label: 'low', muted: false),
-    _Case(label: 'default', muted: true),
+  double get height => padY * 2 + _outputs.length * rowHeight;
+
+  List<BranchOutput> get _outputs =>
+      node.outputs.isNotEmpty ? node.outputs : _defaultOutputs;
+
+  static const List<BranchOutput> _defaultOutputs = [
+    BranchOutput(id: '0', label: 'high'),
+    BranchOutput(id: '1', label: 'medium'),
+    BranchOutput(id: '2', label: 'low'),
+    BranchOutput(id: '3', label: 'default'),
   ];
-
-  double get height => _padY * 2 + _cases.length * _rowH;
 
   @override
   Widget build(BuildContext context) {
     final running = status == JobState.running;
+    final outputs = _outputs;
+    final h = height;
 
     List<BoxShadow> outlineShadows;
     if (selected) {
@@ -71,8 +76,6 @@ class BranchNode extends StatelessWidget {
         ),
       ];
     }
-
-    final h = height;
 
     return MouseRegion(
       onEnter: (_) => onEnter?.call(),
@@ -128,12 +131,12 @@ class BranchNode extends StatelessWidget {
                     ),
                     Expanded(
                       child: Padding(
-                        padding: EdgeInsets.symmetric(vertical: _padY),
+                        padding: EdgeInsets.symmetric(vertical: padY),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
-                          children: _cases.map((c) {
+                          children: outputs.map((c) {
                             return SizedBox(
-                              height: _rowH,
+                              height: rowHeight,
                               child: Padding(
                                 padding: const EdgeInsets.only(right: 12, left: 11),
                                 child: Align(
@@ -143,8 +146,8 @@ class BranchNode extends StatelessWidget {
                                     style: TextStyle(
                                       fontFamily: 'monospace',
                                       fontSize: 12,
-                                      fontWeight: c.muted ? FontWeight.w500 : FontWeight.w600,
-                                      color: c.muted ? AppColors.fg3 : AppColors.fg0,
+                                      fontWeight: c.id == '3' ? FontWeight.w500 : FontWeight.w600,
+                                      color: c.id == '3' ? AppColors.fg3 : AppColors.fg0,
                                     ),
                                   ),
                                 ),
@@ -173,9 +176,9 @@ class BranchNode extends StatelessWidget {
               ),
             ),
             // Output dots
-            ..._cases.asMap().entries.map((e) {
+            ...outputs.asMap().entries.map((e) {
               final i = e.key;
-              final top = _padY + i * _rowH + _rowH / 2 - 4;
+              final top = padY + i * rowHeight + rowHeight / 2 - 4;
               return Positioned(
                 right: -4,
                 top: top,
@@ -201,12 +204,6 @@ class BranchNode extends StatelessWidget {
       ),
     );
   }
-}
-
-class _Case {
-  final String label;
-  final bool muted;
-  const _Case({required this.label, required this.muted});
 }
 
 class _StatusBadge extends StatelessWidget {

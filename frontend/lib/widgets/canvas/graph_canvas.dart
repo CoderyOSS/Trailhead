@@ -50,10 +50,12 @@ class GraphCanvas extends ConsumerWidget {
       _        => BranchNode.width,
     };
 
-    double nodeHeight(String kind) => switch (kind) {
+    double nodeHeight(String kind, {List<BranchOutput> outputs = const []}) => switch (kind) {
       'worker' => 36.0,
       'fan'    => 36.0,
-      _        => 126.0,
+      _        => outputs.isNotEmpty
+          ? BranchNode.padY * 2 + outputs.length * BranchNode.rowHeight
+          : BranchNode.padY * 2 + 4 * BranchNode.rowHeight,
     };
 
     // Sync in-place workflow edits to the document model and workflow list.
@@ -81,13 +83,14 @@ class GraphCanvas extends ConsumerWidget {
       });
     });
 
-    void showPicker(Offset worldPos, String sourceId) {
+    void showPicker(Offset worldPos, String sourceId, {int? sourcePort}) {
       if (!editable) return;
       final screenX = worldPos.dx * viewport.zoom + viewport.pan.dx;
       final screenY = worldPos.dy * viewport.zoom + viewport.pan.dy;
       ref.read(operatorPickerProvider.notifier).state = PickerAnchor(
         screenPos: Offset(screenX, screenY),
         sourceNodeId: sourceId,
+        sourcePort: sourcePort,
       );
     }
 
@@ -101,7 +104,7 @@ class GraphCanvas extends ConsumerWidget {
       );
 
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
-      final sourceHeight = nodeHeight(source.kind);
+      final sourceHeight = nodeHeight(source.kind, outputs: source.outputs);
       final newNodeHeight = nodeHeight(type.kind);
       final snappedX = _snap(source.x + 220);
       final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
@@ -117,6 +120,7 @@ class GraphCanvas extends ConsumerWidget {
         id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
         sourceId: sourceId,
         targetId: id,
+        sourcePort: pickerAnchor?.sourcePort,
       );
 
       ref.read(workflowProvider.notifier).state = workflow.copyWith(
@@ -374,7 +378,7 @@ class GraphCanvas extends ConsumerWidget {
                                       ? (_) {
                                           if (draggingNodeId == node.id) {
                                             final offset = ref.read(dragOffsetProvider);
-                                            final h = nodeHeight(node.kind);
+                                            final h = nodeHeight(node.kind, outputs: node.outputs);
                                             final snappedX = _snap(node.x + offset.dx);
                                             final snappedY = _snapCenter(node.y + offset.dy + h / 2) - h / 2;
                                             final newNodes = workflow.nodes.map((n) {
@@ -401,22 +405,62 @@ class GraphCanvas extends ConsumerWidget {
                                 if (isSelected && editable)
                                   Positioned(
                                     left: 0 - 44.0 / viewport.zoom,
-                                    top: nodeHeight(node.kind) / 2 - 44.0 / viewport.zoom,
+                                    top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0 / viewport.zoom,
                                     child: _InputHandle(
                                       inverseZoom: 1.0 / viewport.zoom,
                                       onTap: () {},
                                     ),
                                   ),
-                                if (isSelected && editable)
+                                if (isSelected && editable && node.kind == 'branch')
+                                  ...node.outputs.isNotEmpty
+                                      ? node.outputs.asMap().entries.map((e) {
+                                          final port = e.key;
+                                          final top = BranchNode.padY + port * BranchNode.rowHeight;
+                                          return Positioned(
+                                            left: BranchNode.width - 44.0 / viewport.zoom,
+                                            top: top,
+                                            child: _OutputHandle(
+                                              inverseZoom: 1.0 / viewport.zoom,
+                                              targetWidth: 44.0,
+                                              targetHeight: BranchNode.rowHeight,
+                                              onTap: () => showPicker(
+                                                Offset(
+                                                  displayX + BranchNode.width,
+                                                  displayY + BranchNode.padY + port * BranchNode.rowHeight + BranchNode.rowHeight / 2,
+                                                ),
+                                                node.id,
+                                                sourcePort: port,
+                                              ),
+                                            ),
+                                          );
+                                        })
+                                      : [
+                                          // Fallback for branch nodes with no outputs defined
+                                          Positioned(
+                                            left: BranchNode.width - 44.0 / viewport.zoom,
+                                            top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0 / viewport.zoom,
+                                            child: _OutputHandle(
+                                              inverseZoom: 1.0 / viewport.zoom,
+                                              onTap: () => showPicker(
+                                                Offset(
+                                                  displayX + BranchNode.width,
+                                                  displayY + nodeHeight(node.kind, outputs: node.outputs) / 2,
+                                                ),
+                                                node.id,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                if (isSelected && editable && node.kind != 'branch')
                                   Positioned(
                                     left: nodeWidth(node.kind) - 44.0 / viewport.zoom,
-                                    top: nodeHeight(node.kind) / 2 - 44.0 / viewport.zoom,
+                                    top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0 / viewport.zoom,
                                     child: _OutputHandle(
                                       inverseZoom: 1.0 / viewport.zoom,
                                       onTap: () => showPicker(
                                         Offset(
                                           displayX + nodeWidth(node.kind),
-                                          displayY + nodeHeight(node.kind) / 2,
+                                          displayY + nodeHeight(node.kind, outputs: node.outputs) / 2,
                                         ),
                                         node.id,
                                       ),
@@ -462,17 +506,21 @@ class GraphCanvas extends ConsumerWidget {
 class _OutputHandle extends StatelessWidget {
   final double inverseZoom;
   final VoidCallback onTap;
+  final double targetWidth;
+  final double targetHeight;
 
   const _OutputHandle({
     required this.inverseZoom,
     required this.onTap,
+    this.targetWidth = 88.0,
+    this.targetHeight = 88.0,
   });
 
   @override
   Widget build(BuildContext context) {
     // Direct world-space sizing so hit area exactly matches visual area.
-    // 44 screen-px hit area = 44 * inverseZoom world units.
-    final size = 88.0 * inverseZoom;
+    final width = targetWidth * inverseZoom;
+    final height = targetHeight * inverseZoom;
     final dotSize = 12.0 * inverseZoom;
     final borderWidth = 2.0 * inverseZoom;
     final ringSpread = 1.0 * inverseZoom;
@@ -482,8 +530,8 @@ class _OutputHandle extends StatelessWidget {
       behavior: HitTestBehavior.translucent,
       onTap: onTap,
       child: Container(
-        width: size,
-        height: size,
+        width: width,
+        height: height,
         color: Colors.transparent,
         alignment: Alignment.center,
         child: Container(

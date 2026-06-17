@@ -22,6 +22,21 @@ String workflowToYaml(WorkflowSummary workflow) {
       if (node.skills.isNotEmpty) {
         buf.writeln('    skills: [${node.skills.map((s) => '"$s"').join(', ')}]');
       }
+      if (node.kind == 'branch') {
+        if (node.matchAll) {
+          buf.writeln('    match_all: true');
+        }
+        if (node.outputs.isNotEmpty) {
+          buf.writeln('    outputs:');
+          for (final out in node.outputs) {
+            buf.writeln('      - id: ${out.id}');
+            buf.writeln('        label: ${out.label}');
+            if (out.expression != null && out.expression!.isNotEmpty) {
+              buf.writeln('        expression: "${out.expression}"');
+            }
+          }
+        }
+      }
       buf.writeln('    pos: {x: ${node.x.toStringAsFixed(0)}, y: ${node.y.toStringAsFixed(0)}}');
     }
     buf.writeln('');
@@ -32,6 +47,9 @@ String workflowToYaml(WorkflowSummary workflow) {
     for (final edge in workflow.edges) {
       buf.writeln('  - from: ${edge.sourceId}');
       buf.writeln('    to: ${edge.targetId}');
+      if (edge.sourcePort != null) {
+        buf.writeln('    port: ${edge.sourcePort}');
+      }
     }
   }
 

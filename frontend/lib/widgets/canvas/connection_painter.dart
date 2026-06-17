@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
 import '../../theme/tokens.dart';
+import 'routing_node.dart';
 
 class ConnectionPainter extends CustomPainter {
   final List<WorkflowNode> nodes;
@@ -35,13 +36,29 @@ class ConnectionPainter extends CustomPainter {
     return Offset(node.x, node.y);
   }
 
-  Offset _exitPoint(WorkflowNode node) {
+  double _branchNodeHeight(WorkflowNode node) {
+    if (node.outputs.isNotEmpty) {
+      return BranchNode.padY * 2 + node.outputs.length * BranchNode.rowHeight;
+    }
+    return _branchHeight;
+  }
+
+  Offset _exitPoint(WorkflowNode node, WorkflowEdge edge) {
     final pos = _nodePos(node);
     return switch (node.kind) {
       'worker' => Offset(pos.dx + _workerWidth,  pos.dy + _workerHeight / 2),
       'fan'    => Offset(pos.dx + _fanWidth,     pos.dy + _fanHeight / 2),
-      _        => Offset(pos.dx + _branchWidth,  pos.dy + _branchHeight / 2),
+      _        => _branchExitPoint(node, pos, edge.sourcePort),
     };
+  }
+
+  Offset _branchExitPoint(WorkflowNode node, Offset pos, int? sourcePort) {
+    final h = _branchNodeHeight(node);
+    if (sourcePort == null || node.outputs.isEmpty) {
+      return Offset(pos.dx + _branchWidth, pos.dy + h / 2);
+    }
+    final y = pos.dy + BranchNode.padY + sourcePort * BranchNode.rowHeight + BranchNode.rowHeight / 2;
+    return Offset(pos.dx + _branchWidth, y);
   }
 
   Offset _entryPoint(WorkflowNode node) {
@@ -49,7 +66,7 @@ class ConnectionPainter extends CustomPainter {
     return switch (node.kind) {
       'worker' => Offset(pos.dx,                 pos.dy + _workerHeight / 2),
       'fan'    => Offset(pos.dx,                 pos.dy + _fanHeight / 2),
-      _        => Offset(pos.dx,                 pos.dy + _branchHeight / 2),
+      _        => Offset(pos.dx,                 pos.dy + _branchNodeHeight(node) / 2),
     };
   }
 
@@ -72,7 +89,7 @@ class ConnectionPainter extends CustomPainter {
       final target = nodeMap[edge.targetId];
       if (source == null || target == null) continue;
 
-      final p0 = _exitPoint(source);
+      final p0 = _exitPoint(source, edge);
       final p3 = _entryPoint(target);
 
       final dx = (p3.dx - p0.dx).abs();

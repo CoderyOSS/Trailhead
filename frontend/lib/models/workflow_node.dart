@@ -1,3 +1,27 @@
+class BranchOutput {
+  final String id;
+  final String label;
+  final String? expression;
+
+  const BranchOutput({
+    required this.id,
+    required this.label,
+    this.expression,
+  });
+
+  BranchOutput copyWith({
+    String? id,
+    String? label,
+    String? expression,
+  }) {
+    return BranchOutput(
+      id: id ?? this.id,
+      label: label ?? this.label,
+      expression: expression ?? this.expression,
+    );
+  }
+}
+
 class WorkflowNode {
   final String id;
   final String kind;
@@ -7,6 +31,8 @@ class WorkflowNode {
   final List<String> skills;
   final double x;
   final double y;
+  final List<BranchOutput> outputs;
+  final bool matchAll;
 
   const WorkflowNode({
     required this.id,
@@ -17,6 +43,8 @@ class WorkflowNode {
     this.skills = const [],
     required this.x,
     required this.y,
+    this.outputs = const [],
+    this.matchAll = false,
   });
 
   WorkflowNode copyWith({
@@ -28,6 +56,8 @@ class WorkflowNode {
     List<String>? skills,
     double? x,
     double? y,
+    List<BranchOutput>? outputs,
+    bool? matchAll,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -38,6 +68,8 @@ class WorkflowNode {
       skills: skills ?? this.skills,
       x: x ?? this.x,
       y: y ?? this.y,
+      outputs: outputs ?? this.outputs,
+      matchAll: matchAll ?? this.matchAll,
     );
   }
 }

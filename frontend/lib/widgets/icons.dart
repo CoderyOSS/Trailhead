@@ -24,6 +24,7 @@ enum TrailheadIconData {
   save,
   search,
   lock,
+  collapseLink,
 }
 
 class TrailheadIcon extends StatelessWidget {
@@ -159,4 +160,7 @@ const Map<TrailheadIconData, String> _bodies = {
   TrailheadIconData.lock:
       '<rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>'
       '<path d="M7 11V7a5 5 0 0 1 10 0v4"/>',
+
+  TrailheadIconData.collapseLink:
+      '<path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7"/>',
 };

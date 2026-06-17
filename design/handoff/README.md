@@ -31,7 +31,7 @@ src/
   WorkflowsSidebar.jsx
   JobsSidebar.jsx
   TopBar.jsx
-  Canvas.jsx                  ← node graph: WorkerNode, FanNode, OperatorNode, edges
+  Canvas.jsx                  ← node graph: WorkerNode, MapNode, OperatorNode, edges
   BuilderOverlay.jsx          ← operator picker + builder tips overlay
   StageDrawer.jsx             ← right slide-over (editor + log viewer)
   Filmstrip.jsx               ← snapshot strip (bottom bar)

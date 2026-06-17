@@ -52,7 +52,7 @@ function edgeMidpoint(d) {
 
 function OutputHandle({ stage, pos, isHovered, isSelected, flow, zoom, onAdd }) {
   const horizontal = flow !== "vertical";
-  const isRouting = stage.kind !== "worker" && stage.kind !== "fan";
+  const isRouting = stage.kind !== "worker" && stage.kind !== "map";
   const w = isRouting ? ROUTING_W : NODE_W;
   const h = isRouting ? ROUTING_H : NODE_H;
   const cx = pos.x + (NODE_W / 2);
@@ -390,7 +390,7 @@ function BuilderOverlay({
         const srcStage = workflow.stages.find(st => st.id === edge.from);
         let srcAnchor = null;
         if (srcPos) {
-          const isRouting = srcStage && srcStage.kind !== "worker" && srcStage.kind !== "fan";
+          const isRouting = srcStage && srcStage.kind !== "worker" && srcStage.kind !== "map";
           const w = isRouting ? ROUTING_W : NODE_W;
           const h = isRouting ? ROUTING_H : NODE_H;
           const cx = srcPos.x + (NODE_W / 2);

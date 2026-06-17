@@ -11,7 +11,7 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "canvasStyle": "graph",
   "edgeStyle": "curved",
   "density": "comfortable",
-  "inflightAnim": "tokens",
+  "inflightAnim": "pulse",
   "accent": "orange"
 }/*EDITMODE-END*/;
 
@@ -346,14 +346,13 @@ function AppTweaks({ t, setTweak }) {
         />
       </TweakSection>
 
-      <TweakSection label="Job inflight">
+      <TweakSection label="Active path">
         <TweakRadio
-          label="Tokens"
-          value={t.inflightAnim}
+          label="Live edge"
+          value={t.inflightAnim === "tokens" ? "pulse" : t.inflightAnim}
           options={[
-            { value: "off",    label: "off" },
-            { value: "pulse",  label: "pulse" },
-            { value: "tokens", label: "flow" },
+            { value: "off",   label: "static" },
+            { value: "pulse", label: "pulse" },
           ]}
           onChange={(v) => setTweak("inflightAnim", v)}
         />

@@ -66,9 +66,9 @@ const ICONS = {
   list:    'line:8,6,21,6|line:8,12,21,12|line:8,18,21,18|line:3,6,3.01,6|line:3,12,3.01,12|line:3,18,3.01,18',
   // Active mode — stopwatch
   stopwatch: 'circle:12,14,8|line:12,10,12,14|line:9,2,15,2|line:12,2,12,4|line:18.4,5.6,19.8,7',
-  // for-each — fan-out: one source iterates out to many parallel items
+  // map — one source iterates out over a list to many parallel items
   forEach: 'circle:4,12,2|circle:20,5,2|circle:20,12,2|circle:20,19,2|path:M6 12h6M12 5v14M12 5h6M12 12h6M12 19h6',
-  // join — fan-in: many upstreams merge into one
+  // join / collect — many upstreams merge into one
   merge:   'circle:4,5,2|circle:4,12,2|circle:4,19,2|circle:20,12,2|path:M6 5h6M6 12h6M6 19h6M12 5v14M12 12h6',
   // node toolbar — kebab "more" menu trigger
   moreVertical: 'circle:12,5,1.3|circle:12,12,1.3|circle:12,19,1.3',

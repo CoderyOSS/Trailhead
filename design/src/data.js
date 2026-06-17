@@ -122,14 +122,14 @@ const WORKFLOW = {
     },
 
     {
-      // Fan-out / fan-in container. Replaces the standalone for-each (map)
-      // operator, its per-item body worker, and the join: one capsule that
-      // fans `over` a list, runs `body` per item at `concurrency`, and fans
-      // results back in at the output (`joinMode`).
+      // Map container. A single capsule that maps `body` over a list (`over`)
+      // at `concurrency`, then collects results back in at the output
+      // (`joinMode`). Replaces the standalone for-each operator, its per-item
+      // body worker, and the join with one node.
       id: "commenter",
-      kind: "fan",
+      kind: "map",
       label: "comment-files",
-      sub: "fan-out · per file",
+      sub: "map · per file",
       over: "ingest.files",
       count: 7,
       concurrency: 8,
@@ -458,7 +458,7 @@ const STAGE_EXECUTIONS = {
   ],
 
   commenter: [
-    { id: "ex_fan_q", label: "fan-out · 0 / 7 iterations done", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] },
+    { id: "ex_map_q", label: "map · 0 / 7 items done", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] },
   ],
 
   critic:    [{ id: "ex_critic_q",    label: "execution", status: "queued", startedAt: "—", durMs: 0, tokens: 0, tools: [] }],
@@ -558,15 +558,12 @@ function workflowToYaml(wf) {
       for (const b of s.branches) lines.push(`      - if: ${b.match}\n        to: [${b.to.join(", ")}]${b.loop ? "  # loops back" : ""}`);
     } else if (s.kind === "map") {
       lines.push(`    over: "${s.over}"`);
-      lines.push(`    body: ${s.body}`);
+      lines.push(`    concurrency: ${s.concurrency}`);
+      lines.push(`    collect: ${s.joinMode}`);
+      lines.push(`    body: ${s.body.label}`);
     } else if (s.kind === "join") {
       lines.push(`    waits_for: [${s.waits_for.join(", ")}]`);
       lines.push(`    mode: ${s.mode}`);
-    } else if (s.kind === "fan") {
-      lines.push(`    over: "${s.over}"`);
-      lines.push(`    concurrency: ${s.concurrency}`);
-      lines.push(`    join: ${s.joinMode}`);
-      lines.push(`    body: ${s.body.label}`);
     }
   }
   return lines.join("\n");

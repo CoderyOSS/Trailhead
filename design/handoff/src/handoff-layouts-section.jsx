@@ -308,7 +308,7 @@ function SchematicLayout({ mode, openDrawer }) {
             <FakeNode x={400 + 5} y={62}  w={92} label="quick-review"  status={mode === "active" ? "skipped" : "queued"} />
             <FakeNode x={400 + 5} y={130} w={92} label="security-scan" status={mode === "active" ? "running" : "queued"} running={mode === "active"} />
             <FakeNode x={500 + 1} y={92}  w={88} label="full-review"   status={mode === "active" ? "running" : "queued"} running={mode === "active"} selected={openDrawer} />
-            <FakeNode x={695 + 0} y={92}  w={88} label="fan"    status="queued" />
+            <FakeNode x={695 + 0} y={92}  w={88} label="map"    status="queued" />
             <FakeNode x={790 + 0} y={92}  w={88} label="critic"       status="queued" />
           </Region>
 
@@ -593,7 +593,7 @@ function LayoutsSection() {
       />
       <LayoutCard
         title="Active mode · running job"
-        description="Two-row JobBar. Active edges flow tokens. Right drawer is read-only log viewer with executions list. Filmstrip beneath the canvas."
+        description="Two-row JobBar. Active edges are accent-highlighted (no traveling dots). Right drawer is read-only log viewer with executions list. Filmstrip beneath the canvas."
         mode="active"
         openDrawer
         tree={`Scaffold

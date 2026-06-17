@@ -66,10 +66,15 @@ const ICONS = {
   list:    'line:8,6,21,6|line:8,12,21,12|line:8,18,21,18|line:3,6,3.01,6|line:3,12,3.01,12|line:3,18,3.01,18',
   // Active mode — stopwatch
   stopwatch: 'circle:12,14,8|line:12,10,12,14|line:9,2,15,2|line:12,2,12,4|line:18.4,5.6,19.8,7',
-  // for-each — fan-out: one source iterates out to many parallel items
+  // map — one source iterates out over a list to many parallel items
   forEach: 'circle:4,12,2|circle:20,5,2|circle:20,12,2|circle:20,19,2|path:M6 12h6M12 5v14M12 5h6M12 12h6M12 19h6',
-  // join — fan-in: many upstreams merge into one
+  // join / collect — many upstreams merge into one
   merge:   'circle:4,5,2|circle:4,12,2|circle:4,19,2|circle:20,12,2|path:M6 5h6M6 12h6M6 19h6M12 5v14M12 12h6',
+  // worker-icon candidates
+  cpu:     'rect:4,4,16,16,2,2|rect:9,9,6,6,1,1|line:9,2,9,4|line:15,2,15,4|line:9,20,9,22|line:15,20,15,22|line:2,9,4,9|line:2,15,4,15|line:20,9,22,9|line:20,15,22,15',
+  bot:     'path:M12 8V4H8|rect:4,8,16,12,2,2|line:2,14,4,14|line:20,14,22,14|line:9,13,9,15|line:15,13,15,15',
+  sparkles:'path:M12 3l1.9 5.8L20 10l-6.1 1.2L12 17l-1.9-5.8L4 10l6.1-1.2z|path:M19 14.5l.7 2.1L22 17.5l-2.3.6L19 20.5l-.7-2.4L16 17.5l2.3-.9z',
+  box:     'path:M21 8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16Z|path:M3.3 7l8.7 5 8.7-5|line:12,22,12,12',
   // node toolbar — kebab "more" menu trigger
   moreVertical: 'circle:12,5,1.3|circle:12,12,1.3|circle:12,19,1.3',
   // remove + collapse — parent wired straight through to child

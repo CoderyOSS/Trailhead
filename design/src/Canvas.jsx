@@ -20,7 +20,7 @@ const WORKER_TOP = (NODE_H - WORKER_H) / 2; // 16 — centers the body on the ce
                                             // body's center line + its left/right ends + the output dot all sit on grid dots
 const OP_W     = 32;          // operator node — rounded square, same height as the worker body, centered in the worker column
 
-function NodeShell({ status, selected, glow, density, children, onClick, style }) {
+function NodeShell({ status, selected, glow, density, children, onClick, style, suppressRail }) {
   const compact = density === "compact";
   const running = status === "running";
   const statusColor = status && status !== "queued" && status !== "skipped"
@@ -46,7 +46,7 @@ function NodeShell({ status, selected, glow, density, children, onClick, style }
           : "var(--co-grad-loaf)",
         border: `1px solid ${selected ? "var(--co-accent)" : running ? statusColor : "var(--co-border-2)"}`,
         borderRadius: 10,
-        boxShadow: breathing ? undefined : `${railShadow}, ${outlineShadow}`,
+        boxShadow: breathing ? undefined : (suppressRail ? outlineShadow : `${railShadow}, ${outlineShadow}`),
         animation: breathing ? "co-node-running-glow 1.7s var(--co-ease-in-out) infinite" : undefined,
         cursor: "pointer",
         userSelect: "none",
@@ -62,37 +62,49 @@ function NodeShell({ status, selected, glow, density, children, onClick, style }
 
 function WorkerNode({ stage, status, info, selected, density, onClick }) {
   const compact = density === "compact";
-  const running = status?.status === "running";
+  const st = status?.status;
+  const running = st === "running";
   return (
     <NodeShell
-      status={status?.status}
+      status={st}
       selected={selected}
       glow={running}
       density={density}
+      suppressRail
       onClick={onClick}
       style={{
         left: info.x, top: info.y + WORKER_TOP,
         width: WORKER_W, height: WORKER_H,
-        padding: "0 10px",
+        padding: 0,
         display: "flex", alignItems: "center",
       }}
     >
-      {/* Worker shows only what you need to read it at a glance: its title,
-          plus the run status (the straddling pill below). */}
+      {/* leading golden role-tile — the shared identity anchor on every node. */}
+      <span style={{
+        width: 26, height: "100%", flexShrink: 0,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        background: "var(--co-grad-crust)", color: "var(--co-accent-ink)",
+        borderTopLeftRadius: 9, borderBottomLeftRadius: 9,
+        borderRight: "1px solid var(--co-border-2)",
+      }}>
+        <Icon name={stage.icon || "bot"} size={14} color="currentColor" />
+      </span>
+
+      {/* title — left-aligned beside the role-tile */}
       <span style={{
         fontFamily: "var(--co-font-mono)",
-        fontSize: compact ? 13 : 14,
+        fontSize: compact ? 12.5 : 13.5,
         fontWeight: 600,
         color: "var(--co-text-strong)",
-        textAlign: "center",
+        textAlign: "left",
         overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-        flex: 1,
+        flex: 1, padding: "0 10px",
       }}>{stage.label}</span>
 
       {/* in-flight progress bar */}
       {running && status.progress != null && (
         <div style={{
-          position: "absolute", left: 12, right: 12, bottom: 6,
+          position: "absolute", left: 34, right: 12, bottom: 6,
           height: 2, background: "var(--co-bg-4)", borderRadius: 1, overflow: "hidden",
         }}>
           <div style={{
@@ -149,13 +161,13 @@ function WorkerNode({ stage, status, info, selected, density, onClick }) {
 
 function OperatorNode({ stage, status, info, selected, onClick, onContextMenu }) {
   const running = status?.status === "running";
-  const icon = stage.kind === "join" ? "merge" : "forEach";
+  const icon = stage.kind === "join" ? "merge" : "gitBranch";
   return (
     <div
       onClick={onClick}
       onContextMenu={onContextMenu}
       onMouseDown={e => e.stopPropagation()}
-      title={stage.kind === "join" ? "join · right-click to remove" : "for-each · right-click to remove"}
+      title={`${stage.kind} · right-click to remove`}
       style={{
         position: "absolute",
         left: info.x + (WORKER_W - OP_W) / 2,
@@ -189,7 +201,6 @@ function ContextMenu({ menu, onInsert, onRemove, onDuplicate, onRemoveCollapse, 
   let items;
   if (menu.kind === "edge") {
     items = [
-      { icon: "forEach", label: "insert for-each", onClick: () => onInsert(menu.edgeKey, "map") },
       { icon: "merge",   label: "insert join",     onClick: () => onInsert(menu.edgeKey, "join") },
     ];
   } else if (menu.kind === "operator") {
@@ -552,7 +563,7 @@ function Canvas({
 
   // Edge map: { "from→to:case": status }
   const stageById = useMemoCV(() => Object.fromEntries(workflow.stages.map(s => [s.id, s])), [workflow]);
-  const isRouting = (s) => s && s.kind !== "worker" && s.kind !== "fan";
+  const isRouting = (s) => s && s.kind !== "worker" && s.kind !== "map";
 
   const flow = canvasStyle === "tree" ? "vertical" : "horizontal";
 
@@ -682,7 +693,11 @@ function Canvas({
                   strokeDasharray={dash}
                   markerEnd={arrow}
                   opacity={opacity}
-                  style={{ transition: "stroke 240ms" }}
+                  style={{
+                    transition: "stroke 240ms",
+                    animation: (eStatus === "active" && inflightAnim === "pulse")
+                      ? "co-pulse 1.8s var(--co-ease-in-out) infinite" : undefined,
+                  }}
                   pointerEvents="none"
                 />
 
@@ -694,11 +709,6 @@ function Canvas({
                     status={eStatus}
                   />
                 )}
-
-                {/* flowing tokens for active edges */}
-                {eStatus === "active" && inflightAnim !== "off" && (
-                  <FlowTokens d={d} mode={inflightAnim} />
-                )}
               </g>
             );
           })}
@@ -709,7 +719,7 @@ function Canvas({
           const p = positions[s.id];
           if (!p) return null;
           const status = showInflight ? job.stageStatus[s.id] : null;
-          const isOp = s.kind !== "worker" && s.kind !== "fan";
+          const isOp = s.kind !== "worker" && s.kind !== "map";
           return (
             <div
               key={s.id}
@@ -729,8 +739,8 @@ function Canvas({
               onTouchMove={isBuilder ? () => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } } : undefined}
               onTouchEnd={isBuilder ? () => { if (longPressRef.current) { clearTimeout(longPressRef.current); longPressRef.current = null; } } : undefined}
             >
-              {s.kind === "fan"
-                ? <FanNode stage={s} status={status} info={p} selected={selectedId === s.id} view={view} onClick={() => onSelect(s.id)} />
+              {s.kind === "map"
+                ? <MapNode stage={s} status={status} info={p} selected={selectedId === s.id} view={view} onClick={() => onSelect(s.id)} />
                 : isOp
                 ? <OperatorNode stage={s} status={status} info={p} selected={selectedId === s.id} onClick={() => onSelect(s.id)} />
                 : <WorkerNode stage={s} status={status} info={p} selected={selectedId === s.id} density={density} onClick={() => onSelect(s.id)} />}
@@ -851,24 +861,12 @@ function CaseLabel({ a, b, flow, label, status }) {
   );
 }
 
-function FlowTokens({ d, mode }) {
-  // Three dots along the path at staggered times.
-  const dur = mode === "pulse" ? 2.8 : 1.6;
-  const dots = mode === "tokens" ? 3 : 2;
-  const offsets = [0, 0.33, 0.66].slice(0, dots);
-  return (
-    <>
-      {offsets.map((o, i) => (
-        <circle key={i} r={3.2} fill="var(--co-accent)">
-          <animateMotion dur={`${dur}s`} repeatCount="indefinite" begin={`${-o * dur}s`} path={d} />
-        </circle>
-      ))}
-    </>
-  );
-}
+// FlowTokens removed — work happens inside workers, not on the wires. Active
+// edges read by accent color (and an optional co-pulse breathe), never by
+// traveling dots.
 
 // ──────────────────────────────────────────────────────────────────────────
-// Fan node — the fan-out / fan-in container (concept "capsule reactor").
+// Map node — the map container (concept "capsule reactor").
 // Replaces the standalone for-each + join operators. A capsule that occupies
 // the worker column (WORKER_W wide, centered on the cell midline so edges
 // stay flat). Collapses to one node; the header chevron expands it in place
@@ -883,7 +881,7 @@ function FlowTokens({ d, mode }) {
 // usual arrowhead, and build mode renders the same dot output handle on the
 // right border as any worker — no special inlet/outlet badges.
 // ──────────────────────────────────────────────────────────────────────────
-const fanChipStyle = {
+const mapChipStyle = {
   display: "inline-flex", alignItems: "center", height: 16, padding: "0 6px",
   borderRadius: 999,
   background: "color-mix(in oklab, var(--co-accent) 14%, transparent)",
@@ -892,7 +890,7 @@ const fanChipStyle = {
   fontFamily: "var(--co-font-mono)", fontSize: 9, fontWeight: 600, whiteSpace: "nowrap",
 };
 
-function FanNode({ stage, status, info, selected, view, onClick, defaultOpen }) {
+function MapNode({ stage, status, info, selected, view, onClick, defaultOpen }) {
   const [open, setOpen] = useStateCV(!!defaultOpen);
   const job = view === "job" ? status : null;
   const st = status?.status;
@@ -938,14 +936,16 @@ function FanNode({ stage, status, info, selected, view, onClick, defaultOpen }) 
           <Icon name="forEach" size={13} color={headerFg} />
           <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, fontWeight: 700, color: headerFg, letterSpacing: "0.02em" }}>map</span>
           <span style={{ flex: 1 }} />
-          <span style={{
-            display: "inline-flex", alignItems: "center", gap: 4, height: 16, padding: "0 6px",
-            borderRadius: 999, background: chipBg, color: headerFg,
-            fontFamily: "var(--co-font-mono)", fontSize: 9.5, fontWeight: 700, whiteSpace: "nowrap",
-          }}>
-            {running && <span style={{ width: 5, height: 5, borderRadius: 999, background: headerFg }} />}
-            {job ? `${done} / ${count}` : `×${count}`}
-          </span>
+          {job && (
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 4, height: 16, padding: "0 6px",
+              borderRadius: 999, background: chipBg, color: headerFg,
+              fontFamily: "var(--co-font-mono)", fontSize: 9.5, fontWeight: 700, whiteSpace: "nowrap",
+            }}>
+              {running && <span style={{ width: 5, height: 5, borderRadius: 999, background: headerFg }} />}
+              {`${done} / ${count}`}
+            </span>
+          )}
           <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(o => !o); }}
             title={open ? "collapse" : "expand internal workflow"}
             style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, border: "none", background: "transparent", color: headerFg, cursor: "pointer", padding: 0 }}>
@@ -966,8 +966,8 @@ function FanNode({ stage, status, info, selected, view, onClick, defaultOpen }) 
               <span style={{ display: "inline-flex", alignItems: "center", height: 24, padding: "0 10px", borderRadius: 7, background: "var(--co-grad-loaf)", border: "1px solid var(--co-border-2)", boxShadow: "inset 3px 0 0 var(--co-accent)", fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)", whiteSpace: "nowrap" }}>{stage.body.label}</span>
             </div>
             <div style={{ display: "flex", gap: 5 }}>
-              <span style={fanChipStyle}>{stage.concurrency} parallel</span>
-              <span style={fanChipStyle}>join · {stage.joinMode}</span>
+              <span style={mapChipStyle}>{stage.concurrency} parallel</span>
+              <span style={mapChipStyle}>collect · {stage.joinMode}</span>
             </div>
           </div>
         )}
@@ -976,4 +976,4 @@ function FanNode({ stage, status, info, selected, view, onClick, defaultOpen }) 
   );
 }
 
-Object.assign(window, { Canvas, WorkerNode, FanNode });
+Object.assign(window, { Canvas, WorkerNode, MapNode });

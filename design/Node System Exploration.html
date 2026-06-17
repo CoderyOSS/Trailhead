@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark" data-theme-variant="slate">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Node System — Consistency Exploration</title>
+  <link rel="stylesheet" href="colors_and_type.css" />
+  <link rel="stylesheet" href="themes.css" />
+  <style>
+    html, body { margin: 0; height: 100%; background: var(--co-bg-0); color: var(--co-text); }
+    #root { height: 100vh; }
+    button { font-family: var(--co-font-sans); }
+    .ns-loading {
+      height: 100vh; display: flex; align-items: center; justify-content: center;
+      font-family: var(--co-font-mono); font-size: 13px; color: var(--co-text-subtle);
+      letter-spacing: 0.06em;
+    }
+    /* Keyframes used by the design-system components */
+    @keyframes co-pulse  { 0%, 100% { opacity: 1 } 50% { opacity: .4 } }
+    @keyframes co-spin   { to { transform: rotate(360deg); } }
+    @keyframes co-blink  { 0%, 50% { opacity: 1 } 50.01%, 100% { opacity: 0 } }
+    @keyframes co-slide-in { from { transform: translateX(24px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+  </style>
+</head>
+<body>
+  <div id="root"><div class="ns-loading">loading node system…</div></div>
+
+  <script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+  <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+
+  <script type="text/babel" src="src/Common.jsx"></script>
+  <script type="text/babel" src="node-system/design-canvas.jsx"></script>
+  <script type="text/babel" src="node-system/kit.jsx"></script>
+  <script type="text/babel" src="node-system/synthesis.jsx"></script>
+  <script type="text/babel" src="node-system/tree.jsx"></script>
+  <script type="text/babel" src="node-system/app.jsx"></script>
+</body>
+</html>

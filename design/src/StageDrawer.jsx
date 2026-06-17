@@ -317,14 +317,6 @@ function EditorSettingsTab({ stage }) {
         </Field>
       )}
 
-      {stage.kind === "map" && (
-        <>
-          <Field label="iterate over"><div style={preStyle}>{stage.over}</div></Field>
-          <Field label="body stage"><div style={preStyle}>{stage.body}</div></Field>
-          <Field label="max parallel"><input defaultValue="8" style={inputStyle} /></Field>
-        </>
-      )}
-
       {stage.kind === "join" && (
         <>
           <Field label="waits for">
@@ -340,15 +332,15 @@ function EditorSettingsTab({ stage }) {
         </>
       )}
 
-      {stage.kind === "fan" && (
+      {stage.kind === "map" && (
         <>
-          <Field label="fans over" hint="the list this container splits"><div style={preStyle}>{stage.over}</div></Field>
+          <Field label="maps over" hint="the list this maps each item across"><div style={preStyle}>{stage.over}</div></Field>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
             <Field label="items"><div style={preStyle}>{stage.count}</div></Field>
             <Field label="max parallel"><input defaultValue={String(stage.concurrency)} style={inputStyle} /></Field>
-            <Field label="fan-in"><div style={preStyle}>{stage.joinMode}</div></Field>
+            <Field label="collect"><div style={preStyle}>{stage.joinMode}</div></Field>
           </div>
-          <Field label="per-item body" hint="runs once per item, then results fan back in">
+          <Field label="per-item body" hint="runs once per item, then results collect back in">
             <div style={{ padding: 10, background: "var(--co-bg-1)", border: "1px solid var(--co-border-2)", borderRadius: 8, display: "flex", flexDirection: "column", gap: 8 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                 <span style={{ display: "inline-flex", alignItems: "center", height: 22, padding: "0 9px", borderRadius: 6, background: "var(--co-grad-loaf)", border: "1px solid var(--co-border-2)", boxShadow: "inset 3px 0 0 var(--co-accent)", fontFamily: "var(--co-font-mono)", fontSize: 12, fontWeight: 600, color: "var(--co-text-strong)" }}>{stage.body.label}</span>
@@ -844,7 +836,6 @@ function JobStageHeaderInfo({ stage }) {
         {stage.kind === "branch" && <Field label="cond"><div style={preStyle}>{stage.cond}</div></Field>}
         {stage.kind === "map"    && <Field label="over"><div style={preStyle}>{stage.over}</div></Field>}
         {stage.kind === "join"   && <Field label="waits for"><div style={preStyle}>{stage.waits_for.join(", ")}</div></Field>}
-        {stage.kind === "fan"    && <Field label="over"><div style={preStyle}>{stage.over}</div></Field>}
       </div>
     );
   }
@@ -958,9 +949,8 @@ function StageDrawer({ stage, status, onClose, view }) {
   const meta = stage.kind === "worker" ? "worker stage" :
     stage.kind === "switch" ? "switch — n-way router" :
     stage.kind === "branch" ? "branch — if/else router" :
-    stage.kind === "map"    ? "map — fan-out iterator" :
+    stage.kind === "map"    ? "map — iterate over a list" :
     stage.kind === "join"   ? "join — wait for upstreams" :
-    stage.kind === "fan"    ? "fan — fan-out / fan-in container" :
     "routing operator";
 
   const isBuilder = view === "builder";
@@ -971,7 +961,7 @@ function StageDrawer({ stage, status, onClose, view }) {
         { value: "prompt",   label: "prompt" },
         { value: "result",   label: "result" },
       ]
-    : stage.kind === "fan"
+    : stage.kind === "map"
     ? [
         { value: "settings", label: "container" },
       ]
@@ -995,12 +985,12 @@ function StageDrawer({ stage, status, onClose, view }) {
         <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
           <div style={{
             width: 28, height: 28, borderRadius: 6,
-            background: (stage.kind === "worker" || stage.kind === "fan") ? "var(--co-grad-crust)" : "var(--co-bg-3)",
-            border: (stage.kind === "worker" || stage.kind === "fan") ? "none" : "1px solid var(--co-border-3)",
+            background: (stage.kind === "worker" || stage.kind === "map") ? "var(--co-grad-crust)" : "var(--co-bg-3)",
+            border: (stage.kind === "worker" || stage.kind === "map") ? "none" : "1px solid var(--co-border-3)",
             display: "flex", alignItems: "center", justifyContent: "center",
           }}>
-            <Icon name={stage.kind === "worker" ? "zap" : stage.kind === "fan" ? "forEach" : "gitBranch"} size={14}
-                  color={(stage.kind === "worker" || stage.kind === "fan") ? "var(--co-accent-ink)" : "var(--co-accent)"} />
+            <Icon name={stage.kind === "worker" ? "zap" : stage.kind === "map" ? "forEach" : "gitBranch"} size={14}
+                  color={(stage.kind === "worker" || stage.kind === "map") ? "var(--co-accent-ink)" : "var(--co-accent)"} />
           </div>
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 8, lineHeight: 1.2 }}>

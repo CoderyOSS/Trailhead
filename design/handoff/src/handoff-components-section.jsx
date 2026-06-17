@@ -936,33 +936,33 @@ function ModifierDotPreview({ kind }) {
       )}
       <div style={{ textAlign: "center" }}>
         <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)" }}>
-          {isForEach ? "for-each node" : "join node"}
+          {isForEach ? "map node" : "join node"}
         </div>
         <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", marginTop: 2 }}>
-          {isForEach ? "fans the source's output over a list" : "waits for N upstreams to converge"}
+          {isForEach ? "maps the source's output over a list" : "waits for N upstreams to converge"}
         </div>
       </div>
     </div>
   );
 }
 
-function FanContainerPreview({ open }) {
+function MapContainerPreview({ open }) {
   const stage = {
-    kind: "fan", label: "comment-files", over: "ingest.files",
+    kind: "map", label: "comment-files", over: "ingest.files",
     count: 7, concurrency: 8, joinMode: "all",
     body: { label: "comment-file", model: "haiku-4.5", skills: ["code.review.inline"] },
   };
   return (
     <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
       <div style={{ position: "relative", width: 184, height: 172 }}>
-        <FanNode stage={stage} status={null} info={{ x: 12, y: 54 }} selected={false} view="builder" defaultOpen={open} onClick={() => {}} />
+        <MapNode stage={stage} status={null} info={{ x: 12, y: 54 }} selected={false} view="builder" defaultOpen={open} onClick={() => {}} />
       </div>
       <div style={{ textAlign: "center" }}>
         <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)" }}>
           {open ? "expanded" : "collapsed"}
         </div>
         <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", marginTop: 2 }}>
-          {open ? "reveals the per-item body" : "one node · ×7 over the list"}
+          {open ? "reveals the per-item body" : "one node · maps over the list"}
         </div>
       </div>
     </div>
@@ -970,33 +970,33 @@ function FanContainerPreview({ open }) {
 }
 
 // ════════════════════════════════════════════════════════════════════════
-//  Fan container — the expanded form is a modal workflow editor
+//  Map container — the expanded form is a modal workflow editor
 //  Collapsed it is a single capsule node; expanding opens a centered modal
 //  that hosts an editable internal-workflow canvas + a save / cancel /
 //  undo-redo / settings toolbar.
 // ════════════════════════════════════════════════════════════════════════
 
-const FAN_EDITOR_STAGE = {
-  kind: "fan", label: "comment-files", over: "ingest.files",
+const MAP_EDITOR_STAGE = {
+  kind: "map", label: "comment-files", over: "ingest.files",
   count: 7, concurrency: 8, joinMode: "all", timeout: 600,
   body: { label: "comment-file", model: "haiku-4.5", skills: ["code.review.inline"] },
 };
 
 // The per-item body is a real worker node — identical component + geometry to
 // the worker states above (160×32, 1 grid gap tall).
-const FAN_BODY_STAGE = { id: "fan_body", kind: "worker", label: "comment-file" };
+const MAP_BODY_STAGE = { id: "map_body", kind: "worker", label: "comment-file" };
 
 // File path the linked-file variant points at.
-const FAN_FILE_REF = { path: "flows/comment-file.flow.yaml" };
+const MAP_FILE_REF = { path: "flows/comment-file.flow.yaml" };
 
-const fanEditorChip = {
+const mapEditorChip = {
   display: "inline-flex", alignItems: "center", height: 19, padding: "0 7px",
   borderRadius: 999, fontFamily: "var(--co-font-mono)", fontSize: 10, fontWeight: 600,
   whiteSpace: "nowrap", letterSpacing: "0.01em",
 };
 
 // Square chrome button used in the modal toolbar (undo / redo / settings / close).
-function FanToolBtn({ children, title, onClick, disabled, active }) {
+function MapToolBtn({ children, title, onClick, disabled, active }) {
   const [hov, setHov] = React.useState(false);
   return (
     <button type="button" title={title} onClick={onClick} disabled={disabled}
@@ -1024,7 +1024,7 @@ const RedoSvg = () => (
   </svg>
 );
 
-// One endpoint of the internal lane (fan-out source / fan-in sink).
+// One endpoint of the internal lane (map source / collect sink).
 function LaneEndpoint({ icon, label, sub }) {
   return (
     <div style={{ position: "relative", width: 36, flex: "0 0 auto" }}>
@@ -1061,12 +1061,12 @@ function LaneEdge() {
 function EditorBodyNode() {
   return (
     <div style={{ position: "relative", width: 160, height: 64, flexShrink: 0 }}>
-      <WorkerNode stage={FAN_BODY_STAGE} status={null} info={{ x: 0, y: 0 }} selected={false} density="default" onClick={() => {}} />
+      <WorkerNode stage={MAP_BODY_STAGE} status={null} info={{ x: 0, y: 0 }} selected={false} density="default" onClick={() => {}} />
     </div>
   );
 }
 
-function FanSettingsField({ label, value }) {
+function MapSettingsField({ label, value }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
       <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>{label}</span>
@@ -1077,9 +1077,9 @@ function FanSettingsField({ label, value }) {
 }
 
 // The editor region: an internal-workflow canvas (hearth + dot grid) hosting
-// the fan-out → body → fan-in lane, a zoom indicator, and an optional
+// the map → body → collect lane, a zoom indicator, and an optional
 // settings panel that slides in from the right.
-function FanEditorRegion({ settingsOpen }) {
+function MapEditorRegion({ settingsOpen }) {
   return (
     <div style={{ display: "flex", minHeight: 256, borderTop: "1px solid var(--co-border-1)", borderBottom: "1px solid var(--co-border-1)" }}>
       <div style={{
@@ -1093,11 +1093,11 @@ function FanEditorRegion({ settingsOpen }) {
         <span style={{ position: "absolute", top: 10, left: 12, fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>internal workflow</span>
 
         <div style={{ display: "flex", alignItems: "center", gap: 0, padding: "0 26px", height: "100%" }}>
-          <LaneEndpoint icon="forEach" label="fan-out" sub="ingest.files" />
+          <LaneEndpoint icon="forEach" label="map" sub="ingest.files" />
           <LaneEdge />
           <EditorBodyNode />
           <LaneEdge />
-          <LaneEndpoint icon="merge" label="fan-in" sub="→ results" />
+          <LaneEndpoint icon="merge" label="collect" sub="→ results" />
         </div>
 
         {/* editor floating toolbar */}
@@ -1113,12 +1113,12 @@ function FanEditorRegion({ settingsOpen }) {
         <div style={{ width: 224, flex: "0 0 auto", borderLeft: "1px solid var(--co-border-1)", background: "var(--co-bg-1)", padding: 16, display: "flex", flexDirection: "column", gap: 14 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <Icon name="settings" size={14} color="var(--co-accent)" />
-            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-muted)", fontWeight: 600 }}>fan settings</span>
+            <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-muted)", fontWeight: 600 }}>map settings</span>
           </div>
-          <FanSettingsField label="concurrency" value="8 parallel" />
-          <FanSettingsField label="join mode" value="all" />
-          <FanSettingsField label="per-item timeout" value="600s" />
-          <FanSettingsField label="on item error" value="continue" />
+          <MapSettingsField label="concurrency" value="8 parallel" />
+          <MapSettingsField label="join mode" value="all" />
+          <MapSettingsField label="per-item timeout" value="600s" />
+          <MapSettingsField label="on item error" value="continue" />
         </div>
       )}
     </div>
@@ -1128,7 +1128,7 @@ function FanEditorRegion({ settingsOpen }) {
 // File-linkage bar — the subworkflow can live in an external file or be a
 // local-only graph. Linked → shows the path + an "open file" button;
 // local-only → shows a "save to file" option.
-function FanFileBar({ fileRef }) {
+function MapFileBar({ fileRef }) {
   const linked = !!fileRef;
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 9, padding: "0 14px", height: 42,
@@ -1138,7 +1138,7 @@ function FanFileBar({ fileRef }) {
       {linked ? (
         <>
           <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 11.5, color: "var(--co-text-strong)", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{fileRef.path}</span>
-          <span style={{ ...fanEditorChip, height: 16, fontSize: 8.5, letterSpacing: "0.06em", textTransform: "uppercase",
+          <span style={{ ...mapEditorChip, height: 16, fontSize: 8.5, letterSpacing: "0.06em", textTransform: "uppercase",
             background: "color-mix(in oklab, var(--co-accent) 14%, transparent)", color: "var(--co-accent)", border: "1px solid color-mix(in oklab, var(--co-accent) 32%, transparent)" }}>linked file</span>
         </>
       ) : (
@@ -1155,7 +1155,7 @@ function FanFileBar({ fileRef }) {
 }
 
 // The modal panel itself — toolbar header, file bar, editor region, action footer.
-function FanEditorPanel({ onClose, fileRef }) {
+function MapEditorPanel({ onClose, fileRef }) {
   const [hist, setHist] = React.useState(2);   // 0..2 — start at latest edit
   const [dirty, setDirty] = React.useState(false);
   const [settingsOpen, setSettingsOpen] = React.useState(false);
@@ -1176,30 +1176,30 @@ function FanEditorPanel({ onClose, fileRef }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
             <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 14, fontWeight: 700, color: "var(--co-text-strong)", letterSpacing: "-0.01em", whiteSpace: "nowrap" }}>comment-files</span>
-            <span style={{ ...fanEditorChip, height: 17, background: "color-mix(in oklab, var(--co-accent) 15%, transparent)", color: "var(--co-accent)", border: "1px solid color-mix(in oklab, var(--co-accent) 32%, transparent)" }}>×7</span>
+            <span style={{ ...mapEditorChip, height: 17, background: "color-mix(in oklab, var(--co-accent) 15%, transparent)", color: "var(--co-accent)", border: "1px solid color-mix(in oklab, var(--co-accent) 32%, transparent)" }}>×7</span>
           </div>
-          <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-text-subtle)", marginTop: 2, whiteSpace: "nowrap" }}>fan-out / fan-in · capsule reactor</div>
+          <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-text-subtle)", marginTop: 2, whiteSpace: "nowrap" }}>map · capsule reactor</div>
         </div>
         <span style={{ flex: 1 }} />
         <div style={{ display: "flex", alignItems: "center", gap: 2 }}>
-          <FanToolBtn title="undo" disabled={!canUndo} onClick={() => { setHist(h => Math.max(0, h - 1)); setDirty(true); }}><UndoSvg /></FanToolBtn>
-          <FanToolBtn title="redo" disabled={!canRedo} onClick={() => { setHist(h => Math.min(2, h + 1)); setDirty(true); }}><RedoSvg /></FanToolBtn>
+          <MapToolBtn title="undo" disabled={!canUndo} onClick={() => { setHist(h => Math.max(0, h - 1)); setDirty(true); }}><UndoSvg /></MapToolBtn>
+          <MapToolBtn title="redo" disabled={!canRedo} onClick={() => { setHist(h => Math.min(2, h + 1)); setDirty(true); }}><RedoSvg /></MapToolBtn>
           <span style={{ width: 1, height: 18, background: "var(--co-border-2)", margin: "0 5px" }} />
-          <FanToolBtn title="settings" active={settingsOpen} onClick={() => setSettingsOpen(o => !o)}><Icon name="settings" size={16} /></FanToolBtn>
-          <FanToolBtn title="close" onClick={onCancel}><Icon name="x" size={16} /></FanToolBtn>
+          <MapToolBtn title="settings" active={settingsOpen} onClick={() => setSettingsOpen(o => !o)}><Icon name="settings" size={16} /></MapToolBtn>
+          <MapToolBtn title="close" onClick={onCancel}><Icon name="x" size={16} /></MapToolBtn>
         </div>
       </div>
 
-      <FanFileBar fileRef={fileRef} />
+      <MapFileBar fileRef={fileRef} />
 
-      <FanEditorRegion settingsOpen={settingsOpen} />
+      <MapEditorRegion settingsOpen={settingsOpen} />
 
       {/* action footer */}
       <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "11px 14px", height: 58 }}>
         <div style={{ display: "flex", alignItems: "center", gap: 6, minWidth: 0, flexWrap: "wrap" }}>
-          <span style={{ ...fanEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>over ingest.files</span>
-          <span style={{ ...fanEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>8 parallel</span>
-          <span style={{ ...fanEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>join · all</span>
+          <span style={{ ...mapEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>over ingest.files</span>
+          <span style={{ ...mapEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>8 parallel</span>
+          <span style={{ ...mapEditorChip, background: "var(--co-bg-3)", color: "var(--co-text-muted)", border: "1px solid var(--co-border-2)" }}>join · all</span>
           {dirty && (
             <span style={{ display: "inline-flex", alignItems: "center", gap: 5, fontFamily: "var(--co-font-mono)", fontSize: 10.5, color: "var(--co-warning)" }}>
               <span style={{ width: 6, height: 6, borderRadius: 999, background: "var(--co-warning)" }} /> edited
@@ -1215,13 +1215,13 @@ function FanEditorPanel({ onClose, fileRef }) {
 }
 
 // Collapsed capsule — the single canvas node, shown deselected. 160×64 =
-// exactly 2 grid gaps tall (the worker is 1 gap; the fan capsule is double),
+// exactly 2 grid gaps tall (the worker is 1 gap; the map capsule is double),
 // sitting on the 32px grid. Toasted header: deselected it bakes down to a
 // muted cocoa-orange over a neutral shell; the full crust gradient + accent
 // outline appear only on selection (or while running). Connectors are the
 // standard worker affordances — arrow in at the left border, dot output
 // handle on the right. Its chevron opens the modal.
-function FanCollapsedTrigger({ onExpand }) {
+function MapCollapsedTrigger({ onExpand }) {
   return (
     <div style={{ position: "relative", width: 224, height: 128, ...dotField(32, 64) }}>
       <div style={{
@@ -1233,7 +1233,6 @@ function FanCollapsedTrigger({ onExpand }) {
           <Icon name="forEach" size={13} color="var(--co-accent-200)" />
           <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 10.5, fontWeight: 700, color: "var(--co-accent-200)", letterSpacing: "0.02em" }}>map</span>
           <span style={{ flex: 1 }} />
-          <span style={{ display: "inline-flex", alignItems: "center", height: 16, padding: "0 6px", borderRadius: 999, background: "rgba(0,0,0,0.22)", color: "var(--co-accent-200)", fontFamily: "var(--co-font-mono)", fontSize: 9.5, fontWeight: 700 }}>×7</span>
           <button type="button" onClick={onExpand} title="expand to editor"
             style={{ display: "flex", alignItems: "center", justifyContent: "center", width: 16, height: 16, border: "none", background: "transparent", color: "var(--co-accent-200)", cursor: "pointer", padding: 0 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round"><polyline points="9,6 15,12 9,18" /></svg>
@@ -1249,7 +1248,7 @@ function FanCollapsedTrigger({ onExpand }) {
 }
 
 // Full-screen overlay version (the live, interactive modal).
-function FanEditorOverlay({ onClose, fileRef }) {
+function MapEditorOverlay({ onClose, fileRef }) {
   React.useEffect(() => {
     const h = (e) => { if (e.key === "Escape") onClose(); };
     window.addEventListener("keydown", h);
@@ -1262,21 +1261,21 @@ function FanEditorOverlay({ onClose, fileRef }) {
       animation: "co-slide-in 180ms var(--co-ease-out)",
     }}>
       <div onClick={(e) => e.stopPropagation()} style={{ width: 760, maxWidth: "94vw" }}>
-        <FanEditorPanel onClose={onClose} fileRef={fileRef} />
+        <MapEditorPanel onClose={onClose} fileRef={fileRef} />
       </div>
     </div>
   );
 }
 
 // A static specimen of the modal as it sits over the dimmed canvas.
-function FanModalSpecimen({ fileRef, label }) {
+function MapModalSpecimen({ fileRef, label }) {
   return (
     <div style={{ position: "relative", marginTop: 14, borderRadius: 12, overflow: "hidden", border: "1px solid var(--co-border-1)" }}>
       <div style={{ position: "absolute", inset: 0, background: "var(--co-grad-hearth)", backgroundColor: "var(--co-bg-0)" }} />
       <div style={{ position: "absolute", inset: 0, background: "rgba(8,5,3,0.5)" }} />
       <div style={{ position: "relative", padding: "34px 22px 30px", display: "flex", justifyContent: "center" }}>
         <div style={{ width: "100%", maxWidth: 740 }}>
-          <FanEditorPanel onClose={() => {}} fileRef={fileRef} />
+          <MapEditorPanel onClose={() => {}} fileRef={fileRef} />
         </div>
       </div>
       <span style={{ position: "absolute", top: 10, left: 12, fontFamily: "var(--co-font-mono)", fontSize: 9, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--co-text-subtle)" }}>{label}</span>
@@ -1286,26 +1285,26 @@ function FanModalSpecimen({ fileRef, label }) {
 
 // The SubBlock body: collapsed trigger (opens the live overlay) + two static
 // specimens of the modal — one linked to an external file, one local-only.
-function FanContainerBlock() {
+function MapContainerBlock() {
   const [open, setOpen] = React.useState(false);
   return (
-    <SubBlock label="fan container · expand → workflow editor modal">
+    <SubBlock label="map container · expand → workflow editor modal">
       <Stage padding={24} height={224} bg="var(--co-bg-0)">
         <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 10 }}>
-          <FanCollapsedTrigger onExpand={() => setOpen(true)} />
+          <MapCollapsedTrigger onExpand={() => setOpen(true)} />
           <div style={{ textAlign: "center" }}>
             <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, color: "var(--co-text-strong)" }}>collapsed · one node · 160×64 (2 grid gaps)</div>
             <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 9.5, color: "var(--co-text-subtle)", marginTop: 2 }}>deselected · toasted header · click the chevron to open the editor</div>
           </div>
         </div>
       </Stage>
-      {open && <FanEditorOverlay onClose={() => setOpen(false)} fileRef={FAN_FILE_REF} />}
+      {open && <MapEditorOverlay onClose={() => setOpen(false)} fileRef={MAP_FILE_REF} />}
 
-      <FanModalSpecimen fileRef={FAN_FILE_REF} label="expanded · modal editor — linked to an external file" />
-      <FanModalSpecimen fileRef={null} label="expanded · modal editor — local-only subworkflow" />
+      <MapModalSpecimen fileRef={MAP_FILE_REF} label="expanded · modal editor — linked to an external file" />
+      <MapModalSpecimen fileRef={null} label="expanded · modal editor — local-only subworkflow" />
 
       <p style={{ margin: "12px 2px 0", fontSize: 11.5, lineHeight: 1.5, color: "var(--co-text-subtle)" }}>
-        The <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>fan container</strong> collapses to a single capsule node — <span style={{ fontFamily: "var(--co-font-mono)" }}>160×64</span>, exactly two grid gaps tall (the worker is one), sitting on the 32px grid with the standard worker connectors — arrow in at the left border, dot output handle on the right. Deselected it wears a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>toasted header</strong> (muted cocoa-orange) over a neutral shell; selection re-ignites the full crust gradient and adds the accent outline + halo, so accent chrome stays a selection-only signal. Expanding opens a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>centered modal</strong> over the dimmed canvas. Its <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>internal-workflow region</strong> hosts the fan-out source, the per-item body, and the fan-in sink; the body is the <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>same worker node</strong> used everywhere else (160×32). The contained subworkflow can live in its own file: a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>file bar</strong> shows the linked path with an <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>open file</strong> button, or — for a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>local-only</strong> graph — offers <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>save to file</strong>. The toolbar carries <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>undo / redo</strong> and <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>settings</strong> (concurrency, join mode, timeouts slide in from the right); the footer has <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>cancel</strong> and a primary <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>save changes</strong>. Edits are staged and only committed on save; cancel or <span style={{ fontFamily: "var(--co-font-mono)" }}>Esc</span> discards them.
+        The <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>map container</strong> collapses to a single capsule node — <span style={{ fontFamily: "var(--co-font-mono)" }}>160×64</span>, exactly two grid gaps tall (the worker is one), sitting on the 32px grid with the standard worker connectors — arrow in at the left border, dot output handle on the right. Deselected it wears a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>toasted header</strong> (muted cocoa-orange) over a neutral shell; selection re-ignites the full crust gradient and adds the accent outline + halo, so accent chrome stays a selection-only signal. Expanding opens a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>centered modal</strong> over the dimmed canvas. Its <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>internal-workflow region</strong> hosts the <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>map source</strong>, the per-item body, and the <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>collect sink</strong>; the body is the <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>same worker node</strong> used everywhere else (160×32). The contained subworkflow can live in its own file: a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>file bar</strong> shows the linked path with an <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>open file</strong> button, or — for a <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>local-only</strong> graph — offers <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>save to file</strong>. The toolbar carries <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>undo / redo</strong> and <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>settings</strong> (concurrency, join mode, timeouts slide in from the right); the footer has <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>cancel</strong> and a primary <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>save changes</strong>. Edits are staged and only committed on save; cancel or <span style={{ fontFamily: "var(--co-font-mono)" }}>Esc</span> discards them.
       </p>
     </SubBlock>
   );
@@ -1315,36 +1314,47 @@ function GraphNodesCard() {
   return (
     <Card
       title="Graph nodes"
-      description="Two node shapes live on the canvas. Worker nodes are compact rounded rectangles holding a prompt, skills, and config. The fan container is a toasted-header capsule that fans a list out over its body and fans every result back in — replacing the old for-each and join operators with a single node that collapses to one node and expands into a modal workflow editor. It wires in and out with the same arrow-input and dot-output connectors as a worker."
-      dartImport="lib/widgets/canvas/worker_node.dart · fan_node.dart"
+      description="Three node roles share one grammar (chosen Direction F from the node-system exploration). Every node is a single-line capsule led by a golden role-tile — the shared identity anchor — and wires through neutral connector dots on its edges. Worker runs a prompt; map runs that same body once per item of a list (single output, fan-out is dynamic at runtime); branch routes to one of N labeled cases and grows a labeled output port per case. Run status shows in the straddling top pill; a selected node gets the crisp accent ring. No node carries a colored left-edge rail."
+      dartImport="lib/widgets/canvas/worker_node.dart · map_node.dart · branch_node.dart"
     >
-      <SubBlock label="worker node · all states · 160×32px (1 grid gap tall)">
+      <SubBlock label="node family · graph layout · wires left → right">
+        <Stage padding={28} bg="var(--co-bg-0)">
+          <HNFamilyRow layout="graph" />
+        </Stage>
+      </SubBlock>
+
+      <SubBlock label="node family · tree layout · wires top → bottom">
+        <Stage padding={28} bg="var(--co-bg-0)">
+          <HNFamilyRow layout="tree" />
+        </Stage>
+      </SubBlock>
+
+      <SubBlock label="worker · run states · golden role-tile + bot glyph · status in the straddling pill">
         <StatesGrid columns={4} items={[
-          { label: "default",                 children: <WNodeWrap stage={DEMO_WORKER} grid /> },
-          { label: "selected",                children: <WNodeWrap stage={DEMO_WORKER} selected grid /> },
-          { label: "running · progress",      children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "running", progress: 0.55 }} grid /> },
-          { label: "running · spinner",       children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "running" }} grid /> },
-          { label: "queued",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "queued" }} grid /> },
-          { label: "passed",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "passed" }} grid /> },
-          { label: "failed",                  children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "failed" }} grid /> },
-          { label: "selected · passed",       children: <WNodeWrap stage={DEMO_WORKER} status={{ status: "passed" }} selected grid /> },
+          { label: "default",       children: <HNWorker /> },
+          { label: "selected",      children: <HNWorker selected /> },
+          { label: "running",       children: <HNWorker status={{ status: "running" }} /> },
+          { label: "queued",        children: <HNWorker status={{ status: "queued" }} /> },
+          { label: "passed",        children: <HNWorker status={{ status: "passed" }} /> },
+          { label: "failed",        children: <HNWorker status={{ status: "failed" }} /> },
+          { label: "selected · passed", children: <HNWorker status={{ status: "passed" }} selected /> },
+          { label: "map · running", children: <HNWorker icon="forEach" label="comment-file" status={{ status: "running" }} /> },
         ]} />
         <p style={{ margin: "12px 2px 0", fontSize: 11.5, lineHeight: 1.5, color: "var(--co-text-subtle)" }}>
-          <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Compact + grid-locked.</strong> The worker body is a rounded rectangle one grid gap tall (32px), centered on a grid row — so its center line, both ends, and the output dot on its right edge all sit on grid dots. It shows only its title; run status lives in the solid pill straddling the top border (passed / failed / running / skipped), the colored 3px left rail, and (when determinate) a 2px progress strip. <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Running vs selected</strong> never read alike: selected is a static crisp accent ring; running is a breathing accent halo plus the running pill with a rotating ring spinner. A selected node also surfaces the output-handle dot, and a long-press / right-click opens its context menu. See <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Builder affordances</strong> below.
+          <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>One capsule, role at the tile.</strong> Every role is the same 36px capsule led by a golden role-tile (worker → bot, map → forEach, branch → gitBranch); the label sits beside it, left-aligned. Run status lives only in the solid pill straddling the top border — there is no colored left rail. <strong style={{ color: "var(--co-text-muted)", fontWeight: 600 }}>Running vs selected</strong> never read alike: selected is a static crisp accent ring; running is a soft accent glow plus the running pill with a rotating ring spinner.
         </p>
       </SubBlock>
 
-      <FanContainerBlock />
-
       <SubBlock label="anatomy · worker node">
         <StageSplit
-          left={<WNodeWrap stage={DEMO_WORKER} status={{ status: "running", progress: 0.62 }} />}
+          left={<div style={{ padding: "8px 0" }}><HNWorker status={{ status: "running" }} /></div>}
           right={(
             <AnatomyLegend items={[
-              { label: "status rail",   desc: "3px left edge · colored by run status · full height · follows the rounded-rect corners" },
-              { label: "status tag",    desc: "top-right · solid-fill pill straddling the top border · passed / failed / running / skipped · label centered on the border line" },
-              { label: "label",         desc: "mono 14px · weight 600 · centered · truncated with ellipsis" },
-              { label: "progress bar",  desc: "2px bottom strip · accent gradient · determinate running only" },
+              { label: "role tile",     desc: "30px leading golden crust tile · role glyph in accent-ink (bot / forEach / gitBranch) · the shared identity anchor on every node" },
+              { label: "label",         desc: "mono 13px · weight 600 · left-aligned beside the tile · truncated with ellipsis" },
+              { label: "status tag",    desc: "top-right · solid-fill pill straddling the top border · passed / failed / running · running adds a co-spin ring · label centered on the border line" },
+              { label: "connector dots",desc: "8px neutral dots · bg-3 fill · 1.5px border-3 · input + output on the edges (left/right in graph, top/bottom in tree)" },
+              { label: "selected ring", desc: "1px accent border + 4px accent-22% halo · the ONLY edge highlight · no colored status rail" },
             ]} />
           )}
         />
@@ -1352,31 +1362,19 @@ function GraphNodesCard() {
 
       <SubBlock label="tokens" last>
         <TokensList tokens={[
-          { name: "node.cell",         value: "64px tall layout cell · shared vertical center for all nodes" },
-          { name: "worker.size",       value: "160 × 32px body · rounded rectangle (1 grid gap tall, centered on the cell)" },
-          { name: "worker.shape",      value: "borderRadius: 10 · rounded rectangle" },
-          { name: "grid.lock",         value: "body center line + both ends + output dot all land on 32px grid dots" },
-          { name: "fan.size",          value: "160 × 64px collapsed · exactly 2 grid gaps tall (worker is 1) · sits on the 32px grid · no edge connectors" },
-          { name: "fan.header",        value: "26px · crustGradient · forEach icon + 'map' + count chip + expand chevron (opens modal)" },
-          { name: "fan.expand",        value: "chevron opens a centered modal editor — no longer grows the node in place" },
-          { name: "modal.panel",       value: "760px max · bg1 · 1px border2 · radius 18 · shadow 0 24 64 / 0.55 + 1px parchment inner highlight" },
-          { name: "modal.scrim",       value: "rgba(10,6,3,0.62) + 6px backdrop blur · co-slide-in 180ms entry · Esc / scrim-click = cancel" },
-          { name: "modal.toolbar",     value: "60px header · crustGradient icon tile + title + ×count chip · right: undo / redo · divider · settings · close (30px square btns)" },
-          { name: "modal.fileBar",     value: "42px · linked → file icon + path + 'linked file' chip + open-file btn (accent-tinted bg) · local-only → muted 'not saved to a file' + save-to-file btn" },
-          { name: "modal.editor",      value: "internal-workflow canvas · hearth + 32px dot grid · fan-out → body → fan-in lane · floating add-stage / 100% bar" },
-          { name: "modal.body",        value: "the per-item body is the same WorkerNode (160 × 32px) used in the worker states — identical component + geometry" },
-          { name: "modal.settings",    value: "224px right panel · slides in on settings toggle · concurrency / join mode / per-item timeout / on-error" },
-          { name: "modal.footer",      value: "58px · context chips (over <list> · N parallel · join · mode) + 'edited' dot · ghost cancel + primary save changes" },
-          { name: "label.padding",     value: "0 10px horizontal · text centered" },
-          { name: "bg.default",        value: "palette.loafGradient" },
-          { name: "bg.running",        value: "accent 12% mix into bg2 → bg2 at 70%" },
-          { name: "border.default",    value: "1px palette.border2" },
-          { name: "border.selected",   value: "1px accent · outer: 1px accent + 4px accent 22% + shadow-1" },
-          { name: "halo.running",      value: "breathing glow · co-node-running-glow 1.7s ease-in-out · NOT the static selected ring" },
-          { name: "statusTag",        value: "solid pill in top-right slot · h 16px · top -8 (centered on border) · mono 9px/600 · running adds a co-spin 0.8s ring · same solid treatment for passed / failed / skipped" },
-          { name: "statusRail.width",  value: "3px · colorKeyed to run status" },
-          { name: "label.font",        value: "AppType.mono · 14px · weight 600" },
-          { name: "progressBar",       value: "h 2px · bottom 6px · l/r 12px · palette.crustGradient · determinate running only" },
+          { name: "capsule.size",     value: "168 × 36px · single-line body · rounded rectangle" },
+          { name: "capsule.shape",    value: "borderRadius: 10" },
+          { name: "roleTile",         value: "30px leading crustGradient tile · role glyph (accent-ink) · 1px border2 divider · rounded to the left corners · shared identity anchor" },
+          { name: "label.font",       value: "AppType.mono · 13px · weight 600 · left-aligned · padding 0 10px" },
+          { name: "connector.dot",    value: "8px · bg-3 fill · 1.5px border-3 · neutral on every role · graph: left/right mid-edge · tree: top/bottom mid-edge" },
+          { name: "branch.graph",     value: "grows tall · one labeled case row + one output dot per case (right edge), aligned to its row" },
+          { name: "branch.tree",      value: "stays 168px wide · output dot per case fans along the bottom edge · case label sits in the connector lane beneath each dot" },
+          { name: "map",              value: "a worker capsule with the forEach glyph · single output · runtime fan-out (no ×n chip on the resting node)" },
+          { name: "bg.default",       value: "palette.loafGradient" },
+          { name: "bg.running",       value: "accent 12% mix into bg2 → bg2 at 70% + soft accent glow" },
+          { name: "border.default",   value: "1px palette.border2" },
+          { name: "border.selected",  value: "1px accent · outer: 1px accent + 4px accent 22% + drop shadow" },
+          { name: "statusTag",        value: "solid pill in top-right slot · h 16px · top -8 (centered on border) · mono 9px/600 · running adds a co-spin 0.8s ring · same solid treatment for passed / failed" },
         ]} />
       </SubBlock>
     </Card>
@@ -1423,7 +1421,7 @@ function GraphEdgesCard() {
   return (
     <Card
       title="Graph edges"
-      description="SVG cubic beziers connect nodes. Three curve styles, four run-state appearances, optional case labels on routing branches, and animated flow tokens on active edges."
+      description="SVG cubic beziers connect nodes. Three curve styles, four run-state appearances, optional case labels on routing branches, and an accent highlight on active edges."
       dartImport="lib/widgets/canvas/edge_painter.dart"
     >
       <SubBlock label="edge styles">
@@ -1449,21 +1447,9 @@ function GraphEdgesCard() {
         </Stage>
       </SubBlock>
 
-      <SubBlock label="flow tokens · 3 accent dots animated along active edge">
+      <SubBlock label="active edge · accent stroke (optional co-pulse breathe) · no traveling dots">
         <Stage padding={20} height={120}>
-          <svg width={380} height={100} style={{ overflow: "visible", display: "block" }}>
-            <defs>
-              <marker id="ea-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--co-accent)" />
-              </marker>
-            </defs>
-            <path d={curvedD} fill="none" stroke="var(--co-accent)" strokeWidth={2} markerEnd="url(#ea-flow)" />
-            {[0, 0.33, 0.66].map((o, i) => (
-              <circle key={i} r={3.2} fill="var(--co-accent)">
-                <animateMotion dur="2s" repeatCount="indefinite" begin={`${-o * 2}s`} path={curvedD} />
-              </circle>
-            ))}
-          </svg>
+          <EdgeSvg id="active" d={curvedD} stroke="var(--co-accent)" strokeWidth={2} />
         </Stage>
       </SubBlock>
 
@@ -1478,7 +1464,7 @@ function GraphEdgesCard() {
           { name: "arrow",                value: "SVG marker · viewBox 10×10 · 6×6 rendered" },
           { name: "caseLabel.bg",         value: "palette.bg3 + 1px border2 · radius 9" },
           { name: "caseLabel.font",       value: "AppType.mono · 10px · weight 500" },
-          { name: "flowToken.r",          value: "3.2px · accent fill · 3 dots · staggered 0.33s apart" },
+          { name: "activeEdge",           value: "accent stroke 2px · optional co-pulse 1.8s breathe · no traveling dots (work happens in workers)" },
           { name: "controlPoint",         value: "c = max(40, |dx| × 0.5) horizontal · |dy| × 0.5 vertical" },
         ]} />
       </SubBlock>
@@ -1504,7 +1490,7 @@ function GraphCanvasCard() {
               <Canvas workflow={WORKFLOW} job={null} view="builder"
                 selectedId={null} onSelect={() => {}}
                 canvasStyle="graph" edgeStyle="curved" density="default"
-                inflightAnim="tokens" drawerOpen={false} />
+                inflightAnim="pulse" drawerOpen={false} />
             </div>
           </Constrained>
         </Stage>
@@ -1559,7 +1545,7 @@ function GraphCanvasCard() {
 const PICKER_TYPES = [
   { kind: "worker", label: "worker",   icon: "zap",       desc: "skills · prompt · result" },
   { kind: "branch", label: "branch",   icon: "gitBranch", desc: "conditional routing" },
-  { kind: "fan",    label: "fan",      icon: "forEach",   desc: "fan-out a list, fan-in results" },
+  { kind: "map",    label: "map",      icon: "forEach",   desc: "map a list, collect results" },
 ];
 
 function OperatorPickerMock() {

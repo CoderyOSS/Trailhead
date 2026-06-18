@@ -18,6 +18,7 @@ import 'dot_grid_painter.dart';
 import 'operator_picker.dart';
 import '../../providers/node_menu_provider.dart';
 import 'node_context_menu.dart';
+import 'entrypoint_node.dart';
 import 'fan_node.dart';
 import 'routing_node.dart';
 import 'worker_node.dart';
@@ -290,8 +291,8 @@ class GraphCanvas extends ConsumerWidget {
                           final displayX = isDragging ? node.x + dragOffset.dx : node.x;
                           final displayY = isDragging ? node.y + dragOffset.dy : node.y;
 
-                          final nodeWidget = node.kind == 'worker'
-                              ? WorkerNode(
+                          final nodeWidget = node.id == 'entrypoint'
+                              ? EntrypointNode(
                                   node: node,
                                   selected: isSelected,
                                   onEnter: () {
@@ -302,8 +303,8 @@ class GraphCanvas extends ConsumerWidget {
                                         (hoveredNodeId == node.id) ? null : hoveredNodeId;
                                   },
                                 )
-                              : node.kind == 'fan'
-                                  ? MapNode(
+                              : node.kind == 'worker'
+                                  ? WorkerNode(
                                       node: node,
                                       selected: isSelected,
                                       onEnter: () {
@@ -314,17 +315,29 @@ class GraphCanvas extends ConsumerWidget {
                                             (hoveredNodeId == node.id) ? null : hoveredNodeId;
                                       },
                                     )
-                                   : BranchNode(
-                                      node: node,
-                                      selected: isSelected,
-                                      onEnter: () {
-                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
-                                      },
-                                      onExit: () {
-                                        ref.read(hoveredNodeProvider.notifier).state =
-                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
-                                      },
-                                    );
+                                  : node.kind == 'fan'
+                                      ? MapNode(
+                                          node: node,
+                                          selected: isSelected,
+                                          onEnter: () {
+                                            ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                          },
+                                          onExit: () {
+                                            ref.read(hoveredNodeProvider.notifier).state =
+                                                (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                          },
+                                        )
+                                      : BranchNode(
+                                          node: node,
+                                          selected: isSelected,
+                                          onEnter: () {
+                                            ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                          },
+                                          onExit: () {
+                                            ref.read(hoveredNodeProvider.notifier).state =
+                                                (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                          },
+                                        );
 
                           return AnimatedPositioned(
                             key: ValueKey('${workflow.id}_${node.id}'),

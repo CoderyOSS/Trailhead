@@ -52,6 +52,28 @@ class CanvasController extends StateNotifier<CanvasViewport> {
     state = value;
   }
 
+  void fitToBounds(Rect bounds, Size canvasSize, {double margin = 24.0}) {
+    final boundsWidth = bounds.width;
+    final boundsHeight = bounds.height;
+    if (boundsWidth <= 0 || boundsHeight <= 0 || canvasSize.isEmpty) {
+      reset();
+      return;
+    }
+    final availableWidth = canvasSize.width - margin * 2;
+    final availableHeight = canvasSize.height - margin * 2;
+    if (availableWidth <= 0 || availableHeight <= 0) {
+      reset();
+      return;
+    }
+    final zoomX = availableWidth / boundsWidth;
+    final zoomY = availableHeight / boundsHeight;
+    final zoom = (zoomX < zoomY ? zoomX : zoomY).clamp(0.35, 2.0);
+    final center = bounds.center;
+    final panX = canvasSize.width / 2 - center.dx * zoom;
+    final panY = canvasSize.height / 2 - center.dy * zoom;
+    state = CanvasViewport(zoom: zoom, pan: Offset(panX, panY));
+  }
+
   void beginScale(Offset focalPoint) {
     _scaleStartZoom = state.zoom;
     _scaleStartPan = state.pan;

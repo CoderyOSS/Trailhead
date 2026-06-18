@@ -205,22 +205,25 @@ class GraphCanvas extends ConsumerWidget {
       ref.read(nodeMenuProvider.notifier).state = null;
     }
 
-    return Focus(
-      autofocus: true,
-      onKeyEvent: (node, event) {
-        if (!editable) return KeyEventResult.ignored;
-        if (event is KeyDownEvent) {
-          if (event.logicalKey == LogicalKeyboardKey.delete ||
-              event.logicalKey == LogicalKeyboardKey.backspace) {
-            if (selectedNodeId != null) {
-              deleteNode(selectedNodeId);
-              return KeyEventResult.handled;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final canvasSize = constraints.biggest;
+        return Focus(
+          autofocus: true,
+          onKeyEvent: (node, event) {
+            if (!editable) return KeyEventResult.ignored;
+            if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.delete ||
+                  event.logicalKey == LogicalKeyboardKey.backspace) {
+                if (selectedNodeId != null) {
+                  deleteNode(selectedNodeId);
+                  return KeyEventResult.handled;
+                }
+              }
             }
-          }
-        }
-        return KeyEventResult.ignored;
-      },
-                                    child: Listener(
+            return KeyEventResult.ignored;
+          },
+          child: Listener(
                                     onPointerMove: (event) {
           if (event.kind == PointerDeviceKind.mouse) {
             controller.pan(event.delta);
@@ -502,13 +505,15 @@ class GraphCanvas extends ConsumerWidget {
                       ref.read(nodeMenuProvider.notifier).state = null;
                     },
                   ),
-                const ZoomControls(),
+                ZoomControls(canvasSize: canvasSize),
               ],
             ),
           ),
         ),
       ),
     ),
+  );
+  },
   );
   }
 }

@@ -1,21 +1,64 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/workflow_node.dart';
 import '../../providers/canvas_controller.dart';
+import '../../providers/mode_provider.dart';
 import '../../theme/tokens.dart';
+import 'fan_node.dart';
+import 'routing_node.dart';
+import 'worker_node.dart';
 
 class ZoomControls extends ConsumerWidget {
-  const ZoomControls({super.key});
+  final Size canvasSize;
+  const ZoomControls({super.key, required this.canvasSize});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final viewport = ref.watch(canvasControllerProvider);
     final controller = ref.read(canvasControllerProvider.notifier);
+    final workflow = ref.watch(workflowProvider);
 
     const mono = TextStyle(
       fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace',
       fontSize: 11,
       height: 1.0,
     );
+
+    double nodeWidth(String kind) => switch (kind) {
+      'worker' => 168.0,
+      'fan'    => 168.0,
+      _        => BranchNode.width,
+    };
+
+    double nodeHeight(String kind, {List<BranchOutput> outputs = const []}) => switch (kind) {
+      'worker' => 36.0,
+      'fan'    => 36.0,
+      _        => outputs.isNotEmpty
+          ? BranchNode.padY * 2 + outputs.length * BranchNode.rowHeight
+          : BranchNode.padY * 2 + 4 * BranchNode.rowHeight,
+    };
+
+    void fitToView() {
+      final nodes = workflow.nodes;
+      if (nodes.isEmpty) {
+        controller.reset();
+        return;
+      }
+      double minX = double.infinity;
+      double minY = double.infinity;
+      double maxX = double.negativeInfinity;
+      double maxY = double.negativeInfinity;
+      for (final node in nodes) {
+        final w = nodeWidth(node.kind);
+        final h = nodeHeight(node.kind, outputs: node.outputs);
+        minX = minX < node.x ? minX : node.x;
+        minY = minY < node.y ? minY : node.y;
+        maxX = maxX > node.x + w ? maxX : node.x + w;
+        maxY = maxY > node.y + h ? maxY : node.y + h;
+      }
+      final bounds = Rect.fromLTRB(minX, minY, maxX, maxY);
+      controller.fitToBounds(bounds, canvasSize, margin: AppSpacing.s8);
+    }
 
     Widget btn({
       required VoidCallback onTap,
@@ -103,7 +146,7 @@ class ZoomControls extends ConsumerWidget {
             ),
             // Fit
             btn(
-              onTap: () => controller.reset(),
+              onTap: fitToView,
               width: null,
               tooltip: 'Fit to view',
               child: Padding(

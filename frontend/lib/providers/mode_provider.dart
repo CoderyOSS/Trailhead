@@ -29,6 +29,8 @@ final draggingNodeIdProvider = StateProvider<String?>((ref) => null);
 
 final dragOffsetProvider = StateProvider<Offset>((ref) => Offset.zero);
 
+final spaceHeldProvider = StateProvider<bool>((ref) => false);
+
 final runsTableViewModeProvider = StateProvider<String>((ref) => 'flat');
 
 final yamlDrawerOpenProvider = StateProvider<bool>((ref) => false);

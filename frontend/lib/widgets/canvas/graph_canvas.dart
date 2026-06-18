@@ -219,15 +219,22 @@ class GraphCanvas extends ConsumerWidget {
         }
         return KeyEventResult.ignored;
       },
-                                  child: GestureDetector(
+                                    child: GestureDetector(
                                     behavior: HitTestBehavior.translucent,
                                     onTap: () {
           // Deselect when tapping empty canvas
           ref.read(selectedNodeProvider.notifier).state = null;
           ref.read(operatorPickerProvider.notifier).state = null;
         },
-        onPanUpdate: (details) {
-          controller.pan(details.delta);
+        onScaleStart: (_) {
+          controller.beginScale();
+        },
+        onScaleUpdate: (details) {
+          controller.pan(details.focalPointDelta);
+          controller.updateScale(details.scale, details.focalPoint);
+        },
+        onScaleEnd: (_) {
+          controller.endScale();
         },
         child: Container(
           decoration: const BoxDecoration(
@@ -369,11 +376,7 @@ class GraphCanvas extends ConsumerWidget {
                                   onPanUpdate: editable
                                       ? (details) {
                                           if (draggingNodeId == node.id) {
-                                            final worldDelta = Offset(
-                                              details.delta.dx / viewport.zoom,
-                                              details.delta.dy / viewport.zoom,
-                                            );
-                                            ref.read(dragOffsetProvider.notifier).state += worldDelta;
+                                            ref.read(dragOffsetProvider.notifier).state += details.delta;
                                           }
                                         }
                                       : null,
@@ -414,11 +417,11 @@ class GraphCanvas extends ConsumerWidget {
                                       onTap: () {},
                                     ),
                                   ),
-                                if (isSelected && editable && node.kind == 'branch')
+                                  if (isSelected && editable && node.kind == 'branch')
                                   ...node.outputs.isNotEmpty
                                       ? node.outputs.asMap().entries.map((e) {
                                           final port = e.key;
-                                          final top = BranchNode.padY + port * BranchNode.rowHeight;
+                                          final top = BranchNode.padY + port * BranchNode.rowHeight + BranchNode.rowHeight / 2 - (BranchNode.rowHeight / viewport.zoom) / 2;
                                           return Positioned(
                                             left: BranchNode.width - 22.0 / viewport.zoom,
                                             top: top,

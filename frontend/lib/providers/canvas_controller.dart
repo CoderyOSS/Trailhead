@@ -18,6 +18,9 @@ class CanvasViewport {
 class CanvasController extends StateNotifier<CanvasViewport> {
   CanvasController() : super(const CanvasViewport());
 
+  double? _scaleStartZoom;
+  Offset? _scaleStartPan;
+
   void pan(Offset delta) {
     state = state.copyWith(pan: state.pan + delta);
   }
@@ -43,6 +46,24 @@ class CanvasController extends StateNotifier<CanvasViewport> {
 
   void setViewport(CanvasViewport value) {
     state = value;
+  }
+
+  void beginScale() {
+    _scaleStartZoom = state.zoom;
+    _scaleStartPan = state.pan;
+  }
+
+  void updateScale(double cumulativeScale, Offset focalPoint) {
+    if (_scaleStartZoom == null) return;
+    final newZoom = (_scaleStartZoom! * cumulativeScale).clamp(0.35, 2.0);
+    final scaleChange = newZoom / _scaleStartZoom!;
+    final newPan = focalPoint - (focalPoint - _scaleStartPan!) * scaleChange;
+    state = CanvasViewport(zoom: newZoom, pan: newPan);
+  }
+
+  void endScale() {
+    _scaleStartZoom = null;
+    _scaleStartPan = null;
   }
 }
 

@@ -98,6 +98,7 @@ class BranchNode extends StatelessWidget {
           borderRadius: BorderRadius.circular(AppRadius.md),
           boxShadow: outlineShadows,
         ),
+        clipBehavior: Clip.antiAlias,
         child: Stack(
           clipBehavior: Clip.none,
           children: [

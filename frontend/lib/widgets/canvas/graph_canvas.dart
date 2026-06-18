@@ -301,6 +301,31 @@ class GraphCanvas extends ConsumerWidget {
                 ref.read(selectionProvider.notifier).clear();
                 ref.read(operatorPickerProvider.notifier).state = null;
               },
+              onLongPressStart: editable
+                  ? (details) {
+                      ref.read(touchMarqueeStartProvider.notifier).state =
+                          details.globalPosition;
+                      ref.read(selectionProvider.notifier).beginMarquee();
+                    }
+                  : null,
+              onLongPressMoveUpdate: editable
+                  ? (details) {
+                      final start = ref.read(touchMarqueeStartProvider);
+                      if (start != null) {
+                        updateMarqueeFromScreenRect(
+                          Rect.fromPoints(start, details.globalPosition),
+                        );
+                      }
+                    }
+                  : null,
+              onLongPressEnd: editable
+                  ? (_) {
+                      ref.read(selectionProvider.notifier).commitMarquee();
+                      ref.read(touchMarqueeStartProvider.notifier).state = null;
+                      ref.read(marqueeProvider.notifier).state =
+                          const MarqueeState();
+                    }
+                  : null,
               onScaleStart: (details) {
                 controller.beginScale(details.focalPoint);
               },

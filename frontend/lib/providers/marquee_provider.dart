@@ -20,3 +20,5 @@ final marqueeProvider = StateProvider<MarqueeState>(
 );
 
 final mouseMarqueeStartProvider = StateProvider<Offset?>((ref) => null);
+
+final touchMarqueeStartProvider = StateProvider<Offset?>((ref) => null);

@@ -102,8 +102,8 @@ class WorkerNode extends StatelessWidget {
                         right: BorderSide(color: AppColors.border2),
                       ),
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(1),
-                        bottomLeft: Radius.circular(1),
+                        topLeft: Radius.circular(AppRadius.md - 1),
+                        bottomLeft: Radius.circular(AppRadius.md - 1),
                       ),
                     ),
                     child: const Center(

@@ -106,14 +106,10 @@ class BranchNode extends StatelessWidget {
                 children: [
                   Container(
                     width: 30,
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       gradient: AppColors.crustGradient,
-                      border: const Border(
+                      border: Border(
                         right: BorderSide(color: AppColors.border2),
-                      ),
-                      borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppRadius.md - 1),
-                        bottomLeft: Radius.circular(AppRadius.md - 1),
                       ),
                     ),
                     child: const Center(

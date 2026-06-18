@@ -47,20 +47,6 @@ class GraphCanvas extends ConsumerWidget {
     final editable = mode == AppMode.build;
     final menuAnchor = ref.watch(nodeMenuProvider);
 
-    double nodeWidth(String kind) => switch (kind) {
-      'worker' => 168.0,
-      'fan'    => 168.0,
-      _        => BranchNode.width,
-    };
-
-    double nodeHeight(String kind, {List<BranchOutput> outputs = const []}) => switch (kind) {
-      'worker' => 36.0,
-      'fan'    => 36.0,
-      _        => outputs.isNotEmpty
-          ? BranchNode.padY * 2 + outputs.length * BranchNode.rowHeight
-          : BranchNode.padY * 2 + 4 * BranchNode.rowHeight,
-    };
-
     // Sync in-place workflow edits to the document model and workflow list.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
       if (prev != null && prev.id == next.id) {
@@ -107,8 +93,8 @@ class GraphCanvas extends ConsumerWidget {
       );
 
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
-      final sourceHeight = nodeHeight(source.kind, outputs: source.outputs);
-      final newNodeHeight = nodeHeight(type.kind);
+      final sourceHeight = source.height;
+      final newNodeHeight = WorkflowNode(id: '', kind: type.kind, label: '', x: 0, y: 0).height;
       final snappedX = _snap(source.x + 220);
       final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
       final newNode = WorkflowNode(
@@ -389,7 +375,7 @@ class GraphCanvas extends ConsumerWidget {
                                       ? (_) {
                                           if (draggingNodeId == node.id) {
                                             final offset = ref.read(dragOffsetProvider);
-                                            final h = nodeHeight(node.kind, outputs: node.outputs);
+                                            final h = node.height;
                                             final snappedX = _snap(node.x + offset.dx);
                                             final snappedY = _snapCenter(node.y + offset.dy + h / 2) - h / 2;
                                             final newNodes = workflow.nodes.map((n) {
@@ -416,7 +402,7 @@ class GraphCanvas extends ConsumerWidget {
                                 if (isSelected && editable && node.id != 'entrypoint')
                                   Positioned(
                                     left: -44.0,
-                                    top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
+                                    top: node.height / 2 - 44.0,
                                     child: _InputHandle(
                                       onTap: () {},
                                     ),
@@ -447,12 +433,12 @@ class GraphCanvas extends ConsumerWidget {
                                           // Fallback for branch nodes with no outputs defined
                                           Positioned(
                                             left: BranchNode.width - 44.0,
-                                            top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
+                                            top: node.height / 2 - 44.0,
                                             child: _OutputHandle(
                                               onTap: () => showPicker(
                                                 Offset(
                                                   displayX + BranchNode.width,
-                                                  displayY + nodeHeight(node.kind, outputs: node.outputs) / 2,
+                                                  displayY + node.height / 2,
                                                 ),
                                                 node.id,
                                               ),
@@ -461,13 +447,13 @@ class GraphCanvas extends ConsumerWidget {
                                         ],
                                 if (isSelected && editable && node.kind != 'branch')
                                   Positioned(
-                                    left: nodeWidth(node.kind) - 44.0,
-                                    top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
+                                    left: node.width - 44.0,
+                                    top: node.height / 2 - 44.0,
                                     child: _OutputHandle(
                                       onTap: () => showPicker(
                                         Offset(
-                                          displayX + nodeWidth(node.kind),
-                                          displayY + nodeHeight(node.kind, outputs: node.outputs) / 2,
+                                          displayX + node.width,
+                                          displayY + node.height / 2,
                                         ),
                                         node.id,
                                       ),

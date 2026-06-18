@@ -57,7 +57,7 @@ class ZoomControls extends ConsumerWidget {
         maxY = maxY > node.y + h ? maxY : node.y + h;
       }
       final bounds = Rect.fromLTRB(minX, minY, maxX, maxY);
-      controller.fitToBounds(bounds, canvasSize, margin: AppSpacing.s8);
+      controller.fitToBounds(bounds, canvasSize, margin: AppSpacing.s8 * 2);
     }
 
     Widget btn({

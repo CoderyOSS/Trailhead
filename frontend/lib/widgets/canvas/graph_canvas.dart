@@ -153,6 +153,7 @@ class GraphCanvas extends ConsumerWidget {
     }
 
     void duplicateNode(String nodeId) {
+      if (nodeId == 'entrypoint') return;
       final node = workflow.nodes.firstWhere((n) => n.id == nodeId);
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
       final newNode = WorkflowNode(
@@ -344,34 +345,16 @@ class GraphCanvas extends ConsumerWidget {
                                       ref.read(operatorPickerProvider.notifier).state = null;
                                     }
                                   },
-                                  onLongPressStart: isSelected && editable
+                                  onLongPressStart: isSelected && editable && node.id != 'entrypoint'
                                       ? (details) {
-                                          final worldPos = Offset(
-                                            displayX + details.localPosition.dx,
-                                            displayY + details.localPosition.dy,
-                                          );
-                                          final screenPos = Offset(
-                                            worldPos.dx * viewport.zoom + viewport.pan.dx,
-                                            worldPos.dy * viewport.zoom + viewport.pan.dy,
-                                          );
                                           ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
-                                            screenPos: screenPos,
                                             nodeId: node.id,
                                           );
                                         }
                                       : null,
-                                  onSecondaryTapDown: isSelected && editable
+                                  onSecondaryTapDown: isSelected && editable && node.id != 'entrypoint'
                                       ? (details) {
-                                          final worldPos = Offset(
-                                            displayX + details.localPosition.dx,
-                                            displayY + details.localPosition.dy,
-                                          );
-                                          final screenPos = Offset(
-                                            worldPos.dx * viewport.zoom + viewport.pan.dx,
-                                            worldPos.dy * viewport.zoom + viewport.pan.dy,
-                                          );
                                           ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
-                                            screenPos: screenPos,
                                             nodeId: node.id,
                                           );
                                         }
@@ -417,7 +400,7 @@ class GraphCanvas extends ConsumerWidget {
                                       : null,
                                   child: nodeWidget,
                                 ),
-                                if (isSelected && editable)
+                                if (isSelected && editable && node.id != 'entrypoint')
                                   Positioned(
                                     left: -44.0,
                                     top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
@@ -496,13 +479,35 @@ class GraphCanvas extends ConsumerWidget {
                     },
                   ),
                 if (menuAnchor != null)
-                  NodeContextMenu(
-                    anchor: menuAnchor.screenPos,
-                    onDuplicate: () => duplicateNode(menuAnchor.nodeId),
-                    onCollapse: () => collapseNode(menuAnchor.nodeId),
-                    onDelete: () => deleteNode(menuAnchor.nodeId),
-                    onClose: () {
-                      ref.read(nodeMenuProvider.notifier).state = null;
+                  Builder(
+                    builder: (context) {
+                      final menuNode = workflow.nodes.cast<WorkflowNode?>().firstWhere(
+                        (n) => n!.id == menuAnchor.nodeId,
+                        orElse: () => null,
+                      );
+                      if (menuNode == null) {
+                        WidgetsBinding.instance.addPostFrameCallback((_) {
+                          ref.read(nodeMenuProvider.notifier).state = null;
+                        });
+                        return const SizedBox.shrink();
+                      }
+                      final isMenuNodeDragging = draggingNodeId == menuNode.id;
+                      final menuDx = isMenuNodeDragging ? menuNode.x + dragOffset.dx : menuNode.x;
+                      final menuDy = isMenuNodeDragging ? menuNode.y + dragOffset.dy : menuNode.y;
+                      final screenPos = Offset(
+                        menuDx * viewport.zoom + viewport.pan.dx,
+                        menuDy * viewport.zoom + viewport.pan.dy,
+                      );
+                      return NodeContextMenu(
+                        anchor: screenPos,
+                        canDuplicate: menuNode.id != 'entrypoint',
+                        onDuplicate: () => duplicateNode(menuAnchor.nodeId),
+                        onCollapse: () => collapseNode(menuAnchor.nodeId),
+                        onDelete: () => deleteNode(menuAnchor.nodeId),
+                        onClose: () {
+                          ref.read(nodeMenuProvider.notifier).state = null;
+                        },
+                      );
                     },
                   ),
                 ZoomControls(canvasSize: canvasSize),

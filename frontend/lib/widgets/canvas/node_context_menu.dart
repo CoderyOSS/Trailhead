@@ -4,6 +4,7 @@ import '../../widgets/icons.dart';
 
 class NodeContextMenu extends StatelessWidget {
   final Offset anchor;
+  final bool canDuplicate;
   final VoidCallback onDuplicate;
   final VoidCallback onCollapse;
   final VoidCallback onDelete;
@@ -12,6 +13,7 @@ class NodeContextMenu extends StatelessWidget {
   const NodeContextMenu({
     super.key,
     required this.anchor,
+    this.canDuplicate = true,
     required this.onDuplicate,
     required this.onCollapse,
     required this.onDelete,
@@ -50,12 +52,13 @@ class NodeContextMenu extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                _MenuItem(
-                  icon: TrailheadIconData.copy,
-                  label: 'duplicate',
-                  desc: 'clone this node downstream',
-                  onTap: onDuplicate,
-                ),
+                if (canDuplicate)
+                  _MenuItem(
+                    icon: TrailheadIconData.copy,
+                    label: 'duplicate',
+                    desc: 'clone this node downstream',
+                    onTap: onDuplicate,
+                  ),
                 _MenuItem(
                   icon: TrailheadIconData.collapseLink,
                   label: 'remove + collapse',

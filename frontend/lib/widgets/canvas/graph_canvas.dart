@@ -527,8 +527,8 @@ class _OutputHandle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // Direct world-space sizing so hit area exactly matches visual area.
-    const width = 88.0;
-    const height = 88.0;
+    final width = targetWidth;
+    final height = targetHeight;
     const dotSize = 12.0;
     const borderWidth = 2.0;
     const ringSpread = 1.0;

@@ -1,4 +1,5 @@
 import 'dart:math' show Random;
+import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -219,27 +220,28 @@ class GraphCanvas extends ConsumerWidget {
         }
         return KeyEventResult.ignored;
       },
-                                    child: GestureDetector(
-                                    behavior: HitTestBehavior.translucent,
-                                    onTap: () {
-          // Deselect when tapping empty canvas
-          ref.read(selectedNodeProvider.notifier).state = null;
-          ref.read(operatorPickerProvider.notifier).state = null;
-        },
-        onPanUpdate: (details) {
-          if (!controller.isScaling) {
-            controller.pan(details.delta);
+                                    child: Listener(
+                                    onPointerMove: (event) {
+          if (event.kind == PointerDeviceKind.mouse) {
+            controller.pan(event.delta);
           }
         },
-        onScaleStart: (details) {
-          controller.beginScale(details.focalPoint);
-        },
-        onScaleUpdate: (details) {
-          controller.updateScale(details.scale, details.focalPoint);
-        },
-        onScaleEnd: (_) {
-          controller.endScale();
-        },
+        child: GestureDetector(
+          behavior: HitTestBehavior.translucent,
+          onTap: () {
+            // Deselect when tapping empty canvas
+            ref.read(selectedNodeProvider.notifier).state = null;
+            ref.read(operatorPickerProvider.notifier).state = null;
+          },
+          onScaleStart: (details) {
+            controller.beginScale(details.focalPoint);
+          },
+          onScaleUpdate: (details) {
+            controller.updateScale(details.scale, details.focalPoint);
+          },
+          onScaleEnd: (_) {
+            controller.endScale();
+          },
         child: Container(
           decoration: const BoxDecoration(
             gradient: AppColors.hearthGradient,
@@ -510,7 +512,8 @@ class GraphCanvas extends ConsumerWidget {
           ),
         ),
       ),
-    );
+    ),
+  );
   }
 }
 

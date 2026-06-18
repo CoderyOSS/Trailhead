@@ -20,6 +20,7 @@ import 'node_context_menu.dart';
 import 'fan_node.dart';
 import 'routing_node.dart';
 import 'worker_node.dart';
+import 'zoom_controls.dart';
 
 class GraphCanvas extends ConsumerWidget {
   const GraphCanvas({super.key});
@@ -496,6 +497,7 @@ class GraphCanvas extends ConsumerWidget {
                       ref.read(nodeMenuProvider.notifier).state = null;
                     },
                   ),
+                const ZoomControls(),
               ],
             ),
           ),

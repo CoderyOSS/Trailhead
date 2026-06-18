@@ -9,6 +9,7 @@ class ConnectionPainter extends CustomPainter {
   final List<WorkflowEdge> edges;
   final String? draggingNodeId;
   final Offset dragOffset;
+  final Set<String> selectedIds;
 
   static const double _controlMin = 40.0;
   static const double _controlMax = 150.0;
@@ -18,10 +19,15 @@ class ConnectionPainter extends CustomPainter {
     required this.edges,
     this.draggingNodeId,
     this.dragOffset = Offset.zero,
+    this.selectedIds = const {},
   });
 
   Offset _nodePos(WorkflowNode node) {
-    if (draggingNodeId == node.id) {
+    final inGroupDrag = draggingNodeId != null &&
+        selectedIds.length > 1 &&
+        selectedIds.contains(draggingNodeId) &&
+        selectedIds.contains(node.id);
+    if (draggingNodeId == node.id || inGroupDrag) {
       return Offset(node.x + dragOffset.dx, node.y + dragOffset.dy);
     }
     return Offset(node.x, node.y);
@@ -181,11 +187,16 @@ class ConnectionPainter extends CustomPainter {
     );
   }
 
+  bool _setsEqual(Set<String> a, Set<String> b) {
+    return a.length == b.length && a.containsAll(b);
+  }
+
   @override
   bool shouldRepaint(covariant ConnectionPainter old) {
     return old.nodes != nodes ||
         old.edges != edges ||
         old.draggingNodeId != draggingNodeId ||
-        old.dragOffset != dragOffset;
+        old.dragOffset != dragOffset ||
+        !_setsEqual(old.selectedIds, selectedIds);
   }
 }

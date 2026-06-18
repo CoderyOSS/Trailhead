@@ -242,16 +242,16 @@ class GraphCanvas extends ConsumerWidget {
             return KeyEventResult.ignored;
           },
           child: Listener(
-            onPointerDown: (event) {
+              onPointerDown: (event) {
               if (event.kind != PointerDeviceKind.mouse) return;
               if (event.buttons != kPrimaryButton) return;
               if (!editable || spaceHeld) return;
               // Don't start marquee if pointer is over a node — node's own
               // gesture detector handles drag.
-              final worldPos = (event.position - viewport.pan) / viewport.zoom;
+              final worldPos = (event.localPosition - viewport.pan) / viewport.zoom;
               final overNode = workflow.nodes.any((n) => n.rect.contains(worldPos));
               if (overNode) return;
-              ref.read(mouseMarqueeStartProvider.notifier).state = event.position;
+              ref.read(mouseMarqueeStartProvider.notifier).state = event.localPosition;
               ref.read(selectionProvider.notifier).beginMarquee();
             },
             onPointerMove: (event) {
@@ -263,7 +263,7 @@ class GraphCanvas extends ConsumerWidget {
               final start = ref.read(mouseMarqueeStartProvider);
               if (start != null) {
                 updateMarqueeFromScreenRect(
-                  Rect.fromPoints(start, event.position),
+                  Rect.fromPoints(start, event.localPosition),
                 );
               }
             },
@@ -290,7 +290,7 @@ class GraphCanvas extends ConsumerWidget {
             onPointerSignal: (event) {
               if (event is PointerScrollEvent &&
                   event.kind == PointerDeviceKind.mouse) {
-                controller.zoomAt(event.scrollDelta.dy, event.position);
+                controller.zoomAt(event.scrollDelta.dy, event.localPosition);
               }
             },
             child: GestureDetector(
@@ -303,7 +303,7 @@ class GraphCanvas extends ConsumerWidget {
               onLongPressStart: editable
                   ? (details) {
                       ref.read(touchMarqueeStartProvider.notifier).state =
-                          details.globalPosition;
+                          details.localPosition;
                       ref.read(selectionProvider.notifier).beginMarquee();
                     }
                   : null,
@@ -312,7 +312,7 @@ class GraphCanvas extends ConsumerWidget {
                       final start = ref.read(touchMarqueeStartProvider);
                       if (start != null) {
                         updateMarqueeFromScreenRect(
-                          Rect.fromPoints(start, details.globalPosition),
+                          Rect.fromPoints(start, details.localPosition),
                         );
                       }
                     }
@@ -326,12 +326,18 @@ class GraphCanvas extends ConsumerWidget {
                     }
                   : null,
               onScaleStart: (details) {
-                controller.beginScale(details.focalPoint);
+                if (ref.read(mouseMarqueeStartProvider) != null) return;
+                if (ref.read(touchMarqueeStartProvider) != null) return;
+                controller.beginScale(details.localFocalPoint);
               },
               onScaleUpdate: (details) {
-                controller.updateScale(details.scale, details.focalPoint);
+                if (ref.read(mouseMarqueeStartProvider) != null) return;
+                if (ref.read(touchMarqueeStartProvider) != null) return;
+                controller.updateScale(details.scale, details.localFocalPoint);
               },
               onScaleEnd: (_) {
+                if (ref.read(mouseMarqueeStartProvider) != null) return;
+                if (ref.read(touchMarqueeStartProvider) != null) return;
                 controller.endScale();
               },
               child: Container(
@@ -367,6 +373,7 @@ class GraphCanvas extends ConsumerWidget {
                               edges: workflow.edges,
                               draggingNodeId: draggingNodeId,
                               dragOffset: dragOffset,
+                              selectedIds: selection.current,
                             ),
                             size: Size.infinite,
                           ),

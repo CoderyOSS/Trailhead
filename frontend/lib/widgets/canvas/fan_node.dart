@@ -59,85 +59,94 @@ class MapNode extends StatelessWidget {
       ];
     }
 
+    final bgGradient = running
+        ? LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.accent.withValues(alpha: 0.12),
+              AppColors.bg2,
+            ],
+            stops: const [0.0, 0.7],
+          )
+        : AppColors.loafGradient;
+    final borderColor = selected
+        ? AppColors.accent
+        : running
+            ? AppColors.accent
+            : AppColors.border2;
+
     return MouseRegion(
       onEnter: (_) => onEnter?.call(),
       onExit: (_) => onExit?.call(),
-      child: Container(
-        width: 168,
-        height: 36,
-        decoration: BoxDecoration(
-          gradient: running
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.accent.withValues(alpha: 0.12),
-                    AppColors.bg2,
-                  ],
-                  stops: const [0.0, 0.7],
-                )
-              : AppColors.loafGradient,
-          border: Border.all(
-            color: selected
-                ? AppColors.accent
-                : running
-                    ? AppColors.accent
-                    : AppColors.border2,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: outlineShadows,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            SizedBox.expand(
-              child: Row(
-                children: [
-                  Container(
-                    width: 30,
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.crustGradient,
-                      border: Border(
-                        right: BorderSide(color: AppColors.border2),
-                      ),
-                    ),
-                    child: const Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.forEach,
-                        size: 14,
-                        color: AppColors.accentInk,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Text(
-                        node.label,
-                        style: const TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.fg0,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Layer 1: shadow + clipped content
+          Container(
+            width: 168,
+            height: 36,
+            decoration: BoxDecoration(boxShadow: outlineShadows),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Container(
+                decoration: BoxDecoration(gradient: bgGradient),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.crustGradient,
+                        border: Border(
+                          right: BorderSide(color: AppColors.border2),
                         ),
-                        overflow: TextOverflow.ellipsis,
+                      ),
+                      child: const Center(
+                        child: TrailheadIcon(
+                          icon: TrailheadIconData.forEach,
+                          size: 14,
+                          color: AppColors.accentInk,
+                        ),
                       ),
                     ),
-                  ),
-                ],
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Text(
+                          node.label,
+                          style: const TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                            color: AppColors.fg0,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
-            _ConnectorDot(left: true),
-            _ConnectorDot(left: false),
-            if (status != null && !running && status != JobState.queued)
-              Positioned(
-                top: -8,
-                right: 8,
-                child: _StatusBadge(status: status!),
-              ),
-          ],
-        ),
+          ),
+          // Layer 2: border overlay
+          Container(
+            width: 168,
+            height: 36,
+            decoration: BoxDecoration(
+              border: Border.all(color: borderColor),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+          ),
+          _ConnectorDot(left: true),
+          _ConnectorDot(left: false),
+          if (status != null && !running && status != JobState.queued)
+            Positioned(
+              top: -8,
+              right: 8,
+              child: _StatusBadge(status: status!),
+            ),
+        ],
       ),
     );
   }

@@ -60,126 +60,135 @@ class WorkerNode extends StatelessWidget {
       ];
     }
 
+    final bgGradient = running
+        ? LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.accent.withValues(alpha: 0.12),
+              AppColors.bg2,
+            ],
+            stops: const [0.0, 0.7],
+          )
+        : AppColors.loafGradient;
+    final borderColor = selected
+        ? AppColors.accent
+        : running
+            ? AppColors.accent
+            : AppColors.border2;
+
     return MouseRegion(
       onEnter: (_) => onEnter?.call(),
       onExit: (_) => onExit?.call(),
-      child: Container(
-        width: 168,
-        height: 36,
-        decoration: BoxDecoration(
-          gradient: running
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.accent.withValues(alpha: 0.12),
-                    AppColors.bg2,
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Layer 1: shadow + clipped content
+          Container(
+            width: 168,
+            height: 36,
+            decoration: BoxDecoration(boxShadow: outlineShadows),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Container(
+                decoration: BoxDecoration(gradient: bgGradient),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.crustGradient,
+                        border: Border(
+                          right: BorderSide(color: AppColors.border2),
+                        ),
+                      ),
+                      child: const Center(
+                        child: TrailheadIcon(
+                          icon: TrailheadIconData.bot,
+                          size: 14,
+                          color: AppColors.accentInk,
+                        ),
+                      ),
+                    ),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            if (running)
+                              const Padding(
+                                padding: EdgeInsets.only(right: 5),
+                                child: StatusDot(
+                                  status: JobState.running,
+                                  pulse: true,
+                                  size: 5,
+                                ),
+                              ),
+                            Expanded(
+                              child: Text(
+                                node.label,
+                                style: const TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.fg0,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
                   ],
-                  stops: const [0.0, 0.7],
-                )
-              : AppColors.loafGradient,
-          border: Border.all(
-            color: selected
-                ? AppColors.accent
-                : running
-                    ? AppColors.accent
-                    : AppColors.border2,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: outlineShadows,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            SizedBox.expand(
-              child: Row(
-                children: [
-                  Container(
-                    width: 30,
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.crustGradient,
-                      border: Border(
-                        right: BorderSide(color: AppColors.border2),
-                      ),
-                    ),
-                    child: const Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.bot,
-                        size: 14,
-                        color: AppColors.accentInk,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          if (running)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 5),
-                              child: StatusDot(
-                                status: JobState.running,
-                                pulse: true,
-                                size: 5,
-                              ),
-                            ),
-                          Expanded(
-                            child: Text(
-                              node.label,
-                              style: const TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 13,
-                                fontWeight: FontWeight.w600,
-                                color: AppColors.fg0,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+                ),
               ),
             ),
-            _ConnectorDot(left: true),
-            _ConnectorDot(left: false),
-            if (running)
-              Positioned(
-                left: 36,
-                right: 10,
-                bottom: 3,
-                child: Container(
-                  height: 2,
-                  decoration: BoxDecoration(
-                    color: AppColors.bg4,
-                    borderRadius: BorderRadius.circular(1),
-                  ),
-                  child: const FractionallySizedBox(
-                    alignment: Alignment.centerLeft,
-                    widthFactor: 0.55,
-                    child: DecoratedBox(
-                      decoration: BoxDecoration(
-                        gradient: AppColors.crustGradient,
-                        borderRadius: BorderRadius.horizontal(
-                          left: Radius.circular(1),
-                        ),
+          ),
+          // Layer 2: border overlay
+          Container(
+            width: 168,
+            height: 36,
+            decoration: BoxDecoration(
+              border: Border.all(color: borderColor),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+          ),
+          _ConnectorDot(left: true),
+          _ConnectorDot(left: false),
+          if (running)
+            Positioned(
+              left: 36,
+              right: 10,
+              bottom: 3,
+              child: Container(
+                height: 2,
+                decoration: BoxDecoration(
+                  color: AppColors.bg4,
+                  borderRadius: BorderRadius.circular(1),
+                ),
+                child: const FractionallySizedBox(
+                  alignment: Alignment.centerLeft,
+                  widthFactor: 0.55,
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: AppColors.crustGradient,
+                      borderRadius: BorderRadius.horizontal(
+                        left: Radius.circular(1),
                       ),
                     ),
                   ),
                 ),
               ),
-            if (status != null && !running && status != JobState.queued)
-              Positioned(
-                top: -8,
-                right: 8,
-                child: _StatusBadge(status: status!),
-              ),
-          ],
-        ),
+            ),
+          if (status != null && !running && status != JobState.queued)
+            Positioned(
+              top: -8,
+              right: 8,
+              child: _StatusBadge(status: status!),
+            ),
+        ],
       ),
     );
   }

@@ -70,57 +70,56 @@ class BranchNode extends StatelessWidget {
       ];
     }
 
+    final bgGradient = running
+        ? LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              AppColors.accent.withValues(alpha: 0.12),
+              AppColors.bg2,
+            ],
+            stops: const [0.0, 0.7],
+          )
+        : AppColors.loafGradient;
+    final borderColor = selected
+        ? AppColors.accent
+        : running
+            ? AppColors.accent
+            : AppColors.border2;
+
     return MouseRegion(
       onEnter: (_) => onEnter?.call(),
       onExit: (_) => onExit?.call(),
-      child: Container(
-        width: width,
-        height: h,
-        decoration: BoxDecoration(
-          gradient: running
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [
-                    AppColors.accent.withValues(alpha: 0.12),
-                    AppColors.bg2,
-                  ],
-                  stops: const [0.0, 0.7],
-                )
-              : AppColors.loafGradient,
-          border: Border.all(
-            color: selected
-                ? AppColors.accent
-                : running
-                    ? AppColors.accent
-                    : AppColors.border2,
-          ),
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          boxShadow: outlineShadows,
-        ),
-        clipBehavior: Clip.antiAlias,
-        child: Stack(
-          clipBehavior: Clip.none,
-          children: [
-            SizedBox.expand(
-              child: Row(
-                children: [
-                  Container(
-                    width: 30,
-                    decoration: const BoxDecoration(
-                      gradient: AppColors.crustGradient,
-                      border: Border(
-                        right: BorderSide(color: AppColors.border2),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          // Layer 1: shadow + clipped content
+          Container(
+            width: width,
+            height: h,
+            decoration: BoxDecoration(boxShadow: outlineShadows),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              child: Container(
+                decoration: BoxDecoration(gradient: bgGradient),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 30,
+                      decoration: const BoxDecoration(
+                        gradient: AppColors.crustGradient,
+                        border: Border(
+                          right: BorderSide(color: AppColors.border2),
+                        ),
+                      ),
+                      child: const Center(
+                        child: TrailheadIcon(
+                          icon: TrailheadIconData.gitBranch,
+                          size: 14,
+                          color: AppColors.accentInk,
+                        ),
                       ),
                     ),
-                    child: const Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.gitBranch,
-                        size: 14,
-                        color: AppColors.accentInk,
-                      ),
-                    ),
-                  ),
                     Expanded(
                       child: Padding(
                         padding: EdgeInsets.symmetric(vertical: padY),
@@ -152,10 +151,38 @@ class BranchNode extends StatelessWidget {
                   ],
                 ),
               ),
-            // Input dot
-            Positioned(
-              left: -4,
-              top: h / 2 - 4,
+            ),
+          ),
+          // Layer 2: border overlay
+          Container(
+            width: width,
+            height: h,
+            decoration: BoxDecoration(
+              border: Border.all(color: borderColor),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+            ),
+          ),
+          // Input dot
+          Positioned(
+            left: -4,
+            top: h / 2 - 4,
+            child: Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: AppColors.bg3,
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.border3, width: 1.5),
+              ),
+            ),
+          ),
+          // Output dots
+          ...outputs.asMap().entries.map((e) {
+            final i = e.key;
+            final top = padY + i * rowHeight + rowHeight / 2 - 4;
+            return Positioned(
+              right: -4,
+              top: top,
               child: Container(
                 width: 8,
                 height: 8,
@@ -165,33 +192,15 @@ class BranchNode extends StatelessWidget {
                   border: Border.all(color: AppColors.border3, width: 1.5),
                 ),
               ),
+            );
+          }),
+          if (status != null && !running && status != JobState.queued)
+            Positioned(
+              top: -8,
+              right: 8,
+              child: _StatusBadge(status: status!),
             ),
-            // Output dots
-            ...outputs.asMap().entries.map((e) {
-              final i = e.key;
-              final top = padY + i * rowHeight + rowHeight / 2 - 4;
-              return Positioned(
-                right: -4,
-                top: top,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: BoxDecoration(
-                    color: AppColors.bg3,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: AppColors.border3, width: 1.5),
-                  ),
-                ),
-              );
-            }),
-            if (status != null && !running && status != JobState.queued)
-              Positioned(
-                top: -8,
-                right: 8,
-                child: _StatusBadge(status: status!),
-              ),
-          ],
-        ),
+        ],
       ),
     );
   }

@@ -18,3 +18,5 @@ class MarqueeState {
 final marqueeProvider = StateProvider<MarqueeState>(
   (ref) => const MarqueeState(),
 );
+
+final mouseMarqueeStartProvider = StateProvider<Offset?>((ref) => null);

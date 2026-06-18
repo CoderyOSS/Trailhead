@@ -1,5 +1,6 @@
 import 'dart:math' show Random;
 import 'dart:ui' show PointerDeviceKind;
+import 'package:flutter/gestures.dart' show PointerScrollEvent, kPrimaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -50,6 +51,7 @@ class GraphCanvas extends ConsumerWidget {
     final mode = ref.watch(modeProvider);
     final editable = mode == AppMode.build;
     final menuAnchor = ref.watch(nodeMenuProvider);
+    final spaceHeld = ref.watch(spaceHeldProvider);
 
     // Sync in-place workflow edits to the document model and workflow list.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
@@ -85,6 +87,20 @@ class GraphCanvas extends ConsumerWidget {
         sourceNodeId: sourceId,
         sourcePort: sourcePort,
       );
+    }
+
+    void updateMarqueeFromScreenRect(Rect screenRect) {
+      final world = Rect.fromPoints(
+        (screenRect.topLeft - viewport.pan) / viewport.zoom,
+        (screenRect.bottomRight - viewport.pan) / viewport.zoom,
+      );
+      final hits = workflow.nodes
+          .where((n) => n.rect.overlaps(world))
+          .map((n) => n.id)
+          .toSet();
+      ref.read(selectionProvider.notifier).updateMarqueeLive(hits);
+      ref.read(marqueeProvider.notifier).state =
+          MarqueeState(screenRect: screenRect, active: true);
     }
 
     void addNode(OperatorType type) {
@@ -202,6 +218,10 @@ class GraphCanvas extends ConsumerWidget {
           onKeyEvent: (node, event) {
             if (!editable) return KeyEventResult.ignored;
             if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.space) {
+                ref.read(spaceHeldProvider.notifier).state = true;
+                return KeyEventResult.handled;
+              }
               if (event.logicalKey == LogicalKeyboardKey.delete ||
                   event.logicalKey == LogicalKeyboardKey.backspace) {
                 final current = ref.read(selectionProvider).current
@@ -214,32 +234,83 @@ class GraphCanvas extends ConsumerWidget {
                   return KeyEventResult.handled;
                 }
               }
+            } else if (event is KeyUpEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.space) {
+                ref.read(spaceHeldProvider.notifier).state = false;
+                return KeyEventResult.handled;
+              }
             }
             return KeyEventResult.ignored;
           },
           child: Listener(
-                                    onPointerMove: (event) {
-          if (event.kind == PointerDeviceKind.mouse) {
-            controller.pan(event.delta);
-          }
-        },
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () {
-            // Deselect when tapping empty canvas
-            ref.read(selectionProvider.notifier).clear();
-            ref.read(operatorPickerProvider.notifier).state = null;
-          },
-          onScaleStart: (details) {
-            controller.beginScale(details.focalPoint);
-          },
-          onScaleUpdate: (details) {
-            controller.updateScale(details.scale, details.focalPoint);
-          },
-          onScaleEnd: (_) {
-            controller.endScale();
-          },
-        child: Container(
+            onPointerDown: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              if (event.buttons != kPrimaryButton) return;
+              if (!editable || spaceHeld) return;
+              // Don't start marquee if pointer is over a node — node's own
+              // gesture detector handles drag.
+              final worldPos = (event.position - viewport.pan) / viewport.zoom;
+              final overNode = workflow.nodes.any((n) => n.rect.contains(worldPos));
+              if (overNode) return;
+              ref.read(mouseMarqueeStartProvider.notifier).state = event.position;
+              ref.read(selectionProvider.notifier).beginMarquee();
+            },
+            onPointerMove: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              if (spaceHeld) {
+                controller.pan(event.delta);
+                return;
+              }
+              final start = ref.read(mouseMarqueeStartProvider);
+              if (start != null) {
+                updateMarqueeFromScreenRect(
+                  Rect.fromPoints(start, event.position),
+                );
+              }
+            },
+            onPointerUp: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              final start = ref.read(mouseMarqueeStartProvider);
+              if (start != null) {
+                ref.read(selectionProvider.notifier).commitMarquee();
+                ref.read(mouseMarqueeStartProvider.notifier).state = null;
+                ref.read(marqueeProvider.notifier).state =
+                    const MarqueeState();
+              }
+            },
+            onPointerCancel: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              final start = ref.read(mouseMarqueeStartProvider);
+              if (start != null) {
+                ref.read(selectionProvider.notifier).cancelMarquee();
+                ref.read(mouseMarqueeStartProvider.notifier).state = null;
+                ref.read(marqueeProvider.notifier).state =
+                    const MarqueeState();
+              }
+            },
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent &&
+                  event.kind == PointerDeviceKind.mouse) {
+                controller.zoomAt(event.scrollDelta.dy, event.position);
+              }
+            },
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                // Deselect when tapping empty canvas
+                ref.read(selectionProvider.notifier).clear();
+                ref.read(operatorPickerProvider.notifier).state = null;
+              },
+              onScaleStart: (details) {
+                controller.beginScale(details.focalPoint);
+              },
+              onScaleUpdate: (details) {
+                controller.updateScale(details.scale, details.focalPoint);
+              },
+              onScaleEnd: (_) {
+                controller.endScale();
+              },
+              child: Container(
           decoration: const BoxDecoration(
             gradient: AppColors.hearthGradient,
           ),

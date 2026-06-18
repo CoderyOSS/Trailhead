@@ -87,7 +87,10 @@ class WorkerNode extends StatelessWidget {
           Container(
             width: 168,
             height: 36,
-            decoration: BoxDecoration(boxShadow: outlineShadows),
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: outlineShadows,
+            ),
             child: ClipRRect(
               borderRadius: BorderRadius.circular(AppRadius.md),
               child: Container(

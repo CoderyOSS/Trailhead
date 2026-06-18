@@ -15,7 +15,9 @@ import '../../theme/tokens.dart';
 import '../../widgets/mode_rail.dart';
 import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
+import 'marquee_painter.dart';
 import 'operator_picker.dart';
+import '../../providers/marquee_provider.dart';
 import '../../providers/node_menu_provider.dart';
 import '../../providers/selection_notifier.dart';
 import 'node_context_menu.dart';
@@ -471,6 +473,18 @@ class GraphCanvas extends ConsumerWidget {
                       ),
                     ),
                   ),
+                // Screen-space marquee overlay
+                Consumer(
+                  builder: (_, ref, __) {
+                    final m = ref.watch(marqueeProvider);
+                    if (!m.active) return const SizedBox.shrink();
+                    return Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: MarqueePainter(m.screenRect)),
+                      ),
+                    );
+                  },
+                ),
                 // Screen-space operator picker
                 if (pickerAnchor != null)
                   OperatorPicker(

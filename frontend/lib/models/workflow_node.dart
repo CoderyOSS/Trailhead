@@ -1,3 +1,5 @@
+import 'dart:ui' show Rect;
+
 class BranchOutput {
   final String id;
   final String label;
@@ -41,6 +43,16 @@ class WorkflowNode {
     BranchOutput(id: '3', label: 'default'),
   ];
 
+  // Geometry constants — single source of truth shared by the model-layer
+  // WorkflowNodeRect extension and the BranchNode/WorkerNode/MapNode widgets.
+  static const double workerWidth = 168.0;
+  static const double workerHeight = 36.0;
+  static const double fanWidth = 168.0;
+  static const double fanHeight = 36.0;
+  static const double branchWidth = 130.0;
+  static const double branchPadY = 9.0;
+  static const double branchRowHeight = 27.0;
+
   const WorkflowNode({
     required this.id,
     required this.kind,
@@ -79,4 +91,25 @@ class WorkflowNode {
       matchAll: matchAll ?? this.matchAll,
     );
   }
+}
+
+extension WorkflowNodeRect on WorkflowNode {
+  double get width => switch (kind) {
+    'worker' => WorkflowNode.workerWidth,
+    'fan'    => WorkflowNode.fanWidth,
+    _        => WorkflowNode.branchWidth,
+  };
+
+  double get height => switch (kind) {
+    'worker' => WorkflowNode.workerHeight,
+    'fan'    => WorkflowNode.fanHeight,
+    _        => outputs.isNotEmpty
+        ? WorkflowNode.branchPadY * 2 +
+            outputs.length * WorkflowNode.branchRowHeight
+        : WorkflowNode.branchPadY * 2 +
+            WorkflowNode.defaultBranchOutputs.length *
+                WorkflowNode.branchRowHeight,
+  };
+
+  Rect get rect => Rect.fromLTWH(x, y, width, height);
 }

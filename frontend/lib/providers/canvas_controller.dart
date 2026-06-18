@@ -95,6 +95,13 @@ class CanvasController extends StateNotifier<CanvasViewport> {
     _scaleStartFocal = null;
     _isScaling = false;
   }
+
+  /// Zoom by a scroll-delta amount anchored to a screen cursor position.
+  /// Negative delta zooms in (wheel scroll up); positive zooms out.
+  void zoomAt(double scrollDelta, Offset screenCursor) {
+    final factor = scrollDelta < 0 ? 1.15 : 1 / 1.15;
+    zoomBy(factor, focal: screenCursor);
+  }
 }
 
 final canvasControllerProvider =

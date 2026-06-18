@@ -21,13 +21,13 @@ final jobsProvider = StateProvider<List<JobSummary>>(
 
 final sidebarViewModeProvider = StateProvider<String>((ref) => 'grouped');
 
-final selectedNodeProvider = StateProvider<String?>((ref) => null);
-
 final hoveredNodeProvider = StateProvider<String?>((ref) => null);
 
 final draggingNodeIdProvider = StateProvider<String?>((ref) => null);
 
 final dragOffsetProvider = StateProvider<Offset>((ref) => Offset.zero);
+
+final spaceHeldProvider = StateProvider<bool>((ref) => false);
 
 final runsTableViewModeProvider = StateProvider<String>((ref) => 'flat');
 

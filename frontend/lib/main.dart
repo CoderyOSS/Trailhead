@@ -4,6 +4,7 @@ import 'theme/tokens.dart';
 import 'models/workflow_document.dart';
 import 'providers/canvas_controller.dart';
 import 'providers/mode_provider.dart';
+import 'providers/selection_notifier.dart';
 import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
 import 'widgets/workflows_sidebar.dart';
@@ -100,7 +101,7 @@ class TrailheadShell extends ConsumerWidget {
             );
             ref.read(workflowProvider.notifier).state = doc.workflow;
             ref.read(canvasControllerProvider.notifier).setViewport(doc.viewport);
-            ref.read(selectedNodeProvider.notifier).state = null;
+            ref.read(selectionProvider.notifier).clear();
             ref.read(hoveredNodeProvider.notifier).state = null;
             ref.read(draggingNodeIdProvider.notifier).state = null;
             ref.read(dragOffsetProvider.notifier).state = Offset.zero;

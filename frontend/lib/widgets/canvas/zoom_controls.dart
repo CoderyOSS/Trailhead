@@ -4,9 +4,6 @@ import '../../models/workflow_node.dart';
 import '../../providers/canvas_controller.dart';
 import '../../providers/mode_provider.dart';
 import '../../theme/tokens.dart';
-import 'fan_node.dart';
-import 'routing_node.dart';
-import 'worker_node.dart';
 
 class ZoomControls extends ConsumerWidget {
   final Size canvasSize;
@@ -24,20 +21,6 @@ class ZoomControls extends ConsumerWidget {
       height: 1.0,
     );
 
-    double nodeWidth(String kind) => switch (kind) {
-      'worker' => 168.0,
-      'fan'    => 168.0,
-      _        => BranchNode.width,
-    };
-
-    double nodeHeight(String kind, {List<BranchOutput> outputs = const []}) => switch (kind) {
-      'worker' => 36.0,
-      'fan'    => 36.0,
-      _        => outputs.isNotEmpty
-          ? BranchNode.padY * 2 + outputs.length * BranchNode.rowHeight
-          : BranchNode.padY * 2 + 4 * BranchNode.rowHeight,
-    };
-
     void fitToView() {
       final nodes = workflow.nodes;
       if (nodes.isEmpty) {
@@ -49,12 +32,10 @@ class ZoomControls extends ConsumerWidget {
       double maxX = double.negativeInfinity;
       double maxY = double.negativeInfinity;
       for (final node in nodes) {
-        final w = nodeWidth(node.kind);
-        final h = nodeHeight(node.kind, outputs: node.outputs);
         minX = minX < node.x ? minX : node.x;
         minY = minY < node.y ? minY : node.y;
-        maxX = maxX > node.x + w ? maxX : node.x + w;
-        maxY = maxY > node.y + h ? maxY : node.y + h;
+        maxX = maxX > node.x + node.width ? maxX : node.x + node.width;
+        maxY = maxY > node.y + node.height ? maxY : node.y + node.height;
       }
       final bounds = Rect.fromLTRB(minX, minY, maxX, maxY);
       controller.fitToBounds(bounds, canvasSize, margin: AppSpacing.s8 * 2);

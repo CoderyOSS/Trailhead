@@ -19,9 +19,9 @@ class BranchNode extends StatelessWidget {
     this.onExit,
   });
 
-  static const double width = 130;
-  static const double rowHeight = 27;
-  static const double padY = 9;
+  static const double width = WorkflowNode.branchWidth;
+  static const double rowHeight = WorkflowNode.branchRowHeight;
+  static const double padY = WorkflowNode.branchPadY;
 
   double get height => padY * 2 + _outputs.length * rowHeight;
 

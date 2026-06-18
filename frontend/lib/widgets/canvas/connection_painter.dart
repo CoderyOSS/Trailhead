@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
 import '../../theme/tokens.dart';
-import 'routing_node.dart';
 
 class ConnectionPainter extends CustomPainter {
   final List<WorkflowNode> nodes;
@@ -11,16 +10,8 @@ class ConnectionPainter extends CustomPainter {
   final String? draggingNodeId;
   final Offset dragOffset;
 
-  static const double _workerWidth = 168.0;
-  static const double _workerHeight = 36.0;
-  static const double _fanWidth = 168.0;
-  static const double _fanHeight = 36.0;
   static const double _controlMin = 40.0;
   static const double _controlMax = 150.0;
-
-  // BranchNode geometry
-  static const double _branchWidth = 130.0;
-  static const double _branchHeight = 126.0; // 9*2 + 4*27
 
   ConnectionPainter({
     required this.nodes,
@@ -36,37 +27,32 @@ class ConnectionPainter extends CustomPainter {
     return Offset(node.x, node.y);
   }
 
-  double _branchNodeHeight(WorkflowNode node) {
-    if (node.outputs.isNotEmpty) {
-      return BranchNode.padY * 2 + node.outputs.length * BranchNode.rowHeight;
-    }
-    return _branchHeight;
-  }
-
   Offset _exitPoint(WorkflowNode node, WorkflowEdge edge) {
     final pos = _nodePos(node);
     return switch (node.kind) {
-      'worker' => Offset(pos.dx + _workerWidth,  pos.dy + _workerHeight / 2),
-      'fan'    => Offset(pos.dx + _fanWidth,     pos.dy + _fanHeight / 2),
+      'worker' => Offset(pos.dx + node.width, pos.dy + node.height / 2),
+      'fan'    => Offset(pos.dx + node.width, pos.dy + node.height / 2),
       _        => _branchExitPoint(node, pos, edge.sourcePort),
     };
   }
 
   Offset _branchExitPoint(WorkflowNode node, Offset pos, int? sourcePort) {
-    final h = _branchNodeHeight(node);
     if (sourcePort == null || node.outputs.isEmpty) {
-      return Offset(pos.dx + _branchWidth, pos.dy + h / 2);
+      return Offset(pos.dx + node.width, pos.dy + node.height / 2);
     }
-    final y = pos.dy + BranchNode.padY + sourcePort * BranchNode.rowHeight + BranchNode.rowHeight / 2;
-    return Offset(pos.dx + _branchWidth, y);
+    final y = pos.dy +
+        WorkflowNode.branchPadY +
+        sourcePort * WorkflowNode.branchRowHeight +
+        WorkflowNode.branchRowHeight / 2;
+    return Offset(pos.dx + node.width, y);
   }
 
   Offset _entryPoint(WorkflowNode node) {
     final pos = _nodePos(node);
     return switch (node.kind) {
-      'worker' => Offset(pos.dx,                 pos.dy + _workerHeight / 2),
-      'fan'    => Offset(pos.dx,                 pos.dy + _fanHeight / 2),
-      _        => Offset(pos.dx,                 pos.dy + _branchNodeHeight(node) / 2),
+      'worker' => Offset(pos.dx, pos.dy + node.height / 2),
+      'fan'    => Offset(pos.dx, pos.dy + node.height / 2),
+      _        => Offset(pos.dx, pos.dy + node.height / 2),
     };
   }
 

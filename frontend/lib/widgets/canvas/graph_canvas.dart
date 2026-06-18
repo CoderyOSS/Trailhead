@@ -1,5 +1,6 @@
 import 'dart:math' show Random;
 import 'dart:ui' show PointerDeviceKind;
+import 'package:flutter/gestures.dart' show PointerScrollEvent, kPrimaryButton;
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
@@ -15,8 +16,11 @@ import '../../theme/tokens.dart';
 import '../../widgets/mode_rail.dart';
 import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
+import 'marquee_painter.dart';
 import 'operator_picker.dart';
+import '../../providers/marquee_provider.dart';
 import '../../providers/node_menu_provider.dart';
+import '../../providers/selection_notifier.dart';
 import 'node_context_menu.dart';
 import 'entrypoint_node.dart';
 import 'fan_node.dart';
@@ -38,7 +42,7 @@ class GraphCanvas extends ConsumerWidget {
     final viewport = ref.watch(canvasControllerProvider);
     final controller = ref.read(canvasControllerProvider.notifier);
     final workflow = ref.watch(workflowProvider);
-    final selectedNodeId = ref.watch(selectedNodeProvider);
+    final selection = ref.watch(selectionProvider);
     final hoveredNodeId = ref.watch(hoveredNodeProvider);
     final draggingNodeId = ref.watch(draggingNodeIdProvider);
     final dragOffset = ref.watch(dragOffsetProvider);
@@ -46,20 +50,7 @@ class GraphCanvas extends ConsumerWidget {
     final mode = ref.watch(modeProvider);
     final editable = mode == AppMode.build;
     final menuAnchor = ref.watch(nodeMenuProvider);
-
-    double nodeWidth(String kind) => switch (kind) {
-      'worker' => 168.0,
-      'fan'    => 168.0,
-      _        => BranchNode.width,
-    };
-
-    double nodeHeight(String kind, {List<BranchOutput> outputs = const []}) => switch (kind) {
-      'worker' => 36.0,
-      'fan'    => 36.0,
-      _        => outputs.isNotEmpty
-          ? BranchNode.padY * 2 + outputs.length * BranchNode.rowHeight
-          : BranchNode.padY * 2 + 4 * BranchNode.rowHeight,
-    };
+    final spaceHeld = ref.watch(spaceHeldProvider);
 
     // Sync in-place workflow edits to the document model and workflow list.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
@@ -97,6 +88,20 @@ class GraphCanvas extends ConsumerWidget {
       );
     }
 
+    void updateMarqueeFromScreenRect(Rect screenRect) {
+      final world = Rect.fromPoints(
+        (screenRect.topLeft - viewport.pan) / viewport.zoom,
+        (screenRect.bottomRight - viewport.pan) / viewport.zoom,
+      );
+      final hits = workflow.nodes
+          .where((n) => n.rect.overlaps(world))
+          .map((n) => n.id)
+          .toSet();
+      ref.read(selectionProvider.notifier).updateMarqueeLive(hits);
+      ref.read(marqueeProvider.notifier).state =
+          MarqueeState(screenRect: screenRect, active: true);
+    }
+
     void addNode(OperatorType type) {
       final sourceId = pickerAnchor?.sourceNodeId;
       if (sourceId == null) return;
@@ -107,8 +112,8 @@ class GraphCanvas extends ConsumerWidget {
       );
 
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
-      final sourceHeight = nodeHeight(source.kind, outputs: source.outputs);
-      final newNodeHeight = nodeHeight(type.kind);
+      final sourceHeight = source.height;
+      final newNodeHeight = WorkflowNode(id: '', kind: type.kind, label: '', x: 0, y: 0).height;
       final snappedX = _snap(source.x + 220);
       final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
       final newNode = WorkflowNode(
@@ -131,22 +136,21 @@ class GraphCanvas extends ConsumerWidget {
         nodes: [...workflow.nodes, newNode],
         edges: [...workflow.edges, edge],
       );
-      ref.read(selectedNodeProvider.notifier).state = id;
+      ref.read(selectionProvider.notifier).selectOne(id);
       ref.read(operatorPickerProvider.notifier).state = null;
     }
 
     void deleteNode(String nodeId) {
-      final newNodes = workflow.nodes.where((n) => n.id != nodeId).toList();
-      final newEdges = workflow.edges
+      final currentWorkflow = ref.read(workflowProvider);
+      final newNodes = currentWorkflow.nodes.where((n) => n.id != nodeId).toList();
+      final newEdges = currentWorkflow.edges
           .where((e) => e.sourceId != nodeId && e.targetId != nodeId)
           .toList();
-      ref.read(workflowProvider.notifier).state = workflow.copyWith(
+      ref.read(workflowProvider.notifier).state = currentWorkflow.copyWith(
         nodes: newNodes,
         edges: newEdges,
       );
-      if (selectedNodeId == nodeId) {
-        ref.read(selectedNodeProvider.notifier).state = null;
-      }
+      ref.read(selectionProvider.notifier).removeIds([nodeId]);
       if (hoveredNodeId == nodeId) {
         ref.read(hoveredNodeProvider.notifier).state = null;
       }
@@ -168,7 +172,7 @@ class GraphCanvas extends ConsumerWidget {
       ref.read(workflowProvider.notifier).state = workflow.copyWith(
         nodes: [...workflow.nodes, newNode],
       );
-      ref.read(selectedNodeProvider.notifier).state = id;
+      ref.read(selectionProvider.notifier).selectOne(id);
       ref.read(nodeMenuProvider.notifier).state = null;
     }
 
@@ -201,9 +205,7 @@ class GraphCanvas extends ConsumerWidget {
         edges: newEdges,
       );
 
-      if (selectedNodeId == nodeId) {
-        ref.read(selectedNodeProvider.notifier).state = null;
-      }
+      ref.read(selectionProvider.notifier).removeIds([nodeId]);
       ref.read(nodeMenuProvider.notifier).state = null;
     }
 
@@ -215,39 +217,124 @@ class GraphCanvas extends ConsumerWidget {
           onKeyEvent: (node, event) {
             if (!editable) return KeyEventResult.ignored;
             if (event is KeyDownEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.space) {
+                ref.read(spaceHeldProvider.notifier).state = true;
+                return KeyEventResult.handled;
+              }
               if (event.logicalKey == LogicalKeyboardKey.delete ||
                   event.logicalKey == LogicalKeyboardKey.backspace) {
-                if (selectedNodeId != null) {
-                  deleteNode(selectedNodeId);
+                final current = ref.read(selectionProvider).current
+                    .where((id) => id != 'entrypoint')
+                    .toList();
+                if (current.isNotEmpty) {
+                  for (final id in current) {
+                    deleteNode(id);
+                  }
                   return KeyEventResult.handled;
                 }
+              }
+            } else if (event is KeyUpEvent) {
+              if (event.logicalKey == LogicalKeyboardKey.space) {
+                ref.read(spaceHeldProvider.notifier).state = false;
+                return KeyEventResult.handled;
               }
             }
             return KeyEventResult.ignored;
           },
           child: Listener(
-                                    onPointerMove: (event) {
-          if (event.kind == PointerDeviceKind.mouse) {
-            controller.pan(event.delta);
-          }
-        },
-        child: GestureDetector(
-          behavior: HitTestBehavior.translucent,
-          onTap: () {
-            // Deselect when tapping empty canvas
-            ref.read(selectedNodeProvider.notifier).state = null;
-            ref.read(operatorPickerProvider.notifier).state = null;
-          },
-          onScaleStart: (details) {
-            controller.beginScale(details.focalPoint);
-          },
-          onScaleUpdate: (details) {
-            controller.updateScale(details.scale, details.focalPoint);
-          },
-          onScaleEnd: (_) {
-            controller.endScale();
-          },
-        child: Container(
+            onPointerDown: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              if (event.buttons != kPrimaryButton) return;
+              if (!editable || spaceHeld) return;
+              // Don't start marquee if pointer is over a node — node's own
+              // gesture detector handles drag.
+              final worldPos = (event.position - viewport.pan) / viewport.zoom;
+              final overNode = workflow.nodes.any((n) => n.rect.contains(worldPos));
+              if (overNode) return;
+              ref.read(mouseMarqueeStartProvider.notifier).state = event.position;
+              ref.read(selectionProvider.notifier).beginMarquee();
+            },
+            onPointerMove: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              if (spaceHeld) {
+                controller.pan(event.delta);
+                return;
+              }
+              final start = ref.read(mouseMarqueeStartProvider);
+              if (start != null) {
+                updateMarqueeFromScreenRect(
+                  Rect.fromPoints(start, event.position),
+                );
+              }
+            },
+            onPointerUp: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              final start = ref.read(mouseMarqueeStartProvider);
+              if (start != null) {
+                ref.read(selectionProvider.notifier).commitMarquee();
+                ref.read(mouseMarqueeStartProvider.notifier).state = null;
+                ref.read(marqueeProvider.notifier).state =
+                    const MarqueeState();
+              }
+            },
+            onPointerCancel: (event) {
+              if (event.kind != PointerDeviceKind.mouse) return;
+              final start = ref.read(mouseMarqueeStartProvider);
+              if (start != null) {
+                ref.read(selectionProvider.notifier).cancelMarquee();
+                ref.read(mouseMarqueeStartProvider.notifier).state = null;
+                ref.read(marqueeProvider.notifier).state =
+                    const MarqueeState();
+              }
+            },
+            onPointerSignal: (event) {
+              if (event is PointerScrollEvent &&
+                  event.kind == PointerDeviceKind.mouse) {
+                controller.zoomAt(event.scrollDelta.dy, event.position);
+              }
+            },
+            child: GestureDetector(
+              behavior: HitTestBehavior.translucent,
+              onTap: () {
+                // Deselect when tapping empty canvas
+                ref.read(selectionProvider.notifier).clear();
+                ref.read(operatorPickerProvider.notifier).state = null;
+              },
+              onLongPressStart: editable
+                  ? (details) {
+                      ref.read(touchMarqueeStartProvider.notifier).state =
+                          details.globalPosition;
+                      ref.read(selectionProvider.notifier).beginMarquee();
+                    }
+                  : null,
+              onLongPressMoveUpdate: editable
+                  ? (details) {
+                      final start = ref.read(touchMarqueeStartProvider);
+                      if (start != null) {
+                        updateMarqueeFromScreenRect(
+                          Rect.fromPoints(start, details.globalPosition),
+                        );
+                      }
+                    }
+                  : null,
+              onLongPressEnd: editable
+                  ? (_) {
+                      ref.read(selectionProvider.notifier).commitMarquee();
+                      ref.read(touchMarqueeStartProvider.notifier).state = null;
+                      ref.read(marqueeProvider.notifier).state =
+                          const MarqueeState();
+                    }
+                  : null,
+              onScaleStart: (details) {
+                controller.beginScale(details.focalPoint);
+              },
+              onScaleUpdate: (details) {
+                controller.updateScale(details.scale, details.focalPoint);
+              },
+              onScaleEnd: (_) {
+                controller.endScale();
+              },
+              child: Container(
           decoration: const BoxDecoration(
             gradient: AppColors.hearthGradient,
           ),
@@ -286,8 +373,15 @@ class GraphCanvas extends ConsumerWidget {
                         ),
                         // Nodes
                         ...workflow.nodes.map((node) {
-                          final isSelected = selectedNodeId == node.id;
-                          final isDragging = draggingNodeId == node.id;
+                          final current = selection.current;
+                          final isSelected = current.contains(node.id);
+                          // Group drag: if the dragged node is part of a multi-selection, every selected
+                          // node moves together. Single-node drag (length 1 or unselected) moves only it.
+                          final inGroupDrag = draggingNodeId != null &&
+                              current.contains(draggingNodeId) &&
+                              current.length > 1 &&
+                              current.contains(node.id);
+                          final isDragging = inGroupDrag || (draggingNodeId == node.id);
                           final displayX = isDragging ? node.x + dragOffset.dx : node.x;
                           final displayY = isDragging ? node.y + dragOffset.dy : node.y;
 
@@ -351,8 +445,7 @@ class GraphCanvas extends ConsumerWidget {
                                 GestureDetector(
                                   behavior: HitTestBehavior.opaque,
                                   onTap: () {
-                                    ref.read(selectedNodeProvider.notifier).state =
-                                        isSelected ? null : node.id;
+                                    ref.read(selectionProvider.notifier).toggleOne(node.id);
                                     // close picker when selecting another node
                                     if (!isSelected) {
                                       ref.read(operatorPickerProvider.notifier).state = null;
@@ -387,22 +480,27 @@ class GraphCanvas extends ConsumerWidget {
                                       : null,
                                   onPanEnd: editable
                                       ? (_) {
-                                          if (draggingNodeId == node.id) {
-                                            final offset = ref.read(dragOffsetProvider);
-                                            final h = nodeHeight(node.kind, outputs: node.outputs);
-                                            final snappedX = _snap(node.x + offset.dx);
-                                            final snappedY = _snapCenter(node.y + offset.dy + h / 2) - h / 2;
-                                            final newNodes = workflow.nodes.map((n) {
-                                              if (n.id == node.id) {
-                                                return n.copyWith(x: snappedX, y: snappedY);
-                                              }
-                                              return n;
-                                            }).toList();
-                                            ref.read(workflowProvider.notifier).state =
-                                                workflow.copyWith(nodes: newNodes);
-                                            ref.read(draggingNodeIdProvider.notifier).state = null;
-                                            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-                                          }
+                                          if (draggingNodeId != node.id) return;
+                                          final offset = ref.read(dragOffsetProvider);
+                                          final cur = ref.read(selectionProvider).current;
+                                          final currentWorkflow = ref.read(workflowProvider);
+                                          final isGroupDrag = cur.length > 1 && cur.contains(node.id);
+
+                                          final newNodes = currentWorkflow.nodes.map((n) {
+                                            final shouldMove = isGroupDrag
+                                                ? cur.contains(n.id)
+                                                : (n.id == node.id);
+                                            if (!shouldMove) return n;
+                                            final h = n.height;
+                                            final snappedX = _snap(n.x + offset.dx);
+                                            final snappedY = _snapCenter(n.y + offset.dy + h / 2) - h / 2;
+                                            return n.copyWith(x: snappedX, y: snappedY);
+                                          }).toList();
+
+                                          ref.read(workflowProvider.notifier).state =
+                                              currentWorkflow.copyWith(nodes: newNodes);
+                                          ref.read(draggingNodeIdProvider.notifier).state = null;
+                                          ref.read(dragOffsetProvider.notifier).state = Offset.zero;
                                         }
                                       : null,
                                   onPanCancel: editable
@@ -416,7 +514,7 @@ class GraphCanvas extends ConsumerWidget {
                                 if (isSelected && editable && node.id != 'entrypoint')
                                   Positioned(
                                     left: -44.0,
-                                    top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
+                                    top: node.height / 2 - 44.0,
                                     child: _InputHandle(
                                       onTap: () {},
                                     ),
@@ -447,12 +545,12 @@ class GraphCanvas extends ConsumerWidget {
                                           // Fallback for branch nodes with no outputs defined
                                           Positioned(
                                             left: BranchNode.width - 44.0,
-                                            top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
+                                            top: node.height / 2 - 44.0,
                                             child: _OutputHandle(
                                               onTap: () => showPicker(
                                                 Offset(
                                                   displayX + BranchNode.width,
-                                                  displayY + nodeHeight(node.kind, outputs: node.outputs) / 2,
+                                                  displayY + node.height / 2,
                                                 ),
                                                 node.id,
                                               ),
@@ -461,13 +559,13 @@ class GraphCanvas extends ConsumerWidget {
                                         ],
                                 if (isSelected && editable && node.kind != 'branch')
                                   Positioned(
-                                    left: nodeWidth(node.kind) - 44.0,
-                                    top: nodeHeight(node.kind, outputs: node.outputs) / 2 - 44.0,
+                                    left: node.width - 44.0,
+                                    top: node.height / 2 - 44.0,
                                     child: _OutputHandle(
                                       onTap: () => showPicker(
                                         Offset(
-                                          displayX + nodeWidth(node.kind),
-                                          displayY + nodeHeight(node.kind, outputs: node.outputs) / 2,
+                                          displayX + node.width,
+                                          displayY + node.height / 2,
                                         ),
                                         node.id,
                                       ),
@@ -482,6 +580,18 @@ class GraphCanvas extends ConsumerWidget {
                       ),
                     ),
                   ),
+                // Screen-space marquee overlay
+                Consumer(
+                  builder: (_, ref, __) {
+                    final m = ref.watch(marqueeProvider);
+                    if (!m.active) return const SizedBox.shrink();
+                    return Positioned.fill(
+                      child: IgnorePointer(
+                        child: CustomPaint(painter: MarqueePainter(m.screenRect)),
+                      ),
+                    );
+                  },
+                ),
                 // Screen-space operator picker
                 if (pickerAnchor != null)
                   OperatorPicker(

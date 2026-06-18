@@ -21,8 +21,6 @@ final jobsProvider = StateProvider<List<JobSummary>>(
 
 final sidebarViewModeProvider = StateProvider<String>((ref) => 'grouped');
 
-final selectedNodeProvider = StateProvider<String?>((ref) => null);
-
 final hoveredNodeProvider = StateProvider<String?>((ref) => null);
 
 final draggingNodeIdProvider = StateProvider<String?>((ref) => null);

@@ -17,6 +17,7 @@ import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
 import 'operator_picker.dart';
 import '../../providers/node_menu_provider.dart';
+import '../../providers/selection_notifier.dart';
 import 'node_context_menu.dart';
 import 'entrypoint_node.dart';
 import 'fan_node.dart';
@@ -38,7 +39,8 @@ class GraphCanvas extends ConsumerWidget {
     final viewport = ref.watch(canvasControllerProvider);
     final controller = ref.read(canvasControllerProvider.notifier);
     final workflow = ref.watch(workflowProvider);
-    final selectedNodeId = ref.watch(selectedNodeProvider);
+    final selection = ref.watch(selectionProvider);
+    final selectedNodeId = selection.current.length == 1 ? selection.current.first : null;
     final hoveredNodeId = ref.watch(hoveredNodeProvider);
     final draggingNodeId = ref.watch(draggingNodeIdProvider);
     final dragOffset = ref.watch(dragOffsetProvider);
@@ -117,22 +119,21 @@ class GraphCanvas extends ConsumerWidget {
         nodes: [...workflow.nodes, newNode],
         edges: [...workflow.edges, edge],
       );
-      ref.read(selectedNodeProvider.notifier).state = id;
+      ref.read(selectionProvider.notifier).selectOne(id);
       ref.read(operatorPickerProvider.notifier).state = null;
     }
 
     void deleteNode(String nodeId) {
-      final newNodes = workflow.nodes.where((n) => n.id != nodeId).toList();
-      final newEdges = workflow.edges
+      final currentWorkflow = ref.read(workflowProvider);
+      final newNodes = currentWorkflow.nodes.where((n) => n.id != nodeId).toList();
+      final newEdges = currentWorkflow.edges
           .where((e) => e.sourceId != nodeId && e.targetId != nodeId)
           .toList();
-      ref.read(workflowProvider.notifier).state = workflow.copyWith(
+      ref.read(workflowProvider.notifier).state = currentWorkflow.copyWith(
         nodes: newNodes,
         edges: newEdges,
       );
-      if (selectedNodeId == nodeId) {
-        ref.read(selectedNodeProvider.notifier).state = null;
-      }
+      ref.read(selectionProvider.notifier).removeIds([nodeId]);
       if (hoveredNodeId == nodeId) {
         ref.read(hoveredNodeProvider.notifier).state = null;
       }
@@ -154,7 +155,7 @@ class GraphCanvas extends ConsumerWidget {
       ref.read(workflowProvider.notifier).state = workflow.copyWith(
         nodes: [...workflow.nodes, newNode],
       );
-      ref.read(selectedNodeProvider.notifier).state = id;
+      ref.read(selectionProvider.notifier).selectOne(id);
       ref.read(nodeMenuProvider.notifier).state = null;
     }
 
@@ -187,9 +188,7 @@ class GraphCanvas extends ConsumerWidget {
         edges: newEdges,
       );
 
-      if (selectedNodeId == nodeId) {
-        ref.read(selectedNodeProvider.notifier).state = null;
-      }
+      ref.read(selectionProvider.notifier).removeIds([nodeId]);
       ref.read(nodeMenuProvider.notifier).state = null;
     }
 
@@ -203,8 +202,13 @@ class GraphCanvas extends ConsumerWidget {
             if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.delete ||
                   event.logicalKey == LogicalKeyboardKey.backspace) {
-                if (selectedNodeId != null) {
-                  deleteNode(selectedNodeId);
+                final current = ref.read(selectionProvider).current
+                    .where((id) => id != 'entrypoint')
+                    .toList();
+                if (current.isNotEmpty) {
+                  for (final id in current) {
+                    deleteNode(id);
+                  }
                   return KeyEventResult.handled;
                 }
               }
@@ -221,7 +225,7 @@ class GraphCanvas extends ConsumerWidget {
           behavior: HitTestBehavior.translucent,
           onTap: () {
             // Deselect when tapping empty canvas
-            ref.read(selectedNodeProvider.notifier).state = null;
+            ref.read(selectionProvider.notifier).clear();
             ref.read(operatorPickerProvider.notifier).state = null;
           },
           onScaleStart: (details) {
@@ -337,8 +341,7 @@ class GraphCanvas extends ConsumerWidget {
                                 GestureDetector(
                                   behavior: HitTestBehavior.opaque,
                                   onTap: () {
-                                    ref.read(selectedNodeProvider.notifier).state =
-                                        isSelected ? null : node.id;
+                                    ref.read(selectionProvider.notifier).toggleOne(node.id);
                                     // close picker when selecting another node
                                     if (!isSelected) {
                                       ref.read(operatorPickerProvider.notifier).state = null;

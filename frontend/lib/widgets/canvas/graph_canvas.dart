@@ -114,6 +114,7 @@ class GraphCanvas extends ConsumerWidget {
         label: type.label,
         x: snappedX,
         y: snappedY,
+        outputs: type.kind == 'branch' ? WorkflowNode.defaultBranchOutputs : const [],
       );
 
       final edge = WorkflowEdge(
@@ -158,6 +159,7 @@ class GraphCanvas extends ConsumerWidget {
         label: node.label,
         x: _snap(node.x + 220),
         y: _snap(node.y + 32),
+        outputs: node.outputs,
       );
       ref.read(workflowProvider.notifier).state = workflow.copyWith(
         nodes: [...workflow.nodes, newNode],

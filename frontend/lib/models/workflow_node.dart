@@ -34,6 +34,13 @@ class WorkflowNode {
   final List<BranchOutput> outputs;
   final bool matchAll;
 
+  static const List<BranchOutput> defaultBranchOutputs = [
+    BranchOutput(id: '0', label: 'high'),
+    BranchOutput(id: '1', label: 'medium'),
+    BranchOutput(id: '2', label: 'low'),
+    BranchOutput(id: '3', label: 'default'),
+  ];
+
   const WorkflowNode({
     required this.id,
     required this.kind,

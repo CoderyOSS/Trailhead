@@ -101,8 +101,8 @@ class MapNode extends StatelessWidget {
                         right: BorderSide(color: AppColors.border2),
                       ),
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppRadius.md),
-                        bottomLeft: Radius.circular(AppRadius.md),
+                        topLeft: Radius.circular(6),
+                        bottomLeft: Radius.circular(6),
                       ),
                     ),
                     child: const Center(

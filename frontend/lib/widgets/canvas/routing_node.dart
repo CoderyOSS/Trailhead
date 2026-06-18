@@ -26,14 +26,7 @@ class BranchNode extends StatelessWidget {
   double get height => padY * 2 + _outputs.length * rowHeight;
 
   List<BranchOutput> get _outputs =>
-      node.outputs.isNotEmpty ? node.outputs : _defaultOutputs;
-
-  static const List<BranchOutput> _defaultOutputs = [
-    BranchOutput(id: '0', label: 'high'),
-    BranchOutput(id: '1', label: 'medium'),
-    BranchOutput(id: '2', label: 'low'),
-    BranchOutput(id: '3', label: 'default'),
-  ];
+      node.outputs.isNotEmpty ? node.outputs : WorkflowNode.defaultBranchOutputs;
 
   @override
   Widget build(BuildContext context) {
@@ -119,8 +112,8 @@ class BranchNode extends StatelessWidget {
                         right: BorderSide(color: AppColors.border2),
                       ),
                       borderRadius: BorderRadius.only(
-                        topLeft: Radius.circular(AppRadius.md),
-                        bottomLeft: Radius.circular(AppRadius.md),
+                        topLeft: Radius.circular(6),
+                        bottomLeft: Radius.circular(6),
                       ),
                     ),
                     child: const Center(

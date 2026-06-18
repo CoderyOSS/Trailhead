@@ -43,7 +43,6 @@ class GraphCanvas extends ConsumerWidget {
     final controller = ref.read(canvasControllerProvider.notifier);
     final workflow = ref.watch(workflowProvider);
     final selection = ref.watch(selectionProvider);
-    final selectedNodeId = selection.current.length == 1 ? selection.current.first : null;
     final hoveredNodeId = ref.watch(hoveredNodeProvider);
     final draggingNodeId = ref.watch(draggingNodeIdProvider);
     final dragOffset = ref.watch(dragOffsetProvider);
@@ -374,8 +373,15 @@ class GraphCanvas extends ConsumerWidget {
                         ),
                         // Nodes
                         ...workflow.nodes.map((node) {
-                          final isSelected = selectedNodeId == node.id;
-                          final isDragging = draggingNodeId == node.id;
+                          final current = selection.current;
+                          final isSelected = current.contains(node.id);
+                          // Group drag: if the dragged node is part of a multi-selection, every selected
+                          // node moves together. Single-node drag (length 1 or unselected) moves only it.
+                          final inGroupDrag = draggingNodeId != null &&
+                              current.contains(draggingNodeId) &&
+                              current.length > 1 &&
+                              current.contains(node.id);
+                          final isDragging = inGroupDrag || (draggingNodeId == node.id);
                           final displayX = isDragging ? node.x + dragOffset.dx : node.x;
                           final displayY = isDragging ? node.y + dragOffset.dy : node.y;
 
@@ -474,22 +480,27 @@ class GraphCanvas extends ConsumerWidget {
                                       : null,
                                   onPanEnd: editable
                                       ? (_) {
-                                          if (draggingNodeId == node.id) {
-                                            final offset = ref.read(dragOffsetProvider);
-                                            final h = node.height;
-                                            final snappedX = _snap(node.x + offset.dx);
-                                            final snappedY = _snapCenter(node.y + offset.dy + h / 2) - h / 2;
-                                            final newNodes = workflow.nodes.map((n) {
-                                              if (n.id == node.id) {
-                                                return n.copyWith(x: snappedX, y: snappedY);
-                                              }
-                                              return n;
-                                            }).toList();
-                                            ref.read(workflowProvider.notifier).state =
-                                                workflow.copyWith(nodes: newNodes);
-                                            ref.read(draggingNodeIdProvider.notifier).state = null;
-                                            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-                                          }
+                                          if (draggingNodeId != node.id) return;
+                                          final offset = ref.read(dragOffsetProvider);
+                                          final cur = ref.read(selectionProvider).current;
+                                          final currentWorkflow = ref.read(workflowProvider);
+                                          final isGroupDrag = cur.length > 1 && cur.contains(node.id);
+
+                                          final newNodes = currentWorkflow.nodes.map((n) {
+                                            final shouldMove = isGroupDrag
+                                                ? cur.contains(n.id)
+                                                : (n.id == node.id);
+                                            if (!shouldMove) return n;
+                                            final h = n.height;
+                                            final snappedX = _snap(n.x + offset.dx);
+                                            final snappedY = _snapCenter(n.y + offset.dy + h / 2) - h / 2;
+                                            return n.copyWith(x: snappedX, y: snappedY);
+                                          }).toList();
+
+                                          ref.read(workflowProvider.notifier).state =
+                                              currentWorkflow.copyWith(nodes: newNodes);
+                                          ref.read(draggingNodeIdProvider.notifier).state = null;
+                                          ref.read(dragOffsetProvider.notifier).state = Offset.zero;
                                         }
                                       : null,
                                   onPanCancel: editable

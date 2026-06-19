@@ -26,6 +26,9 @@ enum TrailheadIconData {
   lock,
   collapseLink,
   bot,
+  mousePointer,
+  scissors,
+  maximize,
 }
 
 class TrailheadIcon extends StatelessWidget {
@@ -170,4 +173,22 @@ const Map<TrailheadIconData, String> _bodies = {
       '<rect width="16" height="12" x="4" y="8" rx="2"/>'
       '<path d="M2 14h2"/><path d="M20 14h2"/>'
       '<path d="M15 13v2"/><path d="M9 13v2"/>',
+
+  TrailheadIconData.mousePointer:
+      '<path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/>'
+      '<line x1="13" y1="13" x2="21" y2="21"/>'
+      '<line x1="13" y1="13" x2="16" y2="16"/>',
+
+  TrailheadIconData.scissors:
+      '<circle cx="6" cy="6" r="3"/>'
+      '<circle cx="6" cy="18" r="3"/>'
+      '<line x1="20" y1="4" x2="8.12" y2="15.88"/>'
+      '<line x1="14.47" y1="14.48" x2="20" y2="20"/>'
+      '<line x1="8.12" y1="8.12" x2="12" y2="12"/>',
+
+  TrailheadIconData.maximize:
+      '<path d="M8 3H5a2 2 0 0 0-2 2v3"/>'
+      '<path d="M21 8V5a2 2 0 0 0-2-2h-3"/>'
+      '<path d="M3 16v3a2 2 0 0 0 2 2h3"/>'
+      '<path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
 };

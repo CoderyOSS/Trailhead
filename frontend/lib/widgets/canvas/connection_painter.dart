@@ -2,6 +2,7 @@ import 'dart:math' show atan2, cos, sin;
 import 'package:flutter/material.dart';
 import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
+import '../../providers/connection_drag_provider.dart';
 import '../../theme/tokens.dart';
 
 class ConnectionPainter extends CustomPainter {
@@ -10,6 +11,7 @@ class ConnectionPainter extends CustomPainter {
   final String? draggingNodeId;
   final Offset dragOffset;
   final Set<String> selectedIds;
+  final ConnectionDragState? connectionDrag;
 
   static const double _controlMin = 40.0;
   static const double _controlMax = 150.0;
@@ -20,6 +22,7 @@ class ConnectionPainter extends CustomPainter {
     this.draggingNodeId,
     this.dragOffset = Offset.zero,
     this.selectedIds = const {},
+    this.connectionDrag,
   });
 
   Offset _nodePos(WorkflowNode node) {
@@ -42,6 +45,27 @@ class ConnectionPainter extends CustomPainter {
     };
   }
 
+  Offset _entryPoint(WorkflowNode node) {
+    final pos = _nodePos(node);
+    return switch (node.kind) {
+      'worker' => Offset(pos.dx, pos.dy + node.height / 2),
+      'fan'    => Offset(pos.dx, pos.dy + node.height / 2),
+      _        => Offset(pos.dx, pos.dy + node.height / 2),
+    };
+  }
+
+  Offset _handlePoint(WorkflowNode node, bool isOutput, int? port) {
+    final pos = _nodePos(node);
+    if (isOutput) {
+      return switch (node.kind) {
+        'worker' => Offset(pos.dx + node.width, pos.dy + node.height / 2),
+        'fan'    => Offset(pos.dx + node.width, pos.dy + node.height / 2),
+        _        => _branchExitPoint(node, pos, port),
+      };
+    }
+    return Offset(pos.dx, pos.dy + node.height / 2);
+  }
+
   Offset _branchExitPoint(WorkflowNode node, Offset pos, int? sourcePort) {
     if (sourcePort == null || node.outputs.isEmpty) {
       return Offset(pos.dx + node.width, pos.dy + node.height / 2);
@@ -51,15 +75,6 @@ class ConnectionPainter extends CustomPainter {
         sourcePort * WorkflowNode.branchRowHeight +
         WorkflowNode.branchRowHeight / 2;
     return Offset(pos.dx + node.width, y);
-  }
-
-  Offset _entryPoint(WorkflowNode node) {
-    final pos = _nodePos(node);
-    return switch (node.kind) {
-      'worker' => Offset(pos.dx, pos.dy + node.height / 2),
-      'fan'    => Offset(pos.dx, pos.dy + node.height / 2),
-      _        => Offset(pos.dx, pos.dy + node.height / 2),
-    };
   }
 
   @override
@@ -106,6 +121,44 @@ class ConnectionPainter extends CustomPainter {
       // Midpoint pill label if present
       if (edge.label != null && edge.label!.isNotEmpty) {
         _drawMidpointLabel(canvas, mid, edge.label!);
+      }
+    }
+
+    // Draw temporary drag line
+    final drag = connectionDrag;
+    if (drag != null) {
+      final source = nodeMap[drag.sourceNodeId];
+      if (source != null) {
+        final p0 = _handlePoint(
+          source,
+          drag.sourceIsOutput,
+          drag.sourcePort,
+        );
+        final p3 = drag.targetNodeId != null
+            ? (() {
+                final target = nodeMap[drag.targetNodeId!];
+                if (target == null) return drag.currentWorldPos;
+                return _handlePoint(
+                  target,
+                  drag.targetIsOutput!,
+                  drag.targetPort,
+                );
+              })()
+            : drag.currentWorldPos;
+
+        final dx = (p3.dx - p0.dx).abs();
+        final controlLen = dx.clamp(_controlMin, _controlMax);
+
+        final p1 = Offset(p0.dx + controlLen, p0.dy);
+        final p2 = Offset(p3.dx - controlLen, p3.dy);
+
+        final dragPath = Path()
+          ..moveTo(p0.dx, p0.dy)
+          ..cubicTo(p1.dx, p1.dy, p2.dx, p2.dy, p3.dx, p3.dy);
+        canvas.drawPath(dragPath, linePaint);
+
+        final tangent = Offset(p3.dx - p2.dx, p3.dy - p2.dy);
+        _drawArrowhead(canvas, p3, tangent, arrowPaint);
       }
     }
   }
@@ -197,6 +250,7 @@ class ConnectionPainter extends CustomPainter {
         old.edges != edges ||
         old.draggingNodeId != draggingNodeId ||
         old.dragOffset != dragOffset ||
+        old.connectionDrag != connectionDrag ||
         !_setsEqual(old.selectedIds, selectedIds);
   }
 }

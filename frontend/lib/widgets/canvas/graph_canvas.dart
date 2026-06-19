@@ -14,6 +14,8 @@ import '../../providers/mock_data.dart';
 import '../../providers/operator_picker_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/mode_rail.dart';
+import '../../providers/connection_drag_provider.dart';
+import '../../providers/scissors_provider.dart';
 import 'connection_painter.dart';
 import 'dot_grid_painter.dart';
 import 'marquee_painter.dart';
@@ -26,7 +28,7 @@ import 'entrypoint_node.dart';
 import 'fan_node.dart';
 import 'routing_node.dart';
 import 'worker_node.dart';
-import 'zoom_controls.dart';
+import 'canvas_toolbar.dart';
 
 class GraphCanvas extends ConsumerWidget {
   const GraphCanvas({super.key});
@@ -50,6 +52,8 @@ class GraphCanvas extends ConsumerWidget {
     final mode = ref.watch(modeProvider);
     final editable = mode == AppMode.build;
     final menuAnchor = ref.watch(nodeMenuProvider);
+    final connectionDrag = ref.watch(connectionDragProvider);
+    final scissors = ref.watch(scissorsModeProvider);
     final spaceHeld = ref.watch(spaceHeldProvider);
 
     // Sync in-place workflow edits to the document model and workflow list.
@@ -86,6 +90,126 @@ class GraphCanvas extends ConsumerWidget {
         sourceNodeId: sourceId,
         sourcePort: sourcePort,
       );
+    }
+
+    // ── Connection drag helpers ───────────────────────────────────────────
+
+    Offset _branchOutputWorldPos(WorkflowNode node, int? port) {
+      if (port == null || node.outputs.isEmpty) {
+        return Offset(node.x + node.width, node.y + node.height / 2);
+      }
+      final y = node.y +
+          WorkflowNode.branchPadY +
+          port * WorkflowNode.branchRowHeight +
+          WorkflowNode.branchRowHeight / 2;
+      return Offset(node.x + node.width, y);
+    }
+
+    Offset _handleWorldPos(WorkflowNode node, bool isOutput, int? port) {
+      if (isOutput) {
+        return switch (node.kind) {
+          'worker' => Offset(node.x + node.width, node.y + node.height / 2),
+          'fan'    => Offset(node.x + node.width, node.y + node.height / 2),
+          _        => _branchOutputWorldPos(node, port),
+        };
+      }
+      return Offset(node.x, node.y + node.height / 2);
+    }
+
+    ({String nodeId, bool isOutput, int? port})? _findNearestHandle(
+      Offset worldPos,
+      bool seekingInput,
+      String sourceNodeId,
+    ) {
+      const screenThreshold = 24.0;
+      final worldThreshold = screenThreshold / viewport.zoom;
+      ({String nodeId, bool isOutput, int? port})? best;
+      double bestDist = worldThreshold;
+
+      for (final node in workflow.nodes) {
+        if (node.id == sourceNodeId) continue;
+
+        if (seekingInput) {
+          final pos = _handleWorldPos(node, false, null);
+          final dist = (pos - worldPos).distance;
+          if (dist < bestDist) {
+            bestDist = dist;
+            best = (nodeId: node.id, isOutput: false, port: null);
+          }
+        } else {
+          // Seeking output — branch ports only, worker/fan have single output
+          if (node.kind == 'branch' && node.outputs.isNotEmpty) {
+            for (var p = 0; p < node.outputs.length; p++) {
+              final pos = _handleWorldPos(node, true, p);
+              final dist = (pos - worldPos).distance;
+              if (dist < bestDist) {
+                bestDist = dist;
+                best = (nodeId: node.id, isOutput: true, port: p);
+              }
+            }
+          } else {
+            final pos = _handleWorldPos(node, true, null);
+            final dist = (pos - worldPos).distance;
+            if (dist < bestDist) {
+              bestDist = dist;
+              best = (nodeId: node.id, isOutput: true, port: null);
+            }
+          }
+        }
+      }
+      return best;
+    }
+
+    void _startConnectionDrag(String sourceNodeId, bool sourceIsOutput, Offset worldPos, int? sourcePort) {
+      ref.read(connectionDragProvider.notifier).state = ConnectionDragState(
+        sourceNodeId: sourceNodeId,
+        sourcePort: sourcePort,
+        sourceIsOutput: sourceIsOutput,
+        currentWorldPos: worldPos,
+      );
+    }
+
+    void _updateConnectionDrag(Offset worldPos, String sourceNodeId) {
+      final drag = ref.read(connectionDragProvider);
+      if (drag == null) return;
+      final seekingInput = drag.sourceIsOutput;
+      final snap = _findNearestHandle(worldPos, seekingInput, sourceNodeId);
+      ref.read(connectionDragProvider.notifier).state = ConnectionDragState(
+        sourceNodeId: drag.sourceNodeId,
+        sourcePort: drag.sourcePort,
+        sourceIsOutput: drag.sourceIsOutput,
+        currentWorldPos: worldPos,
+        targetNodeId: snap?.nodeId,
+        targetIsOutput: snap?.isOutput,
+        targetPort: snap?.port,
+      );
+    }
+
+    void _endConnectionDrag(String sourceNodeId) {
+      final drag = ref.read(connectionDragProvider);
+      if (drag == null) return;
+
+      if (drag.targetNodeId != null) {
+        final current = ref.read(workflowProvider);
+        final alreadyExists = current.edges.any((e) =>
+            e.sourceId == sourceNodeId &&
+            e.targetId == drag.targetNodeId &&
+            e.sourcePort == drag.sourcePort);
+
+        if (!alreadyExists) {
+          final newEdge = WorkflowEdge(
+            id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+            sourceId: sourceNodeId,
+            targetId: drag.targetNodeId!,
+            sourcePort: drag.sourcePort,
+          );
+          ref.read(workflowProvider.notifier).state = current.copyWith(
+            edges: [...current.edges, newEdge],
+          );
+        }
+      }
+
+      ref.read(connectionDragProvider.notifier).state = null;
     }
 
     void updateMarqueeFromScreenRect(Rect screenRect) {
@@ -300,6 +424,15 @@ class GraphCanvas extends ConsumerWidget {
                 ref.read(selectionProvider.notifier).clear();
                 ref.read(operatorPickerProvider.notifier).state = null;
               },
+              onDoubleTap: editable
+                  ? () {
+                      final next = !scissors;
+                      ref.read(scissorsModeProvider.notifier).state = next;
+                      if (next) {
+                        ref.read(selectionProvider.notifier).clear();
+                      }
+                    }
+                  : null,
               onLongPressStart: editable
                   ? (details) {
                       ref.read(touchMarqueeStartProvider.notifier).state =
@@ -367,15 +500,89 @@ class GraphCanvas extends ConsumerWidget {
                       children: [
                         // Connection edges (behind nodes)
                         Positioned.fill(
-                          child: CustomPaint(
-                            painter: ConnectionPainter(
-                              nodes: workflow.nodes,
-                              edges: workflow.edges,
-                              draggingNodeId: draggingNodeId,
-                              dragOffset: dragOffset,
-                              selectedIds: selection.current,
+                          child: GestureDetector(
+                            behavior: HitTestBehavior.translucent,
+                            onTapDown: scissors && editable
+                                ? (details) {
+                                    final tapWorld = details.localPosition;
+                                    const threshold = 18.0;
+                                    String? nearestEdgeKey;
+                                    double nearestDist = threshold;
+
+                                    for (final edge in workflow.edges) {
+                                      final source = workflow.nodes.firstWhere((n) => n.id == edge.sourceId);
+                                      final target = workflow.nodes.firstWhere((n) => n.id == edge.targetId);
+
+                                      // Compute dragged positions (same as painter)
+                                      Offset nodePos(WorkflowNode node) {
+                                        final inGroupDrag = draggingNodeId != null &&
+                                            selection.current.length > 1 &&
+                                            selection.current.contains(draggingNodeId) &&
+                                            selection.current.contains(node.id);
+                                        if (draggingNodeId == node.id || inGroupDrag) {
+                                          return Offset(node.x + dragOffset.dx, node.y + dragOffset.dy);
+                                        }
+                                        return Offset(node.x, node.y);
+                                      }
+
+                                      Offset exitPoint(WorkflowNode node) {
+                                        final pos = nodePos(node);
+                                        return switch (node.kind) {
+                                          'worker' => Offset(pos.dx + node.width, pos.dy + node.height / 2),
+                                          'fan'    => Offset(pos.dx + node.width, pos.dy + node.height / 2),
+                                          _        => Offset(pos.dx + node.width, pos.dy + node.height / 2),
+                                        };
+                                      }
+
+                                      Offset entryPoint(WorkflowNode node) {
+                                        final pos = nodePos(node);
+                                        return Offset(pos.dx, pos.dy + node.height / 2);
+                                      }
+
+                                      final p0 = exitPoint(source);
+                                      final p3 = entryPoint(target);
+                                      final dx = (p3.dx - p0.dx).abs();
+                                      final controlLen = dx.clamp(40.0, 150.0);
+                                      final p1 = Offset(p0.dx + controlLen, p0.dy);
+                                      final p2 = Offset(p3.dx - controlLen, p3.dy);
+
+                                      // Sample bezier curve
+                                      for (var i = 0; i <= 20; i++) {
+                                        final t = i / 20.0;
+                                        final u = 1.0 - t;
+                                        final tt = t * t;
+                                        final uu = u * u;
+                                        final uuu = uu * u;
+                                        final ttt = tt * t;
+                                        final bx = uuu * p0.dx + 3 * uu * t * p1.dx + 3 * u * tt * p2.dx + ttt * p3.dx;
+                                        final by = uuu * p0.dy + 3 * uu * t * p1.dy + 3 * u * tt * p2.dy + ttt * p3.dy;
+                                        final dist = (tapWorld.dx - bx).abs() + (tapWorld.dy - by).abs();
+                                        if (dist < nearestDist) {
+                                          nearestDist = dist;
+                                          nearestEdgeKey = '${edge.sourceId}→${edge.targetId}';
+                                        }
+                                      }
+                                    }
+
+                                    if (nearestEdgeKey != null) {
+                                      final current = ref.read(workflowProvider);
+                                      ref.read(workflowProvider.notifier).state = current.copyWith(
+                                        edges: current.edges.where((e) => '${e.sourceId}→${e.targetId}' != nearestEdgeKey).toList(),
+                                      );
+                                    }
+                                  }
+                                : null,
+                            child: CustomPaint(
+                              painter: ConnectionPainter(
+                                nodes: workflow.nodes,
+                                edges: workflow.edges,
+                                draggingNodeId: draggingNodeId,
+                                dragOffset: dragOffset,
+                                selectedIds: selection.current,
+                                connectionDrag: connectionDrag,
+                              ),
+                              size: Size.infinite,
                             ),
-                            size: Size.infinite,
                           ),
                         ),
                         // Nodes
@@ -452,6 +659,10 @@ class GraphCanvas extends ConsumerWidget {
                                 GestureDetector(
                                   behavior: HitTestBehavior.opaque,
                                   onTap: () {
+                                    if (scissors && editable) {
+                                      deleteNode(node.id);
+                                      return;
+                                    }
                                     ref.read(selectionProvider.notifier).toggleOne(node.id);
                                     // close picker when selecting another node
                                     if (!isSelected) {
@@ -524,6 +735,29 @@ class GraphCanvas extends ConsumerWidget {
                                     top: node.height / 2 - 44.0,
                                     child: _InputHandle(
                                       onTap: () {},
+                                      onPanStart: editable
+                                          ? (_) {
+                                              final worldPos = _handleWorldPos(node, false, null);
+                                              _startConnectionDrag(node.id, false, worldPos, null);
+                                            }
+                                          : null,
+                                      onPanUpdate: editable
+                                          ? (details) {
+                                              final drag = ref.read(connectionDragProvider);
+                                              if (drag != null) {
+                                                _updateConnectionDrag(
+                                                  drag.currentWorldPos + details.delta,
+                                                  node.id,
+                                                );
+                                              }
+                                            }
+                                          : null,
+                                      onPanEnd: editable
+                                          ? (_) => _endConnectionDrag(node.id)
+                                          : null,
+                                      onPanCancel: editable
+                                          ? () => ref.read(connectionDragProvider.notifier).state = null
+                                          : null,
                                     ),
                                   ),
                                   if (isSelected && editable && node.kind == 'branch')
@@ -545,6 +779,29 @@ class GraphCanvas extends ConsumerWidget {
                                                 node.id,
                                                 sourcePort: port,
                                               ),
+                                              onPanStart: editable
+                                                  ? (_) {
+                                                      final worldPos = _handleWorldPos(node, true, port);
+                                                      _startConnectionDrag(node.id, true, worldPos, port);
+                                                    }
+                                                  : null,
+                                              onPanUpdate: editable
+                                                  ? (details) {
+                                                      final drag = ref.read(connectionDragProvider);
+                                                      if (drag != null) {
+                                                        _updateConnectionDrag(
+                                                          drag.currentWorldPos + details.delta,
+                                                          node.id,
+                                                        );
+                                                      }
+                                                    }
+                                                  : null,
+                                              onPanEnd: editable
+                                                  ? (_) => _endConnectionDrag(node.id)
+                                                  : null,
+                                              onPanCancel: editable
+                                                  ? () => ref.read(connectionDragProvider.notifier).state = null
+                                                  : null,
                                             ),
                                           );
                                         })
@@ -561,6 +818,29 @@ class GraphCanvas extends ConsumerWidget {
                                                 ),
                                                 node.id,
                                               ),
+                                              onPanStart: editable
+                                                  ? (_) {
+                                                      final worldPos = _handleWorldPos(node, true, null);
+                                                      _startConnectionDrag(node.id, true, worldPos, null);
+                                                    }
+                                                  : null,
+                                              onPanUpdate: editable
+                                                  ? (details) {
+                                                      final drag = ref.read(connectionDragProvider);
+                                                      if (drag != null) {
+                                                        _updateConnectionDrag(
+                                                          drag.currentWorldPos + details.delta,
+                                                          node.id,
+                                                        );
+                                                      }
+                                                    }
+                                                  : null,
+                                              onPanEnd: editable
+                                                  ? (_) => _endConnectionDrag(node.id)
+                                                  : null,
+                                              onPanCancel: editable
+                                                  ? () => ref.read(connectionDragProvider.notifier).state = null
+                                                  : null,
                                             ),
                                           ),
                                         ],
@@ -576,6 +856,29 @@ class GraphCanvas extends ConsumerWidget {
                                         ),
                                         node.id,
                                       ),
+                                      onPanStart: editable
+                                          ? (_) {
+                                              final worldPos = _handleWorldPos(node, true, null);
+                                              _startConnectionDrag(node.id, true, worldPos, null);
+                                            }
+                                          : null,
+                                      onPanUpdate: editable
+                                          ? (details) {
+                                              final drag = ref.read(connectionDragProvider);
+                                              if (drag != null) {
+                                                _updateConnectionDrag(
+                                                  drag.currentWorldPos + details.delta,
+                                                  node.id,
+                                                );
+                                              }
+                                            }
+                                          : null,
+                                      onPanEnd: editable
+                                          ? (_) => _endConnectionDrag(node.id)
+                                          : null,
+                                      onPanCancel: editable
+                                          ? () => ref.read(connectionDragProvider.notifier).state = null
+                                          : null,
                                     ),
                                   ),
                               ],
@@ -640,7 +943,36 @@ class GraphCanvas extends ConsumerWidget {
                       );
                     },
                   ),
-                ZoomControls(canvasSize: canvasSize),
+                CanvasToolbar(canvasSize: canvasSize),
+                // Mode indicator badge
+                Positioned(
+                  right: 16,
+                  bottom: 16,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    decoration: BoxDecoration(
+                      color: AppColors.bg2,
+                      border: Border.all(color: AppColors.border1),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x40000000),
+                          blurRadius: 8,
+                          offset: Offset(0, 2),
+                        ),
+                      ],
+                    ),
+                    child: Text(
+                      scissors ? 'tool \u00b7 scissors' : 'layout \u00b7 graph',
+                      style: const TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        color: AppColors.fg2,
+                        letterSpacing: 0.4,
+                      ),
+                    ),
+                  ),
+                ),
               ],
             ),
           ),
@@ -655,11 +987,19 @@ class GraphCanvas extends ConsumerWidget {
 
 class _OutputHandle extends StatelessWidget {
   final VoidCallback onTap;
+  final GestureDragStartCallback? onPanStart;
+  final GestureDragUpdateCallback? onPanUpdate;
+  final GestureDragEndCallback? onPanEnd;
+  final GestureDragCancelCallback? onPanCancel;
   final double targetWidth;
   final double targetHeight;
 
   const _OutputHandle({
     required this.onTap,
+    this.onPanStart,
+    this.onPanUpdate,
+    this.onPanEnd,
+    this.onPanCancel,
     this.targetWidth = 88.0,
     this.targetHeight = 88.0,
   });
@@ -677,6 +1017,10 @@ class _OutputHandle extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: onTap,
+      onPanStart: onPanStart,
+      onPanUpdate: onPanUpdate,
+      onPanEnd: onPanEnd,
+      onPanCancel: onPanCancel,
       child: Container(
         width: width,
         height: height,
@@ -712,9 +1056,17 @@ class _OutputHandle extends StatelessWidget {
 
 class _InputHandle extends StatelessWidget {
   final VoidCallback onTap;
+  final GestureDragStartCallback? onPanStart;
+  final GestureDragUpdateCallback? onPanUpdate;
+  final GestureDragEndCallback? onPanEnd;
+  final GestureDragCancelCallback? onPanCancel;
 
   const _InputHandle({
     required this.onTap,
+    this.onPanStart,
+    this.onPanUpdate,
+    this.onPanEnd,
+    this.onPanCancel,
   });
 
   @override
@@ -728,6 +1080,10 @@ class _InputHandle extends StatelessWidget {
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: onTap,
+      onPanStart: onPanStart,
+      onPanUpdate: onPanUpdate,
+      onPanEnd: onPanEnd,
+      onPanCancel: onPanCancel,
       child: Container(
         width: size,
         height: size,

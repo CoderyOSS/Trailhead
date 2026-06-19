@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/tokens.dart';
 import '../providers/mode_provider.dart';
+import '../providers/settings_provider.dart';
 import 'icons.dart';
 
 enum AppMode { build, active, history }
@@ -59,7 +60,7 @@ class ModeRail extends ConsumerWidget {
           _RailButton(
             icon: TrailheadIconData.settings,
             label: 'Settings',
-            onTap: () {},
+            onTap: () => ref.read(settingsModalOpenProvider.notifier).state = true,
           ),
           Padding(
             padding: const EdgeInsets.only(top: 8, bottom: 8),

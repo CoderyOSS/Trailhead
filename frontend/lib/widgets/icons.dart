@@ -29,6 +29,10 @@ enum TrailheadIconData {
   mousePointer,
   scissors,
   maximize,
+  sun,
+  layout,
+  send,
+  plug,
 }
 
 class TrailheadIcon extends StatelessWidget {
@@ -191,4 +195,23 @@ const Map<TrailheadIconData, String> _bodies = {
       '<path d="M21 8V5a2 2 0 0 0-2-2h-3"/>'
       '<path d="M3 16v3a2 2 0 0 0 2 2h3"/>'
       '<path d="M16 21h3a2 2 0 0 0 2-2v-3"/>',
+
+  TrailheadIconData.sun:
+      '<circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/>'
+      '<line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>'
+      '<line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/>'
+      '<line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>'
+      '<line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>',
+
+  TrailheadIconData.layout:
+      '<rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="3" y1="9" x2="21" y2="9"/>'
+      '<line x1="9" y1="21" x2="9" y2="9"/>',
+
+  TrailheadIconData.send:
+      '<line x1="22" y1="2" x2="11" y2="13"/>'
+      '<polygon points="22,2 15,22 11,13 2,9 22,2"/>',
+
+  TrailheadIconData.plug:
+      '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/>'
+      '<path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
 };

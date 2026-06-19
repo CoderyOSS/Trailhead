@@ -12,6 +12,8 @@ import 'widgets/jobs_sidebar.dart';
 import 'widgets/canvas/graph_canvas.dart';
 import 'widgets/runs_table.dart';
 import 'widgets/yaml_drawer.dart';
+import 'widgets/settings/settings_modal.dart';
+import 'providers/settings_provider.dart';
 
 void main() {
   runApp(const TrailheadApp());
@@ -45,37 +47,44 @@ class TrailheadShell extends ConsumerWidget {
     final showSidebar = mode != AppMode.history || job != null;
     final yamlOpen = mode == AppMode.build && ref.watch(yamlDrawerOpenProvider);
     final workflow = ref.watch(workflowProvider);
+    final settingsOpen = ref.watch(settingsModalOpenProvider);
 
     return Scaffold(
-      body: Column(
+      body: Stack(
         children: [
-          Expanded(
-            child: Row(
-              children: [
-                const ModeRail(activeCount: 3),
-                if (showSidebar) _buildSidebar(mode, ref),
-                Expanded(
-                  child: Column(
-                    children: [
-                      const TopBar(),
-                      Expanded(
-                        child: mode == AppMode.history && job == null
-                            ? const RunsTable()
-                            : const GraphCanvas(),
+          Column(
+            children: [
+              Expanded(
+                child: Row(
+                  children: [
+                    const ModeRail(activeCount: 3),
+                    if (showSidebar) _buildSidebar(mode, ref),
+                    Expanded(
+                      child: Column(
+                        children: [
+                          const TopBar(),
+                          Expanded(
+                            child: mode == AppMode.history && job == null
+                                ? const RunsTable()
+                                : const GraphCanvas(),
+                          ),
+                        ],
                       ),
-                    ],
-                  ),
+                    ),
+                    if (yamlOpen)
+                      YamlDrawer(
+                        workflow: workflow,
+                        onClose: () =>
+                            ref.read(yamlDrawerOpenProvider.notifier).state = false,
+                      ),
+                  ],
                 ),
-                if (yamlOpen)
-                  YamlDrawer(
-                    workflow: workflow,
-                    onClose: () =>
-                        ref.read(yamlDrawerOpenProvider.notifier).state = false,
-                  ),
-              ],
-            ),
+              ),
+              Container(height: 1, color: AppColors.border1),
+            ],
           ),
-          Container(height: 1, color: AppColors.border1),
+          if (settingsOpen)
+            const SettingsModalOverlay(),
         ],
       ),
     );

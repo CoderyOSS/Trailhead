@@ -585,7 +585,7 @@ class GraphCanvas extends ConsumerWidget {
                     }
                   : null,
               child: Container(
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             gradient: AppColors.hearthGradient,
           ),
           child: ClipRect(
@@ -1084,7 +1084,7 @@ class GraphCanvas extends ConsumerWidget {
                     ),
                     child: Text(
                       scissors ? 'tool \u00b7 scissors' : 'layout \u00b7 graph',
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 10,
                         color: AppColors.fg2,

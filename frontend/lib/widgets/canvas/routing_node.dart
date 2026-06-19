@@ -109,13 +109,13 @@ class BranchNode extends StatelessWidget {
                   children: [
                     Container(
                       width: 30,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: AppColors.crustGradient,
                         border: Border(
                           right: BorderSide(color: AppColors.border2),
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: TrailheadIcon(
                           icon: TrailheadIconData.gitBranch,
                           size: 14,

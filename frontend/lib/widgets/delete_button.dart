@@ -21,7 +21,7 @@ class DeleteButton extends StatelessWidget {
           ),
         ],
       ),
-      child: const Center(
+      child: Center(
         child: TrailheadIcon(
           icon: TrailheadIconData.x,
           size: 9,

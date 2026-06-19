@@ -47,7 +47,7 @@ class JobsSidebar extends ConsumerWidget {
 
     return Container(
       width: 260,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg1,
         border: Border(
           right: BorderSide(color: AppColors.border1, width: 1),
@@ -108,7 +108,7 @@ class _Header extends StatelessWidget {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.border1, width: 1),
         ),
@@ -282,7 +282,7 @@ class _Footer extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           top: BorderSide(color: AppColors.border1, width: 1),
         ),

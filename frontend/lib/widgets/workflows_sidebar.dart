@@ -26,7 +26,7 @@ class WorkflowsSidebar extends ConsumerWidget {
 
     return Container(
       width: 240,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg1,
         border: Border(
           right: BorderSide(color: AppColors.border1, width: 1),
@@ -120,7 +120,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.border1, width: 1),
         ),

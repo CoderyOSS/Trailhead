@@ -67,7 +67,7 @@ class OperatorPicker extends StatelessWidget {
                         ),
                         GestureDetector(
                           onTap: onClose,
-                          child: const Padding(
+                          child: Padding(
                             padding: EdgeInsets.all(4),
                             child: TrailheadIcon(
                               icon: TrailheadIconData.x,

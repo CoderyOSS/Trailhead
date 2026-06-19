@@ -1,67 +1,46 @@
 import 'package:flutter/material.dart';
+import 'theme_controller.dart';
 
 class AppColors {
-  static const Color bg0 = Color(0xFF0c0d10);
-  static const Color bg1 = Color(0xFF14161b);
-  static const Color bg2 = Color(0xFF1a1d23);
-  static const Color bg3 = Color(0xFF22262d);
-  static const Color bg4 = Color(0xFF2b303a);
-  static const Color bg5 = Color(0xFF353b46);
+  static Color get bg0 => ThemeController().current.bg0;
+  static Color get bg1 => ThemeController().current.bg1;
+  static Color get bg2 => ThemeController().current.bg2;
+  static Color get bg3 => ThemeController().current.bg3;
+  static Color get bg4 => ThemeController().current.bg4;
+  static Color get bg5 => ThemeController().current.bg5;
 
-  static const Color fg0 = Color(0xFFf3f4f6);
-  static const Color fg1 = Color(0xFFd8dade);
-  static const Color fg2 = Color(0xFFa5a9b1);
-  static const Color fg3 = Color(0xFF777b84);
-  static const Color fg4 = Color(0xFF565a62);
-  static const Color fg5 = Color(0xFF3d4148);
+  static Color get fg0 => ThemeController().current.fg0;
+  static Color get fg1 => ThemeController().current.fg1;
+  static Color get fg2 => ThemeController().current.fg2;
+  static Color get fg3 => ThemeController().current.fg3;
+  static Color get fg4 => ThemeController().current.fg4;
+  static Color get fg5 => ThemeController().current.fg5;
 
-  static const Color border1 = Color(0xFF21242a);
-  static const Color border2 = Color(0xFF2e323a);
-  static const Color border3 = Color(0xFF40454f);
+  static Color get border1 => ThemeController().current.border1;
+  static Color get border2 => ThemeController().current.border2;
+  static Color get border3 => ThemeController().current.border3;
 
-  static const Color accent = Color(0xFFe8923a);
-  static const Color accentInk = Color(0xFF2d1810);
-  static const Color trail = Color(0xFF7a8d4a);
-  static const Color chartGrid = Color(0xFF2e1e12);
+  static Color get accent => ThemeController().current.accent;
+  static Color get accentInk => ThemeController().current.accentInk;
+  static Color get trail => ThemeController().current.trail;
+  static Color get chartGrid => ThemeController().current.chartGrid;
 
-  static const Color success = Color(0xFF6fbf73);
-  static const Color warning = Color(0xFFe6b341);
-  static const Color danger = Color(0xFFe26464);
-  static const Color info = Color(0xFF6ea8d9);
+  static Color get success => ThemeController().current.success;
+  static Color get warning => ThemeController().current.warning;
+  static Color get danger => ThemeController().current.danger;
+  static Color get info => ThemeController().current.info;
 
-  static const Color synKeyword = Color(0xFFf4a955);
-  static const Color synString = Color(0xFFb5d189);
-  static const Color synNumber = Color(0xFFf0b340);
-  static const Color synComment = Color(0xFF7a5d44);
-  static const Color synFunction = Color(0xFF7aa6cc);
-  static const Color synType = Color(0xFFe0a8d4);
-  static const Color synPunct = Color(0xFF99765a);
+  static Color get synKeyword => ThemeController().current.synKeyword;
+  static Color get synString => ThemeController().current.synString;
+  static Color get synNumber => ThemeController().current.synNumber;
+  static Color get synComment => ThemeController().current.synComment;
+  static Color get synFunction => ThemeController().current.synFunction;
+  static Color get synType => ThemeController().current.synType;
+  static Color get synPunct => ThemeController().current.synPunct;
 
-  static const Gradient hearthGradient = RadialGradient(
-    center: Alignment(0, -1.1),
-    radius: 1.1,
-    colors: [
-      Color(0xFF1d2027),
-      Color(0xFF14161b),
-      Color(0xFF0c0d10),
-    ],
-    stops: [0.0, 0.45, 1.0],
-  );
-
-  static const Gradient loafGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [
-      Color(0xFF1a1d23),
-      Color(0xFF1f232a),
-    ],
-  );
-
-  static const Gradient crustGradient = LinearGradient(
-    begin: Alignment.topCenter,
-    end: Alignment.bottomCenter,
-    colors: [Color(0xFFe8923a), Color(0xFFf0a85c)],
-  );
+  static Gradient get hearthGradient => ThemeController().current.hearthGradient;
+  static Gradient get loafGradient => ThemeController().current.loafGradient;
+  static Gradient get crustGradient => ThemeController().current.crustGradient;
 }
 
 class AppSpacing {

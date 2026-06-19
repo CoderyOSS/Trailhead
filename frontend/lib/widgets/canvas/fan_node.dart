@@ -98,13 +98,13 @@ class MapNode extends StatelessWidget {
                   children: [
                     Container(
                       width: 30,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: AppColors.crustGradient,
                         border: Border(
                           right: BorderSide(color: AppColors.border2),
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: TrailheadIcon(
                           icon: TrailheadIconData.forEach,
                           size: 14,
@@ -117,7 +117,7 @@ class MapNode extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         child: Text(
                           node.label,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 13,
                             fontWeight: FontWeight.w600,

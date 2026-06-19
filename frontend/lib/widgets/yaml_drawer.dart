@@ -81,7 +81,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
 
     return Container(
       width: 460,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg1,
         border: Border(
           left: BorderSide(color: AppColors.border1, width: 1),
@@ -93,7 +93,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
           // header
           Container(
             padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(color: AppColors.border1, width: 1),
               ),
@@ -112,7 +112,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       alignment: Alignment.center,
-                      child: const TrailheadIcon(
+                      child: TrailheadIcon(
                         icon: TrailheadIconData.file,
                         size: 14,
                         color: AppColors.accent,
@@ -128,7 +128,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                               Expanded(
                                 child: Text(
                                   _fileName,
-                                  style: const TextStyle(
+                                  style: TextStyle(
                                     fontFamily: 'monospace',
                                     fontSize: 14,
                                     fontWeight: FontWeight.w600,
@@ -144,7 +144,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                           const SizedBox(height: 2),
                           Text(
                             '$lineCount lines \u00b7 $sizeLabel \u00b7 ${isJob ? "pinned to run" : "compiled from v${widget.workflow.draft ?? widget.workflow.version} draft"}',
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 10.5,
                               color: AppColors.fg2,
@@ -167,7 +167,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           alignment: Alignment.center,
-                          child: const TrailheadIcon(
+                          child: TrailheadIcon(
                             icon: TrailheadIconData.x,
                             size: 14,
                             color: AppColors.fg2,
@@ -225,7 +225,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                     controller: _searchController,
                     onChanged: (_) => setState(() {}),
                     autofocus: true,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 12,
                       color: AppColors.fg0,
@@ -236,18 +236,18 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                       contentPadding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border2),
+                        borderSide: BorderSide(color: AppColors.border2),
                       ),
                       enabledBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.border2),
+                        borderSide: BorderSide(color: AppColors.border2),
                       ),
                       focusedBorder: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
-                        borderSide: const BorderSide(color: AppColors.accent),
+                        borderSide: BorderSide(color: AppColors.accent),
                       ),
                       hintText: 'find in spec\u2026',
-                      hintStyle: const TextStyle(
+                      hintStyle: TextStyle(
                         fontFamily: 'monospace',
                         fontSize: 12,
                         color: AppColors.fg3,
@@ -282,7 +282,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
           // footer
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(color: AppColors.border1, width: 1),
               ),
@@ -290,7 +290,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
             ),
             child: Row(
               children: [
-                const TrailheadIcon(
+                TrailheadIcon(
                   icon: TrailheadIconData.lock,
                   size: 11,
                   color: AppColors.fg2,
@@ -301,7 +301,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                     isJob
                         ? 'the canvas compiled this \u2014 rerun to change it'
                         : 'the canvas compiles this \u2014 edit stages to change it',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'monospace',
                       fontSize: 10.5,
                       color: AppColors.fg2,
@@ -331,7 +331,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
             alignment: Alignment.topRight,
             child: Text(
               '$lineNum',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 12,
                 color: AppColors.fg3,
@@ -362,7 +362,7 @@ class _ReadOnlyPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const TrailheadIcon(
+          TrailheadIcon(
             icon: TrailheadIconData.lock,
             size: 9,
             color: AppColors.fg2,
@@ -403,13 +403,13 @@ class _YamlLine extends StatelessWidget {
             TextSpan(text: indent),
             TextSpan(
               text: rest,
-              style: const TextStyle(
+              style: TextStyle(
                 color: AppColors.synComment,
                 fontStyle: FontStyle.italic,
               ),
             ),
           ],
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12.5,
             height: 1.65,
@@ -444,9 +444,9 @@ class _YamlLine extends StatelessWidget {
     // key: value
     final kv = RegExp(r'^([A-Za-z0-9_.\-]+)(:)(\s*)(.*)$').firstMatch(rest);
     if (kv != null) {
-      spans.add(TextSpan(text: kv.group(1), style: const TextStyle(color: AppColors.synFunction)));
-      spans.add(TextSpan(text: kv.group(2), style: const TextStyle(color: AppColors.synPunct)));
-      spans.add(TextSpan(text: kv.group(3), style: const TextStyle(color: AppColors.fg0)));
+      spans.add(TextSpan(text: kv.group(1), style: TextStyle(color: AppColors.synFunction)));
+      spans.add(TextSpan(text: kv.group(2), style: TextStyle(color: AppColors.synPunct)));
+      spans.add(TextSpan(text: kv.group(3), style: TextStyle(color: AppColors.fg0)));
       _pushValue(kv.group(4)!, spans);
     } else if (rest.isNotEmpty) {
       _pushValue(rest, spans);
@@ -456,20 +456,20 @@ class _YamlLine extends StatelessWidget {
       TextSpan(text: indent),
     ];
     if (listMarker.isNotEmpty) {
-      children.add(TextSpan(text: listMarker, style: const TextStyle(color: AppColors.synPunct)));
+      children.add(TextSpan(text: listMarker, style: TextStyle(color: AppColors.synPunct)));
     }
     children.addAll(spans);
     if (trailing != null) {
       children.add(TextSpan(
         text: trailing,
-        style: const TextStyle(color: AppColors.synComment, fontStyle: FontStyle.italic),
+        style: TextStyle(color: AppColors.synComment, fontStyle: FontStyle.italic),
       ));
     }
 
     return Text.rich(
       TextSpan(
         children: children,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 12.5,
           height: 1.65,
@@ -484,35 +484,35 @@ class _YamlLine extends StatelessWidget {
 
     // Block scalar indicators.
     if (val == '|' || val == '>' || val == '|-' || val == '>-') {
-      out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.synKeyword)));
+      out.add(TextSpan(text: val, style: TextStyle(color: AppColors.synKeyword)));
       return;
     }
 
     // Quoted string.
     if (RegExp(r'^".*"$').hasMatch(val)) {
-      out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.synString)));
+      out.add(TextSpan(text: val, style: TextStyle(color: AppColors.synString)));
       return;
     }
 
     // Inline array [a, b, c].
     if (RegExp(r'^\[.*\]$').hasMatch(val)) {
       final inner = val.substring(1, val.length - 1);
-      out.add(const TextSpan(text: '[', style: TextStyle(color: AppColors.synPunct)));
+      out.add(TextSpan(text: '[', style: TextStyle(color: AppColors.synPunct)));
       final parts = inner.split(RegExp(r'(,\s*)'));
       for (final tok in parts) {
         if (RegExp(r'^,\s*$').hasMatch(tok)) {
-          out.add(TextSpan(text: tok, style: const TextStyle(color: AppColors.synPunct)));
+          out.add(TextSpan(text: tok, style: TextStyle(color: AppColors.synPunct)));
         } else {
-          out.add(TextSpan(text: tok, style: const TextStyle(color: AppColors.fg0)));
+          out.add(TextSpan(text: tok, style: TextStyle(color: AppColors.fg0)));
         }
       }
-      out.add(const TextSpan(text: ']', style: TextStyle(color: AppColors.synPunct)));
+      out.add(TextSpan(text: ']', style: TextStyle(color: AppColors.synPunct)));
       return;
     }
 
     // Number.
     if (RegExp(r'^-?\d+(\.\d+)?$').hasMatch(val)) {
-      out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.synNumber)));
+      out.add(TextSpan(text: val, style: TextStyle(color: AppColors.synNumber)));
       return;
     }
 
@@ -520,21 +520,21 @@ class _YamlLine extends StatelessWidget {
     const keywords = {'true', 'false', 'null'};
     const types = {'int', 'string', 'boolean', 'object', 'array', 'integer', 'number'};
     if (keywords.contains(val)) {
-      out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.synKeyword)));
+      out.add(TextSpan(text: val, style: TextStyle(color: AppColors.synKeyword)));
       return;
     }
     if (types.contains(val)) {
-      out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.synType)));
+      out.add(TextSpan(text: val, style: TextStyle(color: AppColors.synType)));
       return;
     }
 
     // enum[...] shorthand.
     if (val.startsWith('enum[')) {
-      out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.synType)));
+      out.add(TextSpan(text: val, style: TextStyle(color: AppColors.synType)));
       return;
     }
 
     // Bare scalar.
-    out.add(TextSpan(text: val, style: const TextStyle(color: AppColors.fg0)));
+    out.add(TextSpan(text: val, style: TextStyle(color: AppColors.fg0)));
   }
 }

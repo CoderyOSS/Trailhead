@@ -22,7 +22,7 @@ class ModeRail extends ConsumerWidget {
 
     return Container(
       width: 52,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg0,
         border: Border(
           right: BorderSide(color: AppColors.border1, width: 1),
@@ -100,7 +100,7 @@ class _BrandGlyph extends StatelessWidget {
     return Container(
       height: 52,
       alignment: Alignment.center,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.border1, width: 1),
         ),

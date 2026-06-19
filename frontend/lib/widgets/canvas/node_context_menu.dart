@@ -182,7 +182,7 @@ class _MenuItemState extends State<_MenuItem> {
                   children: [
                     Text(
                       widget.label,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w500,
                         color: AppColors.fg0,

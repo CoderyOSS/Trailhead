@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/tokens.dart';
+import 'theme/theme_controller.dart';
 import 'models/workflow_document.dart';
 import 'providers/canvas_controller.dart';
 import 'providers/mode_provider.dart';
@@ -25,13 +26,16 @@ class TrailheadApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ProviderScope(
-      child: MaterialApp(
-        title: 'Trailhead',
-        debugShowCheckedModeBanner: false,
-        theme: ThemeData.dark().copyWith(
-          scaffoldBackgroundColor: AppColors.bg0,
+      child: ListenableBuilder(
+        listenable: ThemeController(),
+        builder: (context, child) => MaterialApp(
+          title: 'Trailhead',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData.dark().copyWith(
+            scaffoldBackgroundColor: AppColors.bg0,
+          ),
+          home: const TrailheadShell(),
         ),
-        home: const TrailheadShell(),
       ),
     );
   }

@@ -97,7 +97,7 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 12),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.border1),
         ),
@@ -209,7 +209,7 @@ class _TableHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     const headers = ['', 'run id', 'input', 'status', 'started', 'duration', 'tokens', 'cost', 'by'];
     return Container(
-      decoration: const BoxDecoration(color: AppColors.bg1),
+      decoration: BoxDecoration(color: AppColors.bg1),
       child: Row(
         children: headers.asMap().entries.map((e) {
           final flex = _colFlex(e.key);
@@ -245,7 +245,7 @@ class _GroupRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg1,
         border: Border(
           bottom: BorderSide(color: AppColors.border1),
@@ -257,7 +257,7 @@ class _GroupRow extends StatelessWidget {
           Container(
             width: 4,
             height: 4,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.fg3,
               shape: BoxShape.circle,
             ),
@@ -434,7 +434,7 @@ class _JobRowState extends State<_JobRow> {
         child: Container(
           decoration: BoxDecoration(
             color: bg,
-            border: const Border(
+            border: Border(
               bottom: BorderSide(color: AppColors.border1),
             ),
           ),

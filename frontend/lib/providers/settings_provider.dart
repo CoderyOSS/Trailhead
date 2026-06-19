@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/settings_state.dart';
+import '../theme/theme_controller.dart';
 
 final settingsModalOpenProvider = StateProvider<bool>((ref) => false);
 
@@ -8,8 +9,14 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   void setTweak(String key, dynamic value) {
     switch (key) {
-      case 'theme':        state = state.copyWith(theme: value as String); break;
-      case 'accent':       state = state.copyWith(accent: value as String); break;
+      case 'theme':
+        state = state.copyWith(theme: value as String);
+        ThemeController().setTheme(value);
+        break;
+      case 'accent':
+        state = state.copyWith(accent: value as String);
+        ThemeController().setAccent(value);
+        break;
       case 'density':      state = state.copyWith(density: value as String); break;
       case 'canvasStyle':  state = state.copyWith(canvasStyle: value as String); break;
       case 'edgeStyle':    state = state.copyWith(edgeStyle: value as String); break;

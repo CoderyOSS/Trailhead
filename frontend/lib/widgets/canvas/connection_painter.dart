@@ -199,7 +199,7 @@ class ConnectionPainter extends CustomPainter {
   }
 
   void _drawMidpointLabel(Canvas canvas, Offset mid, String label) {
-    const style = TextStyle(
+    final style = TextStyle(
       fontFamily: 'monospace',
       fontSize: 9,
       color: AppColors.fg0,

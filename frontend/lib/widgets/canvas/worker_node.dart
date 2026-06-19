@@ -99,13 +99,13 @@ class WorkerNode extends StatelessWidget {
                   children: [
                     Container(
                       width: 30,
-                      decoration: const BoxDecoration(
+                      decoration: BoxDecoration(
                         gradient: AppColors.crustGradient,
                         border: Border(
                           right: BorderSide(color: AppColors.border2),
                         ),
                       ),
-                      child: const Center(
+                      child: Center(
                         child: TrailheadIcon(
                           icon: TrailheadIconData.bot,
                           size: 14,
@@ -131,7 +131,7 @@ class WorkerNode extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 node.label,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 13,
                                   fontWeight: FontWeight.w600,
@@ -171,7 +171,7 @@ class WorkerNode extends StatelessWidget {
                   color: AppColors.bg4,
                   borderRadius: BorderRadius.circular(1),
                 ),
-                child: const FractionallySizedBox(
+                child: FractionallySizedBox(
                   alignment: Alignment.centerLeft,
                   widthFactor: 0.55,
                   child: DecoratedBox(

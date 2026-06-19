@@ -177,7 +177,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
   Widget _buildHeader() {
     return Container(
       padding: const EdgeInsets.fromLTRB(22, 16, 16, 16),
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         border: Border(
           bottom: BorderSide(color: AppColors.border1),
         ),
@@ -192,7 +192,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
               border: Border.all(color: AppColors.border2),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: const Center(
+            child: Center(
               child: TrailheadIcon(
                 icon: TrailheadIconData.settings,
                 color: AppColors.accent,
@@ -235,7 +235,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
                 color: AppColors.bg2,
                 borderRadius: BorderRadius.circular(6),
               ),
-              child: const Center(
+              child: Center(
                 child: TrailheadIcon(
                   icon: TrailheadIconData.x,
                   size: 14,
@@ -251,7 +251,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
 
   Widget _buildCompactNav() {
     return Container(
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.bg0,
         border: Border(
           bottom: BorderSide(color: AppColors.border1),
@@ -317,7 +317,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
         if (!compact)
           Container(
             width: 178,
-            decoration: const BoxDecoration(
+            decoration: BoxDecoration(
               color: AppColors.bg0,
               border: Border(
                 right: BorderSide(color: AppColors.border1),
@@ -416,7 +416,7 @@ class SettingRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: BoxDecoration(
         border: Border(
-          bottom: last ? BorderSide.none : const BorderSide(color: AppColors.border1),
+          bottom: last ? BorderSide.none : BorderSide(color: AppColors.border1),
         ),
       ),
       child: stacked
@@ -450,7 +450,7 @@ class SettingRow extends StatelessWidget {
       children: [
         Text(
           title,
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 13.5,
             fontWeight: FontWeight.w600,
@@ -461,7 +461,7 @@ class SettingRow extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             desc!,
-            style: const TextStyle(
+            style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 12,
               color: AppColors.fg2,
@@ -910,7 +910,7 @@ class _ThemeCard extends StatelessWidget {
                         children: [
                           Text(
                             theme.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontFamily: 'monospace',
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
@@ -926,7 +926,7 @@ class _ThemeCard extends StatelessWidget {
                             ),
                             child: Text(
                               theme.mode,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 9,
                                 letterSpacing: 0.36,
@@ -939,7 +939,7 @@ class _ThemeCard extends StatelessWidget {
                       const SizedBox(height: 2),
                       Text(
                         theme.desc,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 11,
                           color: AppColors.fg2,
@@ -952,11 +952,11 @@ class _ThemeCard extends StatelessWidget {
                   Container(
                     width: 18,
                     height: 18,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AppColors.accent,
                       shape: BoxShape.circle,
                     ),
-                    child: const Center(
+                    child: Center(
                       child: TrailheadIcon(
                         icon: TrailheadIconData.check,
                         size: 11,
@@ -1141,7 +1141,7 @@ class MessagingSection extends ConsumerWidget {
       children: [
         Container(
           padding: const EdgeInsets.symmetric(vertical: 16),
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             border: Border(
               bottom: BorderSide(color: AppColors.border1),
             ),
@@ -1177,7 +1177,7 @@ class MessagingSection extends ConsumerWidget {
                           children: [
                             Text(
                               'Telegram',
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 13.5,
                                 fontWeight: FontWeight.w600,
@@ -1206,7 +1206,7 @@ class MessagingSection extends ConsumerWidget {
                         const SizedBox(height: 3),
                         Text(
                           'Send run notifications to a Telegram chat through a bot.',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontFamily: 'monospace',
                             fontSize: 12,
                             color: AppColors.fg2,
@@ -1257,7 +1257,7 @@ class MessagingSection extends ConsumerWidget {
         const SizedBox(height: 16),
         Text(
           'More channels can be added to the messaging registry as they ship.',
-          style: const TextStyle(
+          style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 11.5,
             color: AppColors.fg2,
@@ -1277,7 +1277,7 @@ class _FieldLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'monospace',
         fontSize: 11.5,
         fontWeight: FontWeight.w600,
@@ -1306,7 +1306,7 @@ class PluginsSection extends ConsumerWidget {
                 border: Border.all(color: AppColors.border2),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Center(
+              child: Center(
                 child: TrailheadIcon(
                   icon: TrailheadIconData.plug,
                   size: 22,
@@ -1317,7 +1317,7 @@ class PluginsSection extends ConsumerWidget {
             const SizedBox(height: 16),
             Text(
               'No plugins installed',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 14,
                 fontWeight: FontWeight.w600,
@@ -1330,7 +1330,7 @@ class PluginsSection extends ConsumerWidget {
               child: Text(
                 'Extend Trailhead with custom stages, reviewers, and integrations.',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 12.5,
                   color: AppColors.fg2,
@@ -1348,7 +1348,7 @@ class PluginsSection extends ConsumerWidget {
               ),
               child: Text(
                 'trailhead plugin add <name>',
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'monospace',
                   fontSize: 12,
                   color: AppColors.fg1,

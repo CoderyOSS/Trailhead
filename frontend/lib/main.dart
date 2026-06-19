@@ -54,7 +54,7 @@ class TrailheadShell extends ConsumerWidget {
     final settingsOpen = ref.watch(settingsModalOpenProvider);
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
 
-    Widget workflowRegion() {
+    Widget workflowRegion({Widget? bottomPanel}) {
       return Row(
         children: [
           ModeRail(activeCount: 3),
@@ -68,6 +68,7 @@ class TrailheadShell extends ConsumerWidget {
                       ? RunsTable()
                       : GraphCanvas(),
                 ),
+                if (bottomPanel != null) Expanded(child: bottomPanel),
               ],
             ),
           ),
@@ -82,19 +83,14 @@ class TrailheadShell extends ConsumerWidget {
             children: [
               Expanded(
                 child: isPortrait && yamlOpen
-                    ? Column(
-                        children: [
-                          Expanded(child: workflowRegion()),
-                          Expanded(
-                            child: YamlDrawer(
-                              workflow: workflow,
-                              onClose: () => ref
-                                  .read(yamlDrawerOpenProvider.notifier)
-                                  .state = false,
-                              isPortrait: true,
-                            ),
-                          ),
-                        ],
+                    ? workflowRegion(
+                        bottomPanel: YamlDrawer(
+                          workflow: workflow,
+                          onClose: () => ref
+                              .read(yamlDrawerOpenProvider.notifier)
+                              .state = false,
+                          isPortrait: true,
+                        ),
                       )
                     : Row(
                         children: [

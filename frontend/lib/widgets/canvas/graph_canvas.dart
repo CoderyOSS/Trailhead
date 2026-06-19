@@ -1,3 +1,4 @@
+import 'dart:async' show Timer;
 import 'dart:math' show Random;
 import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/gestures.dart' show PointerScrollEvent, kPrimaryButton;
@@ -32,11 +33,25 @@ import 'routing_node.dart';
 import 'worker_node.dart';
 import 'canvas_toolbar.dart';
 
-class GraphCanvas extends ConsumerWidget {
+class GraphCanvas extends ConsumerStatefulWidget {
   const GraphCanvas({super.key});
 
+  @override
+  ConsumerState<GraphCanvas> createState() => _GraphCanvasState();
+}
+
+class _GraphCanvasState extends ConsumerState<GraphCanvas> {
   static const double _snapGrid = 32.0;
   static const Duration _snapDuration = Duration(milliseconds: 200);
+  static const double _doubleTapMaxDist = 20.0;
+  static const int _doubleTapMaxMs = 300;
+  static const double _dragThreshold = 5.0;
+
+  DateTime? _firstTapDownTime;
+  Offset? _firstTapDownPos;
+  Timer? _tapTimer;
+  bool _doubleClickDragActive = false;
+  Offset? _doubleClickStartPos;
 
   double _snap(double value) => (value / _snapGrid).round() * _snapGrid;
   double _snapCenter(double center) => (center / _snapGrid).round() * _snapGrid;
@@ -51,9 +66,74 @@ class GraphCanvas extends ConsumerWidget {
     return (p - closest).distance;
   }
 
+  void _cancelTapTimer() {
+    _tapTimer?.cancel();
+    _tapTimer = null;
+  }
+
+  void _resetDoubleClick() {
+    _cancelTapTimer();
+    _firstTapDownTime = null;
+    _firstTapDownPos = null;
+    _doubleClickDragActive = false;
+    _doubleClickStartPos = null;
+  }
+
+  void _beginMarquee(Offset startPos) {
+    ref.read(selectionProvider.notifier).beginMarquee();
+    ref.read(marqueeProvider.notifier).state =
+        MarqueeState(screenRect: Rect.fromPoints(startPos, startPos), active: true);
+  }
+
+  void _updateMarquee(Offset startPos, Offset currentPos) {
+    final viewport = ref.read(canvasControllerProvider);
+    final workflow = ref.read(workflowProvider);
+    final screenRect = Rect.fromPoints(startPos, currentPos);
+    final world = Rect.fromPoints(
+      (screenRect.topLeft - viewport.pan) / viewport.zoom,
+      (screenRect.bottomRight - viewport.pan) / viewport.zoom,
+    );
+    final hits = workflow.nodes
+        .where((n) => n.rect.overlaps(world))
+        .map((n) => n.id)
+        .toSet();
+    ref.read(selectionProvider.notifier).updateMarqueeLive(hits);
+    ref.read(marqueeProvider.notifier).state =
+        MarqueeState(screenRect: screenRect, active: true);
+  }
+
+  void _commitMarquee() {
+    ref.read(selectionProvider.notifier).commitMarquee();
+    ref.read(marqueeProvider.notifier).state = const MarqueeState();
+  }
+
+  void _cancelMarquee() {
+    ref.read(selectionProvider.notifier).cancelMarquee();
+    ref.read(marqueeProvider.notifier).state = const MarqueeState();
+  }
+
+  void _toggleScissors() {
+    final current = ref.read(scissorsModeProvider);
+    final next = !current;
+    ref.read(scissorsModeProvider.notifier).state = next;
+    if (next) {
+      ref.read(selectionProvider.notifier).clear();
+    }
+    final currentFlash = ref.read(flashOverlayProvider);
+    ref.read(flashOverlayProvider.notifier).state = (
+      mode: next ? FlashMode.scissors : FlashMode.cursor,
+      id: (currentFlash?.id ?? 0) + 1,
+    );
+  }
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  void dispose() {
+    _tapTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final viewport = ref.watch(canvasControllerProvider);
     final controller = ref.read(canvasControllerProvider.notifier);
     final workflow = ref.watch(workflowProvider);
@@ -381,50 +461,91 @@ class GraphCanvas extends ConsumerWidget {
             return KeyEventResult.ignored;
           },
           child: Listener(
-              onPointerDown: (event) {
-              if (event.kind != PointerDeviceKind.mouse) return;
+            onPointerDown: (event) {
               if (event.buttons != kPrimaryButton) return;
               if (!editable || spaceHeld) return;
               // Don't start marquee if pointer is over a node — node's own
               // gesture detector handles drag.
               final worldPos = (event.localPosition - viewport.pan) / viewport.zoom;
               final overNode = workflow.nodes.any((n) => n.rect.contains(worldPos));
-              if (overNode) return;
-              ref.read(mouseMarqueeStartProvider.notifier).state = event.localPosition;
-              ref.read(selectionProvider.notifier).beginMarquee();
+              if (overNode) {
+                _resetDoubleClick();
+                return;
+              }
+
+              final now = DateTime.now();
+              if (_firstTapDownTime != null &&
+                  _firstTapDownPos != null &&
+                  now.difference(_firstTapDownTime!).inMilliseconds <= _doubleTapMaxMs &&
+                  (event.localPosition - _firstTapDownPos!).distance <= _doubleTapMaxDist) {
+                // Second tap detected — record start for potential drag.
+                _cancelTapTimer();
+                _doubleClickStartPos = event.localPosition;
+                _firstTapDownTime = null;
+                _firstTapDownPos = null;
+                return;
+              }
+
+              // First tap — start timer for single-tap action.
+              _firstTapDownTime = now;
+              _firstTapDownPos = event.localPosition;
+              _cancelTapTimer();
+              _tapTimer = Timer(const Duration(milliseconds: _doubleTapMaxMs), () {
+                if (mounted) {
+                  ref.read(selectionProvider.notifier).clear();
+                  ref.read(operatorPickerProvider.notifier).state = null;
+                }
+                _resetDoubleClick();
+              });
             },
             onPointerMove: (event) {
-              if (event.kind != PointerDeviceKind.mouse) return;
+              if (event.buttons != kPrimaryButton) return;
               if (spaceHeld) {
                 controller.pan(event.delta);
                 return;
               }
-              final start = ref.read(mouseMarqueeStartProvider);
-              if (start != null) {
-                updateMarqueeFromScreenRect(
-                  Rect.fromPoints(start, event.localPosition),
-                );
+
+              // Cancel pending single-tap if pointer moved significantly.
+              if (_firstTapDownPos != null &&
+                  !_doubleClickDragActive &&
+                  _doubleClickStartPos == null &&
+                  (event.localPosition - _firstTapDownPos!).distance > _dragThreshold) {
+                _resetDoubleClick();
+                return;
+              }
+
+              if (_doubleClickStartPos != null && !_doubleClickDragActive) {
+                if ((event.localPosition - _doubleClickStartPos!).distance > _dragThreshold) {
+                  _doubleClickDragActive = true;
+                  _beginMarquee(_doubleClickStartPos!);
+                }
+              }
+
+              if (_doubleClickDragActive && _doubleClickStartPos != null) {
+                _updateMarquee(_doubleClickStartPos!, event.localPosition);
               }
             },
             onPointerUp: (event) {
-              if (event.kind != PointerDeviceKind.mouse) return;
-              final start = ref.read(mouseMarqueeStartProvider);
-              if (start != null) {
-                ref.read(selectionProvider.notifier).commitMarquee();
-                ref.read(mouseMarqueeStartProvider.notifier).state = null;
-                ref.read(marqueeProvider.notifier).state =
-                    const MarqueeState();
+              if (_doubleClickDragActive) {
+                _commitMarquee();
+                _resetDoubleClick();
+                return;
               }
+
+              if (_doubleClickStartPos != null) {
+                // Second tap without drag → toggle scissors.
+                if (editable) _toggleScissors();
+                _resetDoubleClick();
+                return;
+              }
+
+              // First tap up — leave timer running so a second tap can still arrive.
             },
-            onPointerCancel: (event) {
-              if (event.kind != PointerDeviceKind.mouse) return;
-              final start = ref.read(mouseMarqueeStartProvider);
-              if (start != null) {
-                ref.read(selectionProvider.notifier).cancelMarquee();
-                ref.read(mouseMarqueeStartProvider.notifier).state = null;
-                ref.read(marqueeProvider.notifier).state =
-                    const MarqueeState();
+            onPointerCancel: (_) {
+              if (_doubleClickDragActive) {
+                _cancelMarquee();
               }
+              _resetDoubleClick();
             },
             onPointerSignal: (event) {
               if (event is PointerScrollEvent &&
@@ -434,69 +555,22 @@ class GraphCanvas extends ConsumerWidget {
             },
             child: GestureDetector(
               behavior: HitTestBehavior.translucent,
-              onTap: () {
-                // Deselect when tapping empty canvas
-                ref.read(selectionProvider.notifier).clear();
-                ref.read(operatorPickerProvider.notifier).state = null;
-              },
-              onDoubleTap: editable
-                  ? () {
-                      final next = !scissors;
-                      ref.read(scissorsModeProvider.notifier).state = next;
-                      if (next) {
-                        ref.read(selectionProvider.notifier).clear();
-                      }
-                      final currentFlash = ref.read(flashOverlayProvider);
-                      ref.read(flashOverlayProvider.notifier).state = (
-                        mode: next ? FlashMode.scissors : FlashMode.cursor,
-                        id: (currentFlash?.id ?? 0) + 1,
-                      );
-                    }
-                  : null,
-              onLongPressStart: editable
-                  ? (details) {
-                      ref.read(touchMarqueeStartProvider.notifier).state =
-                          details.localPosition;
-                      ref.read(selectionProvider.notifier).beginMarquee();
-                    }
-                  : null,
-              onLongPressMoveUpdate: editable
-                  ? (details) {
-                      final start = ref.read(touchMarqueeStartProvider);
-                      if (start != null) {
-                        updateMarqueeFromScreenRect(
-                          Rect.fromPoints(start, details.localPosition),
-                        );
-                      }
-                    }
-                  : null,
-              onLongPressEnd: editable
-                  ? (_) {
-                      ref.read(selectionProvider.notifier).commitMarquee();
-                      ref.read(touchMarqueeStartProvider.notifier).state = null;
-                      ref.read(marqueeProvider.notifier).state =
-                          const MarqueeState();
-                    }
-                  : null,
               onScaleStart: scissors && editable
                   ? null
                   : (details) {
-                      if (ref.read(mouseMarqueeStartProvider) != null) return;
-                      if (ref.read(touchMarqueeStartProvider) != null) return;
+                      if (_doubleClickDragActive) return;
                       controller.beginScale(details.localFocalPoint);
                     },
               onScaleUpdate: scissors && editable
                   ? null
                   : (details) {
-                      if (ref.read(mouseMarqueeStartProvider) != null) return;
-                      if (ref.read(touchMarqueeStartProvider) != null) return;
+                      if (_doubleClickDragActive) return;
                       controller.updateScale(details.scale, details.localFocalPoint);
                     },
               onScaleEnd: scissors && editable
                   ? null
                   : (_) {
-                      if (ref.read(mouseMarqueeStartProvider) != null) return;
-                      if (ref.read(touchMarqueeStartProvider) != null) return;
+                      if (_doubleClickDragActive) return;
                       controller.endScale();
                     },
               onPanStart: scissors && editable

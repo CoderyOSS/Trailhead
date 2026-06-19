@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -5,6 +6,8 @@ import '../theme/tokens.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart';
 import '../utils/workflow_to_yaml.dart';
+import '../utils/clipboard_stub.dart'
+    if (dart.library.html) '../utils/clipboard_web.dart';
 import 'app_button.dart';
 import 'icons.dart';
 
@@ -57,9 +60,14 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
     ].join('\n');
   }
 
-  void _copyAll() {
-    Clipboard.setData(ClipboardData(text: _yamlText));
-    setState(() => _copied = true);
+  void _copyAll() async {
+    if (kIsWeb) {
+      final ok = await fallbackCopy(_yamlText);
+      if (!ok) return;
+    } else {
+      await Clipboard.setData(ClipboardData(text: _yamlText));
+    }
+    if (mounted) setState(() => _copied = true);
     Future.delayed(const Duration(milliseconds: 1600), () {
       if (mounted) setState(() => _copied = false);
     });

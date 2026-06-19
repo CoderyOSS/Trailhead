@@ -120,7 +120,7 @@ class CanvasToolbar extends ConsumerWidget {
                 },
                 icon: TrailheadIconData.scissors,
                 active: scissors,
-                tooltip: 'Scissors — cut connections (or double-tap canvas)',
+                tooltip: 'Scissors — cut connections',
               ),
               Container(
                 width: 18,

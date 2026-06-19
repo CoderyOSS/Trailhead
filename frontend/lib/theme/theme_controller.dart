@@ -258,7 +258,7 @@ class ThemeController extends ChangeNotifier {
       crustGradient: const LinearGradient(
         begin: Alignment.topCenter,
         end: Alignment.bottomCenter,
-        colors: [Color(0xFFe8923a), Color(0xFFf0a85c)],
+        colors: [Color(0xFFfac788), Color(0xFFf4a955), Color(0xFFe8923a), Color(0xFFc66e1f)],
       ),
     ),
     'green': _AccentData(

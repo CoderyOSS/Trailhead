@@ -10,6 +10,16 @@ const { useState, useMemo, useEffect } = React;
   s.id = "co-canvas-keyframes";
   s.textContent = `
     @keyframes co-spin { to { transform: rotate(360deg); } }
+    @keyframes co-mode-flash {
+      0%   { opacity: 0; transform: scale(0.7); }
+      20%  { opacity: 1; transform: scale(1.05); }
+      62%  { opacity: 1; transform: scale(1); }
+      100% { opacity: 0; transform: scale(0.97); }
+    }
+    @keyframes co-scissor-snip {
+      0%, 100% { transform: rotate(-7deg); }
+      50%      { transform: rotate(7deg); }
+    }
     @keyframes co-pulse-glow {
       0%, 100% {
         filter: brightness(0.74);
@@ -84,6 +94,14 @@ const ICONS = {
   fileOpen: 'path:M15 3h6v6|line:10,14,21,3|path:M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
   save:     'path:M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z|polyline:17,21,17,13,7,13,7,21|polyline:7,3,7,8,15,8',
   lock:     'rect:3,11,18,11,2,2|path:M7 11V7a5 5 0 0 1 10 0v4',
+  // scissors — cut a connection (build mode)
+  scissors:    'circle:6,6,3|circle:6,18,3|line:20,4,8.12,15.88|line:14.47,14.48,20,20|line:8.12,8.12,12,12',
+  // maximize / fit-to-view — auto-size the canvas to the graph
+  maximize:    'path:M8 3H5a2 2 0 0 0-2 2v3|path:M21 8V5a2 2 0 0 0-2-2h-3|path:M3 16v3a2 2 0 0 0 2 2h3|path:M16 21h3a2 2 0 0 0 2-2v-3',
+  // mouse-pointer — return to select mode
+  mousePointer:'path:M3 3l7.07 16.97 2.51-7.39 7.39-2.51z',
+  send:     'line:22,2,11,13|polygon:22,2,15,22,11,13,2,9,22,2',
+  plug:     'path:M12 22v-5|path:M9 8V2|path:M15 8V2|path:M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z',
 };
 
 function Icon({ name, size = 16, color = "currentColor", strokeWidth = 1.5, style }) {

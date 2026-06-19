@@ -324,6 +324,7 @@ function BuilderTips() {
       <div style={{ padding: "8px 10px", display: "flex", flexDirection: "column", gap: 6 }}>
         <TipRow icon="+" label="select a node" desc="tap the handle dot to add a stage downstream, or drag it to connect" />
         <TipRow icon="+" label="select a connection" desc="tap + to insert an operator on the edge" />
+        <TipRow icon="✂" label="double-tap the canvas" desc="toggles scissors — then tap any connection to cut it" />
         <TipRow icon="×" label="long-press or right-click a node" desc="opens a menu to duplicate, collapse, or delete" />
       </div>
     </div>

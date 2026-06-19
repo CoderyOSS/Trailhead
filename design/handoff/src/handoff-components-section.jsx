@@ -1,6 +1,8 @@
 /* global React, Card, Stage, StatesGrid, TokensList, StageSplit, SubBlock, H3, AnatomyLegend,
    Button, IconButton, Icon, StatusDot, StatusTag, Tag, Eyebrow,
    ModeRail, WorkflowsSidebar, JobsSidebar, TopBar, StageDrawer, YamlDrawer, Filmstrip, RunsView,
+   SettingsModal, SM_SECTIONS,
+   AppearanceSection, CanvasSection, WorkflowSection, MessagingSection, PluginsSection,
    Canvas, WorkerNode, BuilderTips, OperatorPicker,
    WORKFLOW, JOB, JOBS_LOG, SNAPSHOTS, STAGE_EXECUTIONS */
 
@@ -739,6 +741,139 @@ function YamlDrawerCard() {
           <li>Footer restates the contract: "the canvas compiles this — edit stages to change it" (build) / "rerun to change it" (job).</li>
           <li>Mutually exclusive with the Stage drawer: opening YAML hides a selected stage's editor; selecting a stage closes YAML.</li>
         </ul>
+      </SubBlock>
+    </Card>
+  );
+}
+
+// ════════════════════════════════════════════════════════════════════════
+//  Settings modal card
+// ════════════════════════════════════════════════════════════════════════
+
+// Self-contained specimen: local state so clicking swatches in the doc doesn't
+// mutate the doc's own theme. The live app passes the shared tweak store.
+// `pin` forces a single section (used to lay out every section side-by-side in
+// the spec, so a reviewer sees them all without clicking through the nav).
+function SettingsModalSpecimen({ pin }) {
+  const [t, setT] = React.useState({
+    theme: "slate", accent: "orange", density: "comfortable",
+    canvasStyle: "graph", edgeStyle: "curved",
+    defaultMode: "active", confirmStop: true, notifyFinish: true,
+    workerRunner: "localhost",
+    telegramEnabled: true, telegramToken: "123456789:ABCdef-Gh", telegramChat: "@codery_runs",
+  });
+  const setTweak = (k, v) => setT((prev) => ({ ...prev, [k]: v }));
+  return <SettingsModal t={t} setTweak={setTweak} embedded initialSection={pin || "appearance"} />;
+}
+
+// Renders just one section's content (no modal chrome) under a labeled panel,
+// so the spec can show every section at once.
+function SectionPanel({ value }) {
+  const meta = SM_SECTIONS.find((s) => s.value === value);
+  const [t, setT] = React.useState({
+    theme: "slate", accent: "orange", density: "comfortable",
+    canvasStyle: "graph", edgeStyle: "curved",
+    defaultMode: "active", confirmStop: true, notifyFinish: true,
+    workerRunner: "docker",
+    telegramEnabled: true, telegramToken: "123456789:ABCdef-Gh", telegramChat: "@codery_runs",
+  });
+  const setTweak = (k, v) => setT((prev) => ({ ...prev, [k]: v }));
+  const Comp = meta.Comp;
+  return (
+    <div style={{
+      background: "var(--co-bg-1)", border: "1px solid var(--co-border-1)",
+      borderRadius: 12, overflow: "hidden", flex: "1 1 320px", minWidth: 300,
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 8,
+        padding: "10px 14px", borderBottom: "1px solid var(--co-border-1)",
+        background: "var(--co-bg-0)",
+      }}>
+        <Icon name={meta.icon} size={14} color="var(--co-accent)" />
+        <span style={{ fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase", color: "var(--co-text-muted)" }}>{meta.label}</span>
+      </div>
+      <div style={{ padding: "4px 18px 14px" }}>
+        <Comp t={t} setTweak={setTweak} />
+      </div>
+    </div>
+  );
+}
+
+function SettingsModalCard() {
+  return (
+    <Card
+      title="Settings modal"
+      description="App-level preferences, opened by the gear at the bottom of the mode rail. A centered dialog over a dimmed, blurred backdrop with a left section nav (Appearance / Canvas / Workflow / Messaging / Plugins) and a scrolling content pane. Below ~600px wide the sidebar collapses to a horizontal tab strip so every section stays reachable. Every control writes straight into the shared preference store, so changes apply live and persist. The color-theme chooser is driven by a theme registry, and messaging channels by a parallel registry — adding a palette or channel is one entry plus (for themes) one block in themes.css; the UI scales with no new code. Dismisses on the close button, backdrop click, or Esc."
+      dartImport="lib/widgets/settings/settings_modal.dart"
+    >
+      <SubBlock label="full modal · sidebar nav · Appearance section">
+        <Stage padding={0} height={560}>
+          <Constrained width={720} height={560}>
+            <SettingsModalSpecimen />
+          </Constrained>
+        </Stage>
+      </SubBlock>
+
+      <SubBlock label="every section (content only) — the nav switches between these">
+        <div style={{ display: "flex", flexWrap: "wrap", gap: 14 }}>
+          <SectionPanel value="appearance" />
+          <SectionPanel value="canvas" />
+          <SectionPanel value="workflow" />
+          <SectionPanel value="messaging" />
+          <SectionPanel value="plugins" />
+        </div>
+      </SubBlock>
+
+      <SubBlock label="compact (&lt;600px) — sidebar becomes a top tab strip">
+        <Stage padding={0} height={520}>
+          <Constrained width={420} height={520}>
+            <SettingsModalSpecimen pin="messaging" />
+          </Constrained>
+        </Stage>
+      </SubBlock>
+
+      <SubBlock label="anatomy">
+        <AnatomyLegend items={[
+          { label: "backdrop",     desc: "fixed overlay · bg-0 at 62% + 6px blur · click to dismiss · 240ms slide-in" },
+          { label: "dialog",       desc: "720px · bg-1 · 1px border-2 · radius 18 · shadow-3 · max-height 86vh" },
+          { label: "header",       desc: "gear plaque (bg-3 tile, accent icon) + title (display 17) + mono sub-label + close IconButton" },
+          { label: "section nav",  desc: "178px left column on bg-0 · icon + label rows · active row = bg-3 fill + accent icon + fg-0 label · collapses to a top tab strip (bottom 2px accent indicator) under ~600px" },
+          { label: "content pane", desc: "scrolls · setting rows split label/description (left) from control (right), hairline divided" },
+          { label: "theme card",   desc: "palette swatch strip (n bg steps + accent chip) + name + mode badge + description · selected = accent ring + check" },
+          { label: "accent chip",  desc: "two gradient swatches (orange crust / green trail) · selected = accent ring" },
+          { label: "controls",     desc: "Seg (segmented, accent thumb) for enums · Toggle (accent switch) for booleans" },
+        ]} />
+      </SubBlock>
+
+      <SubBlock label="settings inventory">
+        <TokensList tokens={[
+          { name: "appearance.theme",     value: "registry · hearth / slate / trailhead / paper · extensible (more palettes drop in)" },
+          { name: "appearance.accent",    value: "orange · green · the active/selected highlight, orthogonal to theme" },
+          { name: "appearance.density",   value: "comfortable · compact" },
+          { name: "canvas.layout",        value: "graph · tree · default arrangement when a workflow opens" },
+          { name: "canvas.edgeStyle",     value: "curved · orthogonal · straight" },
+          { name: "workflow.workerRunner",value: "localhost · docker · docker swarm · k3s · where agent jobs execute" },
+          { name: "workflow.openOnLaunch",value: "build · active · history · which mode the app starts in" },
+          { name: "workflow.confirmStop", value: "bool · confirm before cancelling an in-flight run" },
+          { name: "workflow.notifyFinish",value: "bool · toast when a run lands passed/failed" },
+          { name: "messaging.telegram",   value: "registry · enable toggle + bot token + chat ID · extensible to more channels" },
+          { name: "plugins",              value: "empty state · documents the CLI install path" },
+        ]} />
+      </SubBlock>
+
+      <SubBlock label="tokens" last>
+        <TokensList tokens={[
+          { name: "dialog.width",      value: "720 · max-width 100% · max-height 86vh" },
+          { name: "dialog.surface",    value: "palette.appShell (bg-1) · 1px border2 · radius 18 · shadow-3" },
+          { name: "backdrop",          value: "bg-0 @ 62% (color-mix) · backdrop-blur 6px" },
+          { name: "nav.width",         value: "178 · bg-0 floor · 1px right border" },
+          { name: "nav.active",        value: "bg-3 fill · accent icon · fg-0 label · weight 600" },
+          { name: "row.divider",       value: "1px border-1 between rows · none on last" },
+          { name: "seg.thumb",         value: "accent fill · accent-ink label · shadow-1 · 140ms ease-out" },
+          { name: "toggle.on",         value: "accent track · accent-ink knob · 160ms · knob ease-soft" },
+          { name: "themeCard.selected",value: "accent border + 1px accent ring + check badge (accent / accent-ink)" },
+          { name: "open / close",      value: "gear in mode rail opens · backdrop click / Esc / close button dismiss" },
+        ]} />
       </SubBlock>
     </Card>
   );
@@ -1977,6 +2112,7 @@ function ComponentsSection() {
       <TopBarCard />
       <StageDrawerCard />
       <YamlDrawerCard />
+      <SettingsModalCard />
       <FilmstripCard />
       <RunsTableCard />
       <GraphNodesCard />

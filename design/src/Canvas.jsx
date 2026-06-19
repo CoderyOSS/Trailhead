@@ -20,6 +20,11 @@ const WORKER_TOP = (NODE_H - WORKER_H) / 2; // 16 — centers the body on the ce
                                             // body's center line + its left/right ends + the output dot all sit on grid dots
 const OP_W     = 32;          // operator node — rounded square, same height as the worker body, centered in the worker column
 
+// Custom scissors cursor (data-URI SVG) for the connection-cutting tool — a
+// white blade with a dark halo so it reads on the cocoa canvas, hotspot at the
+// blade pivot.
+const SCISSORS_CURSOR = "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 24 24' fill='none' stroke-linecap='round' stroke-linejoin='round'%3E%3Cg stroke='%23160d07' stroke-width='3.6'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cline x1='20' y1='4' x2='8.12' y2='15.88'/%3E%3Cline x1='14.47' y1='14.48' x2='20' y2='20'/%3E%3Cline x1='8.12' y1='8.12' x2='12' y2='12'/%3E%3C/g%3E%3Cg stroke='%23fff' stroke-width='1.8'%3E%3Ccircle cx='6' cy='6' r='3'/%3E%3Ccircle cx='6' cy='18' r='3'/%3E%3Cline x1='20' y1='4' x2='8.12' y2='15.88'/%3E%3Cline x1='14.47' y1='14.48' x2='20' y2='20'/%3E%3Cline x1='8.12' y1='8.12' x2='12' y2='12'/%3E%3C/g%3E%3C/svg%3E\") 15 15, crosshair";
+
 function NodeShell({ status, selected, glow, density, children, onClick, style, suppressRail }) {
   const compact = density === "compact";
   const running = status === "running";
@@ -411,6 +416,39 @@ function Canvas({
   const [picker, setPicker] = useStateCV(null);
   const [ctxMenu, setCtxMenu] = useStateCV(null);
 
+  // Scissors tool — a sticky mode for cutting connections. Double-tap the
+  // canvas background toggles it (touchscreens have no cursor, so the mode is
+  // signalled by a center-screen glyph flash + a persistent badge). While on,
+  // tapping any connection severs it.
+  const [scissors, setScissors] = useStateCV(false);
+  const [flash, setFlash] = useStateCV(null); // { mode: "scissors"|"cursor", id }
+  const flashTimerRef = useRefCV(null);
+  const lastTapRef = useRefCV(0);
+
+  const triggerFlash = (mode) => {
+    setFlash({ mode, id: (flash?.id || 0) + 1 });
+    if (flashTimerRef.current) clearTimeout(flashTimerRef.current);
+    flashTimerRef.current = setTimeout(() => setFlash(null), 820);
+  };
+  const toggleScissors = () => {
+    setScissors(prev => {
+      const next = !prev;
+      triggerFlash(next ? "scissors" : "cursor");
+      if (next) { onSelect(null); setSelectedEdgeKey(null); }
+      return next;
+    });
+  };
+  // Sever a connection. Real graph mutation — shared by the scissors tool and
+  // the edge × delete pin.
+  const deleteEdge = (edgeKey) => {
+    setSelectedEdgeKey(k => k === edgeKey ? null : k);
+    setHoveredEdgeKey(k => k === edgeKey ? null : k);
+    setWorkflow(prev => ({
+      ...prev,
+      edges: prev.edges.filter(ed => `${ed.from}→${ed.to}` !== edgeKey),
+    }));
+  };
+
   // Right-click affordances. Insert an operator into an arrow (splitting it),
   // or remove an operator node and reconnect the arrow it sat on.
   const openEdgeMenu = (e, edgeKey) => {
@@ -531,6 +569,23 @@ function Canvas({
     if (e.target.closest("[data-node]")) return;
     dragRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
   };
+
+  // Double-tap the canvas background toggles the scissors tool. Works for both
+  // mouse and touch via a single pointerdown timing check; ignores taps that
+  // land on nodes, edges, or chrome buttons so only "empty" double-taps flip
+  // the mode.
+  const onPointerDownWrap = (e) => {
+    if (view !== "builder") return;
+    if (e.target.closest("[data-node]") || e.target.closest("button") ||
+        e.target.tagName === "path" || e.target.tagName === "text") return;
+    const now = Date.now();
+    if (now - lastTapRef.current < 320) {
+      lastTapRef.current = 0;
+      toggleScissors();
+    } else {
+      lastTapRef.current = now;
+    }
+  };
   useEffectCV(() => {
     const onMove = (e) => {
       if (!dragRef.current) return;
@@ -561,6 +616,9 @@ function Canvas({
   const showInflight = view === "job";
   const isBuilder = view === "builder";
 
+  // Scissors is a builder-only tool — drop it (and any flash) on view change.
+  useEffectCV(() => { if (view !== "builder") { setScissors(false); setFlash(null); } }, [view]);
+
   // Edge map: { "from→to:case": status }
   const stageById = useMemoCV(() => Object.fromEntries(workflow.stages.map(s => [s.id, s])), [workflow]);
   const isRouting = (s) => s && s.kind !== "worker" && s.kind !== "map";
@@ -586,13 +644,14 @@ function Canvas({
     <div
       ref={wrapRef}
       onMouseDown={onMouseDown}
+      onPointerDown={onPointerDownWrap}
       onWheel={onWheel}
       style={{
         position: "relative",
         flex: 1,
         overflow: "hidden",
         background: "var(--co-grad-hearth)",
-        cursor: dragRef.current ? "grabbing" : "grab",
+        cursor: (isBuilder && scissors) ? SCISSORS_CURSOR : (dragRef.current ? "grabbing" : "grab"),
       }}
     >
       {/* dot grid — spacing is half the node height (a node spans exactly 2
@@ -647,8 +706,10 @@ function Canvas({
             const eStatus = showInflight ? (job.edgeStatus[edgeKey] || "pending") : "design";
             const isEdgeHovered  = hoveredEdgeKey === edgeKey;
             const isEdgeSelected = selectedEdgeKey === edgeKey;
+            const cutting = isBuilder && scissors && isEdgeHovered;
             const highlight = isBuilder && (isEdgeHovered || isEdgeSelected);
-            const stroke = highlight ? "var(--co-accent)" :
+            const stroke = cutting ? "var(--co-danger)" :
+              highlight ? "var(--co-accent)" :
               eStatus === "done"    ? "var(--co-fg-3)" :
               eStatus === "active"  ? "var(--co-accent)" :
               eStatus === "skipped" ? "var(--co-fg-4)" :
@@ -673,11 +734,12 @@ function Canvas({
                     fill="none"
                     stroke="transparent"
                     strokeWidth={18}
-                    style={{ pointerEvents: "stroke", cursor: "pointer" }}
+                    style={{ pointerEvents: "stroke", cursor: scissors ? SCISSORS_CURSOR : "pointer" }}
                     onMouseEnter={() => setHoveredEdgeKey(edgeKey)}
                     onMouseLeave={() => setHoveredEdgeKey(k => k === edgeKey ? null : k)}
                     onClick={(e) => {
                       e.stopPropagation();
+                      if (scissors) { deleteEdge(edgeKey); return; }
                       setSelectedEdgeKey(k => k === edgeKey ? null : edgeKey);
                       onSelect(null);
                     }}
@@ -689,8 +751,8 @@ function Canvas({
                   d={d}
                   fill="none"
                   stroke={stroke}
-                  strokeWidth={(eStatus === "active" || highlight) ? 2 : 1.5}
-                  strokeDasharray={dash}
+                  strokeWidth={(eStatus === "active" || highlight || cutting) ? 2 : 1.5}
+                  strokeDasharray={cutting ? "5 4" : dash}
                   markerEnd={arrow}
                   opacity={opacity}
                   style={{
@@ -769,7 +831,7 @@ function Canvas({
               };
               setPicker({ ...p, anchor: screen });
             }}
-            onDeleteEdge={() => setSelectedEdgeKey(null)}
+            onDeleteEdge={(edgeKey) => deleteEdge(edgeKey)}
           />
         )}
       </div>
@@ -797,23 +859,94 @@ function Canvas({
         />
       )}
 
-      {/* Zoom controls */}
+      {/* Tool + fit controls — vertical toolbar */}
       <div style={{
         position: "absolute", left: 16, bottom: 16,
-        display: "flex", alignItems: "center", gap: 4,
-        padding: 4, background: "var(--co-bg-2)",
+        display: "flex", flexDirection: "column", alignItems: "center", gap: 4,
+        padding: "4px 3px", background: "var(--co-bg-2)",
         border: "1px solid var(--co-border-1)",
         borderRadius: 8,
         fontFamily: "var(--co-font-mono)", fontSize: 11,
         boxShadow: "var(--co-shadow-2)",
         zIndex: 5,
       }}>
-        <button type="button" onClick={() => setZoom(z => Math.max(0.4, z - 0.1))} style={zoomBtn}>−</button>
-        <span style={{ minWidth: 38, textAlign: "center", color: "var(--co-text-muted)" }}>{Math.round(zoom * 100)}%</span>
-        <button type="button" onClick={() => setZoom(z => Math.min(2, z + 0.1))} style={zoomBtn}>+</button>
-        <span style={{ width: 1, height: 16, background: "var(--co-border-1)", margin: "0 2px" }} />
-        <button type="button" onClick={refit} style={{ ...zoomBtn, width: "auto", padding: "0 8px" }}>fit</button>
+        {/* Tool toggle — select (cursor) ⟷ scissors are mutually exclusive */}
+        {isBuilder && (
+          <button
+            type="button"
+            onClick={() => { if (scissors) toggleScissors(); }}
+            title="select — move and select nodes"
+            style={{
+              ...zoomBtn, width: 26, height: 26,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: !scissors ? "var(--co-accent)" : "transparent",
+              color: !scissors ? "var(--co-accent-ink)" : "var(--co-text-strong)",
+            }}
+          >
+            <Icon name="mousePointer" size={14} color="currentColor" />
+          </button>
+        )}
+        {isBuilder && (
+          <button
+            type="button"
+            onClick={() => { if (!scissors) toggleScissors(); }}
+            title="scissors — cut connections (or double-tap the canvas)"
+            style={{
+              ...zoomBtn, width: 26, height: 26,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: scissors ? "var(--co-accent)" : "transparent",
+              color: scissors ? "var(--co-accent-ink)" : "var(--co-text-strong)",
+            }}
+          >
+            <Icon name="scissors" size={14} color="currentColor" />
+          </button>
+        )}
+        {isBuilder && <span style={{ width: 18, height: 1, background: "var(--co-border-1)", margin: "2px 0" }} />}
+        <button
+          type="button"
+          onClick={refit}
+          title="fit to view"
+          style={{
+            ...zoomBtn, width: 26, height: 26,
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}
+        >
+          <Icon name="maximize" size={14} color="currentColor" />
+        </button>
       </div>
+
+      {/* Mode-change flash — a big glyph in the canvas center signalling the
+          mode switch: scissors on entry, a cursor arrow on exit. */}
+      {isBuilder && flash && (
+        <div key={flash.id} style={{
+          position: "absolute", inset: 0, zIndex: 40,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          pointerEvents: "none",
+        }}>
+          <div style={{
+            display: "flex", flexDirection: "column", alignItems: "center", gap: 14,
+            animation: "co-mode-flash 820ms var(--co-ease-out) forwards",
+          }}>
+            <div style={{
+              width: 128, height: 128, borderRadius: 26,
+              display: "flex", alignItems: "center", justifyContent: "center",
+              background: "color-mix(in oklab, var(--co-bg-1) 80%, transparent)",
+              border: `1px solid ${flash.mode === "scissors" ? "var(--co-accent)" : "var(--co-border-2)"}`,
+              backdropFilter: "blur(8px)", WebkitBackdropFilter: "blur(8px)",
+              boxShadow: "var(--co-shadow-3)",
+              color: flash.mode === "scissors" ? "var(--co-accent)" : "var(--co-text-strong)",
+            }}>
+              <Icon name={flash.mode === "scissors" ? "scissors" : "mousePointer"} size={62} strokeWidth={1.6} color="currentColor" />
+            </div>
+            <span style={{
+              fontFamily: "var(--co-font-mono)", fontSize: 13, fontWeight: 600, letterSpacing: "0.04em",
+              color: flash.mode === "scissors" ? "var(--co-accent)" : "var(--co-text-muted)",
+            }}>
+              {flash.mode === "scissors" ? "scissors" : "select mode"}
+            </span>
+          </div>
+        </div>
+      )}
 
       {/* Mode indicator */}
       <div style={{
@@ -828,11 +961,8 @@ function Canvas({
         letterSpacing: "0.04em",
         zIndex: 5,
       }}>
-        layout · {canvasStyle}
+        {scissors ? "tool · scissors" : `layout · ${canvasStyle}`}
       </div>
-
-      {/* Builder how-to tips panel */}
-      {isBuilder && <BuilderTips />}
     </div>
   );
 }

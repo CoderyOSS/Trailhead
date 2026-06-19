@@ -78,7 +78,7 @@ function RailButton({ icon, label, active, badge, onClick }) {
   );
 }
 
-function ModeRail({ mode, onMode, activeCount }) {
+function ModeRail({ mode, onMode, activeCount, onSettings, settingsActive }) {
   return (
     <div style={{
       width: 52, flex: "0 0 52px",
@@ -127,7 +127,7 @@ function ModeRail({ mode, onMode, activeCount }) {
         paddingBottom: 8, gap: 1,
       }}>
         <RailButton icon="terminal" label="CLI · tokens" onClick={() => {}} />
-        <RailButton icon="settings" label="Settings" onClick={() => {}} />
+        <RailButton icon="settings" label="Settings" active={settingsActive} onClick={onSettings} />
         <div style={{
           margin: "8px 12px 0",
           paddingTop: 8,

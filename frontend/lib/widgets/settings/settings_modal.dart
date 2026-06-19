@@ -257,10 +257,14 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
           bottom: BorderSide(color: AppColors.border1),
         ),
       ),
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Row(
-          children: _sections.map((s) {
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: constraints.maxWidth),
+              child: Row(
+                children: _sections.map((s) {
             final on = s.value == section;
             return GestureDetector(
               onTap: () => setState(() => section = s.value),
@@ -298,7 +302,10 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
               ),
             );
           }).toList(),
-        ),
+              ),
+            ),
+          );
+        },
       ),
     );
   }

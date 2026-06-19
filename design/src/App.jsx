@@ -1,7 +1,7 @@
 /* global React, ReactDOM,
    ModeRail, WorkflowsSidebar, JobsSidebar,
    TopBar, Canvas, StageDrawer, Filmstrip, RunsView,
-   TweaksPanel, TweakSection, TweakRadio, useTweaks, YamlDrawer,
+   TweaksPanel, TweakSection, TweakRadio, useTweaks, YamlDrawer, SettingsModal,
    WORKFLOW, JOB, SNAPSHOTS, WORKFLOWS_LIST, JOBS_LOG */
 
 const { useState: useStateApp, useEffect: useEffectApp, useMemo: useMemoApp } = React;
@@ -12,7 +12,15 @@ const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
   "edgeStyle": "curved",
   "density": "comfortable",
   "inflightAnim": "pulse",
-  "accent": "orange"
+  "accent": "orange",
+  "reduceMotion": false,
+  "defaultMode": "active",
+  "confirmStop": true,
+  "notifyFinish": true,
+  "workerRunner": "localhost",
+  "telegramEnabled": false,
+  "telegramToken": "",
+  "telegramChat": ""
 }/*EDITMODE-END*/;
 
 const ACTIVE_STATUSES_APP  = new Set(["running", "paused", "queued", "retrying"]);
@@ -22,7 +30,15 @@ function App() {
   const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
 
   // mode is the top-level concern. The rail is the only thing that mutates it.
-  const [mode, setMode] = useStateApp("active");
+  // Initial mode honors the "open on launch" setting; changing it later only
+  // affects the next load, so we don't yank the user out of their current view.
+  const [mode, setMode] = useStateApp(t.defaultMode || "active");
+
+  // Settings modal — opened by the gear in the mode rail.
+  const [settingsOpen, setSettingsOpen] = useStateApp(false);
+
+  // Reduce-motion overrides the live-edge animation everywhere.
+  const effInflight = t.reduceMotion ? "off" : t.inflightAnim;
 
   // The YAML drawer is an alternative to the StageDrawer — it shares the
   // right slot and takes precedence when open. Reset on mode change so it
@@ -50,7 +66,8 @@ function App() {
     document.documentElement.dataset.themeVariant = t.theme;
     document.documentElement.dataset.theme = t.theme === "paper" ? "light" : "dark";
     document.documentElement.dataset.accent = t.accent;
-  }, [t.theme, t.accent]);
+    document.documentElement.dataset.reduceMotion = t.reduceMotion ? "1" : "0";
+  }, [t.theme, t.accent, t.reduceMotion]);
 
   const activeJobs  = useMemoApp(() => JOBS_LOG.filter(j => ACTIVE_STATUSES_APP.has(j.status)),  []);
   const historyJobs = useMemoApp(() => JOBS_LOG.filter(j => HISTORY_STATUSES_APP.has(j.status)), []);
@@ -132,7 +149,7 @@ function App() {
         canvasStyle={t.canvasStyle}
         edgeStyle={t.edgeStyle}
         density={t.density}
-        inflightAnim={t.inflightAnim}
+        inflightAnim={effInflight}
         drawerOpen={yamlOpen || !!stage}
       />
     );
@@ -153,7 +170,7 @@ function App() {
           canvasStyle={t.canvasStyle}
           edgeStyle={t.edgeStyle}
           density={t.density}
-          inflightAnim={t.inflightAnim}
+          inflightAnim={effInflight}
           drawerOpen={yamlOpen || !!stage}
         />
       );
@@ -214,7 +231,7 @@ function App() {
       fontFamily: "var(--co-font-sans)",
       overflow: "hidden",
     }}>
-      <ModeRail mode={mode} onMode={setMode} activeCount={activeJobCount} />
+      <ModeRail mode={mode} onMode={setMode} activeCount={activeJobCount} onSettings={() => setSettingsOpen(true)} settingsActive={settingsOpen} />
       {sidebar}
 
       <main style={{ flex: 1, display: "flex", flexDirection: "column", minWidth: 0, position: "relative" }}>
@@ -255,6 +272,10 @@ function App() {
       </main>
 
       <AppTweaks t={t} setTweak={setTweak} />
+
+      {settingsOpen && (
+        <SettingsModal t={t} setTweak={setTweak} onClose={() => setSettingsOpen(false)} />
+      )}
     </div>
   );
 }

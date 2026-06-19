@@ -34,7 +34,7 @@ class TrailheadApp extends StatelessWidget {
           theme: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: AppColors.bg0,
           ),
-          home: const TrailheadShell(),
+          home: TrailheadShell(),
         ),
       ),
     );
@@ -61,16 +61,16 @@ class TrailheadShell extends ConsumerWidget {
               Expanded(
                 child: Row(
                   children: [
-                    const ModeRail(activeCount: 3),
+                    ModeRail(activeCount: 3),
                     if (showSidebar) _buildSidebar(mode, ref),
                     Expanded(
                       child: Column(
                         children: [
-                          const TopBar(),
+                          TopBar(),
                           Expanded(
                             child: mode == AppMode.history && job == null
-                                ? const RunsTable()
-                                : const GraphCanvas(),
+                                ? RunsTable()
+                                : GraphCanvas(),
                           ),
                         ],
                       ),
@@ -88,7 +88,7 @@ class TrailheadShell extends ConsumerWidget {
             ],
           ),
           if (settingsOpen)
-            const SettingsModalOverlay(),
+            SettingsModalOverlay(),
         ],
       ),
     );

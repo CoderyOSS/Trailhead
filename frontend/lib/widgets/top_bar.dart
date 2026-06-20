@@ -113,6 +113,7 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   OverlayEntry? _overlay;
   bool _open = false;
   bool _isEditing = false;
+  String? _editingRowId;
   String? _errorText;
   final _editFocusNode = FocusNode();
   late final TextEditingController _editCtrl;
@@ -224,93 +225,137 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
     }
   }
 
+  void _commitRowRename(String id, String name) {
+    final clean = _sanitizeName(name).replaceAll(RegExp(r'^-+|-+$'), '');
+    if (clean.isEmpty) return;
+    final siblings = widget.workflows
+        .where((w) => w.id != id)
+        .map((w) => w.name.toLowerCase());
+    if (siblings.contains(clean.toLowerCase())) return;
+    ref.read(workflowsProvider.notifier).update((list) {
+      return list.map((w) => w.id == id ? w.copyWith(name: clean) : w).toList();
+    });
+    final current = ref.read(workflowProvider);
+    if (current.id == id) {
+      ref.read(workflowProvider.notifier).state = current.copyWith(name: clean);
+    }
+    setState(() => _editingRowId = null);
+  }
+
+  void _cancelRowRename() {
+    setState(() => _editingRowId = null);
+  }
+
   OverlayEntry _createOverlay() {
     return OverlayEntry(
-      builder: (context) => Stack(
-        children: [
-          Positioned.fill(
-            child: GestureDetector(
-              onTap: _close,
-              behavior: HitTestBehavior.translucent,
-              child: Container(color: Colors.transparent),
+      builder: (context) {
+        // Always show row actions on touch devices; hover-only on desktop.
+        // Flutter web/desktop always reports hover capable, so default false.
+        const touch = false; // TODO: detect coarse pointer for mobile builds
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _close,
+                behavior: HitTestBehavior.translucent,
+                child: Container(color: Colors.transparent),
+              ),
             ),
-          ),
-          CompositedTransformFollower(
-            link: _layerLink,
-            showWhenUnlinked: false,
-            offset: const Offset(0, 4),
-            child: Material(
-              color: Colors.transparent,
-              child: Container(
-                width: 288,
-                decoration: BoxDecoration(
-                  color: AppColors.bg2,
-                  border: Border.all(color: AppColors.border2),
-                  borderRadius: BorderRadius.circular(8),
-                  boxShadow: const [
-                    BoxShadow(
-                      color: Color(0x40000000),
-                      blurRadius: 16,
-                      offset: Offset(0, 8),
-                    ),
-                  ],
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    // Header
-                    Padding(
-                      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Text(
-                              'switch workflow \u00b7 ${widget.workflows.length}',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 9.5,
-                                fontWeight: FontWeight.w500,
-                                letterSpacing: 0.08,
-                                color: AppColors.fg3,
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              offset: const Offset(0, 4),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 288,
+                  decoration: BoxDecoration(
+                    color: AppColors.bg2,
+                    border: Border.all(color: AppColors.border2),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x40000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      // Header
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'switch workflow \u00b7 ${widget.workflows.length}',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.w500,
+                                  letterSpacing: 0.08,
+                                  color: AppColors.fg3,
+                                ),
                               ),
                             ),
-                          ),
-                          AppButton(
-                            variant: AppButtonVariant.secondary,
-                            size: AppButtonSize.sm,
-                            icon: TrailheadIconData.plus,
-                            label: 'new',
-                            onTap: _startNew,
-                          ),
-                        ],
+                            AppButton(
+                              variant: AppButtonVariant.secondary,
+                              size: AppButtonSize.sm,
+                              icon: TrailheadIconData.plus,
+                              label: 'new',
+                              onTap: _startNew,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Divider(height: 1, color: AppColors.border1),
-                    // List
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxHeight: 340),
-                      child: ListView.builder(
-                        padding: const EdgeInsets.all(4),
-                        itemCount: widget.workflows.length,
-                        itemBuilder: (context, i) {
-                          final wf = widget.workflows[i];
-                          return _WorkflowMenuRow(
-                            workflow: wf,
-                            active: wf.id == widget.activeWfId,
-                            onPick: () => _pick(wf.id),
-                            onDelete: () => _delete(wf.id),
-                          );
-                        },
+                      Divider(height: 1, color: AppColors.border1),
+                      // List
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 340),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(4),
+                          itemCount: widget.workflows.length,
+                          itemBuilder: (context, i) {
+                            final wf = widget.workflows[i];
+                            if (_editingRowId == wf.id) {
+                              final siblings = widget.workflows
+                                  .where((w) => w.id != wf.id)
+                                  .map((w) => w.name.toLowerCase())
+                                  .toList();
+                              return Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 3),
+                                child: _InlineRename(
+                                  initial: wf.name,
+                                  siblings: siblings,
+                                  big: false,
+                                  onCommit: (name) => _commitRowRename(wf.id, name),
+                                  onCancel: _cancelRowRename,
+                                ),
+                              );
+                            }
+                            return _WorkflowMenuRow(
+                              workflow: wf,
+                              active: wf.id == widget.activeWfId,
+                              touch: touch,
+                              onPick: () => _pick(wf.id),
+                              onStartRename: () => setState(() => _editingRowId = wf.id),
+                              onDelete: () => _delete(wf.id),
+                            );
+                          },
+                        ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      },
     );
   }
 
@@ -647,13 +692,17 @@ class _RenameIconBtn extends StatelessWidget {
 class _WorkflowMenuRow extends StatefulWidget {
   final WorkflowSummary workflow;
   final bool active;
+  final bool touch;
   final VoidCallback onPick;
+  final VoidCallback? onStartRename;
   final VoidCallback onDelete;
 
   const _WorkflowMenuRow({
     required this.workflow,
     required this.active,
+    this.touch = false,
     required this.onPick,
+    this.onStartRename,
     required this.onDelete,
   });
 
@@ -667,94 +716,142 @@ class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
   @override
   Widget build(BuildContext context) {
     final wf = widget.workflow;
+    final showActions = widget.touch || _hovering;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
-      child: GestureDetector(
-        onTap: widget.onPick,
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-          decoration: BoxDecoration(
-            color: widget.active
-                ? AppColors.bg3
-                : _hovering
-                    ? AppColors.bg2
-                    : Colors.transparent,
-            borderRadius: BorderRadius.circular(4),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: widget.onPick,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: widget.active
+                        ? AppColors.bg3
+                        : _hovering
+                            ? AppColors.bg2
+                            : Colors.transparent,
+                    borderRadius: BorderRadius.circular(5),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              wf.name,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11.5,
+                                fontWeight: widget.active
+                                    ? FontWeight.w600
+                                    : FontWeight.w500,
+                                color: widget.active
+                                    ? AppColors.fg0
+                                    : AppColors.fg1,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 1),
+                            Text(
+                              '${wf.runCount.toString()} runs \u00b7 last ${wf.last}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9.5,
+                                color: AppColors.fg3,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (wf.active > 0)
+                        Padding(
+                          padding: const EdgeInsets.only(left: 8),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              StatusDot(
+                                status: JobState.running,
+                                pulse: true,
+                                size: 5,
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${wf.active}',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                  color: AppColors.accent,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            AnimatedOpacity(
+              opacity: showActions ? 1.0 : 0.0,
+              duration: const Duration(milliseconds: 140),
+              child: IgnorePointer(
+                ignoring: !showActions,
+                child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text(
-                      wf.name,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 11.5,
-                        fontWeight: widget.active ? FontWeight.w600 : FontWeight.w500,
-                        color: widget.active ? AppColors.fg0 : AppColors.fg1,
+                    if (widget.onStartRename != null)
+                      GestureDetector(
+                        onTap: widget.onStartRename,
+                        child: Container(
+                          width: 30,
+                          height: 30,
+                          decoration: BoxDecoration(
+                            color: AppColors.bg3,
+                            border: Border.all(color: AppColors.border1),
+                            borderRadius: BorderRadius.circular(7),
+                          ),
+                          child: Center(
+                            child: TrailheadIcon(
+                              icon: TrailheadIconData.pencil,
+                              size: 13,
+                              color: AppColors.fg2,
+                            ),
+                          ),
+                        ),
                       ),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 1),
-                    Text(
-                      '${wf.runCount.toString()} runs \u00b7 last ${wf.last}',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 9.5,
-                        color: AppColors.fg3,
+                    const SizedBox(width: 4),
+                    GestureDetector(
+                      onTap: widget.onDelete,
+                      child: Container(
+                        width: 30,
+                        height: 30,
+                        decoration: BoxDecoration(
+                          color: AppColors.bg3,
+                          border: Border.all(color: AppColors.border1),
+                          borderRadius: BorderRadius.circular(7),
+                        ),
+                        child: Center(
+                          child: TrailheadIcon(
+                            icon: TrailheadIconData.trash,
+                            size: 13,
+                            color: AppColors.fg2,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              if (wf.active > 0)
-                Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    StatusDot(
-                      status: JobState.running,
-                      pulse: true,
-                      size: 5,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${wf.active}',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        color: AppColors.accent,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                ),
-              if (_hovering)
-                GestureDetector(
-                  onTap: widget.onDelete,
-                  child: Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: AppColors.bg3,
-                      border: Border.all(color: AppColors.border1),
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.trash,
-                        size: 12,
-                        color: AppColors.fg2,
-                      ),
-                    ),
-                  ),
-                ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );

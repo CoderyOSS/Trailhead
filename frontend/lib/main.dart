@@ -9,7 +9,6 @@ import 'providers/mode_provider.dart';
 import 'providers/selection_notifier.dart';
 import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
-import 'widgets/workflows_sidebar.dart';
 import 'widgets/jobs_sidebar.dart';
 import 'widgets/canvas/graph_canvas.dart';
 import 'widgets/runs_table.dart';
@@ -63,7 +62,7 @@ class TrailheadShell extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
-    final showSidebar = mode != AppMode.history || job != null;
+    final showSidebar = mode != AppMode.build && (mode != AppMode.history || job != null);
     final yamlOpen = mode == AppMode.build && ref.watch(yamlDrawerOpenProvider);
     final stageOpen = ref.watch(stageDrawerOpenProvider);
     final stageId = ref.watch(selectedStageIdProvider);
@@ -195,31 +194,7 @@ class TrailheadShell extends ConsumerWidget {
   Widget _buildSidebar(AppMode mode, WidgetRef ref) {
     switch (mode) {
       case AppMode.build:
-        return WorkflowsSidebar(
-          activeId: ref.watch(workflowProvider).id,
-          onPick: (id) {
-            // Save current document before switching.
-            final currentWf = ref.read(workflowProvider);
-            final currentVp = ref.read(canvasControllerProvider);
-            ref.read(documentsProvider.notifier).update((docs) {
-              final m = Map<String, WorkflowDocument>.from(docs);
-              m[currentWf.id] = WorkflowDocument(workflow: currentWf, viewport: currentVp);
-              return m;
-            });
-            // Load selected document.
-            final doc = ref.read(documentsProvider)[id] ?? WorkflowDocument(
-              workflow: ref.read(workflowsProvider).firstWhere((w) => w.id == id),
-            );
-            ref.read(workflowProvider.notifier).state = doc.workflow;
-            ref.read(canvasControllerProvider.notifier).setViewport(doc.viewport);
-            ref.read(selectionProvider.notifier).clear();
-            ref.read(hoveredNodeProvider.notifier).state = null;
-            ref.read(draggingNodeIdProvider.notifier).state = null;
-            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-            ref.read(selectedStageIdProvider.notifier).state = null;
-            ref.read(stageDrawerOpenProvider.notifier).state = false;
-          },
-        );
+        return const SizedBox.shrink();
       case AppMode.active:
         return JobsSidebar(
           kind: JobsSidebarKind.active,

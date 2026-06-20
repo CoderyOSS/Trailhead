@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
+import '../models/workflow_document.dart';
+import '../models/workflow_node.dart';
+import '../providers/canvas_controller.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart';
+import '../providers/selection_notifier.dart';
 import 'icons.dart';
 import 'app_button.dart';
 import 'status_tag.dart';
@@ -142,78 +146,543 @@ class _WorkflowGlyph extends StatelessWidget {
   }
 }
 
+// ──────────────────────────────────────────────────────────────────────────
+// Workflow selector dropdown — replaces the old left sidebar.
+// ──────────────────────────────────────────────────────────────────────────
+
+class _WorkflowSelect extends ConsumerStatefulWidget {
+  final WorkflowSummary workflow;
+  final List<WorkflowSummary> workflows;
+  final String? activeWfId;
+  final ValueChanged<String> onPick;
+  final String Function() onNew;
+
+  const _WorkflowSelect({
+    required this.workflow,
+    required this.workflows,
+    required this.activeWfId,
+    required this.onPick,
+    required this.onNew,
+  });
+
+  @override
+  ConsumerState<_WorkflowSelect> createState() => _WorkflowSelectState();
+}
+
+class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
+  final _layerLink = LayerLink();
+  OverlayEntry? _overlay;
+  bool _open = false;
+  String? _editingId;
+
+  void _toggle() => _open ? _close() : _openDropdown();
+
+  void _openDropdown() {
+    setState(() => _open = true);
+    _overlay = _createOverlay();
+    Overlay.of(context).insert(_overlay!);
+  }
+
+  void _close() {
+    if (!_open) return;
+    setState(() => _open = false);
+    _overlay?.remove();
+    _overlay = null;
+  }
+
+  void _pick(String id) {
+    widget.onPick(id);
+    _close();
+  }
+
+  void _startRename() {
+    if (widget.activeWfId == null) return;
+    setState(() => _editingId = widget.activeWfId);
+  }
+
+  void _startNew() {
+    final id = widget.onNew();
+    setState(() => _editingId = id);
+  }
+
+  void _rename(String id, String name) {
+    ref.read(workflowsProvider.notifier).update((list) {
+      return list.map((w) => w.id == id ? w.copyWith(name: name) : w).toList();
+    });
+    final current = ref.read(workflowProvider);
+    if (current.id == id) {
+      ref.read(workflowProvider.notifier).state = current.copyWith(name: name);
+    }
+    setState(() => _editingId = null);
+  }
+
+  void _delete(String id) {
+    ref.read(workflowsProvider.notifier).update((list) {
+      return list.where((w) => w.id != id).toList();
+    });
+    final current = ref.read(workflowProvider);
+    if (current.id == id) {
+      final remaining = ref.read(workflowsProvider);
+      if (remaining.isNotEmpty) {
+        widget.onPick(remaining.first.id);
+      }
+    }
+  }
+
+  OverlayEntry _createOverlay() {
+    return OverlayEntry(
+      builder: (context) => Stack(
+        children: [
+          Positioned.fill(
+            child: GestureDetector(
+              onTap: _close,
+              behavior: HitTestBehavior.translucent,
+              child: Container(color: Colors.transparent),
+            ),
+          ),
+          CompositedTransformFollower(
+            link: _layerLink,
+            showWhenUnlinked: false,
+            offset: const Offset(0, 4),
+            child: Material(
+              color: Colors.transparent,
+              child: Container(
+                width: 288,
+                decoration: BoxDecoration(
+                  color: AppColors.bg2,
+                  border: Border.all(color: AppColors.border2),
+                  borderRadius: BorderRadius.circular(8),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x40000000),
+                      blurRadius: 16,
+                      offset: Offset(0, 8),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Header
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'SWITCH WORKFLOW \u00b7 ${widget.workflows.length}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9.5,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.08,
+                                color: AppColors.fg3,
+                              ),
+                            ),
+                          ),
+                          AppButton(
+                            variant: AppButtonVariant.ghost,
+                            size: AppButtonSize.sm,
+                            icon: TrailheadIconData.pencil,
+                            onTap: _startRename,
+                          ),
+                          const SizedBox(width: 4),
+                          AppButton(
+                            variant: AppButtonVariant.secondary,
+                            size: AppButtonSize.sm,
+                            icon: TrailheadIconData.plus,
+                            label: 'new',
+                            onTap: _startNew,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Divider(height: 1, color: AppColors.border1),
+                    // List
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 340),
+                      child: ListView.builder(
+                        padding: const EdgeInsets.all(4),
+                        itemCount: widget.workflows.length,
+                        itemBuilder: (context, i) {
+                          final wf = widget.workflows[i];
+                          return _WorkflowMenuRow(
+                            workflow: wf,
+                            active: wf.id == widget.activeWfId,
+                            editing: wf.id == _editingId,
+                            onPick: () => _pick(wf.id),
+                            onDelete: () => _delete(wf.id),
+                            onRename: (name) => _rename(wf.id, name),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  @override
+  void dispose() {
+    _overlay?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wf = widget.workflow;
+    final hasDraft = wf.draft != null && wf.draft != wf.version;
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: GestureDetector(
+        onTap: _toggle,
+        child: Container(
+          width: 288,
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+          decoration: BoxDecoration(
+            color: AppColors.bg1,
+            border: Border.all(
+              color: _open ? AppColors.accent : AppColors.border2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              const _WorkflowGlyph(),
+              const SizedBox(width: 9),
+              Expanded(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            wf.name,
+                            style: TextStyle(
+                              fontFamily: 'monospace',
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: AppColors.fg0,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          'v${wf.version}',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10,
+                            color: AppColors.fg2,
+                          ),
+                        ),
+                        if (hasDraft) ...[
+                          const SizedBox(width: 6),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                            decoration: BoxDecoration(
+                              color: AppColors.warning.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(3),
+                            ),
+                            child: Text(
+                              'draft v${wf.draft}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9.5,
+                                color: AppColors.warning,
+                                height: 1,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                    Text(
+                      wf.updated,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        color: AppColors.fg2,
+                        height: 1.15,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              AnimatedRotation(
+                turns: _open ? 0.5 : 0,
+                duration: const Duration(milliseconds: 160),
+                child: Icon(
+                  Icons.keyboard_arrow_down,
+                  size: 16,
+                  color: AppColors.fg2,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _WorkflowMenuRow extends StatefulWidget {
+  final WorkflowSummary workflow;
+  final bool active;
+  final bool editing;
+  final VoidCallback onPick;
+  final VoidCallback onDelete;
+  final ValueChanged<String> onRename;
+
+  const _WorkflowMenuRow({
+    required this.workflow,
+    required this.active,
+    required this.editing,
+    required this.onPick,
+    required this.onDelete,
+    required this.onRename,
+  });
+
+  @override
+  State<_WorkflowMenuRow> createState() => _WorkflowMenuRowState();
+}
+
+class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
+  bool _hovering = false;
+  final _focusNode = FocusNode();
+  late TextEditingController _ctrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.workflow.name);
+    if (widget.editing) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _WorkflowMenuRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.editing != widget.editing && widget.editing) {
+      _ctrl.text = widget.workflow.name;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _focusNode.requestFocus();
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.dispose();
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wf = widget.workflow;
+
+    Widget nameWidget;
+    if (widget.editing) {
+      nameWidget = TextField(
+        controller: _ctrl,
+        focusNode: _focusNode,
+        autofocus: true,
+        onSubmitted: (v) {
+          if (v.trim().isNotEmpty) widget.onRename(v.trim());
+        },
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 11.5,
+          fontWeight: widget.active ? FontWeight.w600 : FontWeight.w500,
+          color: widget.active ? AppColors.fg0 : AppColors.fg1,
+        ),
+        decoration: const InputDecoration(
+          isDense: true,
+          contentPadding: EdgeInsets.zero,
+          border: InputBorder.none,
+        ),
+      );
+    } else {
+      nameWidget = Text(
+        wf.name,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 11.5,
+          fontWeight: widget.active ? FontWeight.w600 : FontWeight.w500,
+          color: widget.active ? AppColors.fg0 : AppColors.fg1,
+        ),
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovering = true),
+      onExit: (_) => setState(() => _hovering = false),
+      child: GestureDetector(
+        onTap: widget.editing ? null : widget.onPick,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          decoration: BoxDecoration(
+            color: widget.active
+                ? AppColors.bg3
+                : _hovering
+                    ? AppColors.bg2
+                    : Colors.transparent,
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    nameWidget,
+                    const SizedBox(height: 1),
+                    Text(
+                      '${wf.runCount.toString()} runs \u00b7 last ${wf.last}',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 9.5,
+                        color: AppColors.fg3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (wf.active > 0)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    StatusDot(
+                      status: JobState.running,
+                      pulse: true,
+                      size: 5,
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '${wf.active}',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10,
+                        color: AppColors.accent,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                  ],
+                ),
+              if (_hovering && !widget.editing)
+                GestureDetector(
+                  onTap: widget.onDelete,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    decoration: BoxDecoration(
+                      color: AppColors.bg3,
+                      border: Border.all(color: AppColors.border1),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Center(
+                      child: TrailheadIcon(
+                        icon: TrailheadIconData.trash,
+                        size: 12,
+                        color: AppColors.fg2,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _BuildBar extends ConsumerWidget {
   const _BuildBar();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final wf = ref.watch(workflowProvider);
+    final workflows = ref.watch(workflowsProvider);
+    final yamlOpen = ref.watch(yamlDrawerOpenProvider);
 
     return Row(
       children: [
-        const _ModeBadge(mode: AppMode.build),
-        const SizedBox(width: 12),
-        const _WorkflowGlyph(),
-        const SizedBox(width: 9),
-        Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  wf.name,
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 15,
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.fg0,
-                    height: 1.15,
-                  ),
-                  overflow: TextOverflow.ellipsis,
+        _WorkflowSelect(
+          workflow: wf,
+          workflows: workflows,
+          activeWfId: wf.id,
+          onPick: (id) {
+            // Save current document before switching.
+            final currentWf = ref.read(workflowProvider);
+            final currentVp = ref.read(canvasControllerProvider);
+            ref.read(documentsProvider.notifier).update((docs) {
+              final m = Map<String, WorkflowDocument>.from(docs);
+              m[currentWf.id] = WorkflowDocument(workflow: currentWf, viewport: currentVp);
+              return m;
+            });
+            // Load selected document.
+            final doc = ref.read(documentsProvider)[id] ?? WorkflowDocument(
+              workflow: ref.read(workflowsProvider).firstWhere((w) => w.id == id),
+            );
+            ref.read(workflowProvider.notifier).state = doc.workflow;
+            ref.read(canvasControllerProvider.notifier).setViewport(doc.viewport);
+            ref.read(selectionProvider.notifier).clear();
+            ref.read(hoveredNodeProvider.notifier).state = null;
+            ref.read(draggingNodeIdProvider.notifier).state = null;
+            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
+            ref.read(selectedStageIdProvider.notifier).state = null;
+            ref.read(stageDrawerOpenProvider.notifier).state = false;
+          },
+          onNew: () {
+            final id = 'wf_untitled_${DateTime.now().millisecondsSinceEpoch}';
+            final newWf = WorkflowSummary(
+              id: id,
+              name: 'Untitled',
+              version: 1,
+              updated: 'just now',
+              nodes: const [
+                WorkflowNode(
+                  id: 'entrypoint',
+                  kind: 'worker',
+                  label: 'entrypoint',
+                  x: 0,
+                  y: -16,
                 ),
-                const SizedBox(width: 6),
-                Text(
-                  'v${wf.version}',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 10,
-                    color: AppColors.fg2,
-                    height: 1.15,
-                  ),
-                ),
-                if (wf.draft != null && wf.draft != wf.version) ...[
-                  const SizedBox(width: 6),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                    decoration: BoxDecoration(
-                      color: AppColors.warning.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(3),
-                    ),
-                    child: Text(
-                      'draft v${wf.draft}',
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 9.5,
-                        color: AppColors.warning,
-                        height: 1,
-                      ),
-                    ),
-                  ),
-                ],
               ],
-            ),
-            Text(
-              wf.updated,
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 10,
-                color: AppColors.fg2,
-                height: 1.15,
-              ),
-            ),
-          ],
+            );
+            ref.read(workflowsProvider.notifier).update((list) => [...list, newWf]);
+            ref.read(documentsProvider.notifier).update((docs) {
+              final m = Map<String, WorkflowDocument>.from(docs);
+              m[id] = WorkflowDocument(workflow: newWf, viewport: const CanvasViewport());
+              return m;
+            });
+            ref.read(workflowProvider.notifier).state = newWf;
+            ref.read(canvasControllerProvider.notifier).reset();
+            ref.read(selectionProvider.notifier).clear();
+            ref.read(hoveredNodeProvider.notifier).state = null;
+            ref.read(draggingNodeIdProvider.notifier).state = null;
+            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
+            ref.read(selectedStageIdProvider.notifier).state = null;
+            ref.read(stageDrawerOpenProvider.notifier).state = false;
+            return id;
+          },
         ),
         const Spacer(),
         AppButton(
@@ -225,12 +694,12 @@ class _BuildBar extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         AppButton(
-          variant: AppButtonVariant.ghost,
+          variant: yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
           size: AppButtonSize.sm,
           icon: TrailheadIconData.file,
           label: 'YAML',
           onTap: () {
-            ref.read(yamlDrawerOpenProvider.notifier).state = true;
+            ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
           },
         ),
         const SizedBox(width: 8),

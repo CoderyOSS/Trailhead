@@ -256,20 +256,7 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
               offset: const Offset(0, 4),
               child: Material(
                 color: Colors.transparent,
-                child: TweenAnimationBuilder<double>(
-                  tween: Tween(begin: 0.0, end: 1.0),
-                  duration: const Duration(milliseconds: 180),
-                  curve: Curves.easeOut,
-                  builder: (context, value, child) {
-                    return Opacity(
-                      opacity: value,
-                      child: Transform.translate(
-                        offset: Offset(0, -6 * (1 - value)),
-                        child: child,
-                      ),
-                    );
-                  },
-                  child: Container(
+                child: Container(
                     width: 288,
                     decoration: BoxDecoration(
                       color: AppColors.bg2,
@@ -355,7 +342,6 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                 ),
               ),
             ),
-            ),
           ],
         );
       },
@@ -405,7 +391,6 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                   Expanded(
                     child: GestureDetector(
                       onTap: _toggle,
-                      onDoubleTap: _enterEditMode,
                       child: Padding(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,

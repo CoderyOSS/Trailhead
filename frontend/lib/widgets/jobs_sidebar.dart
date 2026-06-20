@@ -72,11 +72,25 @@ class JobsSidebar extends ConsumerWidget {
                         kind: kind,
                         activeId: activeId,
                         onPick: onPick,
+                        onDelete: (id) {
+                          ref.read(jobsProvider.notifier).update((list) =>
+                              list.where((j) => j.id != id).toList());
+                          if (id == activeId) {
+                            ref.read(selectedJobProvider.notifier).state = null;
+                          }
+                        },
                       )
                     : _FlatView(
                         jobs: jobs,
                         activeId: activeId,
                         onPick: onPick,
+                        onDelete: (id) {
+                          ref.read(jobsProvider.notifier).update((list) =>
+                              list.where((j) => j.id != id).toList());
+                          if (id == activeId) {
+                            ref.read(selectedJobProvider.notifier).state = null;
+                          }
+                        },
                       ),
           ),
           _Footer(kind: kind, count: jobs.length),
@@ -272,6 +286,51 @@ class _EmptyState extends StatelessWidget {
   }
 }
 
+class _DeleteBackground extends StatelessWidget {
+  final double progress;
+
+  const _DeleteBackground({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = progress.clamp(0.0, 1.0);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.danger,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      padding: const EdgeInsets.only(right: 16),
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Transform.scale(
+            scale: 0.85 + clamped * 0.15,
+            child: TrailheadIcon(
+              icon: TrailheadIconData.trash,
+              size: 14,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Opacity(
+            opacity: clamped,
+            child: const Text(
+              'delete',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _Footer extends StatelessWidget {
   final JobsSidebarKind kind;
   final int count;
@@ -340,12 +399,14 @@ class _GroupedView extends StatelessWidget {
   final JobsSidebarKind kind;
   final String? activeId;
   final ValueChanged<String> onPick;
+  final ValueChanged<String>? onDelete;
 
   const _GroupedView({
     required this.jobs,
     required this.kind,
     required this.activeId,
     required this.onPick,
+    this.onDelete,
   });
 
   @override
@@ -370,6 +431,7 @@ class _GroupedView extends StatelessWidget {
                 job: j,
                 active: j.id == activeId,
                 onTap: () => onPick(j.id),
+                onDelete: onDelete != null ? () => onDelete!(j.id) : null,
               ),
             ),
           ],
@@ -426,11 +488,13 @@ class _JobRowGrouped extends StatefulWidget {
   final JobSummary job;
   final bool active;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const _JobRowGrouped({
     required this.job,
     required this.active,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -454,81 +518,88 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
       bg = Colors.transparent;
     }
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovering = true),
-        onExit: (_) => setState(() => _hovering = false),
-        child: Container(
-          margin: const EdgeInsets.fromLTRB(18, 1, 6, 1),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    StatusDot(
-                      status: j.state,
-                      pulse: j.state == JobState.running,
-                      size: 6,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text.rich(
-                        TextSpan(
-                          children: [
-                            TextSpan(
-                              text: j.input ?? j.id,
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 11.5,
-                                color: isActive ? AppColors.fg0 : AppColors.fg1,
+    return Dismissible(
+      key: ValueKey(j.id),
+      direction: DismissDirection.endToStart,
+      dismissThresholds: const {DismissDirection.endToStart: 0.4},
+      background: const _DeleteBackground(progress: 1.0),
+      onDismissed: (_) => widget.onDelete?.call(),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: Container(
+            margin: const EdgeInsets.fromLTRB(18, 1, 6, 1),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      StatusDot(
+                        status: j.state,
+                        pulse: j.state == JobState.running,
+                        size: 6,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text.rich(
+                          TextSpan(
+                            children: [
+                              TextSpan(
+                                text: j.input ?? j.id,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 11.5,
+                                  color: isActive ? AppColors.fg0 : AppColors.fg1,
+                                ),
                               ),
-                            ),
-                            TextSpan(
-                              text: ' ${j.id.substring(2, 9)}',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 10,
-                                color: AppColors.fg3,
+                              TextSpan(
+                                text: ' ${j.id.substring(2, 9)}',
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 10,
+                                  color: AppColors.fg3,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                          maxLines: 1,
                         ),
-                        overflow: TextOverflow.ellipsis,
-                        maxLines: 1,
                       ),
-                    ),
-                    Text(
-                      j.started,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        color: AppColors.fg3,
+                      Text(
+                        j.started,
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          color: AppColors.fg3,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isActive)
-                Positioned(
-                  left: -18,
-                  top: 6,
-                  bottom: 6,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                    ],
                   ),
                 ),
-            ],
+                if (isActive)
+                  Positioned(
+                    left: -18,
+                    top: 6,
+                    bottom: 6,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),
@@ -542,11 +613,13 @@ class _FlatView extends StatelessWidget {
   final List<JobSummary> jobs;
   final String? activeId;
   final ValueChanged<String> onPick;
+  final ValueChanged<String>? onDelete;
 
   const _FlatView({
     required this.jobs,
     required this.activeId,
     required this.onPick,
+    this.onDelete,
   });
 
   @override
@@ -560,6 +633,7 @@ class _FlatView extends StatelessWidget {
           job: j,
           active: j.id == activeId,
           onTap: () => onPick(j.id),
+          onDelete: onDelete != null ? () => onDelete!(j.id) : null,
         );
       },
     );
@@ -570,11 +644,13 @@ class _JobRowFlat extends StatefulWidget {
   final JobSummary job;
   final bool active;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const _JobRowFlat({
     required this.job,
     required this.active,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -598,87 +674,94 @@ class _JobRowFlatState extends State<_JobRowFlat> {
       bg = Colors.transparent;
     }
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovering = true),
-        onExit: (_) => setState(() => _hovering = false),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    StatusDot(
-                      status: j.state,
-                      pulse: j.state == JobState.running,
-                      size: 6,
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            j.input ?? j.id,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 11.5,
-                              color: isActive ? AppColors.fg0 : AppColors.fg1,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Row(
-                            children: [
-                              _WorkflowTag(name: j.workflow ?? ''),
-                              const SizedBox(width: 5),
-                              Text(
-                                j.id.substring(2, 9),
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 9.5,
-                                  color: AppColors.fg3,
-                                ),
+    return Dismissible(
+      key: ValueKey(j.id),
+      direction: DismissDirection.endToStart,
+      dismissThresholds: const {DismissDirection.endToStart: 0.4},
+      background: const _DeleteBackground(progress: 1.0),
+      onDismissed: (_) => widget.onDelete?.call(),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      StatusDot(
+                        status: j.state,
+                        pulse: j.state == JobState.running,
+                        size: 6,
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              j.input ?? j.id,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 11.5,
+                                color: isActive ? AppColors.fg0 : AppColors.fg1,
                               ),
-                            ],
-                          ),
-                        ],
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            const SizedBox(height: 2),
+                            Row(
+                              children: [
+                                _WorkflowTag(name: j.workflow ?? ''),
+                                const SizedBox(width: 5),
+                                Text(
+                                  j.id.substring(2, 9),
+                                  style: TextStyle(
+                                    fontFamily: 'monospace',
+                                    fontSize: 9.5,
+                                    color: AppColors.fg3,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    Text(
-                      j.started,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        color: AppColors.fg3,
+                      Text(
+                        j.started,
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          color: AppColors.fg3,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
-              ),
-              if (isActive)
-                Positioned(
-                  left: -6,
-                  top: 7,
-                  bottom: 7,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                    ],
                   ),
                 ),
-            ],
+                if (isActive)
+                  Positioned(
+                    left: -6,
+                    top: 7,
+                    bottom: 7,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

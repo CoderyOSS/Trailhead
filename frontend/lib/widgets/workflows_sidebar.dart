@@ -9,6 +9,7 @@ import '../models/workflow_node.dart';
 import 'app_button.dart';
 import 'status_tag.dart';
 import 'mode_rail.dart';
+import 'icons.dart';
 
 class WorkflowsSidebar extends ConsumerWidget {
   final String? activeId;
@@ -90,6 +91,13 @@ class WorkflowsSidebar extends ConsumerWidget {
                   workflow: wf,
                   active: wf.id == activeId,
                   onTap: () => onPick(wf.id),
+                  onDelete: () {
+                    final updated = ref.read(workflowsProvider).where((w) => w.id != wf.id).toList();
+                    ref.read(workflowsProvider.notifier).state = updated;
+                    if (wf.id == activeId && updated.isNotEmpty) {
+                      ref.read(workflowProvider.notifier).state = updated.first;
+                    }
+                  },
                 );
               },
             ),
@@ -162,15 +170,62 @@ class _Header extends StatelessWidget {
   }
 }
 
+class _DeleteBackground extends StatelessWidget {
+  final double progress;
+
+  const _DeleteBackground({required this.progress});
+
+  @override
+  Widget build(BuildContext context) {
+    final clamped = progress.clamp(0.0, 1.0);
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.danger,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      padding: const EdgeInsets.only(right: 16),
+      alignment: Alignment.centerRight,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Transform.scale(
+            scale: 0.85 + clamped * 0.15,
+            child: TrailheadIcon(
+              icon: TrailheadIconData.trash,
+              size: 14,
+              color: Colors.white,
+            ),
+          ),
+          const SizedBox(width: 6),
+          Opacity(
+            opacity: clamped,
+            child: const Text(
+              'delete',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                fontWeight: FontWeight.w600,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _WorkflowRow extends StatefulWidget {
   final WorkflowSummary workflow;
   final bool active;
   final VoidCallback onTap;
+  final VoidCallback? onDelete;
 
   const _WorkflowRow({
     required this.workflow,
     required this.active,
     required this.onTap,
+    this.onDelete,
   });
 
   @override
@@ -194,87 +249,94 @@ class _WorkflowRowState extends State<_WorkflowRow> {
       bg = Colors.transparent;
     }
 
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hovering = true),
-        onExit: (_) => setState(() => _hovering = false),
-        child: Container(
-          margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-                decoration: BoxDecoration(
-                  color: bg,
-                  borderRadius: BorderRadius.circular(6),
-                ),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            wf.name,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 12.5,
-                              fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                              color: isActive ? AppColors.fg0 : AppColors.fg1,
+    return Dismissible(
+      key: ValueKey(wf.id),
+      direction: DismissDirection.endToStart,
+      dismissThresholds: const {DismissDirection.endToStart: 0.4},
+      background: const _DeleteBackground(progress: 1.0),
+      onDismissed: (_) => widget.onDelete?.call(),
+      child: GestureDetector(
+        onTap: widget.onTap,
+        child: MouseRegion(
+          onEnter: (_) => setState(() => _hovering = true),
+          onExit: (_) => setState(() => _hovering = false),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: bg,
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              wf.name,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 12.5,
+                                fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
+                                color: isActive ? AppColors.fg0 : AppColors.fg1,
+                              ),
+                              overflow: TextOverflow.ellipsis,
                             ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 1),
-                          Text(
-                            '${_commaFormat(wf.runCount)} runs \u00b7 last ${wf.last}',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10,
-                              color: AppColors.fg3,
+                            const SizedBox(height: 1),
+                            Text(
+                              '${_commaFormat(wf.runCount)} runs \u00b7 last ${wf.last}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 10,
+                                color: AppColors.fg3,
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    if (wf.active > 0)
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          StatusDot(
-                            status: JobState.running,
-                            pulse: true,
-                            size: 5,
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            '${wf.active}',
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 10,
-                              color: AppColors.accent,
+                      if (wf.active > 0)
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            StatusDot(
+                              status: JobState.running,
+                              pulse: true,
+                              size: 5,
                             ),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-              ),
-              if (isActive)
-                Positioned(
-                  left: -6,
-                  top: 8,
-                  bottom: 8,
-                  child: Container(
-                    width: 2,
-                    decoration: BoxDecoration(
-                      color: AppColors.accent,
-                      borderRadius: BorderRadius.circular(2),
-                    ),
+                            const SizedBox(width: 4),
+                            Text(
+                              '${wf.active}',
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 10,
+                                color: AppColors.accent,
+                              ),
+                            ),
+                          ],
+                        ),
+                    ],
                   ),
                 ),
-            ],
+                if (isActive)
+                  Positioned(
+                    left: -6,
+                    top: 8,
+                    bottom: 8,
+                    child: Container(
+                      width: 2,
+                      decoration: BoxDecoration(
+                        color: AppColors.accent,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                  ),
+              ],
+            ),
           ),
         ),
       ),

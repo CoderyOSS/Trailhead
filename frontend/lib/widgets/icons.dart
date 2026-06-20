@@ -33,6 +33,7 @@ enum TrailheadIconData {
   layout,
   send,
   plug,
+  trash,
 }
 
 class TrailheadIcon extends StatelessWidget {
@@ -214,4 +215,9 @@ const Map<TrailheadIconData, String> _bodies = {
   TrailheadIconData.plug:
       '<path d="M12 22v-5"/><path d="M9 8V2"/><path d="M15 8V2"/>'
       '<path d="M18 8v5a4 4 0 0 1-4 4h-4a4 4 0 0 1-4-4V8Z"/>',
+
+  TrailheadIconData.trash:
+      '<path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/>'
+      '<line x1="10" y1="11" x2="10" y2="17"/><line x1="14" y1="11" x2="14" y2="17"/>'
+      '<path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
 };

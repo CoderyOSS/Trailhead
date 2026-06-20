@@ -170,16 +170,10 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
 
   void _commitRename(String name) {
     final clean = _sanitizeName(name).replaceAll(RegExp(r'^-+|-+$'), '');
-    if (clean.isEmpty) {
-      setState(() => _errorText = "name can't be empty");
-      return;
-    }
+    if (clean.isEmpty) return;
     final siblings =
         widget.workflows.where((w) => w.id != widget.workflow.id).map((w) => w.name.toLowerCase());
-    if (siblings.contains(clean.toLowerCase())) {
-      setState(() => _errorText = 'name already in use');
-      return;
-    }
+    if (siblings.contains(clean.toLowerCase())) return;
     if (clean != widget.workflow.name) {
       final id = widget.workflow.id;
       ref.read(workflowsProvider.notifier).update((list) {
@@ -190,18 +184,12 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
         ref.read(workflowProvider.notifier).state = current.copyWith(name: clean);
       }
     }
-    setState(() {
-      _isEditing = false;
-      _errorText = null;
-    });
+    setState(() => _isEditing = false);
   }
 
   void _cancelRename() {
     _editCtrl.text = widget.workflow.name;
-    setState(() {
-      _isEditing = false;
-      _errorText = null;
-    });
+    setState(() => _isEditing = false);
   }
 
   void _startNew() {
@@ -263,6 +251,8 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
             CompositedTransformFollower(
               link: _layerLink,
               showWhenUnlinked: false,
+              targetAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
               offset: const Offset(0, 4),
               child: Material(
                 color: Colors.transparent,

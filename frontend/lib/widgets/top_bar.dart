@@ -114,7 +114,6 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   bool _open = false;
   bool _isEditing = false;
   String? _editingRowId;
-  String? _errorText;
   final _editFocusNode = FocusNode();
   late final TextEditingController _editCtrl;
 
@@ -267,21 +266,34 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
               offset: const Offset(0, 4),
               child: Material(
                 color: Colors.transparent,
-                child: Container(
-                  width: 288,
-                  decoration: BoxDecoration(
-                    color: AppColors.bg2,
-                    border: Border.all(color: AppColors.border2),
-                    borderRadius: BorderRadius.circular(8),
-                    boxShadow: const [
-                      BoxShadow(
-                        color: Color(0x40000000),
-                        blurRadius: 16,
-                        offset: Offset(0, 8),
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeOut,
+                  builder: (context, value, child) {
+                    return Opacity(
+                      opacity: value,
+                      child: Transform.translate(
+                        offset: Offset(0, -6 * (1 - value)),
+                        child: child,
                       ),
-                    ],
-                  ),
-                  child: Column(
+                    );
+                  },
+                  child: Container(
+                    width: 288,
+                    decoration: BoxDecoration(
+                      color: AppColors.bg2,
+                      border: Border.all(color: AppColors.border2),
+                      borderRadius: BorderRadius.circular(8),
+                      boxShadow: const [
+                        BoxShadow(
+                          color: Color(0x40000000),
+                          blurRadius: 16,
+                          offset: Offset(0, 8),
+                        ),
+                      ],
+                    ),
+                    child: Column(
                     mainAxisSize: MainAxisSize.min,
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -292,7 +304,7 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                           children: [
                             Expanded(
                               child: Text(
-                                'switch workflow \u00b7 ${widget.workflows.length}',
+                                'SWITCH WORKFLOW \u00b7 ${widget.workflows.length}',
                                 style: TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 9.5,
@@ -352,6 +364,7 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                   ),
                 ),
               ),
+            ),
             ),
           ],
         );
@@ -431,12 +444,12 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                                 size: 16,
                                 color: AppColors.fg2,
                               ),
-                            ),
-                          ],
-                        ),
                       ),
-                    ),
+                    ],
                   ),
+                ),
+              ),
+            ),
                   GestureDetector(
                     onTap: _enterEditMode,
                     child: Container(

@@ -66,85 +66,7 @@ class TopBar extends ConsumerWidget {
   }
 }
 
-class _ModeBadge extends StatelessWidget {
-  final AppMode mode;
 
-  const _ModeBadge({required this.mode});
-
-  @override
-  Widget build(BuildContext context) {
-    final meta = switch (mode) {
-      AppMode.build => (
-        label: 'BUILD',
-        color: AppColors.fg0,
-        bg: AppColors.bg3,
-      ),
-      AppMode.active => (
-        label: 'ACTIVE',
-        color: AppColors.accent,
-        bg: AppColors.accent.withValues(alpha: 0.15),
-      ),
-      AppMode.history => (
-        label: 'HISTORY',
-        color: AppColors.fg2,
-        bg: AppColors.bg3,
-      ),
-    };
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-      decoration: BoxDecoration(
-        color: meta.bg,
-        borderRadius: BorderRadius.circular(4),
-        border: Border.all(
-          color: meta.color.withValues(alpha: 0.22),
-        ),
-      ),
-      child: Text(
-        meta.label,
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 9.5,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.10 * 9.5,
-          color: meta.color,
-          height: 1,
-        ),
-      ),
-    );
-  }
-}
-
-class _WorkflowGlyph extends StatelessWidget {
-  const _WorkflowGlyph();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 26,
-      height: 26,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(6),
-        gradient: const LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF8b6914), Color(0xFF5a3e0a)],
-        ),
-      ),
-      alignment: Alignment.center,
-      child: Text(
-        'wf',
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 11,
-          fontWeight: FontWeight.w700,
-          color: const Color(0xFFfbf3e6),
-          height: 1,
-        ),
-      ),
-    );
-  }
-}
 
 // ──────────────────────────────────────────────────────────────────────────
 // Workflow selector dropdown — replaces the old left sidebar.
@@ -173,11 +95,28 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   final _layerLink = LayerLink();
   OverlayEntry? _overlay;
   bool _open = false;
-  String? _editingId;
+  bool _isEditing = false;
+  final _editFocusNode = FocusNode();
+  late final TextEditingController _editCtrl;
+
+  @override
+  void initState() {
+    super.initState();
+    _editCtrl = TextEditingController(text: widget.workflow.name);
+  }
+
+  @override
+  void didUpdateWidget(covariant _WorkflowSelect oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.workflow.name != widget.workflow.name) {
+      _editCtrl.text = widget.workflow.name;
+    }
+  }
 
   void _toggle() => _open ? _close() : _openDropdown();
 
   void _openDropdown() {
+    if (_isEditing) return;
     setState(() => _open = true);
     _overlay = _createOverlay();
     Overlay.of(context).insert(_overlay!);
@@ -195,25 +134,34 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
     _close();
   }
 
-  void _startRename() {
-    if (widget.activeWfId == null) return;
-    setState(() => _editingId = widget.activeWfId);
+  void _enterEditMode() {
+    if (_open) _close();
+    setState(() => _isEditing = true);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _editFocusNode.requestFocus();
+    });
+  }
+
+  void _commitRename(String name) {
+    final trimmed = name.trim();
+    if (trimmed.isNotEmpty && trimmed != widget.workflow.name) {
+      final id = widget.workflow.id;
+      ref.read(workflowsProvider.notifier).update((list) {
+        return list.map((w) => w.id == id ? w.copyWith(name: trimmed) : w).toList();
+      });
+      final current = ref.read(workflowProvider);
+      if (current.id == id) {
+        ref.read(workflowProvider.notifier).state = current.copyWith(name: trimmed);
+      }
+    }
+    setState(() => _isEditing = false);
   }
 
   void _startNew() {
     final id = widget.onNew();
-    setState(() => _editingId = id);
-  }
-
-  void _rename(String id, String name) {
-    ref.read(workflowsProvider.notifier).update((list) {
-      return list.map((w) => w.id == id ? w.copyWith(name: name) : w).toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _enterEditMode();
     });
-    final current = ref.read(workflowProvider);
-    if (current.id == id) {
-      ref.read(workflowProvider.notifier).state = current.copyWith(name: name);
-    }
-    setState(() => _editingId = null);
   }
 
   void _delete(String id) {
@@ -271,23 +219,16 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                         children: [
                           Expanded(
                             child: Text(
-                              'SWITCH WORKFLOW \u00b7 ${widget.workflows.length}',
+                              'switch workflow \u00b7 ${widget.workflows.length}',
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 9.5,
-                                fontWeight: FontWeight.w600,
+                                fontWeight: FontWeight.w500,
                                 letterSpacing: 0.08,
                                 color: AppColors.fg3,
                               ),
                             ),
                           ),
-                          AppButton(
-                            variant: AppButtonVariant.ghost,
-                            size: AppButtonSize.sm,
-                            icon: TrailheadIconData.pencil,
-                            onTap: _startRename,
-                          ),
-                          const SizedBox(width: 4),
                           AppButton(
                             variant: AppButtonVariant.secondary,
                             size: AppButtonSize.sm,
@@ -310,10 +251,8 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                           return _WorkflowMenuRow(
                             workflow: wf,
                             active: wf.id == widget.activeWfId,
-                            editing: wf.id == _editingId,
                             onPick: () => _pick(wf.id),
                             onDelete: () => _delete(wf.id),
-                            onRename: (name) => _rename(wf.id, name),
                           );
                         },
                       ),
@@ -331,95 +270,86 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   @override
   void dispose() {
     _overlay?.remove();
+    _editFocusNode.dispose();
+    _editCtrl.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final wf = widget.workflow;
-    final hasDraft = wf.draft != null && wf.draft != wf.version;
 
     return CompositedTransformTarget(
       link: _layerLink,
-      child: GestureDetector(
-        onTap: _toggle,
-        child: Container(
-          width: 288,
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: AppColors.bg1,
-            border: Border.all(
-              color: _open ? AppColors.accent : AppColors.border2,
-            ),
-            borderRadius: BorderRadius.circular(8),
+      child: Container(
+        width: 288,
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.bg1,
+          border: Border.all(
+            color: _open ? AppColors.accent : AppColors.border2,
           ),
-          child: Row(
-            children: [
-              const _WorkflowGlyph(),
-              const SizedBox(width: 9),
-              Expanded(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            wf.name,
-                            style: TextStyle(
-                              fontFamily: 'monospace',
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                              color: AppColors.fg0,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: GestureDetector(
+                onTap: _toggle,
+                child: _isEditing
+                    ? TextField(
+                        controller: _editCtrl,
+                        focusNode: _editFocusNode,
+                        autofocus: true,
+                        onSubmitted: _commitRename,
+                        onTapOutside: (_) => _commitRename(_editCtrl.text),
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.fg0,
                         ),
-                        const SizedBox(width: 6),
-                        Text(
-                          'v${wf.version}',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            color: AppColors.fg2,
-                          ),
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                          border: InputBorder.none,
                         ),
-                        if (hasDraft) ...[
-                          const SizedBox(width: 6),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                            decoration: BoxDecoration(
-                              color: AppColors.warning.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(3),
-                            ),
-                            child: Text(
-                              'draft v${wf.draft}',
-                              style: TextStyle(
-                                fontFamily: 'monospace',
-                                fontSize: 9.5,
-                                color: AppColors.warning,
-                                height: 1,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                    Text(
-                      wf.updated,
-                      style: TextStyle(
-                        fontFamily: 'monospace',
-                        fontSize: 10,
-                        color: AppColors.fg2,
-                        height: 1.15,
+                      )
+                    : Text(
+                        wf.name,
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.fg0,
+                        ),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+              ),
+            ),
+            GestureDetector(
+              onTap: _enterEditMode,
+              child: Container(
+                width: 28,
+                height: 28,
+                margin: const EdgeInsets.only(left: 4),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.transparent,
+                ),
+                child: Center(
+                  child: TrailheadIcon(
+                    icon: TrailheadIconData.pencil,
+                    size: 12,
+                    color: AppColors.fg2,
+                  ),
                 ),
               ),
-              const SizedBox(width: 8),
-              AnimatedRotation(
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: _toggle,
+              child: AnimatedRotation(
                 turns: _open ? 0.5 : 0,
                 duration: const Duration(milliseconds: 160),
                 child: Icon(
@@ -428,8 +358,8 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                   color: AppColors.fg2,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
@@ -439,18 +369,14 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
 class _WorkflowMenuRow extends StatefulWidget {
   final WorkflowSummary workflow;
   final bool active;
-  final bool editing;
   final VoidCallback onPick;
   final VoidCallback onDelete;
-  final ValueChanged<String> onRename;
 
   const _WorkflowMenuRow({
     required this.workflow,
     required this.active,
-    required this.editing,
     required this.onPick,
     required this.onDelete,
-    required this.onRename,
   });
 
   @override
@@ -459,81 +385,16 @@ class _WorkflowMenuRow extends StatefulWidget {
 
 class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
   bool _hovering = false;
-  final _focusNode = FocusNode();
-  late TextEditingController _ctrl;
-
-  @override
-  void initState() {
-    super.initState();
-    _ctrl = TextEditingController(text: widget.workflow.name);
-    if (widget.editing) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _focusNode.requestFocus();
-      });
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant _WorkflowMenuRow oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.editing != widget.editing && widget.editing) {
-      _ctrl.text = widget.workflow.name;
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _focusNode.requestFocus();
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.dispose();
-    _ctrl.dispose();
-    super.dispose();
-  }
 
   @override
   Widget build(BuildContext context) {
     final wf = widget.workflow;
 
-    Widget nameWidget;
-    if (widget.editing) {
-      nameWidget = TextField(
-        controller: _ctrl,
-        focusNode: _focusNode,
-        autofocus: true,
-        onSubmitted: (v) {
-          if (v.trim().isNotEmpty) widget.onRename(v.trim());
-        },
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 11.5,
-          fontWeight: widget.active ? FontWeight.w600 : FontWeight.w500,
-          color: widget.active ? AppColors.fg0 : AppColors.fg1,
-        ),
-        decoration: const InputDecoration(
-          isDense: true,
-          contentPadding: EdgeInsets.zero,
-          border: InputBorder.none,
-        ),
-      );
-    } else {
-      nameWidget = Text(
-        wf.name,
-        style: TextStyle(
-          fontFamily: 'monospace',
-          fontSize: 11.5,
-          fontWeight: widget.active ? FontWeight.w600 : FontWeight.w500,
-          color: widget.active ? AppColors.fg0 : AppColors.fg1,
-        ),
-        overflow: TextOverflow.ellipsis,
-      );
-    }
-
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: GestureDetector(
-        onTap: widget.editing ? null : widget.onPick,
+        onTap: widget.onPick,
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           decoration: BoxDecoration(
@@ -551,7 +412,16 @@ class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    nameWidget,
+                    Text(
+                      wf.name,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11.5,
+                        fontWeight: widget.active ? FontWeight.w600 : FontWeight.w500,
+                        color: widget.active ? AppColors.fg0 : AppColors.fg1,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
                     const SizedBox(height: 1),
                     Text(
                       '${wf.runCount.toString()} runs \u00b7 last ${wf.last}',
@@ -585,7 +455,7 @@ class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
                     const SizedBox(width: 8),
                   ],
                 ),
-              if (_hovering && !widget.editing)
+              if (_hovering)
                 GestureDetector(
                   onTap: widget.onDelete,
                   child: Container(
@@ -736,8 +606,6 @@ class _HistoryListBar extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const _ModeBadge(mode: AppMode.history),
-        const SizedBox(width: 12),
         Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -792,8 +660,6 @@ class _JobBar extends StatelessWidget {
     if (job == null) {
       return Row(
         children: [
-          _ModeBadge(mode: mode),
-          const SizedBox(width: 12),
           Text(
             mode == AppMode.active
                 ? 'select a running job from the sidebar'
@@ -843,8 +709,6 @@ class _JobRow1 extends StatelessWidget {
 
     return Row(
       children: [
-        _ModeBadge(mode: mode),
-        const SizedBox(width: 10),
         GestureDetector(
           onTap: onClearJob,
           child: Tooltip(

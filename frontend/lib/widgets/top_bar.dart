@@ -236,9 +236,6 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   OverlayEntry _createOverlay() {
     return OverlayEntry(
       builder: (context) {
-        // Always show row actions on touch devices; hover-only on desktop.
-        // Flutter web/desktop always reports hover capable, so default false.
-        const touch = false; // TODO: detect coarse pointer for mobile builds
         return Stack(
           children: [
             Positioned.fill(
@@ -329,7 +326,6 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
                             return _WorkflowMenuRow(
                               workflow: wf,
                               active: wf.id == widget.activeWfId,
-                              touch: touch,
                               onPick: () => _pick(wf.id),
                               onStartRename: () => setState(() => _editingRowId = wf.id),
                               onDelete: () => _delete(wf.id),
@@ -680,7 +676,6 @@ class _RenameIconBtn extends StatelessWidget {
 class _WorkflowMenuRow extends StatefulWidget {
   final WorkflowSummary workflow;
   final bool active;
-  final bool touch;
   final VoidCallback onPick;
   final VoidCallback? onStartRename;
   final VoidCallback onDelete;
@@ -688,7 +683,6 @@ class _WorkflowMenuRow extends StatefulWidget {
   const _WorkflowMenuRow({
     required this.workflow,
     required this.active,
-    this.touch = false,
     required this.onPick,
     this.onStartRename,
     required this.onDelete,
@@ -704,7 +698,6 @@ class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
   @override
   Widget build(BuildContext context) {
     final wf = widget.workflow;
-    final showActions = widget.touch || _hovering;
 
     return MouseRegion(
       onEnter: (_) => setState(() => _hovering = true),
@@ -787,57 +780,50 @@ class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
                 ),
               ),
             ),
-            AnimatedOpacity(
-              opacity: showActions ? 1.0 : 0.0,
-              duration: const Duration(milliseconds: 140),
-              child: IgnorePointer(
-                ignoring: !showActions,
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (widget.onStartRename != null)
-                      GestureDetector(
-                        onTap: widget.onStartRename,
-                        child: Container(
-                          width: 30,
-                          height: 30,
-                          decoration: BoxDecoration(
-                            color: AppColors.bg3,
-                            border: Border.all(color: AppColors.border1),
-                            borderRadius: BorderRadius.circular(7),
-                          ),
-                          child: Center(
-                            child: TrailheadIcon(
-                              icon: TrailheadIconData.pencil,
-                              size: 13,
-                              color: AppColors.fg2,
-                            ),
-                          ),
-                        ),
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (widget.onStartRename != null)
+                  GestureDetector(
+                    onTap: widget.onStartRename,
+                    child: Container(
+                      width: 30,
+                      height: 30,
+                      decoration: BoxDecoration(
+                        color: AppColors.bg3,
+                        border: Border.all(color: AppColors.border1),
+                        borderRadius: BorderRadius.circular(7),
                       ),
-                    const SizedBox(width: 4),
-                    GestureDetector(
-                      onTap: widget.onDelete,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          color: AppColors.bg3,
-                          border: Border.all(color: AppColors.border1),
-                          borderRadius: BorderRadius.circular(7),
-                        ),
-                        child: Center(
-                          child: TrailheadIcon(
-                            icon: TrailheadIconData.trash,
-                            size: 13,
-                            color: AppColors.fg2,
-                          ),
+                      child: Center(
+                        child: TrailheadIcon(
+                          icon: TrailheadIconData.pencil,
+                          size: 13,
+                          color: AppColors.fg2,
                         ),
                       ),
                     ),
-                  ],
+                  ),
+                const SizedBox(width: 4),
+                GestureDetector(
+                  onTap: widget.onDelete,
+                  child: Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: AppColors.bg3,
+                      border: Border.all(color: AppColors.border1),
+                      borderRadius: BorderRadius.circular(7),
+                    ),
+                    child: Center(
+                      child: TrailheadIcon(
+                        icon: TrailheadIconData.trash,
+                        size: 13,
+                        color: AppColors.fg2,
+                      ),
+                    ),
+                  ),
                 ),
-              ),
+              ],
             ),
           ],
         ),

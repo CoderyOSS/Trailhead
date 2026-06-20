@@ -1,3 +1,4 @@
+import '../models/stage_data.dart';
 import '../models/workflow_edge.dart';
 import '../models/workflow_node.dart';
 
@@ -97,6 +98,30 @@ final mockWorkflow = WorkflowSummary(
       label: 'entrypoint',
       x: 0,
       y: -18,
+      prompt: 'You are a helpful code reviewer. Review the following pull request and identify potential issues.\n\nPR title: {{inputs.title}}\nPR description: {{inputs.description}}\n\nFocus on: correctness, performance, security, and style.',
+      resultFormat: 'json',
+      schema: {
+        'type': 'object',
+        'properties': {
+          'summary': {'type': 'string'},
+          'issues': {
+            'type': 'array',
+            'items': {
+              'type': 'object',
+              'properties': {
+                'severity': {'type': 'string', 'enum': ['high', 'medium', 'low']},
+                'line': {'type': 'integer'},
+                'message': {'type': 'string'},
+              },
+            },
+          },
+        },
+      },
+      connection: 'anthropic-claude-sonnet-4',
+      timeout: '120s',
+      retries: 2,
+      parallelism: 4,
+      configs: ['review-rules.yaml', 'style-guide.md'],
     ),
     WorkflowNode(
       id: 'commenter',
@@ -104,6 +129,16 @@ final mockWorkflow = WorkflowSummary(
       label: 'comment-files',
       x: 32,
       y: 46,
+      over: 'files',
+      count: 8,
+      concurrency: 3,
+      collect: 'array',
+      body: StageBody(
+        label: 'per-file-comment',
+        model: 'openai-gpt-4o-mini',
+        skills: ['code-review', 'typescript'],
+        prompt: 'Review this specific file from the PR. File: {{item.path}}\nDiff: {{item.diff}}\n\nProvide inline comments for any issues found.',
+      ),
     ),
     WorkflowNode(
       id: 'scorer',
@@ -117,6 +152,7 @@ final mockWorkflow = WorkflowSummary(
         BranchOutput(id: '2', label: 'low', expression: 'score > 0.2'),
         BranchOutput(id: '3', label: 'default'),
       ],
+      matchAll: false,
     ),
     WorkflowNode(
       id: 'high-worker',
@@ -124,6 +160,12 @@ final mockWorkflow = WorkflowSummary(
       label: 'urgent-review',
       x: 320,
       y: 46,
+      prompt: 'This is a HIGH priority review. The entrypoint found critical issues.\n\nPlease provide a detailed response with actionable fixes.\n\nContext: {{entrypoint.summary}}',
+      resultFormat: 'text',
+      connection: 'anthropic-claude-opus-4',
+      timeout: '300s',
+      retries: 3,
+      parallelism: 1,
     ),
     WorkflowNode(
       id: 'med-worker',
@@ -131,6 +173,19 @@ final mockWorkflow = WorkflowSummary(
       label: 'normal-review',
       x: 320,
       y: 110,
+      prompt: 'Standard review for medium-priority issues.\n\nContext: {{entrypoint.summary}}\n\nProvide a concise summary of findings.',
+      resultFormat: 'json',
+      schema: {
+        'type': 'object',
+        'properties': {
+          'approved': {'type': 'boolean'},
+          'notes': {'type': 'string'},
+        },
+      },
+      connection: 'anthropic-claude-sonnet-4',
+      timeout: '120s',
+      retries: 2,
+      parallelism: 2,
     ),
     WorkflowNode(
       id: 'low-worker',
@@ -138,37 +193,20 @@ final mockWorkflow = WorkflowSummary(
       label: 'deferred-review',
       x: 320,
       y: 174,
+      prompt: 'Low priority — minor suggestions only.\n\nContext: {{entrypoint.summary}}',
+      resultFormat: 'text',
+      connection: 'openai-gpt-4o-mini',
+      timeout: '60s',
+      retries: 1,
+      parallelism: 4,
     ),
   ],
   edges: const [
-    WorkflowEdge(
-      id: 'edge_1',
-      sourceId: 'entrypoint',
-      targetId: 'commenter',
-    ),
-    WorkflowEdge(
-      id: 'edge_2',
-      sourceId: 'commenter',
-      targetId: 'scorer',
-    ),
-    WorkflowEdge(
-      id: 'edge_3',
-      sourceId: 'scorer',
-      targetId: 'high-worker',
-      sourcePort: 0,
-    ),
-    WorkflowEdge(
-      id: 'edge_4',
-      sourceId: 'scorer',
-      targetId: 'med-worker',
-      sourcePort: 1,
-    ),
-    WorkflowEdge(
-      id: 'edge_5',
-      sourceId: 'scorer',
-      targetId: 'low-worker',
-      sourcePort: 2,
-    ),
+    WorkflowEdge(id: 'edge_1', sourceId: 'entrypoint', targetId: 'commenter'),
+    WorkflowEdge(id: 'edge_2', sourceId: 'commenter', targetId: 'scorer'),
+    WorkflowEdge(id: 'edge_3', sourceId: 'scorer', targetId: 'high-worker', sourcePort: 0),
+    WorkflowEdge(id: 'edge_4', sourceId: 'scorer', targetId: 'med-worker', sourcePort: 1),
+    WorkflowEdge(id: 'edge_5', sourceId: 'scorer', targetId: 'low-worker', sourcePort: 2),
   ],
 );
 
@@ -195,10 +233,10 @@ final mockWorkflows = <WorkflowSummary>[
     runCount: 412,
     last: '11m',
     active: 0,
-      nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-      ],
-      edges: const [],
+    nodes: const [
+      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
+    ],
+    edges: const [],
   ),
   WorkflowSummary(
     id: 'wf_release_notes',
@@ -208,10 +246,10 @@ final mockWorkflows = <WorkflowSummary>[
     runCount: 38,
     last: '1h',
     active: 0,
-      nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-      ],
-      edges: const [],
+    nodes: const [
+      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
+    ],
+    edges: const [],
   ),
   WorkflowSummary(
     id: 'wf_flake_tracker',
@@ -221,10 +259,10 @@ final mockWorkflows = <WorkflowSummary>[
     runCount: 906,
     last: '8m',
     active: 1,
-      nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-      ],
-      edges: const [],
+    nodes: const [
+      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
+    ],
+    edges: const [],
   ),
   WorkflowSummary(
     id: 'wf_changelog_summ',
@@ -234,10 +272,10 @@ final mockWorkflows = <WorkflowSummary>[
     runCount: 142,
     last: '3h',
     active: 0,
-      nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-      ],
-      edges: const [],
+    nodes: const [
+      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
+    ],
+    edges: const [],
   ),
   WorkflowSummary(
     id: 'wf_doc_indexer',
@@ -247,10 +285,10 @@ final mockWorkflows = <WorkflowSummary>[
     runCount: 77,
     last: '1d',
     active: 0,
-      nodes: const [
-        WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-      ],
-      edges: const [],
+    nodes: const [
+      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
+    ],
+    edges: const [],
   ),
 ];
 
@@ -424,3 +462,108 @@ final mockJobs = <JobSummary>[
 ];
 
 const historyCount = 13;
+
+final Map<String, List<StageExecution>> mockStageExecutions = {
+  'entrypoint': [
+    StageExecution(
+      id: 'ex_1',
+      label: 'entrypoint',
+      status: 'passed',
+      startedAt: '14:18:02',
+      durMs: 4200,
+      tokens: 1842,
+      renderedPrompt: 'You are a helpful code reviewer. Review the following pull request and identify potential issues.\n\nPR title: "Fix authentication bypass"\nPR description: "This PR fixes the auth bypass issue reported in #1427"\n\nFocus on: correctness, performance, security, and style.',
+      result: {
+        'summary': 'Found 3 issues: potential null pointer, missing input validation, and hardcoded secret.',
+        'issues': [
+          {'severity': 'high', 'line': 42, 'message': 'Null pointer when user is not authenticated'},
+          {'severity': 'medium', 'line': 78, 'message': 'Input not sanitized before SQL query'},
+          {'severity': 'low', 'line': 156, 'message': 'Hardcoded API key'},
+        ],
+      },
+    ),
+  ],
+  'commenter': [
+    StageExecution(
+      id: 'ex_2',
+      label: 'comment-files · 1/8',
+      status: 'running',
+      startedAt: '14:18:07',
+      durMs: 0,
+      tokens: 12400,
+      progress: 0.62,
+      streaming: 'Looking at auth_service.ts... Found issue on line 42. The `getUser` method can return null but the caller does not check.',
+      tools: [
+        ToolCall(name: 'readFile', args: 'auth_service.ts', ok: true, ms: 340),
+        ToolCall(name: 'readFile', args: 'user_model.ts', ok: true, ms: 210),
+        ToolCall(name: 'grep', args: 'getUser', running: true),
+      ],
+    ),
+    StageExecution(
+      id: 'ex_3',
+      label: 'comment-files · 2/8',
+      status: 'queued',
+      startedAt: null,
+      durMs: 0,
+      tokens: 0,
+      waitsFor: ['comment-files · 1/8'],
+    ),
+  ],
+  'scorer': [
+    StageExecution(
+      id: 'ex_4',
+      label: 'priority-routing',
+      status: 'passed',
+      startedAt: '14:18:06',
+      durMs: 120,
+      tokens: 45,
+    ),
+  ],
+  'high-worker': [
+    StageExecution(
+      id: 'ex_5',
+      label: 'urgent-review',
+      status: 'failed',
+      startedAt: '14:18:08',
+      durMs: 3200,
+      tokens: 5600,
+      renderedPrompt: 'This is a HIGH priority review. The entrypoint found critical issues.\n\nPlease provide a detailed response with actionable fixes.\n\nContext: Found 3 issues: potential null pointer, missing input validation, and hardcoded secret.',
+      error: (
+        code: 'RATE_LIMIT',
+        message: 'Anthropic API rate limit exceeded. Retry after 60s.',
+      ),
+    ),
+    StageExecution(
+      id: 'ex_6',
+      label: 'urgent-review (retry 1)',
+      status: 'running',
+      startedAt: '14:18:12',
+      durMs: 0,
+      tokens: 0,
+      progress: 0.35,
+      streaming: 'Analyzing the null pointer issue...',
+    ),
+  ],
+  'med-worker': [
+    StageExecution(
+      id: 'ex_7',
+      label: 'normal-review',
+      status: 'skipped',
+      startedAt: null,
+      durMs: 0,
+      tokens: 0,
+      skipReason: 'Branch condition not met — score 0.85 routed to high priority instead.',
+    ),
+  ],
+  'low-worker': [
+    StageExecution(
+      id: 'ex_8',
+      label: 'deferred-review',
+      status: 'skipped',
+      startedAt: null,
+      durMs: 0,
+      tokens: 0,
+      skipReason: 'Branch condition not met — score 0.85 routed to high priority instead.',
+    ),
+  ],
+};

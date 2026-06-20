@@ -61,6 +61,10 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 
 **Agent rule:** After any code change, always run `~/flutter/bin/flutter build web --release` to update the dev preview.
 
+## iOS Development
+
+See [`ios/README.md`](ios/README.md) for the full iOS build/test/device recipe. iOS builds require macOS + Xcode — not possible from this Linux sandbox.
+
 ## Dev Preview
 
 The Flutter web build is served live at **trailhead-dev.rancidgrandmas.online** via a Bun static server in the apps container.

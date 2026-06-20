@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/tokens.dart';
 import 'theme/theme_controller.dart';
 import 'models/workflow_document.dart';
+import 'models/workflow_node.dart';
 import 'providers/canvas_controller.dart';
 import 'providers/mode_provider.dart';
 import 'providers/selection_notifier.dart';
@@ -13,6 +14,8 @@ import 'widgets/jobs_sidebar.dart';
 import 'widgets/canvas/graph_canvas.dart';
 import 'widgets/runs_table.dart';
 import 'widgets/yaml_drawer.dart';
+import 'widgets/stage_drawer/stage_drawer.dart';
+
 import 'widgets/settings/settings_modal.dart';
 import 'providers/settings_provider.dart';
 
@@ -34,7 +37,7 @@ class TrailheadApp extends StatelessWidget {
           theme: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: AppColors.bg0,
           ),
-          home: TrailheadShell(),
+          home: const TrailheadShell(),
         ),
       ),
     );
@@ -50,9 +53,22 @@ class TrailheadShell extends ConsumerWidget {
     final job = ref.watch(selectedJobProvider);
     final showSidebar = mode != AppMode.history || job != null;
     final yamlOpen = mode == AppMode.build && ref.watch(yamlDrawerOpenProvider);
+    final stageOpen = ref.watch(stageDrawerOpenProvider);
+    final stageId = ref.watch(selectedStageIdProvider);
     final workflow = ref.watch(workflowProvider);
     final settingsOpen = ref.watch(settingsModalOpenProvider);
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+
+    final stageNode = stageId != null
+        ? workflow.nodes.cast<WorkflowNode?>().firstWhere(
+            (n) => n!.id == stageId,
+            orElse: () => null,
+          )
+        : null;
+
+    final drawerView = (mode == AppMode.active || mode == AppMode.history) && job != null
+        ? StageDrawerView.job
+        : StageDrawerView.builder;
 
     Widget workflowRegion({Widget? bottomPanel}) {
       return Row(
@@ -62,16 +78,73 @@ class TrailheadShell extends ConsumerWidget {
           Expanded(
             child: Column(
               children: [
-                TopBar(),
+                const TopBar(),
                 Expanded(
                   child: mode == AppMode.history && job == null
-                      ? RunsTable()
-                      : GraphCanvas(),
+                      ? const RunsTable()
+                      : const GraphCanvas(),
                 ),
                 if (bottomPanel != null) Expanded(child: bottomPanel),
               ],
             ),
           ),
+        ],
+      );
+    }
+
+    Widget buildDrawerPanel() {
+      if (!yamlOpen && !stageOpen) return const SizedBox.shrink();
+
+      if (isPortrait) {
+        // Portrait: side-by-side in bottom panel
+        return Row(
+          children: [
+            if (yamlOpen)
+              Expanded(
+                child: YamlDrawer(
+                  workflow: workflow,
+                  onClose: () => ref
+                      .read(yamlDrawerOpenProvider.notifier)
+                      .state = false,
+                  isPortrait: true,
+                ),
+              ),
+            if (stageOpen && stageNode != null)
+              Expanded(
+                child: StageDrawer(
+                  stage: stageNode,
+                  view: drawerView,
+                  onClose: () {
+                    ref.read(stageDrawerOpenProvider.notifier).state = false;
+                    ref.read(selectedStageIdProvider.notifier).state = null;
+                  },
+                  isPortrait: true,
+                ),
+              ),
+          ],
+        );
+      }
+
+      // Landscape: neighboring columns on the right
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (yamlOpen)
+            YamlDrawer(
+              workflow: workflow,
+              onClose: () => ref
+                  .read(yamlDrawerOpenProvider.notifier)
+                  .state = false,
+            ),
+          if (stageOpen && stageNode != null)
+            StageDrawer(
+              stage: stageNode,
+              view: drawerView,
+              onClose: () {
+                ref.read(stageDrawerOpenProvider.notifier).state = false;
+                ref.read(selectedStageIdProvider.notifier).state = null;
+              },
+            ),
         ],
       );
     }
@@ -82,26 +155,12 @@ class TrailheadShell extends ConsumerWidget {
           Column(
             children: [
               Expanded(
-                child: isPortrait && yamlOpen
-                    ? workflowRegion(
-                        bottomPanel: YamlDrawer(
-                          workflow: workflow,
-                          onClose: () => ref
-                              .read(yamlDrawerOpenProvider.notifier)
-                              .state = false,
-                          isPortrait: true,
-                        ),
-                      )
+                child: isPortrait && (yamlOpen || stageOpen)
+                    ? workflowRegion(bottomPanel: buildDrawerPanel())
                     : Row(
                         children: [
                           Expanded(child: workflowRegion()),
-                          if (yamlOpen)
-                            YamlDrawer(
-                              workflow: workflow,
-                              onClose: () => ref
-                                  .read(yamlDrawerOpenProvider.notifier)
-                                  .state = false,
-                            ),
+                          buildDrawerPanel(),
                         ],
                       ),
               ),
@@ -109,7 +168,7 @@ class TrailheadShell extends ConsumerWidget {
             ],
           ),
           if (settingsOpen)
-            SettingsModalOverlay(),
+            const SettingsModalOverlay(),
         ],
       ),
     );
@@ -139,6 +198,8 @@ class TrailheadShell extends ConsumerWidget {
             ref.read(hoveredNodeProvider.notifier).state = null;
             ref.read(draggingNodeIdProvider.notifier).state = null;
             ref.read(dragOffsetProvider.notifier).state = Offset.zero;
+            ref.read(selectedStageIdProvider.notifier).state = null;
+            ref.read(stageDrawerOpenProvider.notifier).state = false;
           },
         );
       case AppMode.active:

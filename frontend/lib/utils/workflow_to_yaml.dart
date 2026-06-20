@@ -1,9 +1,16 @@
-import '../models/workflow_edge.dart';
-import '../models/workflow_node.dart';
 import '../providers/mock_data.dart';
 
-String workflowToYaml(WorkflowSummary workflow) {
+class YamlResult {
+  final String yaml;
+  final Map<String, ({int start, int end})> stageLines;
+
+  const YamlResult({required this.yaml, required this.stageLines});
+}
+
+YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
   final buf = StringBuffer();
+  final stageLines = <String, ({int start, int end})>{};
+
   buf.writeln('name: ${workflow.name}');
   buf.writeln('version: ${workflow.version}');
   if (workflow.draft != null && workflow.draft != workflow.version) {
@@ -14,6 +21,7 @@ String workflowToYaml(WorkflowSummary workflow) {
   if (workflow.nodes.isNotEmpty) {
     buf.writeln('stages:');
     for (final node in workflow.nodes) {
+      final startLine = buf.toString().split('\n').length;
       buf.writeln('  - name: ${node.id}');
       buf.writeln('    kind: ${node.kind}');
       buf.writeln('    label: ${node.label}');
@@ -22,6 +30,42 @@ String workflowToYaml(WorkflowSummary workflow) {
       if (node.skills.isNotEmpty) {
         buf.writeln('    skills: [${node.skills.map((s) => '"$s"').join(', ')}]');
       }
+
+      // Worker-specific fields
+      if (node.connection != null) {
+        buf.writeln('    connection: ${node.connection}');
+      }
+      if (node.timeout != null) {
+        buf.writeln('    timeout: ${node.timeout}');
+      }
+      if (node.retries != null) {
+        buf.writeln('    retries: ${node.retries}');
+      }
+      if (node.parallelism != null) {
+        buf.writeln('    parallelism: ${node.parallelism}');
+      }
+      if (node.configs.isNotEmpty) {
+        buf.writeln('    configs: [${node.configs.map((c) => '"$c"').join(', ')}]');
+      }
+
+      // Prompt
+      if (node.prompt != null && node.prompt!.isNotEmpty) {
+        buf.writeln('    prompt: |');
+        for (final line in node.prompt!.split('\n')) {
+          buf.writeln('      $line');
+        }
+      }
+
+      // Result format + schema
+      if (node.resultFormat != null) {
+        buf.writeln('    result_format: ${node.resultFormat}');
+      }
+      if (node.schema != null && node.schema!.isNotEmpty) {
+        buf.writeln('    schema:');
+        _writeJson(buf, node.schema!, indent: 6);
+      }
+
+      // Branch outputs
       if (node.kind == 'branch') {
         if (node.matchAll) {
           buf.writeln('    match_all: true');
@@ -37,7 +81,59 @@ String workflowToYaml(WorkflowSummary workflow) {
           }
         }
       }
+
+      // Map (fan) fields
+      if (node.kind == 'fan') {
+        if (node.over != null) buf.writeln('    over: ${node.over}');
+        if (node.count != null) buf.writeln('    count: ${node.count}');
+        if (node.concurrency != null) buf.writeln('    concurrency: ${node.concurrency}');
+        if (node.collect != null) buf.writeln('    collect: ${node.collect}');
+        if (node.body != null) {
+          buf.writeln('    body:');
+          buf.writeln('      label: ${node.body!.label}');
+          if (node.body!.model != null) buf.writeln('      model: ${node.body!.model}');
+          if (node.body!.skills.isNotEmpty) {
+            buf.writeln('      skills: [${node.body!.skills.map((s) => '"$s"').join(', ')}]');
+          }
+          if (node.body!.prompt.isNotEmpty) {
+            buf.writeln('      prompt: |');
+            for (final line in node.body!.prompt.split('\n')) {
+              buf.writeln('        $line');
+            }
+          }
+        }
+      }
+
+      // Join fields
+      if (node.kind == 'join') {
+        if (node.waitsFor.isNotEmpty) {
+          buf.writeln('    waits_for: [${node.waitsFor.map((w) => '"$w"').join(', ')}]');
+        }
+        if (node.joinMode != null) buf.writeln('    mode: ${node.joinMode}');
+      }
+
+      // Switch cases
+      if (node.cases.isNotEmpty) {
+        buf.writeln('    cases:');
+        for (final c in node.cases) {
+          buf.writeln('      - match: ${c.match}');
+          buf.writeln('        to: [${c.to.map((t) => '"$t"').join(', ')}]');
+        }
+      }
+
+      // Branch cases
+      if (node.branches.isNotEmpty) {
+        buf.writeln('    branches:');
+        for (final b in node.branches) {
+          buf.writeln('      - match: ${b.match}');
+          buf.writeln('        to: [${b.to.map((t) => '"$t"').join(', ')}]');
+          if (b.loop) buf.writeln('        loop: true');
+        }
+      }
+
       buf.writeln('    pos: {x: ${node.x.toStringAsFixed(0)}, y: ${node.y.toStringAsFixed(0)}}');
+      final endLine = buf.toString().split('\n').length;
+      stageLines[node.id] = (start: startLine, end: endLine);
     }
     buf.writeln('');
   }
@@ -53,5 +149,49 @@ String workflowToYaml(WorkflowSummary workflow) {
     }
   }
 
-  return buf.toString();
+  return YamlResult(yaml: buf.toString(), stageLines: stageLines);
+}
+
+String workflowToYaml(WorkflowSummary workflow) {
+  return workflowToYamlWithLines(workflow).yaml;
+}
+
+void _writeJson(StringBuffer buf, dynamic value, {required int indent}) {
+  final prefix = ' ' * indent;
+  if (value is Map) {
+    for (final entry in value.entries) {
+      final k = entry.key;
+      final v = entry.value;
+      if (v is Map || v is List) {
+        buf.writeln('$prefix$k:');
+        _writeJson(buf, v, indent: indent + 2);
+      } else {
+        buf.writeln('$prefix$k: ${_yamlValue(v)}');
+      }
+    }
+  } else if (value is List) {
+    for (final item in value) {
+      if (item is Map || item is List) {
+        buf.writeln('$prefix-');
+        _writeJson(buf, item, indent: indent + 2);
+      } else {
+        buf.writeln('$prefix- ${_yamlValue(item)}');
+      }
+    }
+  } else {
+    buf.writeln('$prefix${_yamlValue(value)}');
+  }
+}
+
+String _yamlValue(dynamic v) {
+  if (v == null) return 'null';
+  if (v is bool) return v.toString();
+  if (v is num) return v.toString();
+  if (v is String) {
+    if (v.contains('\n') || v.contains(':') || v.contains('#')) {
+      return '"${v.replaceAll('"', '\\"')}"';
+    }
+    return v;
+  }
+  return v.toString();
 }

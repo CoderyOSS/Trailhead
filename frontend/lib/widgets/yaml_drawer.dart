@@ -81,13 +81,20 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final yamlText = _yamlText;
+    final yamlResult = workflowToYamlWithLines(widget.workflow);
+    final yamlText = widget.job != null
+        ? _jobPreface(widget.job!) + '\n' + yamlResult.yaml
+        : yamlResult.yaml;
     final lines = yamlText.split('\n');
     final lineCount = lines.length;
     final byteSize = yamlText.length;
     final sizeLabel = byteSize < 1024 ? '$byteSize B' : '${(byteSize / 1024).toStringAsFixed(1)} kB';
     final isJob = widget.job != null;
     final search = _searchController.text.trim().toLowerCase();
+    final selectedStageId = ref.watch(selectedStageIdProvider);
+
+    // Compute which lines belong to which stage
+    final stageLines = yamlResult.stageLines;
 
     return Container(
       width: widget.isPortrait ? double.infinity : 460,
@@ -287,7 +294,13 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         for (var i = 0; i < lines.length; i++)
-                          _buildLine(i + 1, lines[i], search),
+                          _buildLine(
+                            i + 1,
+                            lines[i],
+                            search,
+                            stageLines,
+                            selectedStageId,
+                          ),
                       ],
                     ),
                   ),
@@ -332,27 +345,85 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
     );
   }
 
-  Widget _buildLine(int lineNum, String raw, String query) {
+  Widget _buildLine(
+    int lineNum,
+    String raw,
+    String query,
+    Map<String, ({int start, int end})> stageLines,
+    String? selectedStageId,
+  ) {
     final hit = query.isNotEmpty && raw.toLowerCase().contains(query);
-    final hitBg = hit ? AppColors.accent.withValues(alpha: 0.14) : Colors.transparent;
+
+    // Find if this line belongs to a stage
+    String? stageIdForLine;
+    for (final entry in stageLines.entries) {
+      if (lineNum >= entry.value.start && lineNum <= entry.value.end) {
+        stageIdForLine = entry.key;
+        break;
+      }
+    }
+    final isStageLine = stageIdForLine != null;
+    final isSelectedStage = stageIdForLine == selectedStageId;
+
+    Color hitBg;
+    if (hit) {
+      hitBg = AppColors.accent.withValues(alpha: 0.14);
+    } else if (isSelectedStage) {
+      hitBg = AppColors.accent.withValues(alpha: 0.08);
+    } else {
+      hitBg = Colors.transparent;
+    }
 
     return Container(
       color: hitBg,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Gutter with stage button
           Container(
-            width: 48,
-            padding: const EdgeInsets.fromLTRB(16, 0, 12, 0),
+            width: 64,
+            padding: const EdgeInsets.fromLTRB(4, 0, 4, 0),
             alignment: Alignment.topRight,
-            child: Text(
-              '$lineNum',
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 12,
-                color: AppColors.fg3,
-                fontFeatures: [FontFeature.tabularFigures()],
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                if (isStageLine && raw.trimLeft().startsWith('- name:'))
+                  GestureDetector(
+                    onTap: () {
+                      ref.read(selectedStageIdProvider.notifier).state = stageIdForLine;
+                      ref.read(stageDrawerOpenProvider.notifier).state = true;
+                    },
+                    child: MouseRegion(
+                      cursor: SystemMouseCursors.click,
+                      child: Container(
+                        width: 18,
+                        height: 18,
+                        margin: const EdgeInsets.only(right: 4),
+                        decoration: BoxDecoration(
+                          color: isSelectedStage
+                              ? AppColors.accent.withValues(alpha: 0.2)
+                              : AppColors.bg3,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        alignment: Alignment.center,
+                        child: TrailheadIcon(
+                          icon: TrailheadIconData.settings,
+                          size: 10,
+                          color: isSelectedStage ? AppColors.accent : AppColors.fg3,
+                        ),
+                      ),
+                    ),
+                  ),
+                Text(
+                  '$lineNum',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    color: AppColors.fg3,
+                    fontFeatures: [FontFeature.tabularFigures()],
+                  ),
+                ),
+              ],
             ),
           ),
           Padding(

@@ -112,6 +112,11 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     ref.read(marqueeProvider.notifier).state = const MarqueeState();
   }
 
+  void _openStageDrawer(String nodeId) {
+    ref.read(selectedStageIdProvider.notifier).state = nodeId;
+    ref.read(stageDrawerOpenProvider.notifier).state = true;
+  }
+
   void _toggleScissors() {
     final current = ref.read(scissorsModeProvider);
     final next = !current;
@@ -797,7 +802,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                   child: Transform.scale(
                     scale: viewport.zoom,
                     alignment: Alignment.topLeft,
-                    child: Stack(
+                    child: UnboundedHitStack(
                       clipBehavior: Clip.none,
                       children: [
                         ...workflow.nodes.map((node) {
@@ -880,6 +885,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                       ref.read(operatorPickerProvider.notifier).state = null;
                                     }
                                   },
+                                  onDoubleTap: () => _openStageDrawer(node.id),
                                   onLongPressStart: isSelected && editable && node.id != 'entrypoint'
                                       ? (details) {
                                           ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
@@ -1153,6 +1159,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                               deleteNode(id);
                             }
                           }
+                        },
+                        onInspect: () {
+                          _openStageDrawer(menuAnchor.nodeId);
+                          ref.read(nodeMenuProvider.notifier).state = null;
                         },
                         onClose: () {
                           ref.read(nodeMenuProvider.notifier).state = null;

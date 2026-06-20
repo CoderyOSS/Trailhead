@@ -8,6 +8,7 @@ class NodeContextMenu extends StatelessWidget {
   final VoidCallback onDuplicate;
   final VoidCallback onCollapse;
   final VoidCallback onDelete;
+  final VoidCallback onInspect;
   final VoidCallback onClose;
 
   const NodeContextMenu({
@@ -17,6 +18,7 @@ class NodeContextMenu extends StatelessWidget {
     required this.onDuplicate,
     required this.onCollapse,
     required this.onDelete,
+    required this.onInspect,
     required this.onClose,
   });
 
@@ -52,6 +54,16 @@ class NodeContextMenu extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
+                _MenuItem(
+                  icon: TrailheadIconData.settings,
+                  label: 'inspect stage',
+                  desc: 'open stage editor',
+                  onTap: onInspect,
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 6),
+                  child: Container(height: 1, color: AppColors.border1),
+                ),
                 if (canDuplicate)
                   _MenuItem(
                     icon: TrailheadIconData.copy,

@@ -1,6 +1,7 @@
 import 'dart:ui';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
 import '../models/workflow_document.dart';
@@ -112,6 +113,7 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   OverlayEntry? _overlay;
   bool _open = false;
   bool _isEditing = false;
+  String? _errorText;
   final _editFocusNode = FocusNode();
   late final TextEditingController _editCtrl;
 
@@ -158,19 +160,48 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
     });
   }
 
+  static String _sanitizeName(String s) {
+    return s
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'[^a-z0-9._-]'), '')
+        .replaceAll(RegExp(r'-{2,}'), '-');
+  }
+
   void _commitRename(String name) {
-    final trimmed = name.trim();
-    if (trimmed.isNotEmpty && trimmed != widget.workflow.name) {
+    final clean = _sanitizeName(name).replaceAll(RegExp(r'^-+|-+$'), '');
+    if (clean.isEmpty) {
+      setState(() => _errorText = "name can't be empty");
+      return;
+    }
+    final siblings =
+        widget.workflows.where((w) => w.id != widget.workflow.id).map((w) => w.name.toLowerCase());
+    if (siblings.contains(clean.toLowerCase())) {
+      setState(() => _errorText = 'name already in use');
+      return;
+    }
+    if (clean != widget.workflow.name) {
       final id = widget.workflow.id;
       ref.read(workflowsProvider.notifier).update((list) {
-        return list.map((w) => w.id == id ? w.copyWith(name: trimmed) : w).toList();
+        return list.map((w) => w.id == id ? w.copyWith(name: clean) : w).toList();
       });
       final current = ref.read(workflowProvider);
       if (current.id == id) {
-        ref.read(workflowProvider.notifier).state = current.copyWith(name: trimmed);
+        ref.read(workflowProvider.notifier).state = current.copyWith(name: clean);
       }
     }
-    setState(() => _isEditing = false);
+    setState(() {
+      _isEditing = false;
+      _errorText = null;
+    });
+  }
+
+  void _cancelRename() {
+    _editCtrl.text = widget.workflow.name;
+    setState(() {
+      _isEditing = false;
+      _errorText = null;
+    });
   }
 
   void _startNew() {
@@ -294,12 +325,15 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
   @override
   Widget build(BuildContext context) {
     final wf = widget.workflow;
+    final siblingNames = widget.workflows
+        .where((w) => w.id != wf.id)
+        .map((w) => w.name.toLowerCase())
+        .toList();
 
     return CompositedTransformTarget(
       link: _layerLink,
       child: Container(
         width: 288,
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
         decoration: BoxDecoration(
           color: AppColors.bg1,
           border: Border.all(
@@ -307,75 +341,303 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
           ),
           borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
+        child: _isEditing
+            ? Padding(
+                padding: const EdgeInsets.all(5),
+                child: _InlineRename(
+                  initial: wf.name,
+                  siblings: siblingNames,
+                  big: true,
+                  onCommit: (name) => _commitRename(name),
+                  onCancel: _cancelRename,
+                ),
+              )
+            : Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _toggle,
+                      onDoubleTap: _enterEditMode,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 8,
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                wf.name,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: AppColors.fg0,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            AnimatedRotation(
+                              turns: _open ? 0.5 : 0,
+                              duration: const Duration(milliseconds: 160),
+                              child: Icon(
+                                Icons.keyboard_arrow_down,
+                                size: 16,
+                                color: AppColors.fg2,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  GestureDetector(
+                    onTap: _enterEditMode,
+                    child: Container(
+                      width: 38,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        border: Border(
+                          left: BorderSide(color: AppColors.border1),
+                        ),
+                      ),
+                      child: Center(
+                        child: TrailheadIcon(
+                          icon: TrailheadIconData.pencil,
+                          size: 13,
+                          color: AppColors.fg2,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}
+
+class _InlineRename extends StatefulWidget {
+  final String initial;
+  final List<String> siblings;
+  final bool big;
+  final ValueChanged<String> onCommit;
+  final VoidCallback onCancel;
+
+  const _InlineRename({
+    required this.initial,
+    required this.siblings,
+    this.big = false,
+    required this.onCommit,
+    required this.onCancel,
+  });
+
+  @override
+  State<_InlineRename> createState() => _InlineRenameState();
+}
+
+class _InlineRenameState extends State<_InlineRename> {
+  late final TextEditingController _ctrl;
+  late final FocusNode _focusNode;
+  bool _committed = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _ctrl = TextEditingController(text: widget.initial);
+    _focusNode = FocusNode();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _focusNode.requestFocus();
+      _ctrl.selection = TextSelection(
+        baseOffset: 0,
+        extentOffset: _ctrl.text.length,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  static String _sanitize(String s) {
+    return s
+        .toLowerCase()
+        .replaceAll(RegExp(r'\s+'), '-')
+        .replaceAll(RegExp(r'[^a-z0-9._-]'), '')
+        .replaceAll(RegExp(r'-{2,}'), '-')
+        .replaceAll(RegExp(r'^-+|-+$'), '');
+  }
+
+  void _commit() {
+    if (_committed) return;
+    final clean = _sanitize(_ctrl.text);
+    final empty = clean.isEmpty;
+    final dupe = widget.siblings.any((n) => n.toLowerCase() == clean.toLowerCase());
+    if (empty || dupe) return;
+    _committed = true;
+    widget.onCommit(clean);
+  }
+
+  void _cancel() {
+    if (_committed) return;
+    _committed = true;
+    widget.onCancel();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final clean = _sanitize(_ctrl.text);
+    final empty = clean.isEmpty;
+    final dupe = widget.siblings.any((n) => n.toLowerCase() == clean.toLowerCase());
+    final invalid = empty || dupe;
+    final err = empty
+        ? "name can't be empty"
+        : dupe
+            ? 'name already in use'
+            : '';
+
+    final fontSize = widget.big ? 13.0 : 11.5;
+    final fontWeight = widget.big ? FontWeight.w600 : FontWeight.w500;
+    final padding = widget.big
+        ? const EdgeInsets.symmetric(horizontal: 8, vertical: 6)
+        : const EdgeInsets.symmetric(horizontal: 7, vertical: 5);
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
           children: [
             Expanded(
-              child: GestureDetector(
-                onTap: _toggle,
-                child: _isEditing
-                    ? TextField(
-                        controller: _editCtrl,
-                        focusNode: _editFocusNode,
-                        autofocus: true,
-                        onSubmitted: _commitRename,
-                        onTapOutside: (_) => _commitRename(_editCtrl.text),
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.fg0,
-                        ),
-                        decoration: const InputDecoration(
-                          isDense: true,
-                          contentPadding: EdgeInsets.zero,
-                          border: InputBorder.none,
-                        ),
-                      )
-                    : Text(
-                        wf.name,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                          color: AppColors.fg0,
-                        ),
-                        overflow: TextOverflow.ellipsis,
+              child: KeyboardListener(
+                focusNode: FocusNode(),
+                onKeyEvent: (event) {
+                  if (event is KeyDownEvent) {
+                    if (event.logicalKey == LogicalKeyboardKey.escape) {
+                      _cancel();
+                    } else if (event.logicalKey == LogicalKeyboardKey.enter) {
+                      if (!invalid) _commit();
+                    }
+                  }
+                },
+                child: TextField(
+                  controller: _ctrl,
+                  focusNode: _focusNode,
+                  autofocus: true,
+                  onChanged: (_) => setState(() {}),
+                  onSubmitted: (_) => invalid ? null : _commit(),
+                  onTapOutside: (_) => invalid ? _cancel() : _commit(),
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: fontSize,
+                    fontWeight: fontWeight,
+                    color: AppColors.fg0,
+                  ),
+                  decoration: InputDecoration(
+                    isDense: true,
+                    contentPadding: padding,
+                    filled: true,
+                    fillColor: AppColors.bg0,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(
+                        color: invalid ? AppColors.danger : AppColors.accent,
                       ),
-              ),
-            ),
-            GestureDetector(
-              onTap: _enterEditMode,
-              child: Container(
-                width: 28,
-                height: 28,
-                margin: const EdgeInsets.only(left: 4),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(6),
-                  color: Colors.transparent,
-                ),
-                child: Center(
-                  child: TrailheadIcon(
-                    icon: TrailheadIconData.pencil,
-                    size: 12,
-                    color: AppColors.fg2,
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(
+                        color: invalid ? AppColors.danger : AppColors.accent,
+                      ),
+                    ),
+                    focusedBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(6),
+                      borderSide: BorderSide(
+                        color: invalid ? AppColors.danger : AppColors.accent,
+                        width: 1.5,
+                      ),
+                    ),
                   ),
                 ),
               ),
             ),
+            const SizedBox(width: 5),
+            _RenameIconBtn(
+              icon: TrailheadIconData.check,
+              primary: true,
+              disabled: invalid,
+              onTap: invalid ? null : _commit,
+            ),
             const SizedBox(width: 4),
-            GestureDetector(
-              onTap: _toggle,
-              child: AnimatedRotation(
-                turns: _open ? 0.5 : 0,
-                duration: const Duration(milliseconds: 160),
-                child: Icon(
-                  Icons.keyboard_arrow_down,
-                  size: 16,
-                  color: AppColors.fg2,
-                ),
-              ),
+            _RenameIconBtn(
+              icon: TrailheadIconData.x,
+              primary: false,
+              onTap: _cancel,
             ),
           ],
+        ),
+        if (invalid && _ctrl.text.trim().isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4, left: 2),
+            child: Text(
+              err,
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 9.5,
+                color: AppColors.danger,
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _RenameIconBtn extends StatelessWidget {
+  final TrailheadIconData icon;
+  final bool primary;
+  final bool disabled;
+  final VoidCallback? onTap;
+
+  const _RenameIconBtn({
+    required this.icon,
+    this.primary = false,
+    this.disabled = false,
+    this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final bg = primary
+        ? (disabled ? AppColors.bg2 : AppColors.accent.withValues(alpha: 0.15))
+        : AppColors.bg2;
+    final fg = primary
+        ? (disabled ? AppColors.fg3 : AppColors.accent)
+        : AppColors.fg2;
+    final borderColor = primary && !disabled
+        ? AppColors.accent.withValues(alpha: 0.35)
+        : AppColors.border1;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 30,
+        height: 30,
+        decoration: BoxDecoration(
+          color: bg,
+          border: Border.all(color: borderColor),
+          borderRadius: BorderRadius.circular(7),
+        ),
+        child: Center(
+          child: TrailheadIcon(
+            icon: icon,
+            size: 14,
+            color: fg,
+          ),
         ),
       ),
     );

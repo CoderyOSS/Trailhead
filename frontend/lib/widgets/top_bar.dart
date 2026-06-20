@@ -40,7 +40,7 @@ class TopBar extends ConsumerWidget {
           builder: (context) {
             switch (mode) {
               case AppMode.build:
-                return const _BuildBar();
+                return _BuildBar();
               case AppMode.active:
                 return _JobBar(
                   job: job,
@@ -50,7 +50,7 @@ class TopBar extends ConsumerWidget {
                 );
               case AppMode.history:
                 if (job == null) {
-                  return const _HistoryListBar();
+                  return _HistoryListBar();
                 }
                 return _JobBar(
                   job: job,
@@ -896,7 +896,7 @@ class _JobControls extends StatelessWidget {
             onTap: () {},
             label: running ? 'pause' : (state == JobState.paused ? 'resume' : 'start'),
             icon: running
-                ? const _PauseIcon()
+                ? _PauseIcon()
                 : TrailheadIcon(
                     icon: TrailheadIconData.play,
                     size: 11,

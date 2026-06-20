@@ -1,5 +1,5 @@
 /* global React */
-const { useState, useMemo, useEffect } = React;
+const { useState, useMemo, useEffect, useRef } = React;
 
 /* Canvas keyframes — injected once so every host page (app + handoff) shares
    the same source. Used by the worker-node running state + spinner. */
@@ -94,6 +94,7 @@ const ICONS = {
   fileOpen: 'path:M15 3h6v6|line:10,14,21,3|path:M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6',
   save:     'path:M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z|polyline:17,21,17,13,7,13,7,21|polyline:7,3,7,8,15,8',
   lock:     'rect:3,11,18,11,2,2|path:M7 11V7a5 5 0 0 1 10 0v4',
+  trash:    'polyline:3,6,5,6,21,6|path:M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2|line:10,11,10,17|line:14,11,14,17',
   // scissors — cut a connection (build mode)
   scissors:    'circle:6,6,3|circle:6,18,3|line:20,4,8.12,15.88|line:14.47,14.48,20,20|line:8.12,8.12,12,12',
   // maximize / fit-to-view — auto-size the canvas to the graph
@@ -300,5 +301,124 @@ function Eyebrow({ children, accent = false, style }) {
   );
 }
 
+/* ─────────────────────────────────────────────
+   SwipeRow — swipe-left-to-delete affordance.
+
+   Wraps a single list row. Drag the row left (mouse or touch); a red
+   delete background with a trash glyph is revealed underneath. Release
+   past 40% of the row width (Flutter Dismissible's default
+   dismissThreshold) to confirm — the row slides off, collapses its
+   height, and fires onDelete. Release short of that and it springs back.
+
+   Maps 1:1 to Flutter: Dismissible(direction: endToStart, background:,
+   dismissThreshold: 0.4, onDismissed:) wrapping the list tile.
+
+   A drag suppresses the wrapped row's onClick (capture-phase guard) so a
+   swipe never doubles as a tap/select.
+   ───────────────────────────────────────────── */
+function SwipeRow({ children, onDelete, disabled = false, label = "delete", radius = 6 }) {
+  const wrapRef = useRef(null);
+  const st = useRef({ active: false, sx: 0, sy: 0, w: 1, axis: null, moved: false, pid: null });
+  const [dx, setDx] = useState(0);
+  const [animating, setAnimating] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
+  if (disabled || !onDelete) return children;
+
+  const THRESH = 0.4;
+
+  const onDown = (e) => {
+    if (e.button != null && e.button !== 0) return;
+    const w = wrapRef.current ? wrapRef.current.offsetWidth : 1;
+    st.current = { active: true, sx: e.clientX, sy: e.clientY, w, axis: null, moved: false, pid: e.pointerId };
+    setAnimating(false);
+  };
+  const onMove = (e) => {
+    const s = st.current;
+    if (!s.active) return;
+    const ddx = e.clientX - s.sx;
+    const ddy = e.clientY - s.sy;
+    if (s.axis == null) {
+      if (Math.abs(ddx) < 6 && Math.abs(ddy) < 6) return;
+      s.axis = Math.abs(ddx) > Math.abs(ddy) ? "x" : "y";
+      if (s.axis === "x") {
+        try { e.currentTarget.setPointerCapture(e.pointerId); } catch (_) {}
+      }
+    }
+    if (s.axis !== "x") return;
+    s.moved = true;
+    setDx(Math.min(0, ddx));
+  };
+  const finish = () => {
+    const s = st.current;
+    if (!s.active) return;
+    s.active = false;
+    const w = s.w || 1;
+    setAnimating(true);
+    if (s.axis === "x" && dx < -w * THRESH) {
+      setDx(-w);
+      setRemoving(true);
+      setTimeout(() => onDelete(), 210);
+    } else {
+      setDx(0);
+    }
+  };
+  const onClickCapture = (e) => {
+    if (st.current.moved) { e.preventDefault(); e.stopPropagation(); st.current.moved = false; }
+  };
+
+  const prog = Math.min(1, Math.abs(dx) / ((st.current.w || 1) * THRESH));
+
+  return (
+    <div
+      ref={wrapRef}
+      style={{
+        position: "relative",
+        overflow: "hidden",
+        borderRadius: radius,
+        maxHeight: removing ? 0 : 80,
+        opacity: removing ? 0 : 1,
+        transition: removing
+          ? "max-height 210ms var(--co-ease-out), opacity 170ms var(--co-ease-out)"
+          : "none",
+      }}
+    >
+      {/* revealed delete background — sits under the sliding foreground */}
+      <div
+        aria-hidden="true"
+        style={{
+          position: "absolute", inset: 0,
+          display: "flex", alignItems: "center", justifyContent: "flex-end",
+          gap: 6, paddingRight: 16,
+          background: "var(--co-danger)",
+          color: "#fff",
+          borderRadius: radius,
+          fontFamily: "var(--co-font-mono)", fontSize: 11, fontWeight: 600,
+        }}
+      >
+        <Icon name="trash" size={14} color="#fff" style={{ transform: `scale(${0.85 + prog * 0.15})` }} />
+        <span style={{ opacity: prog }}>{label}</span>
+      </div>
+      {/* sliding foreground — opaque so the red only shows once dragged */}
+      <div
+        onPointerDown={onDown}
+        onPointerMove={onMove}
+        onPointerUp={finish}
+        onPointerCancel={finish}
+        onClickCapture={onClickCapture}
+        style={{
+          position: "relative",
+          background: "var(--co-bg-1)",
+          transform: `translateX(${dx}px)`,
+          transition: animating ? "transform 200ms var(--co-ease-out)" : "none",
+          touchAction: "pan-y",
+        }}
+      >
+        {children}
+      </div>
+    </div>
+  );
+}
+
 /* expose */
-Object.assign(window, { Icon, Button, IconButton, StatusDot, StatusTag, Spinner, Tag, Card, Eyebrow });
+Object.assign(window, { Icon, Button, IconButton, StatusDot, StatusTag, Spinner, Tag, Card, Eyebrow, SwipeRow });

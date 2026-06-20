@@ -1,4 +1,4 @@
-/* global React, Icon, IconButton, Eyebrow, StatusDot, Button, WORKFLOWS_LIST */
+/* global React, Icon, IconButton, Eyebrow, StatusDot, Button, SwipeRow, WORKFLOWS_LIST */
 const { useState: useStateWS } = React;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -7,9 +7,10 @@ const { useState: useStateWS } = React;
 // a live-job pip beside their name (with count).
 // ──────────────────────────────────────────────────────────────────────────
 
-function WorkflowRow({ wf, active, onClick }) {
+function WorkflowRow({ wf, active, onClick, onDelete }) {
   const [hover, setHover] = useStateWS(false);
   return (
+    <SwipeRow onDelete={onDelete} label="delete workflow">
     <button
       type="button"
       onClick={onClick}
@@ -61,10 +62,17 @@ function WorkflowRow({ wf, active, onClick }) {
         </span>
       )}
     </button>
+    </SwipeRow>
   );
 }
 
-function WorkflowsSidebar({ activeId, onPick }) {
+function WorkflowsSidebar({ activeId, onPick, onDelete }) {
+  const [hidden, setHidden] = useStateWS(() => new Set());
+  const visible = WORKFLOWS_LIST.filter(wf => !hidden.has(wf.id));
+  const removeWf = (id) => {
+    setHidden(h => { const n = new Set(h); n.add(id); return n; });
+    if (onDelete) onDelete(id);
+  };
   return (
     <aside style={{
       width: 240, flex: "0 0 240px",
@@ -88,7 +96,7 @@ function WorkflowsSidebar({ activeId, onPick }) {
           <div style={{
             fontFamily: "var(--co-font-mono)", fontSize: 10.5,
             color: "var(--co-text-subtle)", marginTop: 2,
-          }}>edit plans · {WORKFLOWS_LIST.length} total</div>
+          }}>edit plans · {visible.length} total</div>
         </div>
         <Button variant="secondary" size="sm" icon="plus">new workflow</Button>
       </div>
@@ -101,8 +109,8 @@ function WorkflowsSidebar({ activeId, onPick }) {
           color: "var(--co-text-subtle)", fontWeight: 500,
         }}>all</div>
         <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {WORKFLOWS_LIST.map(wf => (
-            <WorkflowRow key={wf.id} wf={wf} active={wf.id === activeId} onClick={() => onPick(wf.id)} />
+          {visible.map(wf => (
+            <WorkflowRow key={wf.id} wf={wf} active={wf.id === activeId} onClick={() => onPick(wf.id)} onDelete={() => removeWf(wf.id)} />
           ))}
         </div>
       </div>

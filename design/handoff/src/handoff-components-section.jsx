@@ -458,7 +458,7 @@ function SidebarsCard() {
   return (
     <Card
       title="Sidebars"
-      description="Two sidebar variants — Workflows (Build mode) and Jobs (Active + History modes). The Jobs sidebar is shared across both modes: Active shows live jobs (running/paused/queued/retrying) with a live badge in the footer; History shows completed jobs (passed/failed/cancelled) with a filter button and 'no search yet' footer. Both support grouped/flat view toggle. Note: in History the sidebar is hidden until a run is selected — with no selection the runs table fills the width on its own, so the sidebar acts purely as a job-to-job navigator once you drill in."
+      description="Two sidebar variants — Workflows (Build mode) and Jobs (Active + History modes). The Jobs sidebar is shared across both modes: Active shows live jobs (running/paused/queued/retrying) with a live badge in the footer; History shows completed jobs (passed/failed/cancelled) with a filter button and 'no search yet' footer. Both support grouped/flat view toggle. Every workflow + job row is swipe-left-to-delete (try it on the specimens below). Note: in History the sidebar is hidden until a run is selected — with no selection the runs table fills the width on its own, so the sidebar acts purely as a job-to-job navigator once you drill in."
       dartImport="lib/widgets/sidebars/{workflows,jobs}_sidebar.dart"
     >
       <SubBlock label="workflows sidebar · Build mode · 240px">
@@ -540,6 +540,31 @@ function SidebarsCard() {
         </Stage>
       </SubBlock>
 
+      <SubBlock label="swipe-left-to-delete · workflow rows + job rows (both views)">
+        <StageSplit
+          leftFlex={1.2}
+          left={(
+            <Constrained width={240} height={300}>
+              <WorkflowsSidebar activeId="wf_pr_reviewer" onPick={() => {}} />
+            </Constrained>
+          )}
+          right={(
+            <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+              <div style={{ fontFamily: "var(--co-font-mono)", fontSize: 11.5, color: "var(--co-text-muted)", lineHeight: 1.6 }}>
+                Drag any row left (mouse or touch). A red delete background with a trash glyph is revealed; release past <strong style={{ color: "var(--co-text-strong)" }}>40% of the row width</strong> to confirm — the row slides off, collapses its height, and is removed. Release short of the threshold and it springs back. A swipe never fires the row's tap/select.
+              </div>
+              <AnatomyLegend items={[
+                { label: "drag state", desc: "foreground row translates left only · opaque bg-1 covers the red until you move" },
+                { label: "reveal", desc: "red palette.danger background · trash icon scales 0.85→1 · 'delete' label fades in with drag progress" },
+                { label: "threshold · 0.4", desc: "past 40% width on release → dismiss · short → spring back over 200ms ease-out" },
+                { label: "dismiss", desc: "row slides to -width, then max-height collapses to 0 over 210ms · onDelete fires" },
+                { label: "Flutter", desc: "Dismissible(direction: endToStart, dismissThreshold: 0.4, background:, onDismissed:) wrapping each ListTile" },
+              ]} />
+            </div>
+          )}
+        />
+      </SubBlock>
+
       <SubBlock label="tokens" last>
         <TokensList tokens={[
           { name: "width",          value: "CompSidebar.workflowWidth · 240 · jobsWidth · 260" },
@@ -549,6 +574,8 @@ function SidebarsCard() {
           { name: "filterBtn.bg",   value: "transparent · 1px palette.border1 · radius 5 · History only" },
           { name: "groupHeader",    value: "AppType.mono · 11px · weight 600 · chevron 9px" },
           { name: "row.active.bg",  value: "palette.bg3 · 2px accent left rail at absolute left" },
+          { name: "swipe.bg",       value: "palette.danger · trash glyph + 'delete' label · AppType.mono 11px" },
+          { name: "swipe.threshold",value: "0.4 of row width (Flutter Dismissible.dismissThreshold) · AppMotion 200–210ms ease-out" },
           { name: "footer.font",    value: "AppType.mono · 10px · palette.textSubtle" },
           { name: "footer.live",    value: "StatusDot running + pulse · Active mode only" },
         ]} />

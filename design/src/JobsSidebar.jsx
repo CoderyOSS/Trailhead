@@ -1,4 +1,4 @@
-/* global React, Icon, IconButton, StatusDot, StatusTag, Button */
+/* global React, Icon, IconButton, StatusDot, StatusTag, Button, SwipeRow */
 const { useState: useStateJS, useMemo: useMemoJS } = React;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -74,9 +74,10 @@ function WorkflowTag({ name }) {
   );
 }
 
-function JobRowFlat({ job, active, onClick }) {
+function JobRowFlat({ job, active, onClick, onDelete }) {
   const [hover, setHover] = useStateJS(false);
   return (
+    <SwipeRow onDelete={onDelete} label="delete job">
     <button
       type="button"
       onClick={onClick}
@@ -128,12 +129,14 @@ function JobRowFlat({ job, active, onClick }) {
         fontVariantNumeric: "tabular-nums",
       }}>{job.started}</span>
     </button>
+    </SwipeRow>
   );
 }
 
-function JobRowGrouped({ job, active, onClick }) {
+function JobRowGrouped({ job, active, onClick, onDelete }) {
   const [hover, setHover] = useStateJS(false);
   return (
+    <SwipeRow onDelete={onDelete} label="delete job">
     <button
       type="button"
       onClick={onClick}
@@ -173,6 +176,7 @@ function JobRowGrouped({ job, active, onClick }) {
         fontVariantNumeric: "tabular-nums",
       }}>{job.started}</span>
     </button>
+    </SwipeRow>
   );
 }
 
@@ -210,12 +214,17 @@ function GroupHeader({ name, count, open, onToggle }) {
 
 // ──────────────────────────────────────────────────────────────────────────
 
-function JobsSidebar({ kind, jobs, viewMode, onViewMode, activeId, onPick }) {
+function JobsSidebar({ kind, jobs, viewMode, onViewMode, activeId, onPick, onDelete }) {
+  const [hidden, setHidden] = useStateJS(() => new Set());
+  const removeJob = (id) => {
+    setHidden(h => { const n = new Set(h); n.add(id); return n; });
+    if (onDelete) onDelete(id);
+  };
   // Filter by mode
   const filtered = useMemoJS(() => {
     const set = kind === "active" ? ACTIVE_STATUSES : HISTORY_STATUSES;
-    return jobs.filter(j => set.has(j.status));
-  }, [jobs, kind]);
+    return jobs.filter(j => set.has(j.status) && !hidden.has(j.id));
+  }, [jobs, kind, hidden]);
 
   // Group for grouped mode
   const groups = useMemoJS(() => {
@@ -284,7 +293,7 @@ function JobsSidebar({ kind, jobs, viewMode, onViewMode, activeId, onPick }) {
         {viewMode === "flat" && filtered.length > 0 && (
           <div style={{ display: "flex", flexDirection: "column", gap: 1, paddingTop: 4 }}>
             {filtered.map(j => (
-              <JobRowFlat key={j.id} job={j} active={j.id === activeId} onClick={() => onPick(j.id)} />
+              <JobRowFlat key={j.id} job={j} active={j.id === activeId} onClick={() => onPick(j.id)} onDelete={() => removeJob(j.id)} />
             ))}
           </div>
         )}
@@ -294,7 +303,7 @@ function JobsSidebar({ kind, jobs, viewMode, onViewMode, activeId, onPick }) {
             <GroupHeader name={g.name} count={g.items.length} open onToggle={() => {}} />
             <div style={{ display: "flex", flexDirection: "column", gap: 1 }}>
               {g.items.map(j => (
-                <JobRowGrouped key={j.id} job={j} active={j.id === activeId} onClick={() => onPick(j.id)} />
+                <JobRowGrouped key={j.id} job={j} active={j.id === activeId} onClick={() => onPick(j.id)} onDelete={() => removeJob(j.id)} />
               ))}
             </div>
           </div>

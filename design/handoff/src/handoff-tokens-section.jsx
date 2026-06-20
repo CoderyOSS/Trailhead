@@ -252,9 +252,9 @@ function SpacingScale() {
           {SPACING.map(s => (
             <div key={s.name} style={{
               display: "grid",
-              gridTemplateColumns: "60px 50px 1fr",
+              gridTemplateColumns: "auto auto 1fr",
               alignItems: "center",
-              gap: 10,
+              gap: 12,
               fontFamily: "var(--co-font-mono)", fontSize: 11,
             }}>
               <span style={{ color: "var(--co-accent)" }}>AppSpacing.{s.name}</span>

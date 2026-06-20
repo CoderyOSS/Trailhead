@@ -21,6 +21,7 @@ class TopBar extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
+    final yamlOpen = ref.watch(yamlDrawerOpenProvider);
     final isJobView =
         (mode == AppMode.active && job != null) ||
         (mode == AppMode.history && job != null);
@@ -50,6 +51,10 @@ class TopBar extends ConsumerWidget {
                 return _JobBar(
                   job: job,
                   mode: mode,
+                  yamlOpen: yamlOpen,
+                  onToggleYaml: () => ref
+                      .read(yamlDrawerOpenProvider.notifier)
+                      .state = !yamlOpen,
                   onClearJob: () =>
                       ref.read(selectedJobProvider.notifier).state = null,
                 );
@@ -60,6 +65,10 @@ class TopBar extends ConsumerWidget {
                 return _JobBar(
                   job: job,
                   mode: mode,
+                  yamlOpen: yamlOpen,
+                  onToggleYaml: () => ref
+                      .read(yamlDrawerOpenProvider.notifier)
+                      .state = !yamlOpen,
                   onClearJob: () =>
                       ref.read(selectedJobProvider.notifier).state = null,
                 );
@@ -646,11 +655,15 @@ class _HistoryListBar extends StatelessWidget {
 class _JobBar extends StatelessWidget {
   final JobSummary? job;
   final AppMode mode;
+  final bool yamlOpen;
+  final VoidCallback onToggleYaml;
   final VoidCallback onClearJob;
 
   const _JobBar({
     required this.job,
     required this.mode,
+    required this.yamlOpen,
+    required this.onToggleYaml,
     required this.onClearJob,
   });
 
@@ -680,6 +693,8 @@ class _JobBar extends StatelessWidget {
         _JobRow1(
           job: job!,
           mode: mode,
+          yamlOpen: yamlOpen,
+          onToggleYaml: onToggleYaml,
           onClearJob: onClearJob,
         ),
         const SizedBox(height: 2),
@@ -692,11 +707,15 @@ class _JobBar extends StatelessWidget {
 class _JobRow1 extends StatelessWidget {
   final JobSummary job;
   final AppMode mode;
+  final bool yamlOpen;
+  final VoidCallback onToggleYaml;
   final VoidCallback onClearJob;
 
   const _JobRow1({
     required this.job,
     required this.mode,
+    required this.yamlOpen,
+    required this.onToggleYaml,
     required this.onClearJob,
   });
 
@@ -761,15 +780,27 @@ class _JobRow1 extends StatelessWidget {
         const SizedBox(width: 6),
         StatusTag(status: tagState),
         const Spacer(),
-        if (mode == AppMode.active)
-          _JobControls(state: job.state)
-        else ...[
+        if (mode == AppMode.active) ...[
           AppButton(
-            variant: AppButtonVariant.ghost,
+            variant: yamlOpen
+                ? AppButtonVariant.secondary
+                : AppButtonVariant.ghost,
             size: AppButtonSize.sm,
             icon: TrailheadIconData.file,
             label: 'YAML',
-            onTap: () {},
+            onTap: onToggleYaml,
+          ),
+          const SizedBox(width: 6),
+          _JobControls(state: job.state),
+        ] else ...[
+          AppButton(
+            variant: yamlOpen
+                ? AppButtonVariant.secondary
+                : AppButtonVariant.ghost,
+            size: AppButtonSize.sm,
+            icon: TrailheadIconData.file,
+            label: 'YAML',
+            onTap: onToggleYaml,
           ),
           const SizedBox(width: 6),
           AppButton(

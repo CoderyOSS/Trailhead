@@ -156,7 +156,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     final flash = ref.watch(flashOverlayProvider);
     final spaceHeld = ref.watch(spaceHeldProvider);
 
-    // Sync in-place workflow edits to the document model and workflow list.
+    // Sync in-place workflow edits to the document model (canvas viewport cache).
+    // Backend persistence is handled by the autosave listener in main.dart.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
       if (prev != null && prev.id == next.id) {
         final vp = ref.read(canvasControllerProvider);
@@ -164,9 +165,6 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
           final m = Map<String, WorkflowDocument>.from(docs);
           m[next.id] = WorkflowDocument(workflow: next, viewport: vp);
           return m;
-        });
-        ref.read(workflowsProvider.notifier).update((list) {
-          return list.map((w) => w.id == next.id ? next : w).toList();
         });
       }
     });

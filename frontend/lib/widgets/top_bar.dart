@@ -6,10 +6,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
 import '../models/workflow_document.dart';
 import '../models/workflow_node.dart';
+import '../providers/api_provider.dart';
 import '../providers/canvas_controller.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart';
 import '../providers/selection_notifier.dart';
+import '../utils/workflow_to_yaml.dart';
 import 'icons.dart';
 import 'app_button.dart';
 import 'status_tag.dart';
@@ -94,7 +96,7 @@ class _WorkflowSelect extends ConsumerStatefulWidget {
   final List<WorkflowSummary> workflows;
   final String? activeWfId;
   final ValueChanged<String> onPick;
-  final String Function() onNew;
+  final Future<String> Function() onNew;
 
   const _WorkflowSelect({
     required this.workflow,
@@ -175,14 +177,28 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
         widget.workflows.where((w) => w.id != widget.workflow.id).map((w) => w.name.toLowerCase());
     if (siblings.contains(clean.toLowerCase())) return;
     if (clean != widget.workflow.name) {
-      final id = widget.workflow.id;
-      ref.read(workflowsProvider.notifier).update((list) {
-        return list.map((w) => w.id == id ? w.copyWith(name: clean) : w).toList();
+      final oldName = widget.workflow.name;
+      final yamlText = workflowToYaml(widget.workflow);
+      final api = ref.read(workflowsApiProvider);
+      // Upsert under new name, then delete old name. Fire-and-forget with refresh.
+      api.replace(clean, yamlText).then((_) async {
+        if (oldName != clean) {
+          await api.delete(oldName).catchError((_) => false);
+        }
+        ref.invalidate(remoteWorkflowsProvider);
+        await ref.read(remoteWorkflowsProvider.future);
+        if (!mounted) return;
+        final updated = ref.read(workflowsProvider).firstWhere(
+              (w) => w.name == clean,
+              orElse: () => widget.workflow,
+            );
+        ref.read(workflowProvider.notifier).state = updated;
+      }).catchError((Object e) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('rename failed: $e')),
+        );
       });
-      final current = ref.read(workflowProvider);
-      if (current.id == id) {
-        ref.read(workflowProvider.notifier).state = current.copyWith(name: clean);
-      }
     }
     setState(() => _isEditing = false);
   }
@@ -192,24 +208,41 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
     setState(() => _isEditing = false);
   }
 
-  void _startNew() {
-    final id = widget.onNew();
+  Future<void> _startNew() async {
+    await widget.onNew();
+    if (!mounted) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _enterEditMode();
     });
   }
 
   void _delete(String id) {
-    ref.read(workflowsProvider.notifier).update((list) {
-      return list.where((w) => w.id != id).toList();
-    });
-    final current = ref.read(workflowProvider);
-    if (current.id == id) {
-      final remaining = ref.read(workflowsProvider);
-      if (remaining.isNotEmpty) {
-        widget.onPick(remaining.first.id);
+    final wf = widget.workflows.firstWhere(
+      (w) => w.id == id,
+      orElse: () => WorkflowSummary(id: id, name: id, version: 0, updated: ''),
+    );
+    final api = ref.read(workflowsApiProvider);
+    api.delete(wf.name).then((_) async {
+      ref.invalidate(remoteWorkflowsProvider);
+        await ref.read(remoteWorkflowsProvider.future);
+      if (!mounted) return;
+      final current = ref.read(workflowProvider);
+      if (current.id == id) {
+        final remaining = ref.read(workflowsProvider);
+        if (remaining.isNotEmpty) {
+          widget.onPick(remaining.first.id);
+        } else {
+          // Revert to empty sentinel via main.dart's listener (just clear selection).
+          ref.read(workflowProvider.notifier).state =
+              WorkflowSummary(id: emptyWorkflowId, name: '', version: 0, updated: '');
+        }
       }
-    }
+    }).catchError((Object e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('delete failed: $e')),
+      );
+    });
   }
 
   void _commitRowRename(String id, String name) {
@@ -219,13 +252,31 @@ class _WorkflowSelectState extends ConsumerState<_WorkflowSelect> {
         .where((w) => w.id != id)
         .map((w) => w.name.toLowerCase());
     if (siblings.contains(clean.toLowerCase())) return;
-    ref.read(workflowsProvider.notifier).update((list) {
-      return list.map((w) => w.id == id ? w.copyWith(name: clean) : w).toList();
+    final target = widget.workflows.firstWhere((w) => w.id == id);
+    final oldName = target.name;
+    final yamlText = workflowToYaml(target);
+    final api = ref.read(workflowsApiProvider);
+    api.replace(clean, yamlText).then((_) async {
+      if (oldName != clean) {
+        await api.delete(oldName).catchError((_) => false);
+      }
+      ref.invalidate(remoteWorkflowsProvider);
+        await ref.read(remoteWorkflowsProvider.future);
+      if (!mounted) return;
+      final current = ref.read(workflowProvider);
+      if (current.id == id) {
+        final updated = ref.read(workflowsProvider).firstWhere(
+              (w) => w.name == clean,
+              orElse: () => current,
+            );
+        ref.read(workflowProvider.notifier).state = updated;
+      }
+    }).catchError((Object e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('rename failed: $e')),
+      );
     });
-    final current = ref.read(workflowProvider);
-    if (current.id == id) {
-      ref.read(workflowProvider.notifier).state = current.copyWith(name: clean);
-    }
     setState(() => _editingRowId = null);
   }
 
@@ -840,6 +891,92 @@ class _BuildBar extends ConsumerWidget {
     final wf = ref.watch(workflowProvider);
     final workflows = ref.watch(workflowsProvider);
     final yamlOpen = ref.watch(yamlDrawerOpenProvider);
+    final dirty = ref.watch(workflowDirtyProvider);
+    final remoteAsync = ref.watch(remoteWorkflowsProvider);
+    final isEmpty = wf.id == emptyWorkflowId;
+
+    // Auto-select first remote workflow on initial load.
+    ref.watch(autoSelectFirstWorkflowProvider);
+
+    // Loading state: backend fetch in progress, no real workflow yet.
+    if (isEmpty && remoteAsync.isLoading) {
+      return Row(
+        children: [
+          const SizedBox(
+            width: 16,
+            height: 16,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          ),
+          const SizedBox(width: 10),
+          Text(
+            'loading workflows…',
+            style: TextStyle(color: AppColors.fg2, fontSize: 12),
+          ),
+        ],
+      );
+    }
+
+    // Error state: backend unreachable.
+    if (remoteAsync.hasError && workflows.isEmpty) {
+      return Row(
+        children: [
+          TrailheadIcon(
+            icon: TrailheadIconData.x,
+            size: 14,
+            color: AppColors.danger,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              'backend unreachable: ${remoteAsync.error}',
+              style: TextStyle(color: AppColors.danger, fontSize: 12),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.sm,
+            icon: TrailheadIconData.copy,
+            label: 'retry',
+            onTap: () { ref.invalidate(remoteWorkflowsProvider); },
+          ),
+        ],
+      );
+    }
+
+    // Empty state: no workflows yet.
+    if (isEmpty && workflows.isEmpty) {
+      return Row(
+        children: [
+          AppButton(
+            variant: AppButtonVariant.primary,
+            size: AppButtonSize.sm,
+            icon: TrailheadIconData.plus,
+            label: 'create your first workflow',
+            onTap: () => _createNewWorkflow(ref),
+          ),
+        ],
+      );
+    }
+
+    if (isEmpty) {
+      // Workflows exist but none selected — show picker prompt.
+      return Row(
+        children: [
+          AppButton(
+            variant: AppButtonVariant.ghost,
+            size: AppButtonSize.sm,
+            label: 'pick a workflow',
+            onTap: () {
+              if (workflows.isNotEmpty) {
+                ref.read(workflowProvider.notifier).state = workflows.first;
+              }
+            },
+          ),
+        ],
+      );
+    }
 
     return Row(
       children: [
@@ -850,60 +987,43 @@ class _BuildBar extends ConsumerWidget {
           onPick: (id) {
             // Save current document before switching.
             final currentWf = ref.read(workflowProvider);
-            final currentVp = ref.read(canvasControllerProvider);
-            ref.read(documentsProvider.notifier).update((docs) {
-              final m = Map<String, WorkflowDocument>.from(docs);
-              m[currentWf.id] = WorkflowDocument(workflow: currentWf, viewport: currentVp);
-              return m;
-            });
-            // Load selected document.
-            final doc = ref.read(documentsProvider)[id] ?? WorkflowDocument(
-              workflow: ref.read(workflowsProvider).firstWhere((w) => w.id == id),
-            );
-            ref.read(workflowProvider.notifier).state = doc.workflow;
-            ref.read(canvasControllerProvider.notifier).setViewport(doc.viewport);
+            if (currentWf.id != emptyWorkflowId) {
+              final currentVp = ref.read(canvasControllerProvider);
+              ref.read(documentsProvider.notifier).update((docs) {
+                final m = Map<String, WorkflowDocument>.from(docs);
+                m[currentWf.id] =
+                    WorkflowDocument(workflow: currentWf, viewport: currentVp);
+                return m;
+              });
+            }
+            final picked =
+                ref.read(workflowsProvider).firstWhere((w) => w.id == id);
+            ref.read(workflowProvider.notifier).state = picked;
+            final doc = ref.read(documentsProvider)[id];
+            if (doc != null) {
+              ref
+                  .read(canvasControllerProvider.notifier)
+                  .setViewport(doc.viewport);
+            }
             ref.read(selectionProvider.notifier).clear();
             ref.read(hoveredNodeProvider.notifier).state = null;
             ref.read(draggingNodeIdProvider.notifier).state = null;
             ref.read(dragOffsetProvider.notifier).state = Offset.zero;
             ref.read(selectedStageIdProvider.notifier).state = null;
             ref.read(stageDrawerOpenProvider.notifier).state = false;
+            ref.read(workflowDirtyProvider.notifier).state = false;
           },
-          onNew: () {
-            final id = 'wf_untitled_${DateTime.now().millisecondsSinceEpoch}';
-            final newWf = WorkflowSummary(
-              id: id,
-              name: 'Untitled',
-              version: 1,
-              updated: 'just now',
-              nodes: const [
-                WorkflowNode(
-                  id: 'entrypoint',
-                  kind: 'worker',
-                  label: 'entrypoint',
-                  x: 0,
-                  y: -16,
-                ),
-              ],
-            );
-            ref.read(workflowsProvider.notifier).update((list) => [...list, newWf]);
-            ref.read(documentsProvider.notifier).update((docs) {
-              final m = Map<String, WorkflowDocument>.from(docs);
-              m[id] = WorkflowDocument(workflow: newWf, viewport: const CanvasViewport());
-              return m;
-            });
-            ref.read(workflowProvider.notifier).state = newWf;
-            ref.read(canvasControllerProvider.notifier).reset();
-            ref.read(selectionProvider.notifier).clear();
-            ref.read(hoveredNodeProvider.notifier).state = null;
-            ref.read(draggingNodeIdProvider.notifier).state = null;
-            ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-            ref.read(selectedStageIdProvider.notifier).state = null;
-            ref.read(stageDrawerOpenProvider.notifier).state = false;
-            return id;
-          },
+          onNew: () => _createNewWorkflow(ref),
         ),
         const Spacer(),
+        if (dirty)
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Text(
+              'saving…',
+              style: TextStyle(color: AppColors.fg2, fontSize: 11),
+            ),
+          ),
         AppButton(
           variant: yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
           size: AppButtonSize.sm,
@@ -922,13 +1042,6 @@ class _BuildBar extends ConsumerWidget {
         ),
         const SizedBox(width: 8),
         AppButton(
-          variant: AppButtonVariant.secondary,
-          size: AppButtonSize.sm,
-          label: 'save draft',
-          onTap: () {},
-        ),
-        const SizedBox(width: 8),
-        AppButton(
           variant: AppButtonVariant.trail,
           size: AppButtonSize.sm,
           icon: TrailheadIconData.play,
@@ -937,6 +1050,59 @@ class _BuildBar extends ConsumerWidget {
         ),
       ],
     );
+  }
+
+  /// Creates a new workflow in the backend and switches to it.
+  /// Returns the workflow id.
+  Future<String> _createNewWorkflow(WidgetRef ref) async {
+    final api = ref.read(workflowsApiProvider);
+    final baseName = 'untitled';
+    final existing = ref.read(workflowsProvider).map((w) => w.name).toSet();
+    var name = baseName;
+    var i = 2;
+    while (existing.contains(name)) {
+      name = '$baseName-$i';
+      i++;
+    }
+    final placeholder = WorkflowSummary(
+      id: 'wf_${DateTime.now().millisecondsSinceEpoch}',
+      name: name,
+      version: 1,
+      updated: 'just now',
+      nodes: const [
+        WorkflowNode(
+          id: 'entrypoint',
+          kind: 'worker',
+          label: 'entrypoint',
+          x: 0,
+          y: -16,
+        ),
+      ],
+    );
+    final yaml = workflowToYaml(placeholder);
+    try {
+      await api.create(name, yaml);
+      ref.invalidate(remoteWorkflowsProvider);
+        await ref.read(remoteWorkflowsProvider.future);
+      final created = ref.read(workflowsProvider).firstWhere(
+            (w) => w.name == name,
+            orElse: () => placeholder,
+          );
+      ref.read(workflowProvider.notifier).state = created;
+      ref.read(canvasControllerProvider.notifier).reset();
+      ref.read(selectionProvider.notifier).clear();
+      ref.read(hoveredNodeProvider.notifier).state = null;
+      ref.read(draggingNodeIdProvider.notifier).state = null;
+      ref.read(dragOffsetProvider.notifier).state = Offset.zero;
+      ref.read(selectedStageIdProvider.notifier).state = null;
+      ref.read(stageDrawerOpenProvider.notifier).state = false;
+      ref.read(workflowDirtyProvider.notifier).state = false;
+    } catch (e) {
+      // ignore: use_build_context_synchronously
+      // Surface error via dirty state — caller will see no workflow selected.
+      debugPrint('create workflow failed: $e');
+    }
+    return placeholder.id;
   }
 }
 

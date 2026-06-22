@@ -10,8 +10,7 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 - Dark slate background (`#0c0d10` page, `#14161b` main content)
 - **Riverpod** for state management (`flutter_riverpod`)
 - **Mode rail** + **top bar** implemented, driven by `modeProvider`
-- Mock data drives UI — no backend connection yet
-- No routing, no API client, no sidebars, no canvas, no filmstrip yet
+- Workflows loaded from backend at startup (Build mode); jobs panel still mock
 
 ### Implemented
 
@@ -45,9 +44,38 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 ### Not Yet Implemented
 
 - Snapshot filmstrip (bottom strip)
-- API client (backend connectivity)
+- Jobs panel backend integration (still uses `mockJobs` from `mock_data.dart`)
 - Routing (multiple pages)
 - **Zoom control UI overlay** — zoom exists in controller but no `−`/`+`/reset bar yet
+
+## Backend Connectivity (Build mode)
+
+Workflows are read from and written to the Trailhead backend (`/api/v1/workflows/*`).
+The frontend uses **relative URLs only** — in production it's served from the same
+Rust binary as the API (same-origin via rust-embed). No connection configuration
+needed.
+
+The dev preview (`serve.js` Bun server) proxies `/api/*` and `/mcp/*` to the
+backend via the `BACKEND_URL` env var (default `http://host.docker.internal:4050`).
+Override for local dev:
+
+```bash
+BACKEND_URL=http://localhost:4050 bun run serve.js
+```
+
+iOS native client + hosted backend connection config is a future change.
+
+### Key files
+- `lib/services/workflows_api.dart` — HTTP client for `/workflows/*` endpoints
+- `lib/utils/yaml_to_workflow.dart` — parses stored YAML into canvas model
+- `lib/utils/workflow_to_yaml.dart` — serializes canvas model to YAML
+- `lib/providers/api_provider.dart` — `workflowsApiProvider` (relative URL)
+- `lib/providers/mode_provider.dart` — `remoteWorkflowsProvider` async-fetches + parses
+- `serve.js` — Bun dev preview + API proxy
+
+### Autosave
+Canvas edits trigger debounced (800ms) `PUT /workflows/{name}` via the autosave
+listener in `lib/main.dart`. The `workflowDirtyProvider` tracks unsaved state.
 
 ## Build Commands
 
@@ -145,8 +173,10 @@ frontend/
 
 | Package | Purpose |
 |---------|---------|
-| `flutter_riverpod` | State management (manual StateProviders) |
+| `flutter_riverpod` | State management (manual StateProviders + FutureProvider for async loads) |
 | `flutter_svg` | SVG icon rendering (Lucide stroke paths) |
+| `http` | HTTP client for backend API (`/api/v1/workflows/*`) |
+| `yaml` | YAML parser for stored workflow content |
 | `cupertino_icons` | iOS-style icons |
 
 ## Design System

@@ -55,6 +55,23 @@ pub struct WorkflowNameParams {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct SaveWorkflowParams {
+    pub name: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ImportWorkflowFileParams {
+    pub name: String,
+    pub content: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
+pub struct ImportWorkflowsParams {
+    pub files: Vec<ImportWorkflowFileParams>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, JsonSchema)]
 pub struct SecretParams {
     pub name: String,
     pub value: String,
@@ -276,6 +293,43 @@ impl TrailheadMcpServer {
             Ok(None) => format!("workflow '{}' not found", params.name),
             Err(e) => format!("error: {e}"),
         }
+    }
+
+    #[tool(description = "Create or replace a workflow template by name. Body: {name, content}. Content is opaque YAML text — backend does not validate against the scheduler parser on save.")]
+    pub async fn workflows_create(&self, Parameters(params): Parameters<SaveWorkflowParams>) -> String {
+        match self.db.save_workflow(&params.name, &params.content) {
+            Ok(()) => serde_json::json!({"name": params.name, "saved": true}).to_string(),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    #[tool(description = "Replace a workflow's content (alias of workflows_create — both upsert).")]
+    pub async fn workflows_replace(&self, Parameters(params): Parameters<SaveWorkflowParams>) -> String {
+        match self.db.save_workflow(&params.name, &params.content) {
+            Ok(()) => serde_json::json!({"name": params.name, "replaced": true}).to_string(),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    #[tool(description = "Delete a workflow by name. Idempotent — returns deleted=false if not found.")]
+    pub async fn workflows_delete(&self, Parameters(params): Parameters<WorkflowNameParams>) -> String {
+        match self.db.delete_workflow(&params.name) {
+            Ok(existed) => serde_json::json!({"name": params.name, "deleted": existed}).to_string(),
+            Err(e) => format!("error: {e}"),
+        }
+    }
+
+    #[tool(description = "Batch import workflows. Body: {files: [{name, content}]}. Returns {imported, errors}.")]
+    pub async fn workflows_import(&self, Parameters(params): Parameters<ImportWorkflowsParams>) -> String {
+        let mut imported = 0;
+        let mut errors: Vec<serde_json::Value> = Vec::new();
+        for f in params.files {
+            match self.db.save_workflow(&f.name, &f.content) {
+                Ok(()) => imported += 1,
+                Err(e) => errors.push(serde_json::json!({"name": f.name, "error": e.to_string()})),
+            }
+        }
+        serde_json::json!({"imported": imported, "errors": errors}).to_string()
     }
 
     #[tool(description = "List all secrets")]

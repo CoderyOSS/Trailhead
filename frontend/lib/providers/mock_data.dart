@@ -16,6 +16,14 @@ class WorkflowSummary {
   final List<WorkflowNode> nodes;
   final List<WorkflowEdge> edges;
 
+  /// Raw YAML from backend when this workflow was loaded remotely.
+  /// Null for freshly-created (unsaved) workflows.
+  final String? remoteContent;
+
+  /// Non-null when the backend YAML could not be parsed into the canvas model.
+  /// UI shows an "incompatible format" badge and restricts to delete-only.
+  final String? parseError;
+
   const WorkflowSummary({
     required this.id,
     required this.name,
@@ -27,7 +35,28 @@ class WorkflowSummary {
     this.active = 0,
     this.nodes = const [],
     this.edges = const [],
+    this.remoteContent,
+    this.parseError,
   });
+
+  /// Placeholder for workflows whose YAML could not be parsed into the canvas
+  /// model. The user can still delete them via the API.
+  factory WorkflowSummary.incompatible({
+    required String name,
+    required String parseError,
+    String? remoteContent,
+  }) {
+    return WorkflowSummary(
+      id: 'wf_${name.replaceAll(RegExp(r'[^a-z0-9_-]'), '_').toLowerCase()}',
+      name: name,
+      version: 0,
+      updated: '',
+      nodes: const [],
+      edges: const [],
+      remoteContent: remoteContent,
+      parseError: parseError,
+    );
+  }
 
   WorkflowSummary copyWith({
     String? id,
@@ -40,6 +69,8 @@ class WorkflowSummary {
     int? active,
     List<WorkflowNode>? nodes,
     List<WorkflowEdge>? edges,
+    String? remoteContent,
+    String? parseError,
   }) {
     return WorkflowSummary(
       id: id ?? this.id,
@@ -52,6 +83,8 @@ class WorkflowSummary {
       active: active ?? this.active,
       nodes: nodes ?? this.nodes,
       edges: edges ?? this.edges,
+      remoteContent: remoteContent ?? this.remoteContent,
+      parseError: parseError ?? this.parseError,
     );
   }
 }
@@ -82,215 +115,6 @@ class JobSummary {
   });
 }
 
-final mockWorkflow = WorkflowSummary(
-  id: 'wf_pr_reviewer',
-  name: 'pr-reviewer',
-  version: 14,
-  draft: 15,
-  updated: '2 min ago by jen.b',
-  runCount: 1284,
-  last: '2m',
-  active: 2,
-  nodes: const [
-    WorkflowNode(
-      id: 'entrypoint',
-      kind: 'worker',
-      label: 'entrypoint',
-      x: 0,
-      y: -18,
-      prompt: 'You are a helpful code reviewer. Review the following pull request and identify potential issues.\n\nPR title: {{inputs.title}}\nPR description: {{inputs.description}}\n\nFocus on: correctness, performance, security, and style.',
-      resultFormat: 'json',
-      schema: {
-        'type': 'object',
-        'properties': {
-          'summary': {'type': 'string'},
-          'issues': {
-            'type': 'array',
-            'items': {
-              'type': 'object',
-              'properties': {
-                'severity': {'type': 'string', 'enum': ['high', 'medium', 'low']},
-                'line': {'type': 'integer'},
-                'message': {'type': 'string'},
-              },
-            },
-          },
-        },
-      },
-      connection: 'anthropic-claude-sonnet-4',
-      timeout: '120s',
-      retries: 2,
-      parallelism: 4,
-      configs: ['review-rules.yaml', 'style-guide.md'],
-    ),
-    WorkflowNode(
-      id: 'commenter',
-      kind: 'fan',
-      label: 'comment-files',
-      x: 32,
-      y: 46,
-      over: 'files',
-      count: 8,
-      concurrency: 3,
-      collect: 'array',
-      body: StageBody(
-        label: 'per-file-comment',
-        model: 'openai-gpt-4o-mini',
-        skills: ['code-review', 'typescript'],
-        prompt: 'Review this specific file from the PR. File: {{item.path}}\nDiff: {{item.diff}}\n\nProvide inline comments for any issues found.',
-      ),
-    ),
-    WorkflowNode(
-      id: 'scorer',
-      kind: 'branch',
-      label: 'priority-routing',
-      x: 96,
-      y: 97,
-      outputs: [
-        BranchOutput(id: '0', label: 'high', expression: 'score > 0.8'),
-        BranchOutput(id: '1', label: 'medium', expression: 'score > 0.5'),
-        BranchOutput(id: '2', label: 'low', expression: 'score > 0.2'),
-        BranchOutput(id: '3', label: 'default'),
-      ],
-      matchAll: false,
-    ),
-    WorkflowNode(
-      id: 'high-worker',
-      kind: 'worker',
-      label: 'urgent-review',
-      x: 320,
-      y: 46,
-      prompt: 'This is a HIGH priority review. The entrypoint found critical issues.\n\nPlease provide a detailed response with actionable fixes.\n\nContext: {{entrypoint.summary}}',
-      resultFormat: 'text',
-      connection: 'anthropic-claude-opus-4',
-      timeout: '300s',
-      retries: 3,
-      parallelism: 1,
-    ),
-    WorkflowNode(
-      id: 'med-worker',
-      kind: 'worker',
-      label: 'normal-review',
-      x: 320,
-      y: 110,
-      prompt: 'Standard review for medium-priority issues.\n\nContext: {{entrypoint.summary}}\n\nProvide a concise summary of findings.',
-      resultFormat: 'json',
-      schema: {
-        'type': 'object',
-        'properties': {
-          'approved': {'type': 'boolean'},
-          'notes': {'type': 'string'},
-        },
-      },
-      connection: 'anthropic-claude-sonnet-4',
-      timeout: '120s',
-      retries: 2,
-      parallelism: 2,
-    ),
-    WorkflowNode(
-      id: 'low-worker',
-      kind: 'worker',
-      label: 'deferred-review',
-      x: 320,
-      y: 174,
-      prompt: 'Low priority — minor suggestions only.\n\nContext: {{entrypoint.summary}}',
-      resultFormat: 'text',
-      connection: 'openai-gpt-4o-mini',
-      timeout: '60s',
-      retries: 1,
-      parallelism: 4,
-    ),
-  ],
-  edges: const [
-    WorkflowEdge(id: 'edge_1', sourceId: 'entrypoint', targetId: 'commenter'),
-    WorkflowEdge(id: 'edge_2', sourceId: 'commenter', targetId: 'scorer'),
-    WorkflowEdge(id: 'edge_3', sourceId: 'scorer', targetId: 'high-worker', sourcePort: 0),
-    WorkflowEdge(id: 'edge_4', sourceId: 'scorer', targetId: 'med-worker', sourcePort: 1),
-    WorkflowEdge(id: 'edge_5', sourceId: 'scorer', targetId: 'low-worker', sourcePort: 2),
-  ],
-);
-
-final mockWorkflows = <WorkflowSummary>[
-  WorkflowSummary(
-    id: 'wf_pr_reviewer',
-    name: 'pr-reviewer',
-    version: 14,
-    draft: 15,
-    updated: '2 min ago by jen.b',
-    runCount: 1284,
-    last: '2m',
-    active: 2,
-    nodes: const [
-      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -18),
-    ],
-    edges: const [],
-  ),
-  WorkflowSummary(
-    id: 'wf_eval_harness',
-    name: 'eval-harness',
-    version: 7,
-    updated: '1h ago by ci-bot',
-    runCount: 412,
-    last: '11m',
-    active: 0,
-    nodes: const [
-      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-    ],
-    edges: const [],
-  ),
-  WorkflowSummary(
-    id: 'wf_release_notes',
-    name: 'release-notes',
-    version: 3,
-    updated: '3h ago by alex.k',
-    runCount: 38,
-    last: '1h',
-    active: 0,
-    nodes: const [
-      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-    ],
-    edges: const [],
-  ),
-  WorkflowSummary(
-    id: 'wf_flake_tracker',
-    name: 'flake-tracker',
-    version: 2,
-    updated: '1d ago by jen.b',
-    runCount: 906,
-    last: '8m',
-    active: 1,
-    nodes: const [
-      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-    ],
-    edges: const [],
-  ),
-  WorkflowSummary(
-    id: 'wf_changelog_summ',
-    name: 'changelog-summary',
-    version: 5,
-    updated: '4h ago by ops',
-    runCount: 142,
-    last: '3h',
-    active: 0,
-    nodes: const [
-      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-    ],
-    edges: const [],
-  ),
-  WorkflowSummary(
-    id: 'wf_doc_indexer',
-    name: 'doc-indexer',
-    version: 1,
-    updated: '1d ago by ops',
-    runCount: 77,
-    last: '1d',
-    active: 0,
-    nodes: const [
-      WorkflowNode(id: 'entrypoint', kind: 'worker', label: 'entrypoint', x: 0, y: -16),
-    ],
-    edges: const [],
-  ),
-];
 
 final mockJob = JobSummary(
   id: 'r_8f2a91c',

@@ -1,12 +1,13 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/tokens.dart';
 import 'theme/theme_controller.dart';
-import 'models/workflow_document.dart';
 import 'models/workflow_node.dart';
-import 'providers/canvas_controller.dart';
+import 'providers/api_provider.dart';
 import 'providers/mode_provider.dart';
-import 'providers/selection_notifier.dart';
+import 'providers/mock_data.dart' show WorkflowSummary;
+import 'utils/workflow_to_yaml.dart';
 import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
 import 'widgets/jobs_sidebar.dart';
@@ -31,7 +32,7 @@ GlobalObjectKey _stageDrawerKey(String stageId, StageDrawerView view) {
 const _yamlDrawerKey = GlobalObjectKey('yaml_drawer');
 
 void main() {
-  runApp(const TrailheadApp());
+  runApp(const ProviderScope(child: TrailheadApp()));
 }
 
 class TrailheadApp extends StatelessWidget {
@@ -48,18 +49,89 @@ class TrailheadApp extends StatelessWidget {
           theme: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: AppColors.bg0,
           ),
-          home: TrailheadShell(),
+          home: const TrailheadShell(),
         ),
       ),
     );
   }
 }
 
-class TrailheadShell extends ConsumerWidget {
+class TrailheadShell extends ConsumerStatefulWidget {
   const TrailheadShell({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<TrailheadShell> createState() => _TrailheadShellState();
+}
+
+class _TrailheadShellState extends ConsumerState<TrailheadShell> {
+  Timer? _autosaveTimer;
+  WorkflowSummary? _lastSavedWorkflow;
+
+  @override
+  void dispose() {
+    _autosaveTimer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleAutosave(WorkflowSummary wf) {
+    if (wf.id == emptyWorkflowId) return;
+    if (wf.parseError != null) return;
+    // Skip if state hasn't meaningfully changed.
+    if (_lastSavedWorkflow != null && _workflowEqual(_lastSavedWorkflow!, wf)) {
+      return;
+    }
+    _autosaveTimer?.cancel();
+    ref.read(workflowDirtyProvider.notifier).state = true;
+    _autosaveTimer = Timer(const Duration(milliseconds: 800), () {
+      _flushAutosave();
+    });
+  }
+
+  Future<void> _flushAutosave() async {
+    final wf = ref.read(workflowProvider);
+    if (wf.id == emptyWorkflowId || wf.parseError != null) {
+      ref.read(workflowDirtyProvider.notifier).state = false;
+      return;
+    }
+    final yaml = workflowToYaml(wf);
+    try {
+      final api = ref.read(workflowsApiProvider);
+      await api.replace(wf.name, yaml);
+      _lastSavedWorkflow = wf.copyWith(remoteContent: yaml);
+      // Update remote list so dropdown reflects new mtime if it changes.
+      ref.invalidate(remoteWorkflowsProvider);
+        await ref.read(remoteWorkflowsProvider.future);
+    } catch (e) {
+      debugPrint('autosave failed: $e');
+    } finally {
+      if (mounted) ref.read(workflowDirtyProvider.notifier).state = false;
+    }
+  }
+
+  static bool _workflowEqual(WorkflowSummary a, WorkflowSummary b) {
+    if (a.id != b.id) return false;
+    if (a.name != b.name) return false;
+    if (a.nodes.length != b.nodes.length) return false;
+    if (a.edges.length != b.edges.length) return false;
+    for (var i = 0; i < a.nodes.length; i++) {
+      if (a.nodes[i].id != b.nodes[i].id ||
+          a.nodes[i].x != b.nodes[i].x ||
+          a.nodes[i].y != b.nodes[i].y ||
+          a.nodes[i].label != b.nodes[i].label) {
+        return false;
+      }
+    }
+    for (var i = 0; i < a.edges.length; i++) {
+      if (a.edges[i].sourceId != b.edges[i].sourceId ||
+          a.edges[i].targetId != b.edges[i].targetId) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
     final showSidebar = mode != AppMode.build && (mode != AppMode.history || job != null);
@@ -69,6 +141,18 @@ class TrailheadShell extends ConsumerWidget {
     final workflow = ref.watch(workflowProvider);
     final settingsOpen = ref.watch(settingsModalOpenProvider);
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+
+    // Autosave: debounce-write workflow state changes to backend.
+    ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
+      if (prev == null || prev.id != next.id) {
+        // Workflow switched — reset autosave tracker.
+        _lastSavedWorkflow = null;
+        // Still schedule a save in case the new workflow is dirty.
+        _scheduleAutosave(next);
+        return;
+      }
+      _scheduleAutosave(next);
+    });
 
     final stageNode = stageId != null
         ? workflow.nodes.cast<WorkflowNode?>().firstWhere(
@@ -85,15 +169,15 @@ class TrailheadShell extends ConsumerWidget {
       return Row(
         children: [
           ModeRail(activeCount: 3),
-          if (showSidebar) _buildSidebar(mode, ref),
+          if (showSidebar) _buildSidebar(mode),
           Expanded(
             child: Column(
               children: [
-                TopBar(),
+                const TopBar(),
                 Expanded(
                   child: mode == AppMode.history && job == null
-                      ? RunsTable()
-                      : GraphCanvas(),
+                      ? const RunsTable()
+                      : const GraphCanvas(),
                 ),
                 if (bottomPanel != null) Expanded(child: bottomPanel),
               ],
@@ -109,7 +193,6 @@ class TrailheadShell extends ConsumerWidget {
       final showStageDrawer = stageOpen && stageNode != null && mode != AppMode.history;
 
       if (isPortrait) {
-        // Portrait: side-by-side in bottom panel
         return Row(
           children: [
             if (yamlOpen)
@@ -140,7 +223,6 @@ class TrailheadShell extends ConsumerWidget {
         );
       }
 
-      // Landscape: neighboring columns on the right
       return Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -184,14 +266,13 @@ class TrailheadShell extends ConsumerWidget {
               Container(height: 1, color: AppColors.border1),
             ],
           ),
-          if (settingsOpen)
-            SettingsModalOverlay(),
+          if (settingsOpen) const SettingsModalOverlay(),
         ],
       ),
     );
   }
 
-  Widget _buildSidebar(AppMode mode, WidgetRef ref) {
+  Widget _buildSidebar(AppMode mode) {
     switch (mode) {
       case AppMode.build:
         return const SizedBox.shrink();

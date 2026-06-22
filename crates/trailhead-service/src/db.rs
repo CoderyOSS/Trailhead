@@ -82,8 +82,6 @@ pub struct WorkflowRow {
     pub name: String,
     pub content: String,
     pub content_hash: Option<String>,
-    pub source: String,
-    pub project_id: Option<String>,
     pub created_at: String,
     pub updated_at: String,
 }
@@ -715,31 +713,45 @@ impl Database {
         Ok(())
     }
 
-    pub fn save_workflow(
-        &self,
-        name: &str,
-        content: &str,
-        content_hash: &str,
-        source: &str,
-        project_id: Option<&str>,
-    ) -> Result<()> {
+    pub fn save_workflow(&self, name: &str, content: &str) -> Result<()> {
         let now = Utc::now().to_rfc3339();
+        let hash = Self::normalize_and_hash(content);
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 conn.execute(
-                    "INSERT OR REPLACE INTO workflows (name, content, content_hash, source, project_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                    params![name, content, content_hash, source, project_id, now, now],
+                    "INSERT OR REPLACE INTO workflows (name, content, content_hash, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+                    params![name, content, hash, now, now],
                 )?;
             }
             Backend::Remote { .. } => {
                 self.remote_exec(
-                    "INSERT OR REPLACE INTO workflows (name, content, content_hash, source, project_id, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)",
-                    vec![serde_json::json!(name), serde_json::json!(content), serde_json::json!(content_hash), serde_json::json!(source), serde_json::json!(project_id), serde_json::json!(now), serde_json::json!(now)],
+                    "INSERT OR REPLACE INTO workflows (name, content, content_hash, created_at, updated_at) VALUES (?1, ?2, ?3, ?4, ?5)",
+                    vec![serde_json::json!(name), serde_json::json!(content), serde_json::json!(hash), serde_json::json!(now), serde_json::json!(now)],
                 )?;
             }
         }
         Ok(())
+    }
+
+    pub fn delete_workflow(&self, name: &str) -> Result<bool> {
+        match &self.backend {
+            Backend::Local(_) => {
+                let conn = self.local_conn()?;
+                let affected = conn.execute(
+                    "DELETE FROM workflows WHERE name = ?1",
+                    params![name],
+                )?;
+                Ok(affected > 0)
+            }
+            Backend::Remote { .. } => {
+                self.remote_exec(
+                    "DELETE FROM workflows WHERE name = ?1",
+                    vec![serde_json::json!(name)],
+                )?;
+                Ok(true)
+            }
+        }
     }
 
     pub fn get_workflow(&self, name: &str) -> Result<Option<WorkflowRow>> {
@@ -747,17 +759,15 @@ impl Database {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
                 let row = conn.query_row(
-                    "SELECT name, content, content_hash, source, project_id, created_at, updated_at FROM workflows WHERE name = ?1",
+                    "SELECT name, content, content_hash, created_at, updated_at FROM workflows WHERE name = ?1",
                     params![name],
                     |row| {
                         Ok(WorkflowRow {
                             name: row.get(0)?,
                             content: row.get(1)?,
                             content_hash: row.get(2)?,
-                            source: row.get(3)?,
-                            project_id: row.get(4)?,
-                            created_at: row.get(5)?,
-                            updated_at: row.get(6)?,
+                            created_at: row.get(3)?,
+                            updated_at: row.get(4)?,
                         })
                     },
                 );
@@ -769,7 +779,7 @@ impl Database {
             }
             Backend::Remote { .. } => {
                 self.remote_query_one(
-                    "SELECT name, content, content_hash, source, project_id, created_at, updated_at FROM workflows WHERE name = ?1",
+                    "SELECT name, content, content_hash, created_at, updated_at FROM workflows WHERE name = ?1",
                     vec![serde_json::json!(name)],
                 )
             }
@@ -777,7 +787,7 @@ impl Database {
     }
 
     pub fn list_workflows(&self) -> Result<Vec<WorkflowRow>> {
-        const SQL: &str = "SELECT name, content, content_hash, source, project_id, created_at, updated_at FROM workflows ORDER BY name";
+        const SQL: &str = "SELECT name, content, content_hash, created_at, updated_at FROM workflows ORDER BY name";
         match &self.backend {
             Backend::Local(_) => {
                 let conn = self.local_conn()?;
@@ -787,10 +797,8 @@ impl Database {
                         name: row.get(0)?,
                         content: row.get(1)?,
                         content_hash: row.get(2)?,
-                        source: row.get(3)?,
-                        project_id: row.get(4)?,
-                        created_at: row.get(5)?,
-                        updated_at: row.get(6)?,
+                        created_at: row.get(3)?,
+                        updated_at: row.get(4)?,
                     })
                 })?;
                 let mut result = Vec::new();
@@ -801,39 +809,6 @@ impl Database {
             }
             Backend::Remote { .. } => self.remote_query(SQL, vec![]),
         }
-    }
-
-    pub fn seed_builtin_workflows(&self, dir: &std::path::Path) -> Result<()> {
-        if !dir.is_dir() {
-            tracing::warn!("workflows directory not found: {}", dir.display());
-            return Ok(());
-        }
-        for entry in std::fs::read_dir(dir)? {
-            let entry = entry?;
-            let path = entry.path();
-            if path.extension().and_then(|e| e.to_str()) != Some("yaml") {
-                continue;
-            }
-            let name = path
-                .file_stem()
-                .and_then(|s| s.to_str())
-                .ok_or_else(|| anyhow::anyhow!("invalid filename: {}", path.display()))?;
-            let raw = std::fs::read_to_string(&path)?;
-            let hash = Self::normalize_and_hash(&raw);
-            let existing = self.get_workflow(name)?;
-            match existing {
-                None => {
-                    self.save_workflow(name, raw.trim(), &hash, "builtin", None)?;
-                    tracing::info!("seeded workflow: {}", name);
-                }
-                Some(w) if w.content_hash.as_deref() != Some(&hash) => {
-                    self.save_workflow(name, raw.trim(), &hash, "builtin", None)?;
-                    tracing::info!("updated workflow: {}", name);
-                }
-                Some(_) => {}
-            }
-        }
-        Ok(())
     }
 
     fn normalize_and_hash(content: &str) -> String {

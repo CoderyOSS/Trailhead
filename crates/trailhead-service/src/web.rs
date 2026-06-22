@@ -53,6 +53,22 @@ struct CreateWorkflowBody {
     content: String,
 }
 
+#[derive(Deserialize)]
+struct ReplaceWorkflowBody {
+    content: String,
+}
+
+#[derive(Deserialize)]
+struct ImportWorkflowFile {
+    name: String,
+    content: String,
+}
+
+#[derive(Deserialize)]
+struct ImportWorkflowsBody {
+    files: Vec<ImportWorkflowFile>,
+}
+
 pub fn web_routes(db: Arc<Database>) -> Router {
     Router::new()
         .route("/api/v1/jobs", get(list_jobs).post(create_job))
@@ -65,7 +81,12 @@ pub fn web_routes(db: Arc<Database>) -> Router {
         .route("/api/v1/workers", get(list_workers))
         .route("/api/v1/projects", get(list_projects).post(create_project))
         .route("/api/v1/workflows", get(list_workflows).post(create_workflow))
+        .route("/api/v1/workflows/import", post(import_workflows))
         .route("/api/v1/workflows/validate", post(validate_workflow))
+        .route(
+            "/api/v1/workflows/{name}",
+            get(get_workflow).put(replace_workflow).delete(delete_workflow),
+        )
         .route("/api/v1/events", get(events_sse))
         .fallback(serve_spa)
         .with_state(db)
@@ -229,9 +250,63 @@ async fn create_workflow(
     State(db): State<Arc<Database>>,
     Json(body): Json<CreateWorkflowBody>,
 ) -> Result<StatusCode, (StatusCode, String)> {
-    db.save_workflow(&body.name, &body.content, "", "api", None)
+    db.save_workflow(&body.name, &body.content)
         .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
     Ok(StatusCode::CREATED)
+}
+
+async fn get_workflow(
+    Path(name): Path<String>,
+    State(db): State<Arc<Database>>,
+) -> Result<Json<crate::db::WorkflowRow>, (StatusCode, String)> {
+    db.get_workflow(&name)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?
+        .map(Json)
+        .ok_or((StatusCode::NOT_FOUND, format!("workflow '{}' not found", name)))
+}
+
+async fn replace_workflow(
+    Path(name): Path<String>,
+    State(db): State<Arc<Database>>,
+    Json(body): Json<ReplaceWorkflowBody>,
+) -> Result<StatusCode, (StatusCode, String)> {
+    if body.content.is_empty() {
+        return Err((StatusCode::BAD_REQUEST, "content must not be empty".into()));
+    }
+    db.save_workflow(&name, &body.content)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(StatusCode::OK)
+}
+
+async fn delete_workflow(
+    Path(name): Path<String>,
+    State(db): State<Arc<Database>>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let existed = db
+        .delete_workflow(&name)
+        .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+    Ok(Json(serde_json::json!({ "deleted": existed })))
+}
+
+async fn import_workflows(
+    State(db): State<Arc<Database>>,
+    Json(body): Json<ImportWorkflowsBody>,
+) -> Result<Json<serde_json::Value>, (StatusCode, String)> {
+    let mut imported = 0;
+    let mut errors: Vec<serde_json::Value> = Vec::new();
+    for f in body.files {
+        match db.save_workflow(&f.name, &f.content) {
+            Ok(()) => imported += 1,
+            Err(e) => errors.push(serde_json::json!({
+                "name": f.name,
+                "error": e.to_string(),
+            })),
+        }
+    }
+    Ok(Json(serde_json::json!({
+        "imported": imported,
+        "errors": errors,
+    })))
 }
 
 async fn retry_job(

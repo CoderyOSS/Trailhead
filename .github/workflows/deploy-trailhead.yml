@@ -51,7 +51,7 @@ jobs:
           SSH="ssh -i /tmp/deploy_key -o StrictHostKeyChecking=accept-new deploy@${DEPLOY_HOST}"
           SCP="scp -i /tmp/deploy_key -o StrictHostKeyChecking=accept-new"
 
-          $SSH "sudo mkdir -p /opt/codery/trailhead/bin /opt/codery/trailhead/skills /opt/codery/trailhead/workflows /opt/codery/workspaces"
+          $SSH "sudo mkdir -p /opt/codery/trailhead/bin /opt/codery/trailhead/skills /opt/codery/workspaces"
 
           $SCP trailhead-service "deploy@${DEPLOY_HOST}:/tmp/trailhead-service-${VERSION}"
           $SSH "sudo mv /tmp/trailhead-service-${VERSION} /opt/codery/trailhead/bin/trailhead-service-${VERSION} && sudo chmod +x /opt/codery/trailhead/bin/trailhead-service-${VERSION} && sudo ln -sf /opt/codery/trailhead/bin/trailhead-service-${VERSION} /opt/codery/trailhead/bin/current"
@@ -61,11 +61,6 @@ jobs:
           for f in crates/trailhead-service/skills/*.md; do
             $SCP "$f" "deploy@${DEPLOY_HOST}:/tmp/$(basename "$f")"
             $SSH "sudo mv /tmp/$(basename "$f") /opt/codery/trailhead/skills/"
-          done
-
-          for f in crates/trailhead-service/workflows/*.yaml; do
-            $SCP "$f" "deploy@${DEPLOY_HOST}:/tmp/$(basename "$f")"
-            $SSH "sudo mv /tmp/$(basename "$f") /opt/codery/trailhead/workflows/"
           done
 
           printf '[program:trailhead]\ncommand=/opt/codery/trailhead/bin/current daemon --db /opt/codery/trailhead.db --config /opt/codery/trailhead/trailhead.toml\nuser=root\nautostart=true\nautorestart=true\npriority=50\nstdout_logfile=/var/log/supervisor/trailhead.log\nstdout_logfile_maxbytes=10MB\nstdout_logfile_backups=3\nstderr_logfile=/var/log/supervisor/trailhead.log\nstderr_logfile_maxbytes=10MB\nstderr_logfile_backups=3\n' > /tmp/trailhead.conf

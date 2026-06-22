@@ -31,6 +31,7 @@ async fn main() -> anyhow::Result<()> {
         "jobs" => jobs_cmd(&args[2..]).await,
         "workers" => workers_cmd(&args[2..]).await,
         "projects" => projects_cmd(&args[2..]).await,
+        "workflows" => workflows_cmd(&args[2..]).await,
         "--help" | "-h" => {
             print_usage();
             Ok(())
@@ -58,6 +59,10 @@ fn print_usage() {
     eprintln!("  workers destroy <id>                Destroy a worker");
     eprintln!("  projects list                       List projects");
     eprintln!("  projects add --name ID --repo URL --branch BRANCH");
+    eprintln!("  workflows list                      List workflows");
+    eprintln!("  workflows show <name>               Print workflow YAML");
+    eprintln!("  workflows import <path>             Import .yaml/.yml file or dir");
+    eprintln!("  workflows delete <name>             Delete a workflow");
 }
 
 fn open_port_for_docker_bridges(port: u16) {
@@ -101,7 +106,6 @@ async fn daemon_cmd(args: &[String]) -> anyhow::Result<()> {
     tracing::info!("loaded config from {}", config_path);
 
     let db = Arc::new(db::Database::open(&db_path)?);
-    db.seed_builtin_workflows(std::path::Path::new("/opt/codery/trailhead/workflows"))?;
     let _ = std::fs::create_dir_all("/opt/codery/secrets");
     let provider = Arc::new(provider::docker::DockerProvider::new()?);
 
@@ -357,4 +361,105 @@ fn get_arg_index(args: &[String], idx: usize) -> anyhow::Result<String> {
     args.get(idx)
         .cloned()
         .ok_or_else(|| anyhow::anyhow!("missing argument at position {}", idx))
+}
+
+async fn workflows_cmd(args: &[String]) -> anyhow::Result<()> {
+    if args.is_empty() {
+        eprintln!("usage: trailhead-service workflows <list|show|import|delete>");
+        std::process::exit(1);
+    }
+    let db_path =
+        std::env::var("TRAILHEAD_DB").unwrap_or_else(|_| "/opt/codery/trailhead.db".into());
+    let db = db::Database::open(&db_path)?;
+
+    match args[0].as_str() {
+        "list" => {
+            let wfs = db.list_workflows()?;
+            for w in &wfs {
+                println!("{}", w.name);
+            }
+            println!("({} workflows)", wfs.len());
+        }
+        "show" => {
+            let name = get_arg_index(args, 1)?;
+            match db.get_workflow(&name)? {
+                Some(w) => println!("{}", w.content),
+                None => return Err(anyhow::anyhow!("workflow '{}' not found", name)),
+            }
+        }
+        "import" => {
+            let path = get_arg_index(args, 1)?;
+            let p = std::path::Path::new(&path);
+            if !p.exists() {
+                return Err(anyhow::anyhow!("path does not exist: {}", path));
+            }
+            let (imported, errors) = import_workflow_path(&db, p)?;
+            for e in &errors {
+                eprintln!("error: {} — {}", e.0, e.1);
+            }
+            println!("imported {} workflow(s), {} error(s)", imported, errors.len());
+        }
+        "delete" => {
+            let name = get_arg_index(args, 1)?;
+            let existed = db.delete_workflow(&name)?;
+            println!("{}", if existed { "deleted" } else { "not found" });
+        }
+        _ => {
+            eprintln!("unknown workflows subcommand: {}", args[0]);
+            std::process::exit(1);
+        }
+    }
+    Ok(())
+}
+
+fn import_workflow_path(
+    db: &db::Database,
+    path: &std::path::Path,
+) -> anyhow::Result<(usize, Vec<(String, String)>)> {
+    let mut imported = 0;
+    let mut errors: Vec<(String, String)> = Vec::new();
+    let mut files: Vec<std::path::PathBuf> = Vec::new();
+    if path.is_file() {
+        files.push(path.to_path_buf());
+    } else if path.is_dir() {
+        for entry in walk_yaml(path)? {
+            files.push(entry);
+        }
+    } else {
+        return Err(anyhow::anyhow!("not a file or directory: {}", path.display()));
+    }
+    for f in files {
+        let name = match f.file_stem().and_then(|s| s.to_str()) {
+            Some(n) => n.to_string(),
+            None => {
+                errors.push((f.display().to_string(), "invalid filename".into()));
+                continue;
+            }
+        };
+        match std::fs::read_to_string(&f) {
+            Ok(content) => match db.save_workflow(&name, content.trim()) {
+                Ok(()) => {
+                    imported += 1;
+                    println!("imported: {}", name);
+                }
+                Err(e) => errors.push((name.clone(), e.to_string())),
+            },
+            Err(e) => errors.push((name, e.to_string())),
+        }
+    }
+    Ok((imported, errors))
+}
+
+fn walk_yaml(dir: &std::path::Path) -> anyhow::Result<Vec<std::path::PathBuf>> {
+    let mut out = Vec::new();
+    for entry in std::fs::read_dir(dir)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.is_dir() {
+            out.extend(walk_yaml(&path)?);
+        } else if path.extension().and_then(|e| e.to_str()).map(|s| s == "yaml" || s == "yml").unwrap_or(false) {
+            out.push(path);
+        }
+    }
+    Ok(out)
 }

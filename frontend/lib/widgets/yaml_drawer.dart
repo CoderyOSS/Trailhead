@@ -40,6 +40,15 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
   }
 
   String get _yamlText {
+    // Prefer raw content fetched from backend (round-trip stable).
+    // Fall back to compiling canvas state when workflow is new/unsaved.
+    final remote = widget.workflow.remoteContent;
+    if (remote != null && remote.isNotEmpty) {
+      if (widget.job != null) {
+        return _jobPreface(widget.job!) + '\n' + remote;
+      }
+      return remote;
+    }
     final spec = workflowToYaml(widget.workflow);
     if (widget.job != null) {
       return _jobPreface(widget.job!) + '\n' + spec;
@@ -82,9 +91,16 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
   @override
   Widget build(BuildContext context) {
     final yamlResult = workflowToYamlWithLines(widget.workflow);
-    final yamlText = widget.job != null
+    // Prefer remote content for display; canvas-compiled only for unsaved.
+    final remoteText = widget.workflow.remoteContent;
+    final compiledYaml = widget.job != null
         ? _jobPreface(widget.job!) + '\n' + yamlResult.yaml
         : yamlResult.yaml;
+    final yamlText = (remoteText != null && remoteText.isNotEmpty)
+        ? (widget.job != null
+            ? _jobPreface(widget.job!) + '\n' + remoteText
+            : remoteText)
+        : compiledYaml;
     final lines = yamlText.split('\n');
     final lineCount = lines.length;
     final byteSize = yamlText.length;

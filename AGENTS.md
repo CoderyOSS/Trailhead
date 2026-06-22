@@ -121,13 +121,11 @@ stages:
 - Project management
 
 ### Partial (⚠️)
-- Workflow seeding: `seed_builtin_workflows()` exists but workflows must be created manually via API
 - IDE attachment: SSH adapter exists, limited testing
 - Checkpoint system: schema exists, not fully wired to scheduler
 - SSE events: endpoint returns empty stream
 
 ### Planned (🚧)
-- Auto-seed workflows from directory on startup
 - Human-in-the-loop approvals between stages
 - Kubernetes worker provider (swap Docker)
 - Real SSE event streaming
@@ -152,9 +150,13 @@ POST /api/v1/workers/{id}/destroy
 GET  /api/v1/projects          - list projects
 POST /api/v1/projects          - add project {repo_url, branch?}
 
-GET  /api/v1/workflows         - list workflows
-POST /api/v1/workflows         - create workflow {name, content}
-POST /api/v1/workflows/validate - parse check {content}
+GET  /api/v1/workflows         - list workflows (all rows)
+GET  /api/v1/workflows/{name}  - get workflow content + metadata
+POST /api/v1/workflows         - create workflow {name, content} (upsert)
+PUT  /api/v1/workflows/{name}  - replace workflow content {content}
+DELETE /api/v1/workflows/{name} - delete workflow (idempotent)
+POST /api/v1/workflows/import  - batch import {files: [{name, content}]}
+POST /api/v1/workflows/validate - parse check {content} (scheduler schema)
 ```
 
 ## MCP Tools
@@ -177,6 +179,10 @@ projects_add(params)  - add project {name, repo, branch?}
 
 workflows_list()      - list workflow names
 workflows_show(name)  - show workflow YAML content
+workflows_create(params) - create/replace workflow {name, content}
+workflows_replace(params) - replace workflow content {name, content} (alias of create)
+workflows_delete(name)- delete workflow (idempotent)
+workflows_import(params) - batch import {files: [{name, content}]}
 
 secrets_list()        - list secrets in /opt/codery/secrets
 secrets_set(params)   - set secret {name, value}
@@ -220,6 +226,16 @@ If set, the project directory is bind-mounted directly. Otherwise: `{PROJECT_BAS
 - **multi-provider-workers**: `openspec/changes/multi-provider-workers/` — adds
   Daytona VM, k3s pod, and localhost process providers alongside the existing
   Docker provider. See `design.md` for integration details.
+
+## Recently Landed
+
+- **DB-only workflows + frontend YAML integration (v0.4.0)**: Removed
+  `seed_builtin_workflows()` and `/opt/codery/trailhead/workflows/` disk
+  sync. Workflows live only in SQL, mutable, opaque content (no scheduler
+  parser validation on save). New endpoints: `GET/PUT/DELETE
+  /workflows/{name}`, `POST /workflows/import`. CLI: `trailhead-service
+  workflows <list|show|import|delete>`. Frontend Build mode reads/writes
+  workflows via API with debounced autosave.
 
 ## Deployment
 
@@ -300,6 +316,15 @@ curl -X POST http://localhost:4050/api/v1/workflows \
   }'
 ```
 
+**Import workflows from disk (one-time bootstrap or batch load):**
+```bash
+trailhead-service workflows import /path/to/yaml/dir
+trailhead-service workflows list
+trailhead-service workflows show hello-world
+trailhead-service workflows delete old-workflow
+```
+Workflows live in SQL only — disk files are not watched or auto-seeded.
+
 ## Testing
 
 **E2E test approach:**
@@ -316,10 +341,9 @@ curl -X POST http://localhost:4050/api/v1/workflows \
 
 ## Known Issues
 
-1. **Workflow seeding not automatic:** Must `POST /api/v1/workflows` manually on first run
-2. **Migration failures:** Silent failures if column exists—check logs
-3. **SSE events empty:** `/api/v1/events` returns no data
-4. **Worker logs:** Not captured centrally—check `docker logs`
+1. **Migration failures:** Silent failures if column exists—check logs
+2. **SSE events empty:** `/api/v1/events` returns no data
+3. **Worker logs:** Not captured centrally—check `docker logs`
 
 ## File Layout
 

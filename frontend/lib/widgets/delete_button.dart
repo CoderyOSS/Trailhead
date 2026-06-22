@@ -3,7 +3,7 @@ import 'icons.dart';
 import '../theme/tokens.dart';
 
 class DeleteButton extends StatelessWidget {
-  const DeleteButton({super.key});
+  DeleteButton({super.key});
 
   @override
   Widget build(BuildContext context) {

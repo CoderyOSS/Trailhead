@@ -11,7 +11,7 @@ class NodeContextMenu extends StatelessWidget {
   final VoidCallback onInspect;
   final VoidCallback onClose;
 
-  const NodeContextMenu({
+  NodeContextMenu({
     super.key,
     required this.anchor,
     this.canDuplicate = true,
@@ -143,7 +143,7 @@ class _MenuItem extends StatefulWidget {
   final bool danger;
   final VoidCallback onTap;
 
-  const _MenuItem({
+  _MenuItem({
     required this.icon,
     required this.label,
     required this.desc,

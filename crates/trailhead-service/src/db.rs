@@ -925,7 +925,6 @@ CREATE TABLE IF NOT EXISTS workflows (
     name            TEXT PRIMARY KEY,
     content         TEXT NOT NULL,
     content_hash    TEXT,
-    source          TEXT NOT NULL,
     project_id      TEXT REFERENCES projects(id),
     created_at      TEXT NOT NULL,
     updated_at      TEXT NOT NULL
@@ -945,6 +944,7 @@ const MIGRATIONS: &[&str] = &[
     "ALTER TABLE projects ADD COLUMN name TEXT DEFAULT ''",
     "ALTER TABLE jobs RENAME COLUMN workspace_path TO project_path",
     "ALTER TABLE workers RENAME COLUMN workspace_path TO project_path",
+    "ALTER TABLE workflows DROP COLUMN source",
 ];
 
 #[cfg(test)]

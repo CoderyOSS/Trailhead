@@ -11,7 +11,7 @@ import 'stage_drawer.dart';
 class EditorSettingsTab extends ConsumerStatefulWidget {
   final WorkflowNode stage;
 
-  const EditorSettingsTab({super.key, required this.stage});
+  EditorSettingsTab({super.key, required this.stage});
 
   @override
   ConsumerState<EditorSettingsTab> createState() => _EditorSettingsTabState();
@@ -227,7 +227,7 @@ class _TextInput extends StatelessWidget {
   final TextEditingController controller;
   final ValueChanged<String> onChanged;
 
-  const _TextInput({required this.controller, required this.onChanged});
+  _TextInput({required this.controller, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -265,7 +265,7 @@ class _SelectField extends StatefulWidget {
   final List<(String, String)> options;
   final ValueChanged<String> onChanged;
 
-  const _SelectField({
+  _SelectField({
     required this.value,
     required this.options,
     required this.onChanged,
@@ -329,7 +329,7 @@ class _ConfigList extends StatefulWidget {
   final List<String> configs;
   final ValueChanged<List<String>> onUpdate;
 
-  const _ConfigList({required this.configs, required this.onUpdate});
+  _ConfigList({required this.configs, required this.onUpdate});
 
   @override
   State<_ConfigList> createState() => _ConfigListState();
@@ -470,7 +470,7 @@ class _BranchOutputsEditor extends StatefulWidget {
   final bool matchAll;
   final void Function(List<BranchOutput>, bool, int? removedIndex) onUpdate;
 
-  const _BranchOutputsEditor({
+  _BranchOutputsEditor({
     required this.outputs,
     required this.matchAll,
     required this.onUpdate,
@@ -614,7 +614,7 @@ class _BranchOutputRow extends StatefulWidget {
   final ValueChanged<BranchOutput> onUpdate;
   final VoidCallback onDelete;
 
-  const _BranchOutputRow({
+  _BranchOutputRow({
     required this.output,
     required this.onUpdate,
     required this.onDelete,
@@ -638,10 +638,12 @@ class _BranchOutputRowState extends State<_BranchOutputRow> {
   @override
   void didUpdateWidget(covariant _BranchOutputRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.output.label != widget.output.label) {
+    if (oldWidget.output.label != widget.output.label &&
+        _labelCtrl.text != widget.output.label) {
       _labelCtrl.text = widget.output.label;
     }
-    if (oldWidget.output.expression != widget.output.expression) {
+    if (oldWidget.output.expression != widget.output.expression &&
+        _exprCtrl.text != (widget.output.expression ?? '')) {
       _exprCtrl.text = widget.output.expression ?? '';
     }
   }
@@ -767,7 +769,7 @@ class _SubworkflowSelector extends StatefulWidget {
   final StageBody body;
   final ValueChanged<StageBody> onUpdate;
 
-  const _SubworkflowSelector({
+  _SubworkflowSelector({
     required this.body,
     required this.onUpdate,
   });

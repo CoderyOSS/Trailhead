@@ -19,7 +19,7 @@ class StageDrawer extends ConsumerStatefulWidget {
   final VoidCallback onClose;
   final bool isPortrait;
 
-  const StageDrawer({
+  StageDrawer({
     super.key,
     required this.stage,
     this.view = StageDrawerView.builder,
@@ -315,7 +315,7 @@ class _FooterBtn extends StatefulWidget {
   final Color? accent;
   final bool filled;
 
-  const _FooterBtn({
+  _FooterBtn({
     required this.icon,
     required this.label,
     required this.onTap,
@@ -382,7 +382,7 @@ class Field extends StatelessWidget {
   final Widget child;
   final String? hint;
 
-  const Field({
+  Field({
     super.key,
     required this.label,
     required this.child,
@@ -433,7 +433,7 @@ class PreBlock extends StatelessWidget {
   final String value;
   final Color? borderColor;
 
-  const PreBlock({super.key, required this.value, this.borderColor});
+  PreBlock({super.key, required this.value, this.borderColor});
 
   @override
   Widget build(BuildContext context) {
@@ -462,7 +462,7 @@ class PreBlock extends StatelessWidget {
 class PromptTokens extends StatelessWidget {
   final String value;
 
-  const PromptTokens({super.key, required this.value});
+  PromptTokens({super.key, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -530,7 +530,7 @@ class PromptTokens extends StatelessWidget {
 class SchemaEditor extends StatelessWidget {
   final Map<String, dynamic> schema;
 
-  const SchemaEditor({super.key, required this.schema});
+  SchemaEditor({super.key, required this.schema});
 
   @override
   Widget build(BuildContext context) {
@@ -577,7 +577,7 @@ class SchemaEditor extends StatelessWidget {
 
 class _SyntaxLine extends StatelessWidget {
   final String line;
-  const _SyntaxLine({required this.line});
+  _SyntaxLine({required this.line});
 
   @override
   Widget build(BuildContext context) {
@@ -643,7 +643,7 @@ class _SyntaxLine extends StatelessWidget {
 
 class EmptyBlock extends StatelessWidget {
   final String label;
-  const EmptyBlock({super.key, required this.label});
+  EmptyBlock({super.key, required this.label});
 
   @override
   Widget build(BuildContext context) {

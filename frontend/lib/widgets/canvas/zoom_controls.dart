@@ -7,7 +7,7 @@ import '../../theme/tokens.dart';
 
 class ZoomControls extends ConsumerWidget {
   final Size canvasSize;
-  const ZoomControls({super.key, required this.canvasSize});
+  ZoomControls({super.key, required this.canvasSize});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

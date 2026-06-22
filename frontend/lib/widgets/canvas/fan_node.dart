@@ -10,7 +10,7 @@ class MapNode extends StatelessWidget {
   final bool selected;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
-  const MapNode({
+  MapNode({
     super.key,
     required this.node,
     this.status,
@@ -157,7 +157,7 @@ class MapNode extends StatelessWidget {
 
 class _ConnectorDot extends StatelessWidget {
   final bool left;
-  const _ConnectorDot({required this.left});
+  _ConnectorDot({required this.left});
 
   @override
   Widget build(BuildContext context) {
@@ -180,7 +180,7 @@ class _ConnectorDot extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final JobState status;
-  const _StatusBadge({required this.status});
+  _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {

@@ -22,9 +22,9 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
     buf.writeln('stages:');
     for (final node in workflow.nodes) {
       final startLine = buf.toString().split('\n').length;
-      buf.writeln('  - name: ${node.id}');
+      buf.writeln('  - name: "${node.id}"');
       buf.writeln('    kind: ${node.kind}');
-      buf.writeln('    label: ${node.label}');
+      buf.writeln('    label: "${node.label}"');
       if (node.sub != null) buf.writeln('    sub: "${node.sub}"');
       if (node.model != null) buf.writeln('    model: ${node.model}');
       if (node.skills.isNotEmpty) {
@@ -73,8 +73,8 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         if (node.outputs.isNotEmpty) {
           buf.writeln('    outputs:');
           for (final out in node.outputs) {
-            buf.writeln('      - id: ${out.id}');
-            buf.writeln('        label: ${out.label}');
+            buf.writeln('      - id: "${out.id}"');
+            buf.writeln('        label: "${out.label}"');
             if (out.expression != null && out.expression!.isNotEmpty) {
               buf.writeln('        expression: "${out.expression}"');
             }
@@ -116,7 +116,7 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
       if (node.cases.isNotEmpty) {
         buf.writeln('    cases:');
         for (final c in node.cases) {
-          buf.writeln('      - match: ${c.match}');
+          buf.writeln('      - match: "${c.match}"');
           buf.writeln('        to: [${c.to.map((t) => '"$t"').join(', ')}]');
         }
       }
@@ -125,7 +125,7 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
       if (node.branches.isNotEmpty) {
         buf.writeln('    branches:');
         for (final b in node.branches) {
-          buf.writeln('      - match: ${b.match}');
+          buf.writeln('      - match: "${b.match}"');
           buf.writeln('        to: [${b.to.map((t) => '"$t"').join(', ')}]');
           if (b.loop) buf.writeln('        loop: true');
         }
@@ -141,8 +141,8 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
   if (workflow.edges.isNotEmpty) {
     buf.writeln('edges:');
     for (final edge in workflow.edges) {
-      buf.writeln('  - from: ${edge.sourceId}');
-      buf.writeln('    to: ${edge.targetId}');
+    buf.writeln('  - from: "${edge.sourceId}"');
+    buf.writeln('    to: "${edge.targetId}"');
       if (edge.sourcePort != null) {
         buf.writeln('    port: ${edge.sourcePort}');
       }

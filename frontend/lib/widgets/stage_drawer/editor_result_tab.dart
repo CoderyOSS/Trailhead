@@ -8,7 +8,7 @@ import 'stage_drawer.dart';
 class EditorResultTab extends ConsumerStatefulWidget {
   final WorkflowNode stage;
 
-  const EditorResultTab({super.key, required this.stage});
+  EditorResultTab({super.key, required this.stage});
 
   @override
   ConsumerState<EditorResultTab> createState() => _EditorResultTabState();
@@ -47,7 +47,7 @@ class _EditorResultTabState extends ConsumerState<EditorResultTab> {
   @override
   Widget build(BuildContext context) {
     if (widget.stage.kind != 'worker') {
-      return const EmptyBlock(
+      return EmptyBlock(
         label: "routing operators don't define a result schema",
       );
     }
@@ -126,7 +126,7 @@ class _FormatOption extends StatefulWidget {
   final bool active;
   final VoidCallback onTap;
 
-  const _FormatOption({
+  _FormatOption({
     required this.label,
     required this.sub,
     required this.active,

@@ -8,6 +8,8 @@ dist/
 !crates/trailhead-service/ui/static/index.html
 test-workspace/
 .claude/
+/tools/
+
 
 # graphify-out: commit graph artifacts, ignore machine-local state
 graphify-out/*

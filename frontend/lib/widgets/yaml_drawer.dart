@@ -17,7 +17,7 @@ class YamlDrawer extends ConsumerStatefulWidget {
   final VoidCallback onClose;
   final bool isPortrait;
 
-  const YamlDrawer({
+  YamlDrawer({
     super.key,
     required this.workflow,
     this.job,
@@ -496,7 +496,7 @@ class _ReadOnlyPill extends StatelessWidget {
 class _YamlLine extends StatelessWidget {
   final String raw;
 
-  const _YamlLine({required this.raw});
+  _YamlLine({required this.raw});
 
   @override
   Widget build(BuildContext context) {

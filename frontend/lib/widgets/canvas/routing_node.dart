@@ -10,7 +10,7 @@ class BranchNode extends StatelessWidget {
   final bool selected;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
-  const BranchNode({
+  BranchNode({
     super.key,
     required this.node,
     this.status,
@@ -140,8 +140,8 @@ class BranchNode extends StatelessWidget {
                                     style: TextStyle(
                                       fontFamily: 'monospace',
                                       fontSize: 12,
-                                      fontWeight: c.id == '3' ? FontWeight.w500 : FontWeight.w600,
-                                      color: c.id == '3' ? AppColors.fg3 : AppColors.fg0,
+                                      fontWeight: FontWeight.w600,
+                                      color: AppColors.fg0,
                                     ),
                                   ),
                                 ),
@@ -211,7 +211,7 @@ class BranchNode extends StatelessWidget {
 
 class _StatusBadge extends StatelessWidget {
   final JobState status;
-  const _StatusBadge({required this.status});
+  _StatusBadge({required this.status});
 
   @override
   Widget build(BuildContext context) {

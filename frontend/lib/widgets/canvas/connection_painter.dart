@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
 import '../../providers/connection_drag_provider.dart';
+import '../../theme/theme_controller.dart';
 import '../../theme/tokens.dart';
 
 class ConnectionPainter extends CustomPainter {
@@ -23,7 +24,7 @@ class ConnectionPainter extends CustomPainter {
     this.dragOffset = Offset.zero,
     this.selectedIds = const {},
     this.connectionDrag,
-  });
+  }) : super(repaint: ThemeController());
 
   Offset _nodePos(WorkflowNode node) {
     final inGroupDrag = draggingNodeId != null &&

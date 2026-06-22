@@ -1,12 +1,14 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
+import '../../theme/theme_controller.dart';
 import '../../theme/tokens.dart';
 
 class DotGridPainter extends CustomPainter {
   final double zoom;
   final Offset pan;
 
-  DotGridPainter({required this.zoom, required this.pan});
+  DotGridPainter({required this.zoom, required this.pan})
+      : super(repaint: ThemeController());
 
   @override
   void paint(Canvas canvas, Size size) {

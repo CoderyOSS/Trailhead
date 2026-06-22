@@ -7,7 +7,7 @@ import 'status_tag.dart';
 import 'view_toggle.dart';
 
 class RunsTable extends ConsumerWidget {
-  const RunsTable({super.key});
+  RunsTable({super.key});
 
   static const _historyStatuses = <JobState>{
     JobState.passed,
@@ -39,7 +39,7 @@ class RunsTable extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const _TableHeader(),
+                  _TableHeader(),
                   if (viewMode == 'grouped')
                     ...groups.expand((g) => [
                       _GroupRow(name: g.name, count: g.items.length),
@@ -87,7 +87,7 @@ class _Header extends StatelessWidget {
   final String viewMode;
   final ValueChanged<String> onViewMode;
 
-  const _Header({
+  _Header({
     required this.count,
     required this.viewMode,
     required this.onViewMode,
@@ -158,7 +158,7 @@ class _Pill extends StatelessWidget {
   final int count;
   final bool active;
 
-  const _Pill({
+  _Pill({
     required this.label,
     required this.count,
     this.active = false,
@@ -203,7 +203,7 @@ class _Pill extends StatelessWidget {
 }
 
 class _TableHeader extends StatelessWidget {
-  const _TableHeader();
+  _TableHeader();
 
   @override
   Widget build(BuildContext context) {
@@ -240,7 +240,7 @@ class _GroupRow extends StatelessWidget {
   final String name;
   final int count;
 
-  const _GroupRow({required this.name, required this.count});
+  _GroupRow({required this.name, required this.count});
 
   @override
   Widget build(BuildContext context) {
@@ -292,7 +292,7 @@ class _JobRow extends StatefulWidget {
   final bool active;
   final VoidCallback onTap;
 
-  const _JobRow({
+  _JobRow({
     required this.job,
     required this.active,
     required this.onTap,
@@ -478,7 +478,7 @@ int _colFlex(int index) {
 class _Footer extends StatelessWidget {
   final int count;
 
-  const _Footer({required this.count});
+  _Footer({required this.count});
 
   @override
   Widget build(BuildContext context) {

@@ -9,7 +9,7 @@ import 'stage_drawer.dart';
 class JobLogView extends StatefulWidget {
   final WorkflowNode stage;
 
-  const JobLogView({super.key, required this.stage});
+  JobLogView({super.key, required this.stage});
 
   @override
   State<JobLogView> createState() => _JobLogViewState();
@@ -115,7 +115,7 @@ class _JobLogViewState extends State<JobLogView> {
 class _JobStageHeaderInfo extends StatelessWidget {
   final WorkflowNode stage;
 
-  const _JobStageHeaderInfo({required this.stage});
+  _JobStageHeaderInfo({required this.stage});
 
   @override
   Widget build(BuildContext context) {
@@ -223,7 +223,7 @@ class ExecutionRow extends StatefulWidget {
   final bool expanded;
   final VoidCallback onToggle;
 
-  const ExecutionRow({
+  ExecutionRow({
     super.key,
     required this.exec,
     required this.expanded,
@@ -388,7 +388,7 @@ class _ExecutionRowState extends State<ExecutionRow> {
 class ExecutionDetail extends StatelessWidget {
   final StageExecution exec;
 
-  const ExecutionDetail({super.key, required this.exec});
+  ExecutionDetail({super.key, required this.exec});
 
   @override
   Widget build(BuildContext context) {
@@ -562,7 +562,7 @@ class LogSection extends StatelessWidget {
   final bool accent;
   final Widget child;
 
-  const LogSection({
+  LogSection({
     super.key,
     required this.label,
     this.hint,
@@ -611,7 +611,7 @@ class LogSection extends StatelessWidget {
 class ToolCallRow extends StatelessWidget {
   final ToolCall call;
 
-  const ToolCallRow({super.key, required this.call});
+  ToolCallRow({super.key, required this.call});
 
   @override
   Widget build(BuildContext context) {
@@ -697,7 +697,7 @@ class ToolCallRow extends StatelessWidget {
 class _ExStatusPip extends StatelessWidget {
   final String status;
 
-  const _ExStatusPip({required this.status});
+  _ExStatusPip({required this.status});
 
   @override
   Widget build(BuildContext context) {

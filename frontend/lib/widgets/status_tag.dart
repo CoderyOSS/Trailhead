@@ -7,7 +7,7 @@ class StatusDot extends StatelessWidget {
   final bool pulse;
   final double size;
 
-  const StatusDot({
+  StatusDot({
     super.key,
     required this.status,
     this.pulse = false,
@@ -51,7 +51,7 @@ class _PulsingDot extends StatefulWidget {
   final Color color;
   final double size;
 
-  const _PulsingDot({required this.color, required this.size});
+  _PulsingDot({required this.color, required this.size});
 
   @override
   State<_PulsingDot> createState() => _PulsingDotState();
@@ -113,7 +113,7 @@ class _PulsingDotState extends State<_PulsingDot>
 class StatusTag extends StatelessWidget {
   final JobState status;
 
-  const StatusTag({super.key, required this.status});
+  StatusTag({super.key, required this.status});
 
   Color get _color {
     switch (status) {

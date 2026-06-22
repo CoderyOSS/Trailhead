@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme_controller.dart';
 import '../../theme/tokens.dart';
 
 class MarqueePainter extends CustomPainter {
   final Rect rect;
 
-  const MarqueePainter(this.rect);
+  MarqueePainter(this.rect) : super(repaint: ThemeController());
 
   @override
   void paint(Canvas canvas, Size size) {

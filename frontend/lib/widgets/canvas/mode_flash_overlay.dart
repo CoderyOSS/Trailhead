@@ -9,7 +9,7 @@ class ModeFlashOverlay extends StatefulWidget {
   final FlashMode mode;
   final VoidCallback onDismiss;
 
-  const ModeFlashOverlay({
+  ModeFlashOverlay({
     super.key,
     required this.mode,
     required this.onDismiss,

@@ -46,7 +46,7 @@ const _sections = [
 // ---------------------------------------------------------------------------
 
 class SettingsModalOverlay extends ConsumerWidget {
-  const SettingsModalOverlay({super.key});
+  SettingsModalOverlay({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -84,7 +84,7 @@ class SettingsModalOverlay extends ConsumerWidget {
 class SettingsDialog extends ConsumerStatefulWidget {
   final VoidCallback onClose;
 
-  const SettingsDialog({super.key, required this.onClose});
+  SettingsDialog({super.key, required this.onClose});
 
   @override
   ConsumerState<SettingsDialog> createState() => _SettingsDialogState();
@@ -117,13 +117,14 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
 
   @override
   Widget build(BuildContext context) {
+    ref.watch(settingsProvider);
     final compact = MediaQuery.of(context).orientation == Orientation.portrait;
 
     return Focus(
       autofocus: true,
       child: Shortcuts(
         shortcuts: <ShortcutActivator, Intent>{
-          const SingleActivator(LogicalKeyboardKey.escape): const _CloseIntent(),
+          const SingleActivator(LogicalKeyboardKey.escape): _CloseIntent(),
         },
         child: Actions(
           actions: <Type, Action<Intent>>{
@@ -375,15 +376,15 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
   Widget _buildSection() {
     switch (section) {
       case 'appearance':
-        return const AppearanceSection();
+        return AppearanceSection();
       case 'canvas':
-        return const CanvasSection();
+        return CanvasSection();
       case 'workflow':
-        return const WorkflowSection();
+        return WorkflowSection();
       case 'messaging':
-        return const MessagingSection();
+        return MessagingSection();
       case 'plugins':
-        return const PluginsSection();
+        return PluginsSection();
       default:
         return const SizedBox.shrink();
     }
@@ -401,7 +402,7 @@ class SettingRow extends StatelessWidget {
   final bool stacked;
   final bool last;
 
-  const SettingRow({
+  SettingRow({
     super.key,
     required this.title,
     this.desc,
@@ -758,7 +759,7 @@ const _accents = [
 // ---------------------------------------------------------------------------
 
 class AppearanceSection extends ConsumerWidget {
-  const AppearanceSection({super.key});
+  AppearanceSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1027,7 +1028,7 @@ class _AccentChip extends StatelessWidget {
 }
 
 class CanvasSection extends ConsumerWidget {
-  const CanvasSection({super.key});
+  CanvasSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1069,7 +1070,7 @@ class CanvasSection extends ConsumerWidget {
 }
 
 class WorkflowSection extends ConsumerWidget {
-  const WorkflowSection({super.key});
+  WorkflowSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1129,7 +1130,7 @@ class WorkflowSection extends ConsumerWidget {
 }
 
 class MessagingSection extends ConsumerWidget {
-  const MessagingSection({super.key});
+  MessagingSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1271,7 +1272,7 @@ class MessagingSection extends ConsumerWidget {
 
 class _FieldLabel extends StatelessWidget {
   final String text;
-  const _FieldLabel(this.text);
+  _FieldLabel(this.text);
 
   @override
   Widget build(BuildContext context) {
@@ -1288,7 +1289,7 @@ class _FieldLabel extends StatelessWidget {
 }
 
 class PluginsSection extends ConsumerWidget {
-  const PluginsSection({super.key});
+  PluginsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

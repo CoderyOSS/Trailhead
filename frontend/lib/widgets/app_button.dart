@@ -13,7 +13,7 @@ class AppButton extends StatefulWidget {
   final TrailheadIconData? icon;
   final VoidCallback? onTap;
 
-  const AppButton({
+  AppButton({
     super.key,
     this.variant = AppButtonVariant.secondary,
     this.size = AppButtonSize.md,

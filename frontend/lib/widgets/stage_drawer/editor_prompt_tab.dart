@@ -8,7 +8,7 @@ import 'stage_drawer.dart';
 class EditorPromptTab extends ConsumerStatefulWidget {
   final WorkflowNode stage;
 
-  const EditorPromptTab({super.key, required this.stage});
+  EditorPromptTab({super.key, required this.stage});
 
   @override
   ConsumerState<EditorPromptTab> createState() => _EditorPromptTabState();
@@ -52,7 +52,7 @@ class _EditorPromptTabState extends ConsumerState<EditorPromptTab> {
   @override
   Widget build(BuildContext context) {
     if (widget.stage.prompt == null || widget.stage.prompt!.isEmpty) {
-      return const EmptyBlock(label: 'no prompt for this routing operator');
+      return EmptyBlock(label: 'no prompt for this routing operator');
     }
 
     final refs = [...RegExp(r'\{\{([^}]+)\}\}')

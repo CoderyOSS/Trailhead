@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'theme/tokens.dart';
 import 'theme/theme_controller.dart';
+import 'providers/settings_provider.dart';
 import 'models/workflow_node.dart';
 import 'providers/api_provider.dart';
 import 'providers/mode_provider.dart';
@@ -12,12 +13,12 @@ import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
 import 'widgets/jobs_sidebar.dart';
 import 'widgets/canvas/graph_canvas.dart';
+import 'widgets/empty_workflow_hero.dart';
 import 'widgets/runs_table.dart';
 import 'widgets/yaml_drawer.dart';
 import 'widgets/stage_drawer/stage_drawer.dart';
 
 import 'widgets/settings/settings_modal.dart';
-import 'providers/settings_provider.dart';
 
 final _stageDrawerKeys = <String, GlobalObjectKey>{};
 
@@ -32,14 +33,18 @@ GlobalObjectKey _stageDrawerKey(String stageId, StageDrawerView view) {
 const _yamlDrawerKey = GlobalObjectKey('yaml_drawer');
 
 void main() {
-  runApp(const ProviderScope(child: TrailheadApp()));
+  runApp(ProviderScope(child: TrailheadApp()));
 }
 
-class TrailheadApp extends StatelessWidget {
-  const TrailheadApp({super.key});
+// TrailheadApp watches settingsProvider so theme/accent changes force a full
+// root rebuild. Do NOT make TrailheadShell const in MaterialApp.home — const
+// widgets skip rebuilds even when ancestors rebuild, breaking theme propagation.
+class TrailheadApp extends ConsumerWidget {
+  TrailheadApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    ref.watch(settingsProvider);
     return ProviderScope(
       child: ListenableBuilder(
         listenable: ThemeController(),
@@ -49,7 +54,7 @@ class TrailheadApp extends StatelessWidget {
           theme: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: AppColors.bg0,
           ),
-          home: const TrailheadShell(),
+          home: TrailheadShell(),
         ),
       ),
     );
@@ -57,7 +62,7 @@ class TrailheadApp extends StatelessWidget {
 }
 
 class TrailheadShell extends ConsumerStatefulWidget {
-  const TrailheadShell({super.key});
+  TrailheadShell({super.key});
 
   @override
   ConsumerState<TrailheadShell> createState() => _TrailheadShellState();
@@ -65,7 +70,7 @@ class TrailheadShell extends ConsumerStatefulWidget {
 
 class _TrailheadShellState extends ConsumerState<TrailheadShell> {
   Timer? _autosaveTimer;
-  WorkflowSummary? _lastSavedWorkflow;
+  String? _lastSavedYaml;
 
   @override
   void dispose() {
@@ -76,15 +81,13 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
   void _scheduleAutosave(WorkflowSummary wf) {
     if (wf.id == emptyWorkflowId) return;
     if (wf.parseError != null) return;
-    // Skip if state hasn't meaningfully changed.
-    if (_lastSavedWorkflow != null && _workflowEqual(_lastSavedWorkflow!, wf)) {
-      return;
-    }
+    // Compare serialized YAML so ANY field change (prompt, model, kind,
+    // outputs, cases, etc.) triggers a save — not just position/label.
+    final yaml = workflowToYaml(wf);
+    if (_lastSavedYaml == yaml) return;
     _autosaveTimer?.cancel();
     ref.read(workflowDirtyProvider.notifier).state = true;
-    _autosaveTimer = Timer(const Duration(milliseconds: 800), () {
-      _flushAutosave();
-    });
+    _autosaveTimer = Timer(const Duration(milliseconds: 800), _flushAutosave);
   }
 
   Future<void> _flushAutosave() async {
@@ -97,7 +100,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     try {
       final api = ref.read(workflowsApiProvider);
       await api.replace(wf.name, yaml);
-      _lastSavedWorkflow = wf.copyWith(remoteContent: yaml);
+      _lastSavedYaml = yaml;
       // Update remote list so dropdown reflects new mtime if it changes.
       ref.invalidate(remoteWorkflowsProvider);
         await ref.read(remoteWorkflowsProvider.future);
@@ -106,28 +109,6 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     } finally {
       if (mounted) ref.read(workflowDirtyProvider.notifier).state = false;
     }
-  }
-
-  static bool _workflowEqual(WorkflowSummary a, WorkflowSummary b) {
-    if (a.id != b.id) return false;
-    if (a.name != b.name) return false;
-    if (a.nodes.length != b.nodes.length) return false;
-    if (a.edges.length != b.edges.length) return false;
-    for (var i = 0; i < a.nodes.length; i++) {
-      if (a.nodes[i].id != b.nodes[i].id ||
-          a.nodes[i].x != b.nodes[i].x ||
-          a.nodes[i].y != b.nodes[i].y ||
-          a.nodes[i].label != b.nodes[i].label) {
-        return false;
-      }
-    }
-    for (var i = 0; i < a.edges.length; i++) {
-      if (a.edges[i].sourceId != b.edges[i].sourceId ||
-          a.edges[i].targetId != b.edges[i].targetId) {
-        return false;
-      }
-    }
-    return true;
   }
 
   @override
@@ -141,12 +122,13 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     final workflow = ref.watch(workflowProvider);
     final settingsOpen = ref.watch(settingsModalOpenProvider);
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
+    final isEmptyWorkflow = workflow.id == emptyWorkflowId;
 
     // Autosave: debounce-write workflow state changes to backend.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
       if (prev == null || prev.id != next.id) {
         // Workflow switched — reset autosave tracker.
-        _lastSavedWorkflow = null;
+        _lastSavedYaml = null;
         // Still schedule a save in case the new workflow is dirty.
         _scheduleAutosave(next);
         return;
@@ -173,11 +155,13 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
           Expanded(
             child: Column(
               children: [
-                const TopBar(),
+                TopBar(),
                 Expanded(
-                  child: mode == AppMode.history && job == null
-                      ? const RunsTable()
-                      : const GraphCanvas(),
+                  child: isEmptyWorkflow
+                      ? EmptyWorkflowHero()
+                      : mode == AppMode.history && job == null
+                          ? RunsTable()
+                          : GraphCanvas(),
                 ),
                 if (bottomPanel != null) Expanded(child: bottomPanel),
               ],
@@ -266,7 +250,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
               Container(height: 1, color: AppColors.border1),
             ],
           ),
-          if (settingsOpen) const SettingsModalOverlay(),
+          if (settingsOpen) SettingsModalOverlay(),
         ],
       ),
     );

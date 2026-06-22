@@ -7,7 +7,7 @@ import 'package:frontend/widgets/top_bar.dart';
 
 void main() {
   Future<void> pumpApp(WidgetTester tester) async {
-    await tester.pumpWidget(const ProviderScope(child: TrailheadApp()));
+    await tester.pumpWidget(ProviderScope(child: TrailheadApp()));
     await tester.pumpAndSettle(const Duration(seconds: 5));
   }
 

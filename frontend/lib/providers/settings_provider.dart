@@ -5,7 +5,7 @@ import '../theme/theme_controller.dart';
 final settingsModalOpenProvider = StateProvider<bool>((ref) => false);
 
 class SettingsNotifier extends StateNotifier<SettingsState> {
-  SettingsNotifier() : super(const SettingsState()) {
+  SettingsNotifier() : super(SettingsState()) {
     ThemeController().setThemeAndAccent(state.theme, state.accent);
   }
 

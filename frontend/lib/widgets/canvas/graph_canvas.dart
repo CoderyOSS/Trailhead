@@ -11,6 +11,7 @@ import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
 import '../../providers/canvas_controller.dart';
 import '../../providers/mode_provider.dart';
+import '../../providers/settings_provider.dart';
 import '../../providers/mock_data.dart';
 import '../../providers/operator_picker_provider.dart';
 import '../../theme/tokens.dart';
@@ -34,7 +35,7 @@ import 'worker_node.dart';
 import 'canvas_toolbar.dart';
 
 class GraphCanvas extends ConsumerStatefulWidget {
-  const GraphCanvas({super.key});
+  GraphCanvas({super.key});
 
   @override
   ConsumerState<GraphCanvas> createState() => _GraphCanvasState();
@@ -104,12 +105,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
   void _commitMarquee() {
     ref.read(selectionProvider.notifier).commitMarquee();
-    ref.read(marqueeProvider.notifier).state = const MarqueeState();
+    ref.read(marqueeProvider.notifier).state = MarqueeState();
   }
 
   void _cancelMarquee() {
     ref.read(selectionProvider.notifier).cancelMarquee();
-    ref.read(marqueeProvider.notifier).state = const MarqueeState();
+    ref.read(marqueeProvider.notifier).state = MarqueeState();
   }
 
   void _openStageDrawer(String nodeId) {
@@ -363,6 +364,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     }
 
     void deleteNode(String nodeId) {
+      if (nodeId == 'entrypoint') return;
       final currentWorkflow = ref.read(workflowProvider);
       final newNodes = currentWorkflow.nodes.where((n) => n.id != nodeId).toList();
       final newEdges = currentWorkflow.edges
@@ -399,6 +401,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     }
 
     void collapseNode(String nodeId) {
+      if (nodeId == 'entrypoint') return;
       final parentEdge = workflow.edges.cast<WorkflowEdge?>().firstWhere(
         (e) => e?.targetId == nodeId,
         orElse: () => null,
@@ -431,6 +434,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       ref.read(nodeMenuProvider.notifier).state = null;
     }
 
+    ref.watch(settingsProvider);
     return LayoutBuilder(
       builder: (context, constraints) {
         final canvasSize = constraints.biggest;
@@ -1226,7 +1230,7 @@ class _OutputHandle extends StatelessWidget {
   final double targetWidth;
   final double targetHeight;
 
-  const _OutputHandle({
+  _OutputHandle({
     required this.onTap,
     this.onPanStart,
     this.onPanUpdate,
@@ -1293,7 +1297,7 @@ class _InputHandle extends StatelessWidget {
   final GestureDragEndCallback? onPanEnd;
   final GestureDragCancelCallback? onPanCancel;
 
-  const _InputHandle({
+  _InputHandle({
     this.onTap,
     this.onPanStart,
     this.onPanUpdate,
@@ -1358,7 +1362,7 @@ class _InputHandle extends StatelessWidget {
 /// Stack's own size, while keeping normal layout and paint clipping
 /// (the outer [ClipRect] still clips painting to the viewport).
 class UnboundedHitStack extends Stack {
-  const UnboundedHitStack({
+  UnboundedHitStack({
     super.key,
     super.alignment,
     super.textDirection,
@@ -1415,7 +1419,7 @@ class _RenderUnboundedHitStack extends RenderStack {
 /// This widget tests every child and returns `true` if *any* child was hit,
 /// letting all overlapping recognizers enter the gesture arena.
 class MultiHitStack extends Stack {
-  const MultiHitStack({
+  MultiHitStack({
     super.key,
     super.alignment,
     super.textDirection,

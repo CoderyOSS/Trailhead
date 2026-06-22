@@ -7,7 +7,7 @@ class OperatorPicker extends StatelessWidget {
   final void Function(OperatorType type) onSelect;
   final VoidCallback onClose;
 
-  const OperatorPicker({
+  OperatorPicker({
     super.key,
     required this.anchor,
     required this.onSelect,
@@ -127,7 +127,7 @@ class _OperatorRow extends StatefulWidget {
   final OperatorType type;
   final VoidCallback onTap;
 
-  const _OperatorRow({required this.type, required this.onTap});
+  _OperatorRow({required this.type, required this.onTap});
 
   @override
   State<_OperatorRow> createState() => _OperatorRowState();

@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'theme_data.dart';
 
+// NOTE: notifyListeners() alone does NOT rebuild the widget tree. Widgets must
+// either (a) watch settingsProvider (see main.dart), or (b) be non-const so
+// ancestor rebuilds propagate. NEVER mark widgets const if they or their
+// descendants read AppColors. See tokens.dart for the full rule.
 class ThemeController extends ChangeNotifier {
   static final ThemeController _instance = ThemeController._internal();
   factory ThemeController() => _instance;

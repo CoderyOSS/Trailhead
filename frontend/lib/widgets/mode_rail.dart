@@ -11,7 +11,7 @@ enum AppMode { build, active, history }
 class ModeRail extends ConsumerWidget {
   final int activeCount;
 
-  const ModeRail({
+  ModeRail({
     super.key,
     this.activeCount = 0,
   });
@@ -129,7 +129,7 @@ class _RailButton extends StatefulWidget {
   final int? badge;
   final VoidCallback onTap;
 
-  const _RailButton({
+  _RailButton({
     required this.icon,
     required this.label,
     this.active = false,

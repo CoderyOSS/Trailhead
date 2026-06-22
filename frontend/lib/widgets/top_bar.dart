@@ -18,7 +18,7 @@ import 'status_tag.dart';
 import 'mode_rail.dart';
 
 class TopBar extends ConsumerWidget {
-  const TopBar({super.key});
+  TopBar({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -98,7 +98,7 @@ class _WorkflowSelect extends ConsumerStatefulWidget {
   final ValueChanged<String> onPick;
   final Future<String> Function() onNew;
 
-  const _WorkflowSelect({
+  _WorkflowSelect({
     required this.workflow,
     required this.workflows,
     required this.activeWfId,
@@ -505,7 +505,7 @@ class _InlineRename extends StatefulWidget {
   final ValueChanged<String> onCommit;
   final VoidCallback onCancel;
 
-  const _InlineRename({
+  _InlineRename({
     required this.initial,
     required this.siblings,
     this.big = false,
@@ -683,7 +683,7 @@ class _RenameIconBtn extends StatelessWidget {
   final bool disabled;
   final VoidCallback? onTap;
 
-  const _RenameIconBtn({
+  _RenameIconBtn({
     required this.icon,
     this.primary = false,
     this.disabled = false,
@@ -731,7 +731,7 @@ class _WorkflowMenuRow extends StatefulWidget {
   final VoidCallback? onStartRename;
   final VoidCallback onDelete;
 
-  const _WorkflowMenuRow({
+  _WorkflowMenuRow({
     required this.workflow,
     required this.active,
     required this.onPick,
@@ -884,7 +884,7 @@ class _WorkflowMenuRowState extends State<_WorkflowMenuRow> {
 }
 
 class _BuildBar extends ConsumerWidget {
-  const _BuildBar();
+  _BuildBar();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -1107,7 +1107,7 @@ class _BuildBar extends ConsumerWidget {
 }
 
 class _HistoryListBar extends StatelessWidget {
-  const _HistoryListBar();
+  _HistoryListBar();
 
   @override
   Widget build(BuildContext context) {
@@ -1158,7 +1158,7 @@ class _JobBar extends StatelessWidget {
   final VoidCallback onToggleYaml;
   final VoidCallback onClearJob;
 
-  const _JobBar({
+  _JobBar({
     required this.job,
     required this.mode,
     required this.yamlOpen,
@@ -1210,7 +1210,7 @@ class _JobRow1 extends StatelessWidget {
   final VoidCallback onToggleYaml;
   final VoidCallback onClearJob;
 
-  const _JobRow1({
+  _JobRow1({
     required this.job,
     required this.mode,
     required this.yamlOpen,
@@ -1318,7 +1318,7 @@ class _JobRow1 extends StatelessWidget {
 class _JobRow2 extends StatelessWidget {
   final JobSummary job;
 
-  const _JobRow2({required this.job});
+  _JobRow2({required this.job});
 
   @override
   Widget build(BuildContext context) {
@@ -1404,7 +1404,7 @@ class _JobRow2 extends StatelessWidget {
 class _JobControls extends StatelessWidget {
   final JobState state;
 
-  const _JobControls({required this.state});
+  _JobControls({required this.state});
 
   @override
   Widget build(BuildContext context) {
@@ -1472,7 +1472,7 @@ class _CtrlBtn extends StatefulWidget {
   final Widget icon;
   final bool primary;
 
-  const _CtrlBtn({
+  _CtrlBtn({
     required this.onTap,
     this.label,
     required this.icon,
@@ -1533,7 +1533,7 @@ class _CtrlBtnState extends State<_CtrlBtn> {
 }
 
 class _PauseIcon extends StatelessWidget {
-  const _PauseIcon();
+  _PauseIcon();
 
   @override
   Widget build(BuildContext context) {

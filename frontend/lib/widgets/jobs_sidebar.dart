@@ -26,7 +26,7 @@ class JobsSidebar extends ConsumerWidget {
   final String? activeId;
   final ValueChanged<String> onPick;
 
-  const JobsSidebar({
+  JobsSidebar({
     super.key,
     required this.kind,
     this.activeId,
@@ -106,7 +106,7 @@ class _Header extends StatelessWidget {
   final String viewMode;
   final ValueChanged<String> onViewModeChanged;
 
-  const _Header({
+  _Header({
     required this.kind,
     required this.count,
     required this.viewMode,
@@ -171,7 +171,7 @@ class _ViewToggle extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChanged;
 
-  const _ViewToggle({required this.value, required this.onChanged});
+  _ViewToggle({required this.value, required this.onChanged});
 
   @override
   Widget build(BuildContext context) {
@@ -260,7 +260,7 @@ class _FilterButton extends StatelessWidget {
 class _EmptyState extends StatelessWidget {
   final JobsSidebarKind kind;
 
-  const _EmptyState({required this.kind});
+  _EmptyState({required this.kind});
 
   @override
   Widget build(BuildContext context) {
@@ -289,7 +289,7 @@ class _EmptyState extends StatelessWidget {
 class _DeleteBackground extends StatelessWidget {
   final double progress;
 
-  const _DeleteBackground({required this.progress});
+  _DeleteBackground({required this.progress});
 
   @override
   Widget build(BuildContext context) {
@@ -335,7 +335,7 @@ class _Footer extends StatelessWidget {
   final JobsSidebarKind kind;
   final int count;
 
-  const _Footer({required this.kind, required this.count});
+  _Footer({required this.kind, required this.count});
 
   @override
   Widget build(BuildContext context) {
@@ -401,7 +401,7 @@ class _GroupedView extends StatelessWidget {
   final ValueChanged<String> onPick;
   final ValueChanged<String>? onDelete;
 
-  const _GroupedView({
+  _GroupedView({
     required this.jobs,
     required this.kind,
     required this.activeId,
@@ -445,7 +445,7 @@ class _GroupHeader extends StatelessWidget {
   final String name;
   final int count;
 
-  const _GroupHeader({required this.name, required this.count});
+  _GroupHeader({required this.name, required this.count});
 
   @override
   Widget build(BuildContext context) {
@@ -490,7 +490,7 @@ class _JobRowGrouped extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback? onDelete;
 
-  const _JobRowGrouped({
+  _JobRowGrouped({
     required this.job,
     required this.active,
     required this.onTap,
@@ -522,7 +522,7 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
       key: ValueKey(j.id),
       direction: DismissDirection.endToStart,
       dismissThresholds: const {DismissDirection.endToStart: 0.4},
-      background: const _DeleteBackground(progress: 1.0),
+      background: _DeleteBackground(progress: 1.0),
       onDismissed: (_) => widget.onDelete?.call(),
       child: GestureDetector(
         onTap: widget.onTap,
@@ -615,7 +615,7 @@ class _FlatView extends StatelessWidget {
   final ValueChanged<String> onPick;
   final ValueChanged<String>? onDelete;
 
-  const _FlatView({
+  _FlatView({
     required this.jobs,
     required this.activeId,
     required this.onPick,
@@ -646,7 +646,7 @@ class _JobRowFlat extends StatefulWidget {
   final VoidCallback onTap;
   final VoidCallback? onDelete;
 
-  const _JobRowFlat({
+  _JobRowFlat({
     required this.job,
     required this.active,
     required this.onTap,
@@ -678,7 +678,7 @@ class _JobRowFlatState extends State<_JobRowFlat> {
       key: ValueKey(j.id),
       direction: DismissDirection.endToStart,
       dismissThresholds: const {DismissDirection.endToStart: 0.4},
-      background: const _DeleteBackground(progress: 1.0),
+      background: _DeleteBackground(progress: 1.0),
       onDismissed: (_) => widget.onDelete?.call(),
       child: GestureDetector(
         onTap: widget.onTap,
@@ -772,7 +772,7 @@ class _JobRowFlatState extends State<_JobRowFlat> {
 class _WorkflowTag extends StatelessWidget {
   final String name;
 
-  const _WorkflowTag({required this.name});
+  _WorkflowTag({required this.name});
 
   @override
   Widget build(BuildContext context) {

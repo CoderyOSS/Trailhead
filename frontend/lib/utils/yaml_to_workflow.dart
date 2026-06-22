@@ -66,6 +66,24 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
     }
   }
 
+  // Entrypoint invariant: every workflow renders with exactly one node whose
+  // id is 'entrypoint'. If the loaded YAML lacks one (e.g. legacy scheduler
+  // format, or hand-edited YAML), prepend a virtual entrypoint. It persists
+  // back to the backend via autosave on the first canvas edit.
+  final hasEntrypoint = nodes.any((n) => n.id == 'entrypoint');
+  if (!hasEntrypoint) {
+    nodes.insert(
+      0,
+      const WorkflowNode(
+        id: 'entrypoint',
+        kind: 'worker',
+        label: 'entrypoint',
+        x: 0,
+        y: -16,
+      ),
+    );
+  }
+
   return WorkflowSummary(
     id: 'wf_${name.replaceAll(RegExp(r'[^a-z0-9_-]'), '_').toLowerCase()}',
     name: name,
@@ -79,12 +97,12 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
 }
 
 WorkflowNode _parseNode(YamlMap stage, int index) {
-  final id = stage['name'] as String?;
+  final id = _toStr(stage['name']);
   if (id == null || id.isEmpty) {
     throw WorkflowParseException('stage at index $index missing "name"');
   }
-  final kind = (stage['kind'] as String?) ?? 'worker';
-  final label = (stage['label'] as String?) ?? id;
+  final kind = _toStr(stage['kind']) ?? 'worker';
+  final label = _toStr(stage['label']) ?? id;
   final sub = stage['sub'] as String?;
   final model = stage['model'] as String?;
   final skills = _toStringList(stage['skills']);
@@ -121,9 +139,9 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
       for (final o in outsNode) {
         if (o is! YamlMap) continue;
         outputs.add(BranchOutput(
-          id: (o['id'] as String?) ?? '0',
-          label: (o['label'] as String?) ?? '',
-          expression: o['expression'] as String?,
+          id: _toStr(o['id']) ?? '0',
+          label: _toStr(o['label']) ?? '',
+          expression: _toStr(o['expression']),
         ));
       }
     }
@@ -138,7 +156,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
       for (final cs in c) {
         if (cs is! YamlMap) continue;
         cases.add(SwitchCase(
-          match: (cs['match'] as String?) ?? '',
+          match: _toStr(cs['match']) ?? '',
           to: _toStringList(cs['to']),
         ));
       }
@@ -150,11 +168,11 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   if (stage['branches'] is YamlList) {
     for (final b in stage['branches'] as YamlList) {
       if (b is! YamlMap) continue;
-      branches.add(BranchCase(
-        match: (b['match'] as String?) ?? '',
-        to: _toStringList(b['to']),
-        loop: (b['loop'] as bool?) ?? false,
-      ));
+        branches.add(BranchCase(
+          match: _toStr(b['match']) ?? '',
+          to: _toStringList(b['to']),
+          loop: (b['loop'] as bool?) ?? false,
+        ));
     }
   }
 
@@ -211,10 +229,10 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
 }
 
 WorkflowEdge _parseEdge(YamlMap e, int index) {
-  final from = e['from'] as String? ?? '';
-  final to = e['to'] as String? ?? '';
+  final from = _toStr(e['from']) ?? '';
+  final to = _toStr(e['to']) ?? '';
   final port = e['port'] as int?;
-  final label = e['label'] as String?;
+  final label = _toStr(e['label']);
   return WorkflowEdge(
     id: 'edge_${index}_$from\_$to',
     sourceId: from,
@@ -229,5 +247,13 @@ List<String> _toStringList(dynamic node) {
     return node.map((e) => e.toString()).toList();
   }
   if (node is String) return [node];
-  return const [];
+  if (node == null) return const [];
+  return [node.toString()];
+}
+
+/// Coerce YAML scalars to string. Avoids `_TypeError` when an unquoted
+/// value (e.g. `id: 0`) is parsed as int/double but consumers expect String.
+String? _toStr(dynamic v) {
+  if (v == null) return null;
+  return v.toString();
 }

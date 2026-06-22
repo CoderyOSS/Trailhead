@@ -1,10 +1,11 @@
 import 'package:flutter/material.dart';
+import '../../theme/theme_controller.dart';
 import '../../theme/tokens.dart';
 
 class CutPathPainter extends CustomPainter {
   final List<Offset> points;
 
-  CutPathPainter({required this.points});
+  CutPathPainter({required this.points}) : super(repaint: ThemeController());
 
   @override
   void paint(Canvas canvas, Size size) {

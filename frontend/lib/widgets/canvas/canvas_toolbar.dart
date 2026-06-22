@@ -10,7 +10,7 @@ import '../icons.dart';
 
 class CanvasToolbar extends ConsumerWidget {
   final Size canvasSize;
-  const CanvasToolbar({super.key, required this.canvasSize});
+  CanvasToolbar({super.key, required this.canvasSize});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

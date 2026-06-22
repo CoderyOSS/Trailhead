@@ -5,7 +5,7 @@ class ViewToggle extends StatelessWidget {
   final String value;
   final ValueChanged<String> onChange;
 
-  const ViewToggle({
+  ViewToggle({
     super.key,
     required this.value,
     required this.onChange,
@@ -44,7 +44,7 @@ class _Item extends StatefulWidget {
   final bool active;
   final VoidCallback onTap;
 
-  const _Item({
+  _Item({
     required this.label,
     required this.active,
     required this.onTap,

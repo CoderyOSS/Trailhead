@@ -1,6 +1,5 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/workflow_node.dart';
 import '../../providers/mode_provider.dart';
@@ -229,40 +228,6 @@ class _StageDrawerState extends ConsumerState<StageDrawer> {
                             : const SizedBox.shrink())
                 : JobLogView(stage: widget.stage),
           ),
-          // Footer (builder only)
-          if (isBuilder && isWorker)
-            Container(
-              padding: const EdgeInsets.fromLTRB(14, 10, 14, 10),
-              decoration: BoxDecoration(
-                border: Border(
-                  top: BorderSide(color: AppColors.border1, width: 1),
-                ),
-                color: AppColors.bg2,
-              ),
-              child: Row(
-                children: [
-                  _FooterBtn(
-                    icon: TrailheadIconData.copy,
-                    label: 'duplicate',
-                    onTap: () {},
-                  ),
-                  const SizedBox(width: 8),
-                  _FooterBtn(
-                    icon: TrailheadIconData.trash,
-                    label: 'delete',
-                    accent: AppColors.danger,
-                    onTap: () {},
-                  ),
-                  const Spacer(),
-                  _FooterBtn(
-                    icon: TrailheadIconData.check,
-                    label: 'save',
-                    filled: true,
-                    onTap: () {},
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
@@ -306,71 +271,6 @@ class _Tab {
   final String value;
   final String label;
   _Tab({required this.value, required this.label});
-}
-
-class _FooterBtn extends StatefulWidget {
-  final TrailheadIconData icon;
-  final String label;
-  final VoidCallback onTap;
-  final Color? accent;
-  final bool filled;
-
-  _FooterBtn({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-    this.accent,
-    this.filled = false,
-  });
-
-  @override
-  State<_FooterBtn> createState() => _FooterBtnState();
-}
-
-class _FooterBtnState extends State<_FooterBtn> {
-  bool _hover = false;
-
-  @override
-  Widget build(BuildContext context) {
-    final fg = widget.accent ??
-        (widget.filled ? AppColors.accentInk : AppColors.fg0);
-    return GestureDetector(
-      onTap: widget.onTap,
-      child: MouseRegion(
-        onEnter: (_) => setState(() => _hover = true),
-        onExit: (_) => setState(() => _hover = false),
-        child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: widget.filled
-                ? AppColors.accent
-                : (_hover ? AppColors.bg3 : Colors.transparent),
-            borderRadius: BorderRadius.circular(6),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TrailheadIcon(
-                icon: widget.icon,
-                size: 12,
-                color: fg,
-              ),
-              const SizedBox(width: 5),
-              Text(
-                widget.label,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                  color: fg,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 }
 
 // ════════════════════════════════════════════════════════════════════════
@@ -453,74 +353,6 @@ class PreBlock extends StatelessWidget {
           fontFamily: 'monospace',
           fontSize: 12,
           color: AppColors.fg0,
-        ),
-      ),
-    );
-  }
-}
-
-class PromptTokens extends StatelessWidget {
-  final String value;
-
-  PromptTokens({super.key, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    final parts = value.split(RegExp(r'(\{\{[^}]+\}\})'));
-    final matches = RegExp(r'\{\{[^}]+\}\}').allMatches(value).map((m) => m.group(0)!).toList();
-
-    final spans = <InlineSpan>[];
-    var matchIdx = 0;
-    for (var i = 0; i < parts.length; i++) {
-      if (parts[i].isNotEmpty) {
-        spans.add(TextSpan(text: parts[i]));
-      }
-      if (matchIdx < matches.length) {
-        spans.add(
-          WidgetSpan(
-            alignment: PlaceholderAlignment.middle,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
-              margin: const EdgeInsets.symmetric(horizontal: 1),
-              decoration: BoxDecoration(
-                color: AppColors.accent.withValues(alpha: 0.14),
-                border: Border.all(
-                  color: AppColors.accent.withValues(alpha: 0.35),
-                ),
-                borderRadius: BorderRadius.circular(4),
-              ),
-              child: Text(
-                matches[matchIdx],
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 11.5,
-                  color: AppColors.accent,
-                ),
-              ),
-            ),
-          ),
-        );
-        matchIdx++;
-      }
-    }
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.bg0,
-        border: Border.all(color: AppColors.border2),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: Text.rich(
-        TextSpan(
-          children: spans,
-          style: TextStyle(
-            fontFamily: 'monospace',
-            fontSize: 12.5,
-            height: 1.55,
-            color: AppColors.fg0,
-          ),
         ),
       ),
     );

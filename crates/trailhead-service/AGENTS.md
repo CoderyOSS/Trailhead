@@ -83,4 +83,12 @@ Flutter frontend lives at `frontend/` (separate project, independent version). W
 3. `rust_embed::Embed` includes `ui/static/` in the binary
 4. `web.rs` `serve_spa()` serves embedded assets via axum fallback handler
 
-See `frontend/AGENTS.md` for frontend-specific instructions.
+To build the release binary and print the host deploy commands, run the
+repo-root script:
+
+```bash
+./scripts/build-trailhead.sh
+```
+
+See `frontend/AGENTS.md` and the root `AGENTS.md` for the full deployment
+instructions.

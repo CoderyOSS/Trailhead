@@ -83,11 +83,12 @@ listener in `lib/main.dart`. The `workflowDirtyProvider` tracks unsaved state.
 |--------|---------|
 | Run web dev | `~/flutter/bin/flutter run -d chrome` |
 | Build web release | `~/flutter/bin/flutter build web --release` |
+| Build production release | `../../scripts/build-trailhead.sh` (from `frontend/`) |
 | Run tests | `~/flutter/bin/flutter test` |
 | Analyze | `~/flutter/bin/flutter analyze` |
 | Run iOS build | `~/flutter/bin/flutter build ios --release --no-codesign` (macOS only) |
 
-**Agent rule:** After any code change, always run `~/flutter/bin/flutter build web --release` to update the dev preview.
+**Agent rule:** After any code change, run `../../scripts/build-trailhead.sh` to build the Flutter frontend + Rust service and print the host deploy commands. For dev-preview-only changes, `~/flutter/bin/flutter build web --release` is enough.
 
 ## iOS Development
 
@@ -107,7 +108,7 @@ The dev preview uses **mock backend data** baked into the Flutter build (no API 
 
 **App config:** `trailhead-ui` app, internal port 8040, directory `/home/gem/projects/CoderyTrailhead/frontend`, command `bun run serve.js`.
 
-**Production** (`trailhead.rancidgrandmas.online`): served by the Rust binary via `rust-embed`. Requires `flutter build web --release` + copy to `crates/trailhead-service/ui/static/` + `cargo build` + service restart.
+**Production** (`trailhead.rancidgrandmas.online`): served by the Rust binary via `rust-embed`. Run `../../scripts/build-trailhead.sh` to build and print the host commands that copy the binary and restart the service.
 
 ## Code Style
 

@@ -9,6 +9,7 @@ dist/
 test-workspace/
 .claude/
 /tools/
+/deploy
 
 
 # graphify-out: commit graph artifacts, ignore machine-local state

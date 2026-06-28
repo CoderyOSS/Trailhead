@@ -293,6 +293,15 @@ stdout_logfile=/var/log/supervisor/trailhead.log
 
 Binary installed to `/opt/codery/trailhead/bin/` with `current` symlink pointing to the active version.
 
+To build a new release and print the host deploy commands, run:
+
+```bash
+./scripts/build-trailhead.sh
+```
+
+The script runs the Flutter and Rust builds on the apps container, then prints
+the commands to copy the binary and restart the service on the host.
+
 Logs: `/var/log/supervisor/trailhead.log`.
 
 Port 4050 firewall-opened for Docker bridge network (172.16.0.0/12).

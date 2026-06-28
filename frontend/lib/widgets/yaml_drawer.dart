@@ -40,18 +40,16 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
   }
 
   String get _yamlText {
-    // Prefer raw content fetched from backend (round-trip stable).
-    // Fall back to compiling canvas state when workflow is new/unsaved.
-    final remote = widget.workflow.remoteContent;
-    if (remote != null && remote.isNotEmpty) {
-      if (widget.job != null) {
-        return _jobPreface(widget.job!) + '\n' + remote;
-      }
-      return remote;
-    }
+    // For resolved job runs, show the pinned backend YAML.
+    // For builder mode, always compile the current canvas state so edits
+    // are reflected immediately.
     final spec = workflowToYaml(widget.workflow);
     if (widget.job != null) {
-      return _jobPreface(widget.job!) + '\n' + spec;
+      final remote = widget.workflow.remoteContent;
+      if (remote != null && remote.isNotEmpty) {
+        return '${_jobPreface(widget.job!)}\n$remote';
+      }
+      return '${_jobPreface(widget.job!)}\n$spec';
     }
     return spec;
   }
@@ -91,16 +89,12 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
   @override
   Widget build(BuildContext context) {
     final yamlResult = workflowToYamlWithLines(widget.workflow);
-    // Prefer remote content for display; canvas-compiled only for unsaved.
-    final remoteText = widget.workflow.remoteContent;
+    // Builder mode always reflects the current canvas model; job mode shows
+    // the pinned remote YAML when available.
     final compiledYaml = widget.job != null
-        ? _jobPreface(widget.job!) + '\n' + yamlResult.yaml
+        ? '${_jobPreface(widget.job!)}\n${yamlResult.yaml}'
         : yamlResult.yaml;
-    final yamlText = (remoteText != null && remoteText.isNotEmpty)
-        ? (widget.job != null
-            ? _jobPreface(widget.job!) + '\n' + remoteText
-            : remoteText)
-        : compiledYaml;
+    final yamlText = compiledYaml;
     final lines = yamlText.split('\n');
     final lineCount = lines.length;
     final byteSize = yamlText.length;

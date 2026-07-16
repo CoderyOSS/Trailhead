@@ -5,7 +5,7 @@
     "semantic_hash": "758c5bf8bd1b695dd11523c800baf5c8"
   },
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784190753.7577903,
+    "mtime": 1784232601.3500016,
     "ast_hash": "7ed35bc85b7658d113371ffc24d07117",
     "semantic_hash": "7ed35bc85b7658d113371ffc24d07117"
   },
@@ -45,12 +45,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784190754.05879,
+    "mtime": 1784232601.6590004,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784190754.06279,
+    "mtime": 1784232601.6610005,
     "ast_hash": "f6079b630997f8fd4ae1ac639162419a",
     "semantic_hash": "f6079b630997f8fd4ae1ac639162419a"
   },
@@ -85,13 +85,13 @@
     "semantic_hash": "2c78427dae2fdd14bc970249ae93a7b3"
   },
   "frontend/lib/models/workflow_edge.dart": {
-    "mtime": 1784159033.3905277,
-    "ast_hash": "ef90619ecf76a2d710ada981706f40cb",
-    "semantic_hash": "ef90619ecf76a2d710ada981706f40cb"
+    "mtime": 1784232323.1770048,
+    "ast_hash": "e8c9cd2bdedbd762a8c8d7e053e7623a",
+    "semantic_hash": ""
   },
   "frontend/lib/models/workflow_node.dart": {
-    "mtime": 1784190662.1188982,
-    "ast_hash": "f3a346071b03778c7890f3c68b68ecb3",
+    "mtime": 1784232334.4909785,
+    "ast_hash": "93e0ac27e8fb9d6345d94c9936eeb6c3",
     "semantic_hash": ""
   },
   "frontend/lib/providers/canvas_controller.dart": {
@@ -110,8 +110,8 @@
     "semantic_hash": "8514043ea7a91c76cdf5c739a60fe724"
   },
   "frontend/lib/providers/mock_data.dart": {
-    "mtime": 1784166288.608938,
-    "ast_hash": "a974cffc93f84319689b02c71b8b1c8f",
+    "mtime": 1784232348.3909461,
+    "ast_hash": "49a7744e0253c409bed384bbe1f9f407",
     "semantic_hash": ""
   },
   "frontend/lib/providers/mode_provider.dart": {
@@ -165,8 +165,8 @@
     "semantic_hash": "9eaca0dd47eb1436f314cc0c865b1fb4"
   },
   "frontend/lib/utils/workflow_to_yaml.dart": {
-    "mtime": 1784190702.682851,
-    "ast_hash": "7811722ca90d6a8dfe9bee26a3ec942b",
+    "mtime": 1784232573.6951008,
+    "ast_hash": "87d39702478ca8ab9537fe955c429671",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/app_button.dart": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/canvas/connection_painter.dart": {
-    "mtime": 1784166194.6019874,
-    "ast_hash": "ff5f3cccaba1757c2138868fa5fcb754",
+    "mtime": 1784232520.2702968,
+    "ast_hash": "8ad2143f14c5a4736495c7bdab4accb6",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/canvas/cut_path_painter.dart": {
@@ -195,8 +195,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/canvas/graph_canvas.dart": {
-    "mtime": 1784166886.7599645,
-    "ast_hash": "f41b3364e56b57efa2938ee94976415d",
+    "mtime": 1784232470.7424848,
+    "ast_hash": "4ce96aca460263681b6f803147f9e533",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/canvas/marquee_painter.dart": {
@@ -295,9 +295,9 @@
     "semantic_hash": "caf0fbb4151c838c703c7de5a0e92838"
   },
   "frontend/test/connection_painter_test.dart": {
-    "mtime": 1784159033.3985279,
-    "ast_hash": "b538a1703ba47352784ec60b1f698be5",
-    "semantic_hash": "b538a1703ba47352784ec60b1f698be5"
+    "mtime": 1784232492.4514017,
+    "ast_hash": "df4e5cea55735609cdb579403ed9a8b3",
+    "semantic_hash": ""
   },
   "frontend/test/marquee_integration_test.dart": {
     "mtime": 1781807328.6234634,
@@ -1950,8 +1950,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/utils/yaml_to_workflow.dart": {
-    "mtime": 1784190694.6258605,
-    "ast_hash": "0469c3c0dd21129be3402f655f72104f",
+    "mtime": 1784232550.284186,
+    "ast_hash": "8429ecc3cca2da5c95c6427d5fba3868",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/empty_workflow_hero.dart": {
@@ -2000,8 +2000,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/node_drawer/editor_settings_tab.dart": {
-    "mtime": 1784190741.509805,
-    "ast_hash": "3a93fc81044ad554a742215f3a43d88b",
+    "mtime": 1784232480.783446,
+    "ast_hash": "04ec64140f172b2fc21dee04bec77d9c",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/node_drawer/job_log_view.dart": {
@@ -2012,6 +2012,36 @@
   "frontend/lib/widgets/node_drawer/node_drawer.dart": {
     "mtime": 1784190677.6338801,
     "ast_hash": "9f99bba83e0fca80c5310de56a632037",
+    "semantic_hash": ""
+  },
+  ".superpowers/sdd/task-2-brief.md": {
+    "mtime": 1784232108.3345041,
+    "ast_hash": "f1cbcd8447f89bd6dcdccd084cf4b658",
+    "semantic_hash": ""
+  },
+  "docs/superpowers/specs/2026-07-16-pipe-message-connections-design.md": {
+    "mtime": 1784227938.5255625,
+    "ast_hash": "e087a1f8e95580f36637c7000dbefa8e",
+    "semantic_hash": ""
+  },
+  "frontend/test/failures/marquee_painter_isolatedDiff.png": {
+    "mtime": 1784232607.6189792,
+    "ast_hash": "ffd1e8e8091906322ce5cbeb7684ff53",
+    "semantic_hash": ""
+  },
+  "frontend/test/failures/marquee_painter_maskedDiff.png": {
+    "mtime": 1784232607.6019793,
+    "ast_hash": "ffd1e8e8091906322ce5cbeb7684ff53",
+    "semantic_hash": ""
+  },
+  "frontend/test/failures/marquee_painter_masterImage.png": {
+    "mtime": 1784232607.5669794,
+    "ast_hash": "3ea774141d70b2b5616dacaf2b2fcc44",
+    "semantic_hash": ""
+  },
+  "frontend/test/failures/marquee_painter_testImage.png": {
+    "mtime": 1784232607.5829794,
+    "ast_hash": "d04b81a251b964b14ab6d4a38eaf9114",
     "semantic_hash": ""
   }
 }

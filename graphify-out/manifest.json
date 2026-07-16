@@ -4,138 +4,8 @@
     "ast_hash": "758c5bf8bd1b695dd11523c800baf5c8",
     "semantic_hash": "758c5bf8bd1b695dd11523c800baf5c8"
   },
-  "containers/worker/entrypoint.sh": {
-    "mtime": 1780328898.2156172,
-    "ast_hash": "8e0ece32dff7a6a88a0b8894b133c44d",
-    "semantic_hash": "8e0ece32dff7a6a88a0b8894b133c44d"
-  },
-  "crates/trailhead-service/build.rs": {
-    "mtime": 1780328898.2156172,
-    "ast_hash": "b11d8889ad0c40d28c08c673dd5e7da4",
-    "semantic_hash": "b11d8889ad0c40d28c08c673dd5e7da4"
-  },
-  "crates/trailhead-service/src/api.rs": {
-    "mtime": 1780328898.2176173,
-    "ast_hash": "8e5b2a04ff66a4a1e97a2f483a80f4ee",
-    "semantic_hash": "8e5b2a04ff66a4a1e97a2f483a80f4ee"
-  },
-  "crates/trailhead-service/src/config.rs": {
-    "mtime": 1780328898.2186172,
-    "ast_hash": "475f6a23894a98bea6ddfcb24c036b36",
-    "semantic_hash": "475f6a23894a98bea6ddfcb24c036b36"
-  },
-  "crates/trailhead-service/src/db.rs": {
-    "mtime": 1782104016.2644277,
-    "ast_hash": "8adae91ca26885aac1dc26caba6368c9",
-    "semantic_hash": ""
-  },
-  "crates/trailhead-service/src/ide/cursor.rs": {
-    "mtime": 1782032050.2815478,
-    "ast_hash": "ba04607985a74dee4812a48bdb2a61d0",
-    "semantic_hash": ""
-  },
-  "crates/trailhead-service/src/ide/mod.rs": {
-    "mtime": 1780328898.2206173,
-    "ast_hash": "bced55d46b4e3fd6e069d54d09243a21",
-    "semantic_hash": "bced55d46b4e3fd6e069d54d09243a21"
-  },
-  "crates/trailhead-service/src/ide/opencode.rs": {
-    "mtime": 1780328898.2206173,
-    "ast_hash": "819f9f185ef3527c7ceed609908057be",
-    "semantic_hash": "819f9f185ef3527c7ceed609908057be"
-  },
-  "crates/trailhead-service/src/ide/shell.rs": {
-    "mtime": 1780328898.2206173,
-    "ast_hash": "e00f656667831759a0edf61a382df4fc",
-    "semantic_hash": "e00f656667831759a0edf61a382df4fc"
-  },
-  "crates/trailhead-service/src/ide/ssh.rs": {
-    "mtime": 1780328898.2216172,
-    "ast_hash": "a4488d607269fe0889a21ad6c2391198",
-    "semantic_hash": "a4488d607269fe0889a21ad6c2391198"
-  },
-  "crates/trailhead-service/src/ide/vscode.rs": {
-    "mtime": 1780328898.2216172,
-    "ast_hash": "e1e988691bfa3070cc744d674d7002f1",
-    "semantic_hash": "e1e988691bfa3070cc744d674d7002f1"
-  },
-  "crates/trailhead-service/src/jobs.rs": {
-    "mtime": 1780328898.2216172,
-    "ast_hash": "24b30d7caf7df0b03104dc4a5e61e194",
-    "semantic_hash": "24b30d7caf7df0b03104dc4a5e61e194"
-  },
-  "crates/trailhead-service/src/main.rs": {
-    "mtime": 1782082729.5224125,
-    "ast_hash": "8009e87b0782d1ed380d9d9999b8da45",
-    "semantic_hash": ""
-  },
-  "crates/trailhead-service/src/mcp.rs": {
-    "mtime": 1782082729.5224125,
-    "ast_hash": "a5da27e73888717577c00ecd982cb00d",
-    "semantic_hash": ""
-  },
-  "crates/trailhead-service/src/provider/docker.rs": {
-    "mtime": 1780328898.2226174,
-    "ast_hash": "13366f7077da32e45bded6f5a49e9758",
-    "semantic_hash": "13366f7077da32e45bded6f5a49e9758"
-  },
-  "crates/trailhead-service/src/provider/mod.rs": {
-    "mtime": 1780328898.2226174,
-    "ast_hash": "3e44783cb562cac61c3880354fca1602",
-    "semantic_hash": "3e44783cb562cac61c3880354fca1602"
-  },
-  "crates/trailhead-service/src/scheduler.rs": {
-    "mtime": 1780328898.2226174,
-    "ast_hash": "111705c5c85f22009884d0330864942f",
-    "semantic_hash": "111705c5c85f22009884d0330864942f"
-  },
-  "crates/trailhead-service/src/web.rs": {
-    "mtime": 1784159034.210536,
-    "ast_hash": "530098e377df92d594fa14096dc26c6e",
-    "semantic_hash": ""
-  },
-  "crates/trailhead-service/src/worker/adapter.rs": {
-    "mtime": 1780328898.2226174,
-    "ast_hash": "4be56bfdf5e76b18478a1d61d34fcf82",
-    "semantic_hash": "4be56bfdf5e76b18478a1d61d34fcf82"
-  },
-  "crates/trailhead-service/src/worker/events.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "61a17ded52b053d17ead4f33e783c45b",
-    "semantic_hash": "61a17ded52b053d17ead4f33e783c45b"
-  },
-  "crates/trailhead-service/src/worker/mod.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "397eabc6bb648eb94230d34c31e17fe9",
-    "semantic_hash": "397eabc6bb648eb94230d34c31e17fe9"
-  },
-  "crates/trailhead-service/src/worker/permission.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "b3cd1841a03412e07aad33c7a4d1a42b",
-    "semantic_hash": "b3cd1841a03412e07aad33c7a4d1a42b"
-  },
-  "crates/trailhead-service/src/workflow/mod.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "48006c251fce67d7dfbe7e49c5a8f9c2",
-    "semantic_hash": "48006c251fce67d7dfbe7e49c5a8f9c2"
-  },
-  "crates/trailhead-service/src/workflow/parser.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "415bb3c1377cda550bee62f62b161299",
-    "semantic_hash": "415bb3c1377cda550bee62f62b161299"
-  },
-  "crates/trailhead-service/src/workflow/resolver.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "c083dd695d29eafe73964b11ae773def",
-    "semantic_hash": "c083dd695d29eafe73964b11ae773def"
-  },
-  "crates/trailhead-service/src/workflow/router.rs": {
-    "mtime": 1780328898.2236173,
-    "ast_hash": "416f55195316ff6b1ccdead516b2aef3",
-    "semantic_hash": "416f55195316ff6b1ccdead516b2aef3"
-  },
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784168827.9013689,
+    "mtime": 1784179273.501241,
     "ast_hash": "7ed35bc85b7658d113371ffc24d07117",
     "semantic_hash": "7ed35bc85b7658d113371ffc24d07117"
   },
@@ -245,12 +115,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784168828.1643715,
+    "mtime": 1784179273.8412447,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784168828.1663716,
+    "mtime": 1784179273.8432448,
     "ast_hash": "f6079b630997f8fd4ae1ac639162419a",
     "semantic_hash": "f6079b630997f8fd4ae1ac639162419a"
   },
@@ -290,8 +160,8 @@
     "semantic_hash": "ef90619ecf76a2d710ada981706f40cb"
   },
   "frontend/lib/models/workflow_node.dart": {
-    "mtime": 1784166840.255511,
-    "ast_hash": "2003a797027850dd32c1f04c8b454a16",
+    "mtime": 1784179216.7426033,
+    "ast_hash": "013a40e0834997357cdf41372f234a78",
     "semantic_hash": ""
   },
   "frontend/lib/providers/canvas_controller.dart": {
@@ -365,8 +235,8 @@
     "semantic_hash": "9eaca0dd47eb1436f314cc0c865b1fb4"
   },
   "frontend/lib/utils/workflow_to_yaml.dart": {
-    "mtime": 1784167689.9179308,
-    "ast_hash": "b0f8fc2e1bd1c8a7de90bf3d8857d67b",
+    "mtime": 1784179225.4977021,
+    "ast_hash": "ef7754b6d773b327a61c6ac88648e85f",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/app_button.dart": {
@@ -415,8 +285,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/canvas/operator_picker.dart": {
-    "mtime": 1784166042.3464484,
-    "ast_hash": "0e00e5e5fe25933c805f51a8ab6a20b6",
+    "mtime": 1784179151.7268643,
+    "ast_hash": "c09329447a9afa99f903e38c896f3b25",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/canvas/routing_node.dart": {
@@ -440,9 +310,9 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/icons.dart": {
-    "mtime": 1781982195.4093635,
-    "ast_hash": "3a3af9886636cb389e905a2b28afb8c8",
-    "semantic_hash": "3a3af9886636cb389e905a2b28afb8c8"
+    "mtime": 1784179139.3357224,
+    "ast_hash": "e946f8610e89bb45a74ac8616ab5c3bf",
+    "semantic_hash": ""
   },
   "frontend/lib/widgets/jobs_sidebar.dart": {
     "mtime": 1782114685.0808992,
@@ -485,8 +355,8 @@
     "semantic_hash": ""
   },
   "frontend/serve.js": {
-    "mtime": 1784168812.6972158,
-    "ast_hash": "3b4b8e87e17b4e1453e1efd13d16f9d9",
+    "mtime": 1784178766.9079578,
+    "ast_hash": "c0412d7295dd3cefd3456dbedf0261a0",
     "semantic_hash": ""
   },
   "frontend/test/canvas_controller_test.dart": {
@@ -529,110 +399,15 @@
     "ast_hash": "906fc433ff2f17c2c8af10ca573ca807",
     "semantic_hash": "906fc433ff2f17c2c8af10ca573ca807"
   },
-  "tests/probes/adapter.ts": {
-    "mtime": 1780328898.3056183,
-    "ast_hash": "17b2f79382e5f624627ecf1ec756f050",
-    "semantic_hash": "17b2f79382e5f624627ecf1ec756f050"
-  },
-  "tests/probes/fixtures/schema.sql": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "ac7c55d0aa929b04b0243795fb46167f",
-    "semantic_hash": "ac7c55d0aa929b04b0243795fb46167f"
-  },
-  "tests/probes/helpers.ts": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "f248ca23f2a2795d6b53e887fb81ead5",
-    "semantic_hash": "f248ca23f2a2795d6b53e887fb81ead5"
-  },
-  "tests/probes/integration/full-job.test.ts": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "801e2df5680586e538d6518c6d73cba3",
-    "semantic_hash": "801e2df5680586e538d6518c6d73cba3"
-  },
-  "tests/probes/integration/hello-world.test.ts": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "f82a3ca456a23270973e33aed5754e8e",
-    "semantic_hash": "f82a3ca456a23270973e33aed5754e8e"
-  },
-  "tests/probes/launcher.sh": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "d60a5d3f286cef9c87d41accb23aebe9",
-    "semantic_hash": "d60a5d3f286cef9c87d41accb23aebe9"
-  },
-  "tests/probes/package.json": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "0d40b12509177fd57d928de7fbafb077",
-    "semantic_hash": "0d40b12509177fd57d928de7fbafb077"
-  },
-  "tests/probes/service/api.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "282d7820004a3cdb9181365c44ba9c7d",
-    "semantic_hash": "282d7820004a3cdb9181365c44ba9c7d"
-  },
-  "tests/probes/service/db.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "1c93e271da17554a3e3cf406e78363d3",
-    "semantic_hash": "1c93e271da17554a3e3cf406e78363d3"
-  },
-  "tests/probes/service/jobs.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "e945739012bbbd408ee0ccd448ff2f6c",
-    "semantic_hash": "e945739012bbbd408ee0ccd448ff2f6c"
-  },
-  "tests/probes/service/scheduler.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "8c9f61e06f5cf35ba6dcffd013c68f6c",
-    "semantic_hash": "8c9f61e06f5cf35ba6dcffd013c68f6c"
-  },
-  "tests/probes/service/web.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "e40d60fea32f1b8d4753498fe3b33d48",
-    "semantic_hash": "e40d60fea32f1b8d4753498fe3b33d48"
-  },
-  "tests/probes/setup.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "cce9227bc3556aa42a2d7813b590c5d2",
-    "semantic_hash": "cce9227bc3556aa42a2d7813b590c5d2"
-  },
-  "tests/probes/workflow/engine.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "9ecd5293c0bc4a13c6e4fa4863968e82",
-    "semantic_hash": "9ecd5293c0bc4a13c6e4fa4863968e82"
-  },
-  "tests/probes/workflow/parser.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "c4b3a6dae51937a9c0075e659f7d5c5e",
-    "semantic_hash": "c4b3a6dae51937a9c0075e659f7d5c5e"
-  },
-  "tests/probes/workflow/resolver.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "032b69a6fc18ba477083a47baf93ebde",
-    "semantic_hash": "032b69a6fc18ba477083a47baf93ebde"
-  },
-  "tests/probes/workflow/router.test.ts": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "86f7401467c8718c7ba5f55dfec65860",
-    "semantic_hash": "86f7401467c8718c7ba5f55dfec65860"
-  },
   ".github/workflows/build-frontend-ios.yml": {
     "mtime": 1780328898.2086172,
     "ast_hash": "72e9b7a7273df6a17425da53f3dbb5dd",
     "semantic_hash": "72e9b7a7273df6a17425da53f3dbb5dd"
   },
   ".github/workflows/build.yml": {
-    "mtime": 1782086094.8828886,
-    "ast_hash": "57654e692f75f145f6d346daaf0f0e33",
-    "semantic_hash": "57654e692f75f145f6d346daaf0f0e33"
-  },
-  ".github/workflows/deploy-trailhead.yml": {
-    "mtime": 1782082729.5214126,
-    "ast_hash": "46a278645fb32d6d698ff243c00d7f37",
+    "mtime": 1784178770.2839916,
+    "ast_hash": "86f55eb4fb019b3affc924d8dabf045c",
     "semantic_hash": ""
-  },
-  ".github/workflows/release.yml": {
-    "mtime": 1780328898.2116172,
-    "ast_hash": "847fea53e787b9dc39bd56a53b848b3c",
-    "semantic_hash": "847fea53e787b9dc39bd56a53b848b3c"
   },
   ".opencode/commands/opsx-apply.md": {
     "mtime": 1780328898.2116172,
@@ -675,59 +450,9 @@
     "semantic_hash": "cafdd99d14adcd7f90c0cd6a50ed5f9a"
   },
   "AGENTS.md": {
-    "mtime": 1784176177.9630435,
-    "ast_hash": "764ff0272e83c1113902c1ea696c52b0",
+    "mtime": 1784178756.5278542,
+    "ast_hash": "9125c5e5b736388e9d8c0a30b99dfbfa",
     "semantic_hash": ""
-  },
-  "containers/worker/AGENTS.md": {
-    "mtime": 1780328898.2156172,
-    "ast_hash": "e68931fa81408f30ad561c6ef2072e71",
-    "semantic_hash": "e68931fa81408f30ad561c6ef2072e71"
-  },
-  "crates/trailhead-service/AGENTS.md": {
-    "mtime": 1782625232.7902818,
-    "ast_hash": "ce15b6b2a92389a353232c8f56e6029b",
-    "semantic_hash": ""
-  },
-  "crates/trailhead-service/skills/create_pr.md": {
-    "mtime": 1780328898.2166173,
-    "ast_hash": "36cb24b8584f356f4005bd3eebbf3f64",
-    "semantic_hash": "36cb24b8584f356f4005bd3eebbf3f64"
-  },
-  "crates/trailhead-service/skills/fix.md": {
-    "mtime": 1780328898.2166173,
-    "ast_hash": "a5e03c8c279579ca3df8b27be1827e40",
-    "semantic_hash": "a5e03c8c279579ca3df8b27be1827e40"
-  },
-  "crates/trailhead-service/skills/implement.md": {
-    "mtime": 1780328898.2166173,
-    "ast_hash": "5e71058e770295665f116836622dbcf7",
-    "semantic_hash": "5e71058e770295665f116836622dbcf7"
-  },
-  "crates/trailhead-service/skills/pause.md": {
-    "mtime": 1780328898.2166173,
-    "ast_hash": "88bf4d7c8ee4b9a12f7bb8c90a317c64",
-    "semantic_hash": "88bf4d7c8ee4b9a12f7bb8c90a317c64"
-  },
-  "crates/trailhead-service/skills/plan.md": {
-    "mtime": 1780328898.2166173,
-    "ast_hash": "64eb82e8131fbbdaf2b2d0ae8ba7f44c",
-    "semantic_hash": "64eb82e8131fbbdaf2b2d0ae8ba7f44c"
-  },
-  "crates/trailhead-service/skills/plan_detail.md": {
-    "mtime": 1780328898.2176173,
-    "ast_hash": "b406aa72c52eb44e9aadf0f8fcfa5ae3",
-    "semantic_hash": "b406aa72c52eb44e9aadf0f8fcfa5ae3"
-  },
-  "crates/trailhead-service/skills/review.md": {
-    "mtime": 1780328898.2176173,
-    "ast_hash": "9475fad2811c00ac965ee2d911812932",
-    "semantic_hash": "9475fad2811c00ac965ee2d911812932"
-  },
-  "crates/trailhead-service/skills/test.md": {
-    "mtime": 1780328898.2176173,
-    "ast_hash": "f3c7495d722758d637d8336300209f6f",
-    "semantic_hash": "f3c7495d722758d637d8336300209f6f"
   },
   "docs/operations/troubleshooting.md": {
     "mtime": 1780328898.2976182,
@@ -835,8 +560,8 @@
     "semantic_hash": "6a26a320a016d57a7476763dd8037737"
   },
   "frontend/AGENTS.md": {
-    "mtime": 1784157335.7412977,
-    "ast_hash": "12be2fdeb5d2cf380ab4490324452a88",
+    "mtime": 1784178761.5969048,
+    "ast_hash": "f90e33bef1e34a0bb1ea97b1232b689b",
     "semantic_hash": ""
   },
   "frontend/README.md": {
@@ -850,9 +575,9 @@
     "semantic_hash": "66d03d7647c8e438164feaf5b922d44a"
   },
   "frontend/ios/README.md": {
-    "mtime": 1781934442.7015069,
-    "ast_hash": "a106ba133bc8ed4469a0be25928e16da",
-    "semantic_hash": "a106ba133bc8ed4469a0be25928e16da"
+    "mtime": 1784178774.242031,
+    "ast_hash": "ed7d827b729fdb46a50f5ee45e8cef18",
+    "semantic_hash": ""
   },
   "frontend/ios/Runner/Assets.xcassets/LaunchImage.imageset/README.md": {
     "mtime": 1780328898.3026183,
@@ -938,31 +663,6 @@
     "mtime": 1780328898.3056183,
     "ast_hash": "73504b0b881fbad80325fcc4a821684a",
     "semantic_hash": "73504b0b881fbad80325fcc4a821684a"
-  },
-  "tests/probes/fixtures/seed.yaml": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "2c5e1622d99f22879cdcefd5878ba799",
-    "semantic_hash": "2c5e1622d99f22879cdcefd5878ba799"
-  },
-  "tests/probes/fixtures/workflows/feature.yaml": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "0004cdc98ddc1b17ab673e655365e975",
-    "semantic_hash": "0004cdc98ddc1b17ab673e655365e975"
-  },
-  "tests/probes/fixtures/workflows/simple.yaml": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "ea9780c043701b67ad353ed357f5f5db",
-    "semantic_hash": "ea9780c043701b67ad353ed357f5f5db"
-  },
-  "tests/probes/probes.yml": {
-    "mtime": 1780328898.3076181,
-    "ast_hash": "93519343f6e7f9fa49b42b00f1353ad8",
-    "semantic_hash": "93519343f6e7f9fa49b42b00f1353ad8"
-  },
-  "tests/probes/proof-records.md": {
-    "mtime": 1780328898.3086183,
-    "ast_hash": "c7e43eafb746368d6ec85952a321575f",
-    "semantic_hash": "c7e43eafb746368d6ec85952a321575f"
   },
   "frontend/assets/images/trailhead-logo.png": {
     "mtime": 1780328898.3006182,
@@ -2335,8 +2035,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/providers/api_provider.dart": {
-    "mtime": 1782086041.4585598,
-    "ast_hash": "6acdc03f95f56af0c7bc5bd69ab2995d",
+    "mtime": 1784178778.7570763,
+    "ast_hash": "03e3ff2558dec8729af83aa916845796",
     "semantic_hash": ""
   },
   "frontend/lib/services/workflows_api.dart": {
@@ -2345,8 +2045,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/utils/yaml_to_workflow.dart": {
-    "mtime": 1784167700.8750405,
-    "ast_hash": "6d65adc150a5a03ef52603c5a190910f",
+    "mtime": 1784179247.4739494,
+    "ast_hash": "e401d0f928782bd8f76ea5d00d58a4b4",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/empty_workflow_hero.dart": {
@@ -2360,12 +2060,12 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/31ca25cd31fb2bb90b7a2df107c9ba3d/main.dart.js": {
-    "mtime": 1784167798.6080198,
-    "ast_hash": "4686e9a326087f524aebcaa1cde2dfc7",
+    "mtime": 1784179300.2475393,
+    "ast_hash": "06c80f17bb5d9366c275b21d9cc0efc4",
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/31ca25cd31fb2bb90b7a2df107c9ba3d/outputs.json": {
-    "mtime": 1784168831.1584017,
+    "mtime": 1784179303.470575,
     "ast_hash": "3c068031ede9ed70eabe3f8d27e7950e",
     "semantic_hash": ""
   },
@@ -2405,13 +2105,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/node_drawer/node_drawer.dart": {
-    "mtime": 1784166781.8229275,
-    "ast_hash": "29fa4c90be35fe8d3689159d7e4118c7",
-    "semantic_hash": ""
-  },
-  "scripts/build-trailhead.sh": {
-    "mtime": 1782636923.1850464,
-    "ast_hash": "0e8e7543caa1a053fc0f66f69f3ca292",
+    "mtime": 1784179158.5469422,
+    "ast_hash": "10d55908c5d6e14982e8e251375c6e8c",
     "semantic_hash": ""
   }
 }

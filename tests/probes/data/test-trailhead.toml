@@ -1,6 +1,0 @@
-model = "deepseek/deepseek-chat"
-
-[provider.deepseek]
-api = "openai-compatible"
-base_url = "https://api.deepseek.com/v1"
-env = ["DEEPSEEK_API_KEY"]

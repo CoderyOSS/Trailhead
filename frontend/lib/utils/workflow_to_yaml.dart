@@ -83,15 +83,25 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
       }
 
       // Node kinds with config sub-map
-      if (node.kind == 'delay' || node.kind == 'http' || node.kind == 'source.inject') {
+      if (node.kind == 'delay' || node.kind == 'http.ingress' || node.kind == 'http.egress' || node.kind == 'http.request' || node.kind == 'source.inject') {
         buf.writeln('    config:');
         if (node.kind == 'delay' && node.intervalMs != null) {
           buf.writeln('      interval_ms: ${node.intervalMs}');
         }
-        if (node.kind == 'http') {
-          if (node.httpServer != null) buf.writeln('      server: "${node.httpServer}"');
-          if (node.httpMethod != null) buf.writeln('      method: ${node.httpMethod}');
-          if (node.httpPath != null) buf.writeln('      path: "${node.httpPath}"');
+        if (node.kind == 'http.ingress') {
+          if (node.httpIngressServer != null) buf.writeln('      server: "${node.httpIngressServer}"');
+          if (node.httpIngressMethod != null) buf.writeln('      method: ${node.httpIngressMethod}');
+          if (node.httpIngressPath != null) buf.writeln('      path: "${node.httpIngressPath}"');
+        }
+        if (node.kind == 'http.egress') {
+          if (node.httpEgressStatus != null) buf.writeln('      status: ${node.httpEgressStatus}');
+          if (node.httpEgressContentType != null) buf.writeln('      content_type: "${node.httpEgressContentType}"');
+          if (node.httpEgressBody != null) buf.writeln('      body: "${node.httpEgressBody}"');
+        }
+        if (node.kind == 'http.request') {
+          if (node.httpRequestServer != null) buf.writeln('      server: "${node.httpRequestServer}"');
+          if (node.httpRequestMethod != null) buf.writeln('      method: ${node.httpRequestMethod}');
+          if (node.httpRequestPath != null) buf.writeln('      path: "${node.httpRequestPath}"');
         }
       }
 

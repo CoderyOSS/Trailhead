@@ -123,17 +123,33 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   // Node config sub-map (THRT node types)
   final config = stage['config'];
   int? intervalMs;
-  String? httpServer;
-  String? httpMethod;
-  String? httpPath;
+  String? httpIngressServer;
+  String? httpIngressMethod;
+  String? httpIngressPath;
+  int? httpEgressStatus;
+  String? httpEgressContentType;
+  String? httpEgressBody;
+  String? httpRequestServer;
+  String? httpRequestMethod;
+  String? httpRequestPath;
   if (config is YamlMap) {
     if (kind == 'delay') {
       intervalMs = config['interval_ms'] as int?;
     }
-    if (kind == 'http') {
-      httpServer = _toStr(config['server']);
-      httpMethod = _toStr(config['method']);
-      httpPath = _toStr(config['path']);
+    if (kind == 'http.ingress') {
+      httpIngressServer = _toStr(config['server']);
+      httpIngressMethod = _toStr(config['method']);
+      httpIngressPath = _toStr(config['path']);
+    }
+    if (kind == 'http.egress') {
+      httpEgressStatus = (config['status'] ?? 200) as int?;
+      httpEgressContentType = _toStr(config['content_type']);
+      httpEgressBody = _toStr(config['body']);
+    }
+    if (kind == 'http.request') {
+      httpRequestServer = _toStr(config['server']);
+      httpRequestMethod = _toStr(config['method']);
+      httpRequestPath = _toStr(config['path']);
     }
   }
 
@@ -233,9 +249,15 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     collect: collect,
     body: body,
     intervalMs: intervalMs,
-    httpServer: httpServer,
-    httpMethod: httpMethod,
-    httpPath: httpPath,
+    httpIngressServer: httpIngressServer,
+    httpIngressMethod: httpIngressMethod,
+    httpIngressPath: httpIngressPath,
+    httpEgressStatus: httpEgressStatus,
+    httpEgressContentType: httpEgressContentType,
+    httpEgressBody: httpEgressBody,
+    httpRequestServer: httpRequestServer,
+    httpRequestMethod: httpRequestMethod,
+    httpRequestPath: httpRequestPath,
   );
 }
 

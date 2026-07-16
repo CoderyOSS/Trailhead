@@ -16,11 +16,8 @@ CoderyTrailhead/
 ├── frontend/                       ← Flutter SPA (web + iOS)
 │   ├── AGENTS.md                   ← Frontend-specific instructions
 │   └── ...
-├── crates/trailhead-service/       ← Rust backend
-│   ├── AGENTS.md                   ← Backend-specific instructions
-│   └── ...
 ├── openspec/                       ← OpenSpec change proposals
-└── containers/worker/              ← Worker container image (Docker provider default)
+└── design/                         ← Design prototype (reference only)
 ```
 
 For frontend work, read `frontend/AGENTS.md`. For the runtime backend, read `/home/gem/projects/THRT/AGENTS.md`.
@@ -32,9 +29,8 @@ that stores workflow YAML and executes node graphs. The Flutter frontend at
 `trailhead.rancidgrandmas.online` is served by a Bun proxy that forwards
 `/api/*` to THRT.
 
-The earlier Rust prototype (`crates/trailhead-service/`) is preserved for
-reference only — its job/worker lifecycle, Docker provider, and MCP server
-are not part of the active architecture.
+The earlier Rust prototype has been retired entirely. The runtime is
+exclusively THRT (Elixir).
 
 ## Knowledge Graph (graphify)
 
@@ -119,7 +115,7 @@ edges:
 **Flow runtime**: A deployed workflow becomes a supervised tree of per-node
 `THRT.Node.Server` processes. Messages are routed along edges.
 
-*(Job/Worker lifecycle from the Rust prototype is not re-implemented in THRT.)*
+*(Job/Worker lifecycle re-implementation on THRT planned — see roadmap.)*
 
 ## Worker Providers
 
@@ -172,10 +168,10 @@ Deferred. See roadmap.
 
 ## Recently Landed
 
-- **THRT runtime + same-origin proxy (2026-07-15)**: Retired Rust backend.
-  Active runtime is now THRT (`/home/gem/projects/THRT`). Frontend served by
-  Bun proxy at `trailhead.rancidgrandmas.online`, forwarding `/api/*` to
-  THRT on `localhost:8060`. Added Deploy button, Inject dialog, and node
+- **THRT runtime + same-origin proxy (2026-07-15)**: Active runtime is
+  THRT (`/home/gem/projects/THRT`). Frontend served by Bun proxy at
+  `trailhead.rancidgrandmas.online`, forwarding `/api/*` to THRT on
+  `localhost:8060`. Added Deploy button, Inject dialog, and node
   status badges.
 
 ## Deployment

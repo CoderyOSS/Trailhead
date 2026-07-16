@@ -58,9 +58,15 @@ class WorkflowNode {
 
   // Node type-specific config
   final int? intervalMs;
-  final String? httpServer;
-  final String? httpMethod;
-  final String? httpPath;
+  final String? httpIngressServer;
+  final String? httpIngressMethod;
+  final String? httpIngressPath;
+  final int? httpEgressStatus;
+  final String? httpEgressContentType;
+  final String? httpEgressBody;
+  final String? httpRequestServer;
+  final String? httpRequestMethod;
+  final String? httpRequestPath;
 
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
@@ -107,9 +113,15 @@ class WorkflowNode {
     this.collect,
     this.body,
     this.intervalMs,
-    this.httpServer,
-    this.httpMethod,
-    this.httpPath,
+    this.httpIngressServer,
+    this.httpIngressMethod,
+    this.httpIngressPath,
+    this.httpEgressStatus,
+    this.httpEgressContentType,
+    this.httpEgressBody,
+    this.httpRequestServer,
+    this.httpRequestMethod,
+    this.httpRequestPath,
   });
 
   WorkflowNode copyWith({
@@ -141,9 +153,15 @@ class WorkflowNode {
     String? collect,
     StageBody? body,
     int? intervalMs,
-    String? httpServer,
-    String? httpMethod,
-    String? httpPath,
+    String? httpIngressServer,
+    String? httpIngressMethod,
+    String? httpIngressPath,
+    int? httpEgressStatus,
+    String? httpEgressContentType,
+    String? httpEgressBody,
+    String? httpRequestServer,
+    String? httpRequestMethod,
+    String? httpRequestPath,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -174,9 +192,15 @@ class WorkflowNode {
       collect: collect ?? this.collect,
       body: body ?? this.body,
       intervalMs: intervalMs ?? this.intervalMs,
-      httpServer: httpServer ?? this.httpServer,
-      httpMethod: httpMethod ?? this.httpMethod,
-      httpPath: httpPath ?? this.httpPath,
+      httpIngressServer: httpIngressServer ?? this.httpIngressServer,
+      httpIngressMethod: httpIngressMethod ?? this.httpIngressMethod,
+      httpIngressPath: httpIngressPath ?? this.httpIngressPath,
+      httpEgressStatus: httpEgressStatus ?? this.httpEgressStatus,
+      httpEgressContentType: httpEgressContentType ?? this.httpEgressContentType,
+      httpEgressBody: httpEgressBody ?? this.httpEgressBody,
+      httpRequestServer: httpRequestServer ?? this.httpRequestServer,
+      httpRequestMethod: httpRequestMethod ?? this.httpRequestMethod,
+      httpRequestPath: httpRequestPath ?? this.httpRequestPath,
     );
   }
 }

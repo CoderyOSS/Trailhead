@@ -23,6 +23,18 @@
   </style>
   <title>Trailhead</title>
   <link rel="manifest" href="manifest.json">
+  <script>
+    (function(){
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.getRegistrations().then(function(regs) {
+          for (var i = 0; i < regs.length; i++) regs[i].unregister();
+        });
+        navigator.serviceWorker.register = function() {
+          return Promise.reject(new Error('disabled'));
+        };
+      }
+    })();
+  </script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

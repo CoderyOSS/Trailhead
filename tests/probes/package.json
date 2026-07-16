@@ -1,7 +1,0 @@
-{
-  "name": "trailhead-e2e-tests",
-  "private": true,
-  "scripts": {
-    "test": "bun test"
-  }
-}

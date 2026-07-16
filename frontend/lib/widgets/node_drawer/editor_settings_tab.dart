@@ -25,6 +25,14 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
   late TextEditingController _overCtrl;
   late TextEditingController _countCtrl;
   late TextEditingController _concurrencyCtrl;
+  late TextEditingController _intervalMsCtrl;
+  late TextEditingController _httpIngressServerCtrl;
+  late TextEditingController _httpIngressPathCtrl;
+  late TextEditingController _httpEgressStatusCtrl;
+  late TextEditingController _httpEgressContentTypeCtrl;
+  late TextEditingController _httpEgressBodyCtrl;
+  late TextEditingController _httpRequestServerCtrl;
+  late TextEditingController _httpRequestPathCtrl;
 
   @override
   void initState() {
@@ -36,6 +44,14 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _overCtrl = TextEditingController(text: widget.node.over ?? 'files');
     _countCtrl = TextEditingController(text: widget.node.count?.toString() ?? '8');
     _concurrencyCtrl = TextEditingController(text: widget.node.concurrency?.toString() ?? '3');
+    _intervalMsCtrl = TextEditingController(text: widget.node.intervalMs?.toString() ?? '1000');
+    _httpIngressServerCtrl = TextEditingController(text: widget.node.httpIngressServer ?? '');
+    _httpIngressPathCtrl = TextEditingController(text: widget.node.httpIngressPath ?? '/');
+    _httpEgressStatusCtrl = TextEditingController(text: widget.node.httpEgressStatus?.toString() ?? '200');
+    _httpEgressContentTypeCtrl = TextEditingController(text: widget.node.httpEgressContentType ?? 'application/json');
+    _httpEgressBodyCtrl = TextEditingController(text: widget.node.httpEgressBody ?? '');
+    _httpRequestServerCtrl = TextEditingController(text: widget.node.httpRequestServer ?? '');
+    _httpRequestPathCtrl = TextEditingController(text: widget.node.httpRequestPath ?? '/');
   }
 
   @override
@@ -47,6 +63,14 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _overCtrl.dispose();
     _countCtrl.dispose();
     _concurrencyCtrl.dispose();
+    _intervalMsCtrl.dispose();
+    _httpIngressServerCtrl.dispose();
+    _httpIngressPathCtrl.dispose();
+    _httpEgressStatusCtrl.dispose();
+    _httpEgressContentTypeCtrl.dispose();
+    _httpEgressBodyCtrl.dispose();
+    _httpRequestServerCtrl.dispose();
+    _httpRequestPathCtrl.dispose();
     super.dispose();
   }
 
@@ -62,6 +86,10 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     final node = widget.node;
     final isWorker = node.kind == 'genserver';
     final isBranch = node.kind == 'function';
+    final isDelay = node.kind == 'delay';
+    final isHttpIngress = node.kind == 'http.ingress';
+    final isHttpEgress = node.kind == 'http.egress';
+    final isHttpRequest = node.kind == 'http.request';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -149,6 +177,104 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
                   nodes: wf.nodes.map((n) => n.id == node.id ? n.copyWith(outputs: outputs, matchAll: matchAll) : n).toList(),
                 );
               },
+            ),
+          ] else if (isDelay) ...[
+            Field(
+              label: 'interval (ms)',
+              hint: 'time to wait before emitting',
+              child: _TextInput(
+                controller: _intervalMsCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(intervalMs: int.tryParse(v))),
+              ),
+            ),
+          ] else if (isHttpIngress) ...[
+            Field(
+              label: 'server',
+              hint: 'server instance id, default is "default"',
+              child: _TextInput(
+                controller: _httpIngressServerCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpIngressServer: v.isEmpty ? null : v)),
+              ),
+            ),
+            Field(
+              label: 'method',
+              hint: 'HTTP request method',
+              child: _SelectField(
+                value: node.httpIngressMethod ?? 'GET',
+                options: const [
+                  ('GET', 'GET'),
+                  ('POST', 'POST'),
+                  ('PUT', 'PUT'),
+                  ('DELETE', 'DELETE'),
+                  ('PATCH', 'PATCH'),
+                ],
+                onChanged: (v) => _updateNode(node.copyWith(httpIngressMethod: v)),
+              ),
+            ),
+            Field(
+              label: 'path',
+              hint: 'url path, e.g. /webhook',
+              child: _TextInput(
+                controller: _httpIngressPathCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpIngressPath: v.isEmpty ? null : v)),
+              ),
+            ),
+          ] else if (isHttpEgress) ...[
+            Field(
+              label: 'status',
+              hint: 'HTTP status code, default 200',
+              child: _TextInput(
+                controller: _httpEgressStatusCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpEgressStatus: int.tryParse(v))),
+              ),
+            ),
+            Field(
+              label: 'content type',
+              hint: 'response Content-Type header',
+              child: _TextInput(
+                controller: _httpEgressContentTypeCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpEgressContentType: v.isEmpty ? null : v)),
+              ),
+            ),
+            Field(
+              label: 'body',
+              hint: 'static response body fallback',
+              child: _TextInput(
+                controller: _httpEgressBodyCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpEgressBody: v.isEmpty ? null : v)),
+              ),
+            ),
+          ] else if (isHttpRequest) ...[
+            Field(
+              label: 'server',
+              hint: 'base url of the target server',
+              child: _TextInput(
+                controller: _httpRequestServerCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpRequestServer: v.isEmpty ? null : v)),
+              ),
+            ),
+            Field(
+              label: 'method',
+              hint: 'HTTP request method',
+              child: _SelectField(
+                value: node.httpRequestMethod ?? 'GET',
+                options: const [
+                  ('GET', 'GET'),
+                  ('POST', 'POST'),
+                  ('PUT', 'PUT'),
+                  ('DELETE', 'DELETE'),
+                  ('PATCH', 'PATCH'),
+                ],
+                onChanged: (v) => _updateNode(node.copyWith(httpRequestMethod: v)),
+              ),
+            ),
+            Field(
+              label: 'path',
+              hint: 'url path, e.g. /api/v1/data',
+              child: _TextInput(
+                controller: _httpRequestPathCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpRequestPath: v.isEmpty ? null : v)),
+              ),
             ),
           ] else ...[
             Field(

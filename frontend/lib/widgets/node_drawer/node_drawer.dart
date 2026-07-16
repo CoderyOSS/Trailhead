@@ -77,9 +77,13 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
             ? 'task node'
             : widget.node.kind == 'delay'
                 ? 'delay node'
-                : widget.node.kind == 'http'
-                    ? 'http node'
-                    : widget.node.kind == 'source.inject'
+                : widget.node.kind == 'http.ingress'
+                    ? 'http ingress node'
+                    : widget.node.kind == 'http.egress'
+                        ? 'http egress node'
+                        : widget.node.kind == 'http.request'
+                            ? 'http request node'
+                            : widget.node.kind == 'source.inject'
                         ? 'inject node'
                         : widget.node.kind == 'function'
                             ? 'function \u2014 if/else router'
@@ -87,7 +91,7 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                                 ? 'log sink node'
                                 : 'node';
 
-    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http' || widget.node.kind == 'source.inject' || widget.node.kind == 'sink.log';
+    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http.ingress' || widget.node.kind == 'http.egress' || widget.node.kind == 'http.request' || widget.node.kind == 'source.inject' || widget.node.kind == 'sink.log';
     final isBuilder = widget.view == NodeDrawerView.builder;
 
     final tabs = isWorker

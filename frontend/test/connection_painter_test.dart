@@ -7,12 +7,12 @@ void main() {
   test('shouldRepaint when selectedIds changes', () {
     final p1 = ConnectionPainter(
       nodes: const [],
-      edges: const [],
+      connections: const [],
       selectedIds: const {'A'},
     );
     final p2 = ConnectionPainter(
       nodes: const [],
-      edges: const [],
+      connections: const [],
       selectedIds: const {'A', 'B'},
     );
     expect(p1.shouldRepaint(p2), isTrue);
@@ -23,13 +23,13 @@ void main() {
       WorkflowNode(id: 'A', kind: 'worker', label: 'A', x: 0, y: 0),
       WorkflowNode(id: 'B', kind: 'worker', label: 'B', x: 200, y: 100),
     ];
-    final edges = [
-      WorkflowEdge(id: 'e1', sourceId: 'A', targetId: 'B'),
+    final connections = [
+      WorkflowConnection(id: 'e1', from: 'A', to: 'B'),
     ];
 
     final painter = ConnectionPainter(
       nodes: nodes,
-      edges: edges,
+      connections: connections,
       draggingNodeId: 'A',
       dragOffset: const Offset(50, 30),
       selectedIds: const {'A', 'B'},
@@ -43,7 +43,7 @@ void main() {
     // Verify repaint triggers when drag offset changes
     final painter2 = ConnectionPainter(
       nodes: nodes,
-      edges: edges,
+      connections: connections,
       draggingNodeId: 'A',
       dragOffset: const Offset(60, 40),
       selectedIds: const {'A', 'B'},

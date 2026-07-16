@@ -139,14 +139,11 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
     buf.writeln('');
   }
 
-  if (workflow.edges.isNotEmpty) {
-    buf.writeln('edges:');
-    for (final edge in workflow.edges) {
-    buf.writeln('  - from: "${edge.sourceId}"');
-    buf.writeln('    to: "${edge.targetId}"');
-      if (edge.sourcePort != null) {
-        buf.writeln('    port: ${edge.sourcePort}');
-      }
+  if (workflow.connections.isNotEmpty) {
+    buf.writeln('connections:');
+    for (final conn in workflow.connections) {
+      buf.writeln('  - from: "${conn.from}"');
+      buf.writeln('    to: "${conn.to}"');
     }
   }
 

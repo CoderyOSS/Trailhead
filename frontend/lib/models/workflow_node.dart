@@ -205,6 +205,38 @@ class WorkflowNode {
   }
 }
 
+/// Node kind classification shared with the THRT backend.
+///
+/// Mirrors `THRT.Node.actor?/1` (module introspection on `handle_message/3`).
+/// Actor kinds wrap an Erlang process (mailbox + send/receive); function kinds
+/// are pure transforms inlined into the caller's pipe chain.
+///
+/// Keep in sync with `ConnectionValidator.actorKinds` / `functionKinds`.
+extension WorkflowNodeKind on WorkflowNode {
+  static const Set<String> actorKinds = <String>{
+    'genserver',
+    'http.ingress',
+    'http.egress',
+    'http.request',
+    'task',
+    'source.inject',
+  };
+
+  static const Set<String> functionKinds = <String>{
+    'function',
+    'delay',
+    'sink.log',
+  };
+
+  /// True when this node wraps an Erlang process (has a mailbox).
+  /// A connection whose target `isActor` is a message (`send/2`).
+  bool get isActor => actorKinds.contains(kind);
+
+  /// True when this node is a pure function (`transform/3`).
+  /// A connection whose target `isFunction` is a pipe (`|>`).
+  bool get isFunction => functionKinds.contains(kind);
+}
+
 extension WorkflowNodeRect on WorkflowNode {
   double get width => kind == 'function' ? WorkflowNode.branchWidth : WorkflowNode.workerWidth;
 

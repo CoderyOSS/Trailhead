@@ -415,20 +415,20 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
       if (drag.targetNodeId != null) {
         final current = ref.read(workflowProvider);
-        final alreadyExists = current.edges.any((e) =>
-            e.sourceId == sourceNodeId &&
-            e.targetId == drag.targetNodeId &&
+        final alreadyExists = current.connections.any((e) =>
+            e.from == sourceNodeId &&
+            e.to == drag.targetNodeId &&
             e.sourcePort == drag.sourcePort);
 
         if (!alreadyExists) {
-          final newEdge = WorkflowEdge(
+          final newEdge = WorkflowConnection(
             id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
-            sourceId: sourceNodeId,
-            targetId: drag.targetNodeId!,
+            from: sourceNodeId,
+            to: drag.targetNodeId!,
             sourcePort: drag.sourcePort,
           );
           ref.read(workflowProvider.notifier).state = current.copyWith(
-            edges: [...current.edges, newEdge],
+            connections: [...current.connections, newEdge],
           );
         }
       }
@@ -493,16 +493,16 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
         outputs: type.kind == 'function' ? WorkflowNode.defaultBranchOutputs : const [],
       );
 
-      final edge = WorkflowEdge(
+      final edge = WorkflowConnection(
         id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
-        sourceId: sourceId,
-        targetId: id,
+        from: sourceId,
+        to: id,
         sourcePort: pickerAnchor?.sourcePort,
       );
 
       ref.read(workflowProvider.notifier).state = workflow.copyWith(
         nodes: [...workflow.nodes, newNode],
-        edges: [...workflow.edges, edge],
+        connections: [...workflow.connections, edge],
       );
       ref.read(selectionProvider.notifier).selectOne(id);
       ref.read(operatorPickerProvider.notifier).state = null;
@@ -511,12 +511,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     void deleteNode(String nodeId) {
       final currentWorkflow = ref.read(workflowProvider);
       final newNodes = currentWorkflow.nodes.where((n) => n.id != nodeId).toList();
-      final newEdges = currentWorkflow.edges
-          .where((e) => e.sourceId != nodeId && e.targetId != nodeId)
+      final newEdges = currentWorkflow.connections
+          .where((e) => e.from != nodeId && e.to != nodeId)
           .toList();
       ref.read(workflowProvider.notifier).state = currentWorkflow.copyWith(
         nodes: newNodes,
-        edges: newEdges,
+        connections: newEdges,
       );
       ref.read(selectionProvider.notifier).removeIds([nodeId]);
       if (hoveredNodeId == nodeId) {
@@ -544,22 +544,22 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     }
 
     void collapseNode(String nodeId) {
-      final parentEdge = workflow.edges.cast<WorkflowEdge?>().firstWhere(
-        (e) => e?.targetId == nodeId,
+      final parentEdge = workflow.connections.cast<WorkflowConnection?>().firstWhere(
+        (e) => e?.to == nodeId,
         orElse: () => null,
       );
-      final childEdges = workflow.edges.where((e) => e.sourceId == nodeId).toList();
+      final childEdges = workflow.connections.where((e) => e.from == nodeId).toList();
 
-      final newEdges = workflow.edges
-          .where((e) => e.targetId != nodeId && e.sourceId != nodeId)
+      final newEdges = workflow.connections
+          .where((e) => e.to != nodeId && e.from != nodeId)
           .toList();
 
       if (parentEdge != null) {
         for (final child in childEdges) {
-          newEdges.add(WorkflowEdge(
+          newEdges.add(WorkflowConnection(
             id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
-            sourceId: parentEdge.sourceId,
-            targetId: child.targetId,
+            from: parentEdge.from,
+            to: child.to,
             sourcePort: parentEdge.sourcePort,
           ));
         }
@@ -569,7 +569,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
       ref.read(workflowProvider.notifier).state = workflow.copyWith(
         nodes: newNodes,
-        edges: newEdges,
+        connections: newEdges,
       );
 
       ref.read(selectionProvider.notifier).removeIds([nodeId]);
@@ -748,9 +748,9 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                 final threshold = 6.0 / viewport.zoom;
                                 final toDelete = <String>{};
           
-                                for (final edge in workflow.edges) {
-                                  final source = workflow.nodes.firstWhere((n) => n.id == edge.sourceId);
-                                  final target = workflow.nodes.firstWhere((n) => n.id == edge.targetId);
+                                for (final edge in workflow.connections) {
+                                  final source = workflow.nodes.firstWhere((n) => n.id == edge.from);
+                                  final target = workflow.nodes.firstWhere((n) => n.id == edge.to);
           
                                   Offset exitPoint(WorkflowNode node) {
                                     final pos = Offset(node.x, node.y);
@@ -796,7 +796,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                       }
                                     }
                                     if (hit) {
-                                      toDelete.add('${edge.sourceId}\u2192${edge.targetId}');
+                                      toDelete.add('${edge.from}\u2192${edge.to}');
                                       break;
                                     }
                                   }
@@ -805,7 +805,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                 if (toDelete.isNotEmpty) {
                                   final current = ref.read(workflowProvider);
                                   ref.read(workflowProvider.notifier).state = current.copyWith(
-                                    edges: current.edges.where((e) => !toDelete.contains('${e.sourceId}\u2192${e.targetId}')).toList(),
+                                    connections: current.connections.where((e) => !toDelete.contains('${e.from}\u2192${e.to}')).toList(),
                                   );
                                 }
                               }
@@ -847,9 +847,9 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                                 String? nearestEdgeKey;
                                                 double nearestDist = threshold;
           
-                                                for (final edge in workflow.edges) {
-                                                  final source = workflow.nodes.firstWhere((n) => n.id == edge.sourceId);
-                                                  final target = workflow.nodes.firstWhere((n) => n.id == edge.targetId);
+                                                for (final edge in workflow.connections) {
+                                                  final source = workflow.nodes.firstWhere((n) => n.id == edge.from);
+                                                  final target = workflow.nodes.firstWhere((n) => n.id == edge.to);
           
                                                   // Compute dragged positions (same as painter)
                                                   Offset nodePos(WorkflowNode node) {
@@ -897,7 +897,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                                     final dist = (tapWorld.dx - bx).abs() + (tapWorld.dy - by).abs();
                                                     if (dist < nearestDist) {
                                                       nearestDist = dist;
-                                                      nearestEdgeKey = '${edge.sourceId}\u2192${edge.targetId}';
+                                                      nearestEdgeKey = '${edge.from}\u2192${edge.to}';
                                                     }
                                                   }
                                                 }
@@ -905,7 +905,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                                 if (nearestEdgeKey != null) {
                                                   final current = ref.read(workflowProvider);
                                                   ref.read(workflowProvider.notifier).state = current.copyWith(
-                                                    edges: current.edges.where((e) => '${e.sourceId}\u2192${e.targetId}' != nearestEdgeKey).toList(),
+                                                    connections: current.connections.where((e) => '${e.from}\u2192${e.to}' != nearestEdgeKey).toList(),
                                                   );
                                                 }
                                               }
@@ -913,7 +913,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                         child: CustomPaint(
                                           painter: ConnectionPainter(
                                             nodes: workflow.nodes,
-                                            edges: workflow.edges,
+                                            connections: workflow.connections,
                                             draggingNodeId: draggingNodeId,
                                             dragOffset: dragOffset,
                                             selectedIds: selection.current,

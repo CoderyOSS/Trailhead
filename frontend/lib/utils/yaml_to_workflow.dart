@@ -17,7 +17,7 @@ class WorkflowParseException implements Exception {
 ///   - name (required), version (default 1), draft (optional)
 ///   - nodes: array of {id, type, label, pos, ...kind-specific fields}
 ///     (also accepts legacy stages/name/kind keys)
-///   - edges: array of {from, to, port?}
+///   - connections: array of {from, to}  (legacy `edges:` auto-migrates)
 ///
 /// Throws [WorkflowParseException] on missing required fields or
 /// incompatible schema (e.g. scheduler-style map stages).
@@ -62,13 +62,15 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
     throw WorkflowParseException('unexpected nodes shape: ${nodeList.runtimeType}');
   }
 
-  final edgesNode = doc['edges'];
-  final edges = <WorkflowEdge>[];
-  if (edgesNode is YamlList) {
-    for (var i = 0; i < edgesNode.length; i++) {
-      final e = edgesNode[i];
+  // Read `connections:` (canonical) first; fall back to legacy `edges:` key
+  // so existing persisted workflows auto-migrate. Matches THRT backend.
+  final connectionsNode = doc['connections'] ?? doc['edges'];
+  final connections = <WorkflowConnection>[];
+  if (connectionsNode is YamlList) {
+    for (var i = 0; i < connectionsNode.length; i++) {
+      final e = connectionsNode[i];
       if (e is! YamlMap) continue;
-      edges.add(_parseEdge(e, i));
+      connections.add(_parseConnection(e, i));
     }
   }
 
@@ -81,7 +83,7 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
     draft: draft,
     updated: '',
     nodes: nodes,
-    edges: edges,
+    connections: connections,
     remoteContent: yamlText,
   );
 }
@@ -261,17 +263,17 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   );
 }
 
-WorkflowEdge _parseEdge(YamlMap e, int index) {
+WorkflowConnection _parseConnection(YamlMap e, int index) {
   final from = _toStr(e['from']) ?? '';
   final to = _toStr(e['to']) ?? '';
+  // Legacy `port:` is read into sourcePort for in-memory continuity but is
+  // not re-emitted (spec §10 — future case-expression ports).
   final port = e['port'] as int?;
-  final label = _toStr(e['label']);
-  return WorkflowEdge(
-    id: 'edge_${index}_$from\_$to',
-    sourceId: from,
-    targetId: to,
+  return WorkflowConnection(
+    id: 'conn_${index}_$from\_$to',
+    from: from,
+    to: to,
     sourcePort: port,
-    label: label,
   );
 }
 

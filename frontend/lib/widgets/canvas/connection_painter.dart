@@ -8,7 +8,7 @@ import '../../theme/tokens.dart';
 
 class ConnectionPainter extends CustomPainter {
   final List<WorkflowNode> nodes;
-  final List<WorkflowEdge> edges;
+  final List<WorkflowConnection> connections;
   final String? draggingNodeId;
   final Offset dragOffset;
   final Set<String> selectedIds;
@@ -19,7 +19,7 @@ class ConnectionPainter extends CustomPainter {
 
   ConnectionPainter({
     required this.nodes,
-    required this.edges,
+    required this.connections,
     this.draggingNodeId,
     this.dragOffset = Offset.zero,
     this.selectedIds = const {},
@@ -37,10 +37,10 @@ class ConnectionPainter extends CustomPainter {
     return Offset(node.x, node.y);
   }
 
-  Offset _exitPoint(WorkflowNode node, WorkflowEdge edge) {
+  Offset _exitPoint(WorkflowNode node, WorkflowConnection conn) {
     final pos = _nodePos(node);
     if (node.kind == 'function' && node.outputs.isNotEmpty) {
-      return _branchExitPoint(node, pos, edge.sourcePort);
+      return _branchExitPoint(node, pos, conn.sourcePort);
     }
     return Offset(pos.dx + node.width, pos.dy + node.height / 2);
   }
@@ -86,12 +86,12 @@ class ConnectionPainter extends CustomPainter {
       ..color = AppColors.border3
       ..style = PaintingStyle.fill;
 
-    for (final edge in edges) {
-      final source = nodeMap[edge.sourceId];
-      final target = nodeMap[edge.targetId];
+    for (final conn in connections) {
+      final source = nodeMap[conn.from];
+      final target = nodeMap[conn.to];
       if (source == null || target == null) continue;
 
-      final p0 = _exitPoint(source, edge);
+      final p0 = _exitPoint(source, conn);
       final p3 = _entryPoint(target);
 
       final dx = (p3.dx - p0.dx).abs();
@@ -109,14 +109,6 @@ class ConnectionPainter extends CustomPainter {
       // Arrowhead at target end
       final tangent = Offset(p3.dx - p2.dx, p3.dy - p2.dy);
       _drawArrowhead(canvas, p3, tangent, arrowPaint);
-
-      // Midpoint for label placement
-      final mid = _bezierPoint(p0, p1, p2, p3, 0.5);
-
-      // Midpoint pill label if present
-      if (edge.label != null && edge.label!.isNotEmpty) {
-        _drawMidpointLabel(canvas, mid, edge.label!);
-      }
     }
 
     // Draw temporary drag line
@@ -181,60 +173,6 @@ class ConnectionPainter extends CustomPainter {
     canvas.drawPath(path, paint);
   }
 
-  Offset _bezierPoint(Offset p0, Offset p1, Offset p2, Offset p3, double t) {
-    final u = 1.0 - t;
-    final tt = t * t;
-    final uu = u * u;
-    final uuu = uu * u;
-    final ttt = tt * t;
-
-    final x = uuu * p0.dx + 3 * uu * t * p1.dx + 3 * u * tt * p2.dx + ttt * p3.dx;
-    final y = uuu * p0.dy + 3 * uu * t * p1.dy + 3 * u * tt * p2.dy + ttt * p3.dy;
-    return Offset(x, y);
-  }
-
-  void _drawMidpointLabel(Canvas canvas, Offset mid, String label) {
-    final style = TextStyle(
-      fontFamily: 'monospace',
-      fontSize: 9,
-      color: AppColors.fg0,
-      fontWeight: FontWeight.w500,
-    );
-    final span = TextSpan(text: label, style: style);
-    final painter = TextPainter(
-      text: span,
-      textDirection: TextDirection.ltr,
-    )..layout();
-
-    final padX = 6.0;
-    final padY = 2.0;
-    final rect = RRect.fromRectAndRadius(
-      Rect.fromCenter(
-        center: mid,
-        width: painter.width + padX * 2,
-        height: painter.height + padY * 2,
-      ),
-      const Radius.circular(4),
-    );
-
-    canvas.drawRRect(
-      rect,
-      Paint()..color = AppColors.bg2,
-    );
-    canvas.drawRRect(
-      rect,
-      Paint()
-        ..color = AppColors.border2
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = 1.0,
-    );
-
-    painter.paint(
-      canvas,
-      Offset(mid.dx - painter.width / 2, mid.dy - painter.height / 2),
-    );
-  }
-
   bool _setsEqual(Set<String> a, Set<String> b) {
     return a.length == b.length && a.containsAll(b);
   }
@@ -242,7 +180,7 @@ class ConnectionPainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant ConnectionPainter old) {
     return old.nodes != nodes ||
-        old.edges != edges ||
+        old.connections != connections ||
         old.draggingNodeId != draggingNodeId ||
         old.dragOffset != dragOffset ||
         old.connectionDrag != connectionDrag ||

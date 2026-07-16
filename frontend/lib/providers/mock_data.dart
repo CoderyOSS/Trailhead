@@ -14,7 +14,7 @@ class WorkflowSummary {
   final String last;
   final int active;
   final List<WorkflowNode> nodes;
-  final List<WorkflowEdge> edges;
+  final List<WorkflowConnection> connections;
 
   /// Raw YAML from backend when this workflow was loaded remotely.
   /// Null for freshly-created (unsaved) workflows.
@@ -34,7 +34,7 @@ class WorkflowSummary {
     this.last = '',
     this.active = 0,
     this.nodes = const [],
-    this.edges = const [],
+    this.connections = const [],
     this.remoteContent,
     this.parseError,
   });
@@ -52,7 +52,7 @@ class WorkflowSummary {
       version: 0,
       updated: '',
       nodes: const [],
-      edges: const [],
+      connections: const [],
       remoteContent: remoteContent,
       parseError: parseError,
     );
@@ -68,7 +68,7 @@ class WorkflowSummary {
     String? last,
     int? active,
     List<WorkflowNode>? nodes,
-    List<WorkflowEdge>? edges,
+    List<WorkflowConnection>? connections,
     String? remoteContent,
     String? parseError,
   }) {
@@ -82,7 +82,7 @@ class WorkflowSummary {
       last: last ?? this.last,
       active: active ?? this.active,
       nodes: nodes ?? this.nodes,
-      edges: edges ?? this.edges,
+      connections: connections ?? this.connections,
       remoteContent: remoteContent ?? this.remoteContent,
       parseError: parseError ?? this.parseError,
     );

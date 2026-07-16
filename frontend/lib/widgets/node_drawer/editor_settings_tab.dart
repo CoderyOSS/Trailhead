@@ -160,12 +160,12 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
               matchAll: node.matchAll,
               onUpdate: (outputs, matchAll, removedIndex) {
                 var wf = ref.read(workflowProvider);
-                if (removedIndex != null) {
+                  if (removedIndex != null) {
                   wf = wf.copyWith(
-                    edges: wf.edges
-                        .where((e) => !(e.sourceId == node.id && e.sourcePort == removedIndex))
+                    connections: wf.connections
+                        .where((e) => !(e.from == node.id && e.sourcePort == removedIndex))
                         .map((e) {
-                      if (e.sourceId == node.id && e.sourcePort != null && e.sourcePort! > removedIndex) {
+                      if (e.from == node.id && e.sourcePort != null && e.sourcePort! > removedIndex) {
                         return e.copyWith(sourcePort: e.sourcePort! - 1);
                       }
                       return e;

@@ -107,7 +107,10 @@ class OperatorPicker extends StatelessWidget {
 enum OperatorType {
   genserver(kind: 'genserver', label: 'genserver', desc: 'stateful \u00b7 module or inline', icon: TrailheadIconData.zap),
   task(kind: 'task', label: 'task', desc: 'stateless \u00b7 concurrent \u00b7 elixir expr', icon: TrailheadIconData.zap),
+  delay(kind: 'delay', label: 'delay', desc: 'timed delay \u00b7 configurable ms', icon: TrailheadIconData.clock),
+  http(kind: 'http', label: 'http', desc: 'HTTP endpoint \u00b7 method + path', icon: TrailheadIconData.globe),
   function(kind: 'function', label: 'function', desc: 'conditional routing', icon: TrailheadIconData.gitBranch),
+  sourceInject(kind: 'source.inject', label: 'source.inject', desc: 'timer or one-shot inject', icon: TrailheadIconData.send),
   sinkLog(kind: 'sink.log', label: 'sink.log', desc: 'write messages to the log', icon: TrailheadIconData.zap);
 
   const OperatorType({
@@ -139,8 +142,7 @@ class _OperatorRowState extends State<_OperatorRow> {
 
   @override
   Widget build(BuildContext context) {
-    final isPrimary =
-        widget.type == OperatorType.genserver || widget.type == OperatorType.task;
+    final isPrimary = widget.type != OperatorType.function;
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),

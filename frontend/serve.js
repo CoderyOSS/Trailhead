@@ -44,8 +44,8 @@ Bun.serve({
     let path = url.pathname;
 
     // Proxy API + MCP calls to backend. In production, the frontend is
-    // served from the same Rust binary as the API (same-origin), so no
-    // proxy is needed. The dev preview uses this Bun forward.
+    // served from the same Bun proxy as the API (same-origin), so no
+    // separate proxy is needed. The dev preview uses this Bun forward.
     if (path.startsWith('/api/') || path.startsWith('/mcp/')) {
       const target = `${BACKEND_URL}${path}${url.search}`;
       try {

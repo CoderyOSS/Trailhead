@@ -82,6 +82,19 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         }
       }
 
+      // Node kinds with config sub-map
+      if (node.kind == 'delay' || node.kind == 'http' || node.kind == 'source.inject') {
+        buf.writeln('    config:');
+        if (node.kind == 'delay' && node.intervalMs != null) {
+          buf.writeln('      interval_ms: ${node.intervalMs}');
+        }
+        if (node.kind == 'http') {
+          if (node.httpServer != null) buf.writeln('      server: "${node.httpServer}"');
+          if (node.httpMethod != null) buf.writeln('      method: ${node.httpMethod}');
+          if (node.httpPath != null) buf.writeln('      path: "${node.httpPath}"');
+        }
+      }
+
       // Join fields
       if (node.kind == 'join') {
         if (node.waitsFor.isNotEmpty) {

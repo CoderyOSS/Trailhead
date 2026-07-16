@@ -6,7 +6,7 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 
 ## Current State
 
-- Flutter project targeting **web** (embedded in Rust binary) and **iOS** (native app)
+- Flutter project targeting **web** (served by Bun proxy) and **iOS** (native app)
 - Dark slate background (`#0c0d10` page, `#14161b` main content)
 - **Riverpod** for state management (`flutter_riverpod`)
 - **Mode rail** + **top bar** implemented, driven by `modeProvider`
@@ -87,7 +87,7 @@ listener in `lib/main.dart`. The `workflowDirtyProvider` tracks unsaved state.
 | Analyze | `~/projects/flutter/bin/flutter analyze` |
 | Run iOS build | `~/projects/flutter/bin/flutter build ios --release --no-codesign` (macOS only) |
 
-**Agent rule:** After any code change, run `~/projects/flutter/bin/flutter build web --release` and refresh `trailhead.rancidgrandmas.online`. The Rust build script `scripts/build-trailhead.sh` is no longer used for frontend deployments.
+**Agent rule:** After any code change, run `~/projects/flutter/bin/flutter build web --release` and refresh `trailhead.rancidgrandmas.online`.
 
 ## iOS Development
 
@@ -107,7 +107,7 @@ The dev preview proxies `/api/*` to the THRT runtime (`http://localhost:8060`).
 
 **App config:** `trailhead` app, internal port 8040, directory `/home/gem/projects/CoderyTrailhead/frontend`, command `bun run serve.js`.
 
-**Production** (`trailhead.rancidgrandmas.online`): now served by the same Bun proxy + THRT runtime instead of the Rust binary.
+**Production** (`trailhead.rancidgrandmas.online`): served by Bun proxy + THRT runtime.
 
 ## Code Style
 
@@ -200,4 +200,4 @@ Theme: **dark** with **slate** variant. Key tokens:
 
 ## Backend
 
-The backend runtime is now **THRT** (`/home/gem/projects/THRT`) — an Elixir service that stores workflow YAML and executes node graphs. The Rust service in `crates/trailhead-service/` has been retired and is preserved for reference only.
+The backend runtime is **THRT** (`/home/gem/projects/THRT`) — an Elixir service that stores workflow YAML and executes node graphs.

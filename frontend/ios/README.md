@@ -158,9 +158,7 @@ The Codery sandbox is Linux — **cannot build iOS here**. Recommended flow:
 
 1. Iterate on Mac locally with simulator/device
 2. Commit + push changes to `frontend/`
-3. Sandbox picks up changes → run `~/flutter/bin/flutter build web --release`
-   to refresh trailhead-dev preview
-4. Backend Rust embed picks up web build on next `cargo build`
+3. Sandbox picks up changes
 
 Keep iOS-specific config (`ios/`, Podfile changes) in git but don't try to build
 it from the Linux container.

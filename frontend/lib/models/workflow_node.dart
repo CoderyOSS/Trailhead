@@ -56,6 +56,12 @@ class WorkflowNode {
   final String? collect;
   final StageBody? body;
 
+  // Node type-specific config
+  final int? intervalMs;
+  final String? httpServer;
+  final String? httpMethod;
+  final String? httpPath;
+
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
     BranchOutput(id: '1', label: 'medium'),
@@ -100,6 +106,10 @@ class WorkflowNode {
     this.concurrency,
     this.collect,
     this.body,
+    this.intervalMs,
+    this.httpServer,
+    this.httpMethod,
+    this.httpPath,
   });
 
   WorkflowNode copyWith({
@@ -130,6 +140,10 @@ class WorkflowNode {
     int? concurrency,
     String? collect,
     StageBody? body,
+    int? intervalMs,
+    String? httpServer,
+    String? httpMethod,
+    String? httpPath,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -159,6 +173,10 @@ class WorkflowNode {
       concurrency: concurrency ?? this.concurrency,
       collect: collect ?? this.collect,
       body: body ?? this.body,
+      intervalMs: intervalMs ?? this.intervalMs,
+      httpServer: httpServer ?? this.httpServer,
+      httpMethod: httpMethod ?? this.httpMethod,
+      httpPath: httpPath ?? this.httpPath,
     );
   }
 }

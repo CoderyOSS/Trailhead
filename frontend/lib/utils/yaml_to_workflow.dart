@@ -120,6 +120,23 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   final connection = stage['connection']?.toString();
   final configs = _toStringList(stage['configs']);
 
+  // Node config sub-map (THRT node types)
+  final config = stage['config'];
+  int? intervalMs;
+  String? httpServer;
+  String? httpMethod;
+  String? httpPath;
+  if (config is YamlMap) {
+    if (kind == 'delay') {
+      intervalMs = config['interval_ms'] as int?;
+    }
+    if (kind == 'http') {
+      httpServer = _toStr(config['server']);
+      httpMethod = _toStr(config['method']);
+      httpPath = _toStr(config['path']);
+    }
+  }
+
   // Kind-specific fields.
   final outputs = <BranchOutput>[];
   var matchAll = false;
@@ -215,6 +232,10 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     concurrency: concurrency,
     collect: collect,
     body: body,
+    intervalMs: intervalMs,
+    httpServer: httpServer,
+    httpMethod: httpMethod,
+    httpPath: httpPath,
   );
 }
 

@@ -55,6 +55,11 @@ class ConnectionPainter extends CustomPainter {
   /// [connections] via [ConnectionValidator.invalidIds]. Rendered red.
   final Set<String> invalidIds;
 
+  /// When non-null, renders a transient red "X" marker at this world
+  /// position (drag-drop validation rejection feedback). Cleared by a Timer
+  /// in `graph_canvas` after ~600ms.
+  final Offset? invalidDropPos;
+
   /// Dash pattern for message connections (spec §6.2.3 suggests 6/4).
   static const double messageDash = 6.0;
   static const double messageGap = 4.0;
@@ -70,6 +75,7 @@ class ConnectionPainter extends CustomPainter {
     this.selectedIds = const {},
     this.connectionDrag,
     Set<String>? invalidIds,
+    this.invalidDropPos,
   })  : invalidIds = invalidIds ??
             ConnectionValidator.invalidIds(
               connections,
@@ -220,6 +226,39 @@ class ConnectionPainter extends CustomPainter {
         _drawArrowhead(canvas, p3, tangent, dragArrowPaint);
       }
     }
+
+    // Transient red marker for an invalid drag-drop attempt.
+    final dropPos = invalidDropPos;
+    if (dropPos != null) {
+      _drawInvalidDropMarker(canvas, dropPos);
+    }
+  }
+
+  void _drawInvalidDropMarker(Canvas canvas, Offset center) {
+    const r = 12.0;
+    final ringPaint = Paint()
+      ..color = AppColors.danger
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0;
+    final xPaint = Paint()
+      ..color = AppColors.danger
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.0
+      ..strokeCap = StrokeCap.round;
+
+    canvas.drawCircle(center, r, ringPaint);
+    // X mark inside the ring.
+    final arm = r * 0.5;
+    canvas.drawLine(
+      Offset(center.dx - arm, center.dy - arm),
+      Offset(center.dx + arm, center.dy + arm),
+      xPaint,
+    );
+    canvas.drawLine(
+      Offset(center.dx - arm, center.dy + arm),
+      Offset(center.dx + arm, center.dy - arm),
+      xPaint,
+    );
   }
 
   void _drawArrowhead(Canvas canvas, Offset tip, Offset tangent, Paint paint) {

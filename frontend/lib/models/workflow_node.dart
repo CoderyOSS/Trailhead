@@ -56,6 +56,9 @@ class WorkflowNode {
   final String? collect;
   final StageBody? body;
 
+  // Transform node expression (kind=='function' && expr!=null => transform, not routing)
+  final String? expr;
+
   // Node type-specific config
   final int? intervalMs;
   final String? httpIngressServer;
@@ -64,9 +67,9 @@ class WorkflowNode {
   final int? httpEgressStatus;
   final String? httpEgressContentType;
   final String? httpEgressBody;
-  final String? httpRequestServer;
+  final String? httpRequestUrl;
   final String? httpRequestMethod;
-  final String? httpRequestPath;
+  final String? httpEgressServer;
 
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
@@ -112,6 +115,7 @@ class WorkflowNode {
     this.concurrency,
     this.collect,
     this.body,
+    this.expr,
     this.intervalMs,
     this.httpIngressServer,
     this.httpIngressMethod,
@@ -119,9 +123,9 @@ class WorkflowNode {
     this.httpEgressStatus,
     this.httpEgressContentType,
     this.httpEgressBody,
-    this.httpRequestServer,
+    this.httpRequestUrl,
     this.httpRequestMethod,
-    this.httpRequestPath,
+    this.httpEgressServer,
   });
 
   WorkflowNode copyWith({
@@ -152,6 +156,7 @@ class WorkflowNode {
     int? concurrency,
     String? collect,
     StageBody? body,
+    String? expr,
     int? intervalMs,
     String? httpIngressServer,
     String? httpIngressMethod,
@@ -159,9 +164,9 @@ class WorkflowNode {
     int? httpEgressStatus,
     String? httpEgressContentType,
     String? httpEgressBody,
-    String? httpRequestServer,
+    String? httpRequestUrl,
     String? httpRequestMethod,
-    String? httpRequestPath,
+    String? httpEgressServer,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -191,6 +196,7 @@ class WorkflowNode {
       concurrency: concurrency ?? this.concurrency,
       collect: collect ?? this.collect,
       body: body ?? this.body,
+      expr: expr ?? this.expr,
       intervalMs: intervalMs ?? this.intervalMs,
       httpIngressServer: httpIngressServer ?? this.httpIngressServer,
       httpIngressMethod: httpIngressMethod ?? this.httpIngressMethod,
@@ -198,9 +204,9 @@ class WorkflowNode {
       httpEgressStatus: httpEgressStatus ?? this.httpEgressStatus,
       httpEgressContentType: httpEgressContentType ?? this.httpEgressContentType,
       httpEgressBody: httpEgressBody ?? this.httpEgressBody,
-      httpRequestServer: httpRequestServer ?? this.httpRequestServer,
+      httpRequestUrl: httpRequestUrl ?? this.httpRequestUrl,
       httpRequestMethod: httpRequestMethod ?? this.httpRequestMethod,
-      httpRequestPath: httpRequestPath ?? this.httpRequestPath,
+      httpEgressServer: httpEgressServer ?? this.httpEgressServer,
     );
   }
 }
@@ -215,9 +221,8 @@ class WorkflowNode {
 extension WorkflowNodeKind on WorkflowNode {
   static const Set<String> actorKinds = <String>{
     'genserver',
-    'http.ingress',
-    'http.egress',
-    'http.request',
+    'http.server.ingress',
+    'http.client.request',
     'task',
     'source.inject',
   };
@@ -226,6 +231,7 @@ extension WorkflowNodeKind on WorkflowNode {
     'function',
     'delay',
     'sink.log',
+    'http.server.egress',
   };
 
   /// True when this node wraps an Erlang process (has a mailbox).
@@ -238,9 +244,11 @@ extension WorkflowNodeKind on WorkflowNode {
 }
 
 extension WorkflowNodeRect on WorkflowNode {
-  double get width => kind == 'function' ? WorkflowNode.branchWidth : WorkflowNode.workerWidth;
+  bool get _isBranch => kind == 'function' && expr == null;
 
-  double get height => kind == 'function'
+  double get width => _isBranch ? WorkflowNode.branchWidth : WorkflowNode.workerWidth;
+
+  double get height => _isBranch
       ? (outputs.isNotEmpty
           ? WorkflowNode.branchPadY * 2 + outputs.length * WorkflowNode.branchRowHeight
           : WorkflowNode.branchPadY * 2 +

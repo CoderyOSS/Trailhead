@@ -78,6 +78,8 @@ Bun.serve({
         const upstream = await fetch(target, init);
         // Strip hop-by-hop / encoding headers so Bun doesn't double-compress
         // (which would invalidate the upstream Content-Length and break Caddy).
+        // Always set Content-Type on error responses lacking one — browsers
+        // may fire XHR onError instead of onLoad for 4xx/5xx without framing.
         const headers = new Headers();
         for (const [k, v] of upstream.headers) {
           const lk = k.toLowerCase();
@@ -85,6 +87,9 @@ Bun.serve({
             continue;
           }
           headers.set(k, v);
+        }
+        if (upstream.status >= 400 && !headers.has('content-type')) {
+          headers.set('content-type', 'text/plain; charset=utf-8');
         }
         return new Response(upstream.body, {
           status: upstream.status,

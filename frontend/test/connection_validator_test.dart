@@ -11,12 +11,11 @@ WorkflowConnection _conn(String id, String from, String to, {int? sourcePort}) =
 
 void main() {
   group('WorkflowNode classification', () {
-    test('isActor is true for the 6 actor kinds', () {
+    test('isActor is true for the 5 actor kinds', () {
       for (final kind in [
         'genserver',
-        'http.ingress',
-        'http.egress',
-        'http.request',
+        'http.server.ingress',
+        'http.client.request',
         'task',
         'source.inject',
       ]) {
@@ -24,8 +23,8 @@ void main() {
       }
     });
 
-    test('isFunction is true for the 3 function kinds', () {
-      for (final kind in ['function', 'delay', 'sink.log']) {
+    test('isFunction is true for the 4 function kinds', () {
+      for (final kind in ['function', 'delay', 'sink.log', 'http.server.egress']) {
         expect(_node('n', kind).isFunction, isTrue,
             reason: '$kind should be function');
       }

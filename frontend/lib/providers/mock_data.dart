@@ -1,8 +1,7 @@
 import '../models/stage_data.dart';
 import '../models/workflow_edge.dart';
 import '../models/workflow_node.dart';
-
-enum JobState { running, paused, passed, failed, cancelled, queued, retrying }
+import '../models/server_def.dart';
 
 class WorkflowSummary {
   final String id;
@@ -15,6 +14,7 @@ class WorkflowSummary {
   final int active;
   final List<WorkflowNode> nodes;
   final List<WorkflowConnection> connections;
+  final List<ServerDef> servers;
 
   /// Raw YAML from backend when this workflow was loaded remotely.
   /// Null for freshly-created (unsaved) workflows.
@@ -35,6 +35,7 @@ class WorkflowSummary {
     this.active = 0,
     this.nodes = const [],
     this.connections = const [],
+    this.servers = const [],
     this.remoteContent,
     this.parseError,
   });
@@ -69,6 +70,7 @@ class WorkflowSummary {
     int? active,
     List<WorkflowNode>? nodes,
     List<WorkflowConnection>? connections,
+    List<ServerDef>? servers,
     String? remoteContent,
     String? parseError,
   }) {
@@ -83,209 +85,12 @@ class WorkflowSummary {
       active: active ?? this.active,
       nodes: nodes ?? this.nodes,
       connections: connections ?? this.connections,
+      servers: servers ?? this.servers,
       remoteContent: remoteContent ?? this.remoteContent,
       parseError: parseError ?? this.parseError,
     );
   }
 }
-
-class JobSummary {
-  final String id;
-  final String? workflow;
-  final int? workflowVersion;
-  final JobState state;
-  final String? input;
-  final int elapsedSec;
-  final int tokens;
-  final double costUsd;
-  final String started;
-  final String? by;
-
-  const JobSummary({
-    required this.id,
-    this.workflow,
-    this.workflowVersion,
-    required this.state,
-    this.input,
-    this.elapsedSec = 0,
-    this.tokens = 0,
-    this.costUsd = 0,
-    this.started = '',
-    this.by,
-  });
-}
-
-
-final mockJob = JobSummary(
-  id: 'r_8f2a91c',
-  workflow: 'pr-reviewer',
-  workflowVersion: 14,
-  state: JobState.running,
-  input: 'PR #1428',
-  elapsedSec: 247,
-  tokens: 184233,
-  costUsd: 0.42,
-  started: '14:18',
-  by: 'ci',
-);
-
-final mockJobs = <JobSummary>[
-  JobSummary(
-    id: 'r_8f2a91c',
-    workflow: 'pr-reviewer',
-    workflowVersion: 14,
-    state: JobState.running,
-    input: 'PR #1428',
-    elapsedSec: 247,
-    tokens: 184233,
-    costUsd: 0.42,
-    started: '14:18',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f2a4b1',
-    workflow: 'eval-harness',
-    workflowVersion: 7,
-    state: JobState.running,
-    input: 'suite/regress',
-    elapsedSec: 351,
-    tokens: 310000,
-    costUsd: 1.12,
-    started: '14:16',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f2a103',
-    workflow: 'flake-tracker',
-    workflowVersion: 2,
-    state: JobState.paused,
-    input: 'ci-main',
-    elapsedSec: 482,
-    tokens: 8200,
-    costUsd: 0.08,
-    started: '14:14',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f29d52',
-    workflow: 'pr-reviewer',
-    workflowVersion: 14,
-    state: JobState.queued,
-    input: 'PR #1429',
-    started: '14:13',
-    by: 'jen.b',
-  ),
-  JobSummary(
-    id: 'r_8f29442',
-    workflow: 'pr-reviewer',
-    workflowVersion: 14,
-    state: JobState.passed,
-    input: 'PR #1427',
-    elapsedSec: 224,
-    tokens: 156000,
-    costUsd: 0.31,
-    started: '14:12',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f28a01',
-    workflow: 'eval-harness',
-    workflowVersion: 7,
-    state: JobState.failed,
-    input: 'suite/all',
-    elapsedSec: 492,
-    tokens: 310000,
-    costUsd: 1.84,
-    started: '14:07',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f27b3d',
-    workflow: 'flake-tracker',
-    workflowVersion: 2,
-    state: JobState.passed,
-    input: 'ci-main',
-    elapsedSec: 48,
-    tokens: 4100,
-    costUsd: 0.04,
-    started: '14:03',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f26108',
-    workflow: 'pr-reviewer',
-    workflowVersion: 14,
-    state: JobState.passed,
-    input: 'PR #1426',
-    elapsedSec: 138,
-    tokens: 112000,
-    costUsd: 0.22,
-    started: '13:58',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f25fa2',
-    workflow: 'pr-reviewer',
-    workflowVersion: 14,
-    state: JobState.retrying,
-    input: 'PR #1425',
-    elapsedSec: 310,
-    tokens: 98000,
-    costUsd: 0.38,
-    started: '13:54',
-    by: 'ci',
-  ),
-  JobSummary(
-    id: 'r_8f24c0e',
-    workflow: 'release-notes',
-    workflowVersion: 3,
-    state: JobState.passed,
-    input: 'v0.42.1',
-    elapsedSec: 72,
-    tokens: 12000,
-    costUsd: 0.09,
-    started: '13:01',
-    by: 'alex.k',
-  ),
-  JobSummary(
-    id: 'r_8f23911',
-    workflow: 'pr-reviewer',
-    workflowVersion: 14,
-    state: JobState.cancelled,
-    input: 'PR #1424',
-    elapsedSec: 22,
-    tokens: 8000,
-    costUsd: 0.02,
-    started: '12:55',
-    by: 'jen.b',
-  ),
-  JobSummary(
-    id: 'r_8f22a05',
-    workflow: 'doc-indexer',
-    workflowVersion: 1,
-    state: JobState.passed,
-    input: 'snapshot',
-    elapsedSec: 724,
-    tokens: 45000,
-    costUsd: 0.91,
-    started: '12:11',
-    by: 'ops',
-  ),
-  JobSummary(
-    id: 'r_8f21338',
-    workflow: 'changelog-summary',
-    workflowVersion: 5,
-    state: JobState.passed,
-    input: 'v0.42.0',
-    elapsedSec: 38,
-    tokens: 5500,
-    costUsd: 0.05,
-    started: '11:42',
-    by: 'ops',
-  ),
-];
-
-const historyCount = 13;
 
 final Map<String, List<StageExecution>> mockStageExecutions = {
   'commenter': [

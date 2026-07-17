@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
-import '../providers/mock_data.dart';
+import '../models/job_state.dart';
+import '../services/jobs_api.dart';
 import '../providers/mode_provider.dart';
 import 'status_tag.dart';
 import 'view_toggle.dart';
@@ -10,15 +11,14 @@ class RunsTable extends ConsumerWidget {
   RunsTable({super.key});
 
   static const _historyStatuses = <JobState>{
-    JobState.passed,
-    JobState.failed,
     JobState.cancelled,
   };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final allJobs = ref.watch(jobsProvider);
-    final jobs = allJobs.where((j) => _historyStatuses.contains(j.state)).toList();
+    final jobsAsync = ref.watch(jobsProvider);
+    final allJobs = jobsAsync.maybeWhen(data: (list) => list, orElse: () => <JobDto>[]);
+    final jobs = allJobs.where((j) => _historyStatuses.contains(j.jobState)).toList();
     final viewMode = ref.watch(runsTableViewModeProvider);
     final activeId = ref.watch(selectedJobProvider)?.id;
 
@@ -65,11 +65,10 @@ class RunsTable extends ConsumerWidget {
     );
   }
 
-  List<_Group> _groupByWorkflow(List<JobSummary> jobs) {
-    final m = <String, List<JobSummary>>{};
+  List<_Group> _groupByWorkflow(List<JobDto> jobs) {
+    final m = <String, List<JobDto>>{};
     for (final j in jobs) {
-      final w = j.workflow ?? 'unknown';
-      m.putIfAbsent(w, () => []).add(j);
+      m.putIfAbsent(j.flowName, () => []).add(j);
     }
     return m.entries.map((e) => _Group(name: e.key, items: e.value)).toList();
   }
@@ -77,7 +76,7 @@ class RunsTable extends ConsumerWidget {
 
 class _Group {
   final String name;
-  final List<JobSummary> items;
+  final List<JobDto> items;
 
   _Group({required this.name, required this.items});
 }
@@ -130,11 +129,7 @@ class _Header extends StatelessWidget {
           const Spacer(),
           _Pill(label: 'all', count: count, active: true),
           const SizedBox(width: 8),
-          _Pill(label: 'passed', count: 4),
-          const SizedBox(width: 8),
-          _Pill(label: 'failed', count: 1),
-          const SizedBox(width: 8),
-          _Pill(label: 'cancelled', count: 1),
+          _Pill(label: 'cancelled', count: count),
           const SizedBox(width: 8),
           Container(
             width: 1,
@@ -288,7 +283,7 @@ class _GroupRow extends StatelessWidget {
 }
 
 class _JobRow extends StatefulWidget {
-  final JobSummary job;
+  final JobDto job;
   final bool active;
   final VoidCallback onTap;
 
@@ -308,10 +303,7 @@ class _JobRowState extends State<_JobRow> {
   @override
   Widget build(BuildContext context) {
     final job = widget.job;
-    final mins = job.elapsedSec ~/ 60;
-    final secs = job.elapsedSec % 60;
-    final durStr = job.elapsedSec > 0 ? '${mins}m${secs.toString().padLeft(2, '0')}s' : '';
-    final tokStr = job.tokens > 0 ? '${(job.tokens / 1000).toStringAsFixed(1)}k' : '';
+    final durStr = '';
 
     Color bg;
     if (widget.active) {
@@ -327,8 +319,8 @@ class _JobRowState extends State<_JobRow> {
         0,
         Alignment.center,
         StatusDot(
-          status: job.state,
-          pulse: job.state == JobState.running,
+          status: job.jobState,
+          pulse: false,
           size: 6,
         ),
       ),
@@ -348,7 +340,7 @@ class _JobRowState extends State<_JobRow> {
         2,
         Alignment.centerLeft,
         Text(
-          job.input ?? '',
+          job.flowName,
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 11.5,
@@ -359,13 +351,13 @@ class _JobRowState extends State<_JobRow> {
       _cell(
         3,
         Alignment.centerLeft,
-        StatusTag(status: job.state),
+        StatusTag(status: job.jobState),
       ),
       _cell(
         4,
         Alignment.centerLeft,
         Text(
-          job.started,
+          job.startedAt.substring(11, 16),
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12,
@@ -391,7 +383,7 @@ class _JobRowState extends State<_JobRow> {
         6,
         Alignment.centerLeft,
         Text(
-          tokStr,
+          '',
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12,
@@ -404,7 +396,7 @@ class _JobRowState extends State<_JobRow> {
         7,
         Alignment.centerLeft,
         Text(
-          job.costUsd > 0 ? '\$${job.costUsd.toStringAsFixed(2)}' : '',
+          '',
           style: TextStyle(
             fontFamily: 'monospace',
             fontSize: 12,
@@ -417,7 +409,7 @@ class _JobRowState extends State<_JobRow> {
         8,
         Alignment.centerLeft,
         Text(
-          job.by ?? '',
+          '',
           style: TextStyle(
             fontSize: 12,
             color: AppColors.fg2,

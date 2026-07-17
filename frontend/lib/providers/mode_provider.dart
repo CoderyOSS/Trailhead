@@ -3,12 +3,15 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/workflow_document.dart';
 import '../utils/yaml_to_workflow.dart';
 import '../widgets/mode_rail.dart';
+import '../services/jobs_api.dart';
 import 'api_provider.dart';
 import 'mock_data.dart';
 
 final modeProvider = StateProvider<AppMode>((ref) => AppMode.build);
 
-final selectedJobProvider = StateProvider<JobSummary?>((ref) => null);
+final selectedJobProvider = StateProvider<JobDto?>((ref) => null);
+
+final autoRefreshJobsProvider = StateProvider<int>((ref) => 0);
 
 /// All workflows loaded from backend, parsed into canvas models.
 /// Each item is either a fully parsed WorkflowSummary or an "incompatible"
@@ -68,10 +71,13 @@ final autoSelectFirstWorkflowProvider =
   return first;
 });
 
-/// Jobs list — still mock until backend integration lands.
-final jobsProvider = StateProvider<List<JobSummary>>(
-  (ref) => mockJobs,
-);
+/// Jobs list — fetched from backend.
+final jobsProvider = FutureProvider<List<JobDto>>((ref) async {
+  ref.watch(autoRefreshJobsProvider);
+  ref.watch(jobsApiProvider);
+  final api = ref.read(jobsApiProvider);
+  return api.list();
+});
 
 final sidebarViewModeProvider = StateProvider<String>((ref) => 'grouped');
 

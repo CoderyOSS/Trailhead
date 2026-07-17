@@ -1,6 +1,7 @@
 import '../models/stage_data.dart';
 import '../models/workflow_edge.dart';
 import '../models/workflow_node.dart';
+import '../models/server_def.dart';
 import '../providers/mock_data.dart';
 import 'package:yaml/yaml.dart';
 
@@ -76,6 +77,29 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
 
   // No entrypoint injection — workflows can start from any node.
 
+  // Parse servers section
+  final serverDefs = <ServerDef>[];
+  final serversNode = doc['servers'];
+  if (serversNode is YamlList) {
+    for (final s in serversNode) {
+      if (s is! YamlMap) continue;
+      serverDefs.add(ServerDef(
+        id: _toStr(s['id']) ?? 'default',
+        port: (s['port'] as int?) ?? 8081,
+        scheme: _toStr(s['scheme']) ?? 'http',
+        tlsCert: _toStr(s['tls_cert']),
+        tlsKey: _toStr(s['tls_key']),
+        cors: s['cors'] is YamlMap
+            ? CorsDef(
+                origins: _toStringListFromYaml(s['cors']['origins']),
+                methods: _toStringListFromYaml(s['cors']['methods']),
+                headers: _toStringListFromYaml(s['cors']['headers']),
+              )
+            : null,
+      ));
+    }
+  }
+
   return WorkflowSummary(
     id: 'wf_${name.replaceAll(RegExp(r'[^a-z0-9_-]'), '_').toLowerCase()}',
     name: name,
@@ -84,6 +108,7 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
     updated: '',
     nodes: nodes,
     connections: connections,
+    servers: serverDefs,
     remoteContent: yamlText,
   );
 }
@@ -124,6 +149,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
 
   // Node config sub-map (THRT node types)
   final config = stage['config'];
+  String? expr;
   int? intervalMs;
   String? httpIngressServer;
   String? httpIngressMethod;
@@ -131,27 +157,28 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   int? httpEgressStatus;
   String? httpEgressContentType;
   String? httpEgressBody;
-  String? httpRequestServer;
+  String? httpRequestUrl;
   String? httpRequestMethod;
-  String? httpRequestPath;
+  String? httpEgressServer;
   if (config is YamlMap) {
+    expr = _toStr(config['expr']);
     if (kind == 'delay') {
       intervalMs = config['interval_ms'] as int?;
     }
-    if (kind == 'http.ingress') {
+    if (kind == 'http.server.ingress') {
       httpIngressServer = _toStr(config['server']);
       httpIngressMethod = _toStr(config['method']);
       httpIngressPath = _toStr(config['path']);
     }
-    if (kind == 'http.egress') {
+    if (kind == 'http.server.egress') {
+      httpEgressServer = _toStr(config['server']);
       httpEgressStatus = (config['status'] ?? 200) as int?;
       httpEgressContentType = _toStr(config['content_type']);
       httpEgressBody = _toStr(config['body']);
     }
-    if (kind == 'http.request') {
-      httpRequestServer = _toStr(config['server']);
+    if (kind == 'http.client.request') {
+      httpRequestUrl = _toStr(config['url']);
       httpRequestMethod = _toStr(config['method']);
-      httpRequestPath = _toStr(config['path']);
     }
   }
 
@@ -250,6 +277,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     concurrency: concurrency,
     collect: collect,
     body: body,
+    expr: expr,
     intervalMs: intervalMs,
     httpIngressServer: httpIngressServer,
     httpIngressMethod: httpIngressMethod,
@@ -257,9 +285,9 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     httpEgressStatus: httpEgressStatus,
     httpEgressContentType: httpEgressContentType,
     httpEgressBody: httpEgressBody,
-    httpRequestServer: httpRequestServer,
+    httpRequestUrl: httpRequestUrl,
     httpRequestMethod: httpRequestMethod,
-    httpRequestPath: httpRequestPath,
+    httpEgressServer: httpEgressServer,
   );
 }
 
@@ -291,4 +319,11 @@ List<String> _toStringList(dynamic node) {
 String? _toStr(dynamic v) {
   if (v == null) return null;
   return v.toString();
+}
+
+List<String> _toStringListFromYaml(dynamic node) {
+  if (node is YamlList) {
+    return node.map((e) => e.toString()).toList();
+  }
+  return [];
 }

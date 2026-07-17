@@ -7,6 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../models/node_catalog.dart';
 import '../../models/workflow_document.dart';
 import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
@@ -34,6 +35,7 @@ import '../../providers/node_menu_provider.dart';
 import '../../providers/selection_notifier.dart';
 import 'node_context_menu.dart';
 import 'routing_node.dart';
+import 'transform_node.dart';
 import 'worker_node.dart';
 import 'canvas_toolbar.dart';
 
@@ -205,17 +207,21 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
   }
 
   Future<void> _pollStatus() async {
-    final deployed = ref.read(deployedFlowsProvider);
-    if (deployed.isEmpty) return;
+    final jobs = ref.read(jobsProvider).valueOrNull ?? [];
+    final runningFlows = jobs
+        .where((j) => j.status == 'running')
+        .map((j) => j.flowName)
+        .toSet();
+    if (runningFlows.isEmpty) return;
     try {
       final api = ref.read(thrtApiProvider);
       final updates = <String, FlowStatus>{};
-      for (final name in deployed) {
+      for (final name in runningFlows) {
         updates[name] = await api.status(name);
       }
       final current = ref.read(flowStatusProvider);
       final cleaned = Map<String, FlowStatus>.from(current)
-        ..removeWhere((k, _) => !deployed.contains(k) && !updates.containsKey(k));
+        ..removeWhere((k, _) => !runningFlows.contains(k));
       cleaned.addAll(updates);
       ref.read(flowStatusProvider.notifier).state = cleaned;
     } catch (e) {
@@ -286,9 +292,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       });
     });
 
-    ref.listen<Set<String>>(deployedFlowsProvider, (prev, next) {
+    ref.listen(jobsProvider, (prev, next) {
       _statusTimer?.cancel();
-      if (next.isNotEmpty) {
+      final jobs = next.valueOrNull ?? [];
+      if (jobs.any((j) => j.status == 'running')) {
         _statusTimer = Timer.periodic(const Duration(seconds: 1), (_) {
           _pollStatus();
         });
@@ -334,7 +341,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
     Offset _handleWorldPos(WorkflowNode node, bool isOutput, int? port) {
       if (isOutput) {
-        if (node.kind == 'function' && node.outputs.isNotEmpty) {
+        if (node.kind == 'function' && node.expr == null && node.outputs.isNotEmpty) {
           return _branchOutputWorldPos(node, port);
         }
         return Offset(node.x + node.width, node.y + node.height / 2);
@@ -364,7 +371,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
           }
         } else {
           // Seeking output — function ports only
-          if (node.kind == 'function' && node.outputs.isNotEmpty) {
+          if (node.kind == 'function' && node.expr == null && node.outputs.isNotEmpty) {
             for (var p = 0; p < node.outputs.length; p++) {
               final pos = _handleWorldPos(node, true, p);
               final dist = (pos - worldPos).distance;
@@ -465,7 +472,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
           MarqueeState(screenRect: screenRect, active: true);
     }
 
-    void addNode(OperatorType type) {
+    void addNode(NodeEntry entry) {
       final sourceId = pickerAnchor?.sourceNodeId;
       final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
 
@@ -476,11 +483,14 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
         final centerY = (-vp.pan.dy + screenSize.height / 2) / vp.zoom;
         final newNode = WorkflowNode(
           id: id,
-          kind: type.kind,
-          label: type.label,
+          kind: entry.kind,
+          label: entry.label,
           x: _snap(centerX - 100),
           y: _snap(centerY - 18),
-          outputs: type.kind == 'function' ? WorkflowNode.defaultBranchOutputs : const [],
+          outputs: entry.kind == 'function' && !entry.isTransform
+              ? WorkflowNode.defaultBranchOutputs
+              : const [],
+          expr: entry.isTransform ? entry.templateExpr : null,
         );
         ref.read(workflowProvider.notifier).state = workflow.copyWith(
           nodes: [...workflow.nodes, newNode],
@@ -496,16 +506,19 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       );
 
       final sourceHeight = source.height;
-      final newNodeHeight = WorkflowNode(id: '', kind: type.kind, label: '', x: 0, y: 0).height;
+      final newNodeHeight = WorkflowNode(id: '', kind: entry.kind, label: '', x: 0, y: 0).height;
       final snappedX = _snap(source.x + 220);
       final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
       final newNode = WorkflowNode(
         id: id,
-        kind: type.kind,
-        label: type.label,
+        kind: entry.kind,
+        label: entry.label,
         x: snappedX,
         y: snappedY,
-        outputs: type.kind == 'function' ? WorkflowNode.defaultBranchOutputs : const [],
+        outputs: entry.kind == 'function' && !entry.isTransform
+            ? WorkflowNode.defaultBranchOutputs
+            : const [],
+        expr: entry.isTransform ? entry.templateExpr : null,
       );
 
       final edge = WorkflowConnection(
@@ -977,8 +990,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                           final displayX = isDragging ? node.x + dragOffset.dx : node.x;
                           final displayY = isDragging ? node.y + dragOffset.dy : node.y;
           
-                          final nodeWidget = node.kind == 'function'
-                              ? BranchNode(
+                          final nodeWidget = node.expr != null
+                              ? TransformNode(
                                   node: node,
                                   selected: isSelected,
                                   onEnter: () {
@@ -989,17 +1002,29 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                         (hoveredNodeId == node.id) ? null : hoveredNodeId;
                                   },
                                 )
-                              : WorkerNode(
-                                  node: node,
-                                  selected: isSelected,
-                                  onEnter: () {
-                                    ref.read(hoveredNodeProvider.notifier).state = node.id;
-                                  },
-                                  onExit: () {
-                                    ref.read(hoveredNodeProvider.notifier).state =
-                                        (hoveredNodeId == node.id) ? null : hoveredNodeId;
-                                  },
-                                );
+                              : node.kind == 'function'
+                                  ? BranchNode(
+                                      node: node,
+                                      selected: isSelected,
+                                      onEnter: () {
+                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                      },
+                                      onExit: () {
+                                        ref.read(hoveredNodeProvider.notifier).state =
+                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                      },
+                                    )
+                                  : WorkerNode(
+                                      node: node,
+                                      selected: isSelected,
+                                      onEnter: () {
+                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
+                                      },
+                                      onExit: () {
+                                        ref.read(hoveredNodeProvider.notifier).state =
+                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
+                                      },
+                                    );
           
                           return AnimatedPositioned(
                             key: ValueKey('${workflow.id}_${node.id}'),

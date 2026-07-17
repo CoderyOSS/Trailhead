@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../models/workflow_node.dart';
-import '../../providers/mock_data.dart';
+import '../../models/job_state.dart';
 import '../../theme/tokens.dart';
 import '../icons.dart';
 import '../status_tag.dart';
@@ -185,7 +185,7 @@ class WorkerNode extends StatelessWidget {
                 ),
               ),
             ),
-          if (status != null && !running && status != JobState.queued)
+          if (status != null && !running)
             Positioned(
               top: -8,
               right: 8,
@@ -229,24 +229,16 @@ class _StatusBadge extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
       decoration: BoxDecoration(
-        color: status == JobState.passed
-            ? AppColors.success
-            : status == JobState.failed
-                ? AppColors.danger
-                : AppColors.bg4,
+        color: AppColors.bg4,
         borderRadius: BorderRadius.circular(999),
       ),
       child: Text(
-        status == JobState.cancelled ? 'cancelled' : status.name,
+        status.name,
         style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 9,
           fontWeight: FontWeight.w600,
-          color: status == JobState.passed
-              ? const Color(0xFF1a3d1c)
-              : status == JobState.failed
-                  ? const Color(0xFF3d1a1a)
-                  : AppColors.fg2,
+          color: AppColors.fg2,
         ),
       ),
     );

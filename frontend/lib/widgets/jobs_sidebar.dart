@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
+import '../providers/api_provider.dart';
 import '../providers/mode_provider.dart';
-import '../providers/mock_data.dart';
+import '../models/job_state.dart';
+import '../services/jobs_api.dart';
 import 'status_tag.dart';
 import 'icons.dart';
 
@@ -10,14 +12,9 @@ enum JobsSidebarKind { active, history }
 
 const _activeStatuses = <JobState>{
   JobState.running,
-  JobState.paused,
-  JobState.queued,
-  JobState.retrying,
 };
 
 const _historyStatuses = <JobState>{
-  JobState.passed,
-  JobState.failed,
   JobState.cancelled,
 };
 
@@ -33,16 +30,17 @@ class JobsSidebar extends ConsumerWidget {
     required this.onPick,
   });
 
-  bool _isRelevant(JobState s) {
+  bool _isRelevant(JobDto j) {
     return kind == JobsSidebarKind.active
-        ? _activeStatuses.contains(s)
-        : _historyStatuses.contains(s);
+        ? _activeStatuses.contains(j.jobState)
+        : _historyStatuses.contains(j.jobState);
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final allJobs = ref.watch(jobsProvider);
-    final jobs = allJobs.where((j) => _isRelevant(j.state)).toList();
+    final jobsAsync = ref.watch(jobsProvider);
+    final allJobs = jobsAsync.maybeWhen(data: (list) => list, orElse: () => <JobDto>[]);
+    final jobs = allJobs.where(_isRelevant).toList();
     final viewMode = ref.watch(sidebarViewModeProvider);
 
     return Container(
@@ -72,24 +70,24 @@ class JobsSidebar extends ConsumerWidget {
                         kind: kind,
                         activeId: activeId,
                         onPick: onPick,
-                        onDelete: (id) {
-                          ref.read(jobsProvider.notifier).update((list) =>
-                              list.where((j) => j.id != id).toList());
-                          if (id == activeId) {
-                            ref.read(selectedJobProvider.notifier).state = null;
-                          }
+                        onDelete: (id) async {
+                          try {
+                            final api = ref.read(jobsApiProvider);
+                            await api.cancel(id);
+                            ref.invalidate(jobsProvider);
+                          } catch (_) {}
                         },
                       )
                     : _FlatView(
                         jobs: jobs,
                         activeId: activeId,
                         onPick: onPick,
-                        onDelete: (id) {
-                          ref.read(jobsProvider.notifier).update((list) =>
-                              list.where((j) => j.id != id).toList());
-                          if (id == activeId) {
-                            ref.read(selectedJobProvider.notifier).state = null;
-                          }
+                        onDelete: (id) async {
+                          try {
+                            final api = ref.read(jobsApiProvider);
+                            await api.cancel(id);
+                            ref.invalidate(jobsProvider);
+                          } catch (_) {}
                         },
                       ),
           ),
@@ -395,7 +393,7 @@ class _Footer extends StatelessWidget {
 // ── Grouped view ─────────────────────────────────────────────────────────
 
 class _GroupedView extends StatelessWidget {
-  final List<JobSummary> jobs;
+  final List<JobDto> jobs;
   final JobsSidebarKind kind;
   final String? activeId;
   final ValueChanged<String> onPick;
@@ -411,11 +409,11 @@ class _GroupedView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final groups = <String, List<JobSummary>>{};
-    for (final j in jobs) {
-      final key = j.workflow ?? 'unknown';
-      groups.putIfAbsent(key, () => []).add(j);
-    }
+    final groups = <String, List<JobDto>>{};
+      for (final j in jobs) {
+        final key = j.flowName;
+        groups.putIfAbsent(key, () => []).add(j);
+      }
 
     return ListView.builder(
       padding: const EdgeInsets.only(top: 4, bottom: 12),
@@ -485,7 +483,7 @@ class _GroupHeader extends StatelessWidget {
 }
 
 class _JobRowGrouped extends StatefulWidget {
-  final JobSummary job;
+  final JobDto job;
   final bool active;
   final VoidCallback onTap;
   final VoidCallback? onDelete;
@@ -524,8 +522,9 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
       dismissThresholds: const {DismissDirection.endToStart: 0.4},
       background: _DeleteBackground(progress: 1.0),
       onDismissed: (_) => widget.onDelete?.call(),
-      child: GestureDetector(
+      child: InkWell(
         onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(6),
         child: MouseRegion(
           onEnter: (_) => setState(() => _hovering = true),
           onExit: (_) => setState(() => _hovering = false),
@@ -543,8 +542,8 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
                   child: Row(
                     children: [
                       StatusDot(
-                        status: j.state,
-                        pulse: j.state == JobState.running,
+                        status: j.jobState,
+                        pulse: j.jobState == JobState.running,
                         size: 6,
                       ),
                       const SizedBox(width: 8),
@@ -553,7 +552,7 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
                           TextSpan(
                             children: [
                               TextSpan(
-                                text: j.input ?? j.id,
+                                text: j.flowName,
                                 style: TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 11.5,
@@ -561,7 +560,7 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
                                 ),
                               ),
                               TextSpan(
-                                text: ' ${j.id.substring(2, 9)}',
+                                text: ' ${j.id.substring(2)}',
                                 style: TextStyle(
                                   fontFamily: 'monospace',
                                   fontSize: 10,
@@ -575,7 +574,7 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
                         ),
                       ),
                       Text(
-                        j.started,
+                        j.startedAt.substring(11, 16),
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 10,
@@ -610,7 +609,7 @@ class _JobRowGroupedState extends State<_JobRowGrouped> {
 // ── Flat view ────────────────────────────────────────────────────────────
 
 class _FlatView extends StatelessWidget {
-  final List<JobSummary> jobs;
+  final List<JobDto> jobs;
   final String? activeId;
   final ValueChanged<String> onPick;
   final ValueChanged<String>? onDelete;
@@ -641,7 +640,7 @@ class _FlatView extends StatelessWidget {
 }
 
 class _JobRowFlat extends StatefulWidget {
-  final JobSummary job;
+  final JobDto job;
   final bool active;
   final VoidCallback onTap;
   final VoidCallback? onDelete;
@@ -680,8 +679,9 @@ class _JobRowFlatState extends State<_JobRowFlat> {
       dismissThresholds: const {DismissDirection.endToStart: 0.4},
       background: _DeleteBackground(progress: 1.0),
       onDismissed: (_) => widget.onDelete?.call(),
-      child: GestureDetector(
+      child: InkWell(
         onTap: widget.onTap,
+        borderRadius: BorderRadius.circular(6),
         child: MouseRegion(
           onEnter: (_) => setState(() => _hovering = true),
           onExit: (_) => setState(() => _hovering = false),
@@ -700,8 +700,8 @@ class _JobRowFlatState extends State<_JobRowFlat> {
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
                       StatusDot(
-                        status: j.state,
-                        pulse: j.state == JobState.running,
+                        status: j.jobState,
+                        pulse: j.jobState == JobState.running,
                         size: 6,
                       ),
                       const SizedBox(width: 8),
@@ -710,7 +710,7 @@ class _JobRowFlatState extends State<_JobRowFlat> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              j.input ?? j.id,
+                              j.flowName,
                               style: TextStyle(
                                 fontFamily: 'monospace',
                                 fontSize: 11.5,
@@ -721,10 +721,10 @@ class _JobRowFlatState extends State<_JobRowFlat> {
                             const SizedBox(height: 2),
                             Row(
                               children: [
-                                _WorkflowTag(name: j.workflow ?? ''),
+                                _WorkflowTag(name: j.flowName),
                                 const SizedBox(width: 5),
                                 Text(
-                                  j.id.substring(2, 9),
+                                  j.id.substring(2),
                                   style: TextStyle(
                                     fontFamily: 'monospace',
                                     fontSize: 9.5,
@@ -737,7 +737,7 @@ class _JobRowFlatState extends State<_JobRowFlat> {
                         ),
                       ),
                       Text(
-                        j.started,
+                        j.startedAt.substring(11, 16),
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 10,

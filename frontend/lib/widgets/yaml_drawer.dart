@@ -4,7 +4,8 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
 import '../providers/mode_provider.dart';
-import '../providers/mock_data.dart';
+import '../providers/mock_data.dart' show WorkflowSummary;
+import '../services/jobs_api.dart';
 import '../utils/workflow_to_yaml.dart';
 import '../utils/clipboard_stub.dart'
     if (dart.library.html) '../utils/clipboard_web.dart';
@@ -13,7 +14,7 @@ import 'icons.dart';
 
 class YamlDrawer extends ConsumerStatefulWidget {
   final WorkflowSummary workflow;
-  final JobSummary? job;
+  final JobDto? job;
   final VoidCallback onClose;
   final bool isPortrait;
 
@@ -54,13 +55,12 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
     return spec;
   }
 
-  String _jobPreface(JobSummary job) {
-    final status = job.state.name;
+  String _jobPreface(JobDto job) {
+    final status = job.status;
     return [
       '# --- resolved run spec ---',
       '# run:       ${job.id}',
-      '# workflow:  ${job.workflow ?? "unknown"} \u00b7 v${job.workflowVersion ?? 0}',
-      '# input:     ${job.input ?? "\u2014"}',
+      '# flow:      ${job.flowName}',
       '# status:    $status',
       '# this is the exact, pinned spec the run executed \u2014 read-only.',
       '# ---',

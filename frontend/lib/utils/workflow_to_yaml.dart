@@ -1,4 +1,5 @@
 import '../providers/mock_data.dart';
+import '../models/server_def.dart';
 
 class YamlResult {
   final String yaml;
@@ -16,6 +17,25 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
   if (workflow.draft != null && workflow.draft != workflow.version) {
     buf.writeln('draft: ${workflow.draft}');
   }
+
+  // Servers section
+  if (workflow.servers.isNotEmpty) {
+    buf.writeln('servers:');
+    for (final s in workflow.servers) {
+      buf.writeln('  - id: ${s.id}');
+      buf.writeln('    port: ${s.port}');
+      buf.writeln('    scheme: ${s.scheme}');
+      if (s.tlsCert != null) buf.writeln('    tls_cert: "${s.tlsCert}"');
+      if (s.tlsKey != null) buf.writeln('    tls_key: "${s.tlsKey}"');
+      if (s.cors != null) {
+        buf.writeln('    cors:');
+        buf.writeln('      origins: [${s.cors!.origins.map((o) => '"$o"').join(', ')}]');
+        buf.writeln('      methods: [${s.cors!.methods.map((m) => '"$m"').join(', ')}]');
+        buf.writeln('      headers: [${s.cors!.headers.map((h) => '"$h"').join(', ')}]');
+      }
+    }
+  }
+
   buf.writeln('');
 
   if (workflow.nodes.isNotEmpty) {
@@ -65,12 +85,15 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         _writeJson(buf, node.schema!, indent: 6);
       }
 
-      // Function outputs
+      // Function outputs (routing) or transform expression
       if (node.kind == 'function') {
-        if (node.matchAll) {
-          buf.writeln('    match_all: true');
-        }
-        if (node.outputs.isNotEmpty) {
+        if (node.expr != null) {
+          buf.writeln('    config:');
+          buf.writeln('      expr: "${node.expr}"');
+        } else if (node.outputs.isNotEmpty) {
+          if (node.matchAll) {
+            buf.writeln('    match_all: true');
+          }
           buf.writeln('    outputs:');
           for (final out in node.outputs) {
             buf.writeln('      - id: "${out.id}"');
@@ -83,25 +106,25 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
       }
 
       // Node kinds with config sub-map
-      if (node.kind == 'delay' || node.kind == 'http.ingress' || node.kind == 'http.egress' || node.kind == 'http.request' || node.kind == 'source.inject') {
+      if (node.kind == 'delay' || node.kind == 'http.server.ingress' || node.kind == 'http.server.egress' || node.kind == 'http.client.request' || node.kind == 'source.inject') {
         buf.writeln('    config:');
         if (node.kind == 'delay' && node.intervalMs != null) {
           buf.writeln('      interval_ms: ${node.intervalMs}');
         }
-        if (node.kind == 'http.ingress') {
+        if (node.kind == 'http.server.ingress') {
           if (node.httpIngressServer != null) buf.writeln('      server: "${node.httpIngressServer}"');
           if (node.httpIngressMethod != null) buf.writeln('      method: ${node.httpIngressMethod}');
           if (node.httpIngressPath != null) buf.writeln('      path: "${node.httpIngressPath}"');
         }
-        if (node.kind == 'http.egress') {
+        if (node.kind == 'http.server.egress') {
+          if (node.httpEgressServer != null) buf.writeln('      server: "${node.httpEgressServer}"');
           if (node.httpEgressStatus != null) buf.writeln('      status: ${node.httpEgressStatus}');
           if (node.httpEgressContentType != null) buf.writeln('      content_type: "${node.httpEgressContentType}"');
-          if (node.httpEgressBody != null) buf.writeln('      body: "${node.httpEgressBody}"');
+          if (node.httpEgressBody != null) buf.writeln('      body: ${_yamlValue(node.httpEgressBody)}');
         }
-        if (node.kind == 'http.request') {
-          if (node.httpRequestServer != null) buf.writeln('      server: "${node.httpRequestServer}"');
+        if (node.kind == 'http.client.request') {
+          if (node.httpRequestUrl != null) buf.writeln('      url: "${node.httpRequestUrl}"');
           if (node.httpRequestMethod != null) buf.writeln('      method: ${node.httpRequestMethod}');
-          if (node.httpRequestPath != null) buf.writeln('      path: "${node.httpRequestPath}"');
         }
       }
 

@@ -8,9 +8,6 @@ final thrtApiProvider = Provider<ThrtApi>((ref) {
   return ThrtApi('');
 });
 
-/// Names of workflows currently deployed to THRT.
-final deployedFlowsProvider = StateProvider<Set<String>>((ref) => const {});
-
 /// Latest runtime status per workflow, keyed by name. Null = not yet fetched.
 final flowStatusProvider =
     StateProvider<Map<String, FlowStatus>>((ref) => const {});

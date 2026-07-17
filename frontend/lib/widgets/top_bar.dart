@@ -8,10 +8,11 @@ import '../models/workflow_document.dart';
 import '../providers/api_provider.dart';
 import '../providers/canvas_controller.dart';
 import '../providers/mode_provider.dart';
-import '../providers/mock_data.dart';
+import '../providers/mock_data.dart' show WorkflowSummary;
 import '../providers/selection_notifier.dart';
-import '../providers/thrt_provider.dart';
 import '../utils/workflow_to_yaml.dart';
+import '../services/jobs_api.dart';
+import '../models/job_state.dart';
 import 'icons.dart';
 import 'app_button.dart';
 import 'status_tag.dart';
@@ -893,9 +894,7 @@ class _BuildBar extends ConsumerWidget {
     final yamlOpen = ref.watch(yamlDrawerOpenProvider);
     final dirty = ref.watch(workflowDirtyProvider);
     final remoteAsync = ref.watch(remoteWorkflowsProvider);
-    final deployedSet = ref.watch(deployedFlowsProvider);
     final isEmpty = wf.id == emptyWorkflowId;
-    final deployed = deployedSet.contains(wf.name);
 
     // Auto-select first remote workflow on initial load.
     ref.watch(autoSelectFirstWorkflowProvider);
@@ -1051,20 +1050,24 @@ class _BuildBar extends ConsumerWidget {
           variant: AppButtonVariant.trail,
           size: AppButtonSize.sm,
           icon: TrailheadIconData.play,
-          label: deployed ? 'deployed ✓' : 'deploy',
-          onTap: deployed
-              ? null
-              : () async {
-                  try {
-                    final yaml = workflowToYaml(wf);
-                    await ref.read(workflowsApiProvider).replace(wf.name, yaml);
-                    await ref.read(thrtApiProvider).deploy(wf.name);
-                    ref.read(deployedFlowsProvider.notifier).state =
-                        {...ref.read(deployedFlowsProvider), wf.name};
-                  } catch (e) {
-                    debugPrint('deploy failed: $e');
-                  }
-                },
+          label: 'launch',
+          onTap: () async {
+            try {
+              final yaml = workflowToYaml(wf);
+              await ref.read(workflowsApiProvider).replace(wf.name, yaml);
+              final jobsApi = ref.read(jobsApiProvider);
+              final job = await jobsApi.create(wf.name);
+              ref.invalidate(jobsProvider);
+              ref.read(selectedJobProvider.notifier).state = job;
+              ref.read(modeProvider.notifier).state = AppMode.active;
+            } catch (e) {
+              if (context.mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('launch failed: $e')),
+                );
+              }
+            }
+          },
         ),
       ],
     );
@@ -1116,11 +1119,14 @@ class _BuildBar extends ConsumerWidget {
   }
 }
 
-class _HistoryListBar extends StatelessWidget {
+class _HistoryListBar extends ConsumerWidget {
   _HistoryListBar();
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final jobsAsync = ref.watch(jobsProvider);
+    final count = jobsAsync.maybeWhen(data: (list) => list.length, orElse: () => 0);
+
     return Row(
       children: [
         Column(
@@ -1138,7 +1144,7 @@ class _HistoryListBar extends StatelessWidget {
               ),
             ),
             Text(
-              '$historyCount runs \u00b7 last 24h',
+              '$count runs \u00b7 last 24h',
               style: TextStyle(
                 fontFamily: 'monospace',
                 fontSize: 10,
@@ -1154,7 +1160,7 @@ class _HistoryListBar extends StatelessWidget {
           size: AppButtonSize.sm,
           icon: TrailheadIconData.refresh,
           label: 'refresh',
-          onTap: () {},
+          onTap: () => ref.invalidate(jobsProvider),
         ),
       ],
     );
@@ -1162,7 +1168,7 @@ class _HistoryListBar extends StatelessWidget {
 }
 
 class _JobBar extends StatelessWidget {
-  final JobSummary? job;
+  final JobDto? job;
   final AppMode mode;
   final bool yamlOpen;
   final VoidCallback onToggleYaml;
@@ -1213,8 +1219,8 @@ class _JobBar extends StatelessWidget {
   }
 }
 
-class _JobRow1 extends StatelessWidget {
-  final JobSummary job;
+class _JobRow1 extends ConsumerWidget {
+  final JobDto job;
   final AppMode mode;
   final bool yamlOpen;
   final VoidCallback onToggleYaml;
@@ -1229,11 +1235,7 @@ class _JobRow1 extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
-    final tagState = job.state == JobState.paused
-        ? JobState.cancelled
-        : job.state;
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
         GestureDetector(
@@ -1276,7 +1278,7 @@ class _JobRow1 extends StatelessWidget {
             border: Border.all(color: AppColors.border1),
           ),
           child: Text(
-            '${job.workflow ?? "unknown"} \u00b7 v${job.workflowVersion ?? 0}',
+            job.flowName,
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 10,
@@ -1287,7 +1289,7 @@ class _JobRow1 extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 6),
-        StatusTag(status: tagState),
+        StatusTag(status: job.jobState),
         const Spacer(),
         if (mode == AppMode.active) ...[
           AppButton(
@@ -1300,25 +1302,7 @@ class _JobRow1 extends StatelessWidget {
             onTap: onToggleYaml,
           ),
           const SizedBox(width: 6),
-          _JobControls(state: job.state),
-        ] else ...[
-          AppButton(
-            variant: yamlOpen
-                ? AppButtonVariant.secondary
-                : AppButtonVariant.ghost,
-            size: AppButtonSize.sm,
-            icon: TrailheadIconData.file,
-            label: 'YAML',
-            onTap: onToggleYaml,
-          ),
-          const SizedBox(width: 6),
-          AppButton(
-            variant: AppButtonVariant.secondary,
-            size: AppButtonSize.sm,
-            icon: TrailheadIconData.refresh,
-            label: 'rerun',
-            onTap: () {},
-          ),
+          _JobControls(job: job),
         ],
       ],
     );
@@ -1326,53 +1310,37 @@ class _JobRow1 extends StatelessWidget {
 }
 
 class _JobRow2 extends StatelessWidget {
-  final JobSummary job;
+  final JobDto job;
 
   _JobRow2({required this.job});
 
   @override
   Widget build(BuildContext context) {
-    final mins = job.elapsedSec ~/ 60;
-    final secs = job.elapsedSec % 60;
-
     return Padding(
       padding: const EdgeInsets.only(left: 24),
       child: Row(
         children: [
           Text(
-            'input',
+            job.flowName,
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 11,
-              color: AppColors.fg3,
+              color: AppColors.fg2,
             ),
+            overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(width: 8),
-          Expanded(
-            child: Text(
-              job.input ?? '',
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 11,
-                color: AppColors.fg2,
-              ),
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 8),
-          TrailheadIcon(
-            icon: TrailheadIconData.clock,
-            size: 10,
-            color: AppColors.fg3,
-          ),
-          const SizedBox(width: 4),
           Text(
-            '${mins}m${secs.toString().padLeft(2, '0')}s',
+            '\u00b7',
+            style: TextStyle(color: AppColors.border2),
+          ),
+          const SizedBox(width: 8),
+          Text(
+            '${job.nodeCount} nodes',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 11,
-              color: AppColors.fg0,
-              fontFeatures: const [FontFeature.tabularFigures()],
+              color: AppColors.fg2,
             ),
           ),
           const SizedBox(width: 8),
@@ -1382,27 +1350,11 @@ class _JobRow2 extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           Text(
-            '${(job.tokens / 1000).toStringAsFixed(1)}k tok',
+            job.startedAt,
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 11,
-              color: AppColors.fg0,
-              fontFeatures: const [FontFeature.tabularFigures()],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '\u00b7',
-            style: TextStyle(color: AppColors.border2),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '\$${job.costUsd.toStringAsFixed(2)}',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 11,
-              color: AppColors.fg0,
-              fontFeatures: const [FontFeature.tabularFigures()],
+              color: AppColors.fg2,
             ),
           ),
         ],
@@ -1411,15 +1363,13 @@ class _JobRow2 extends StatelessWidget {
   }
 }
 
-class _JobControls extends StatelessWidget {
-  final JobState state;
+class _JobControls extends ConsumerWidget {
+  final JobDto job;
 
-  _JobControls({required this.state});
+  _JobControls({required this.job});
 
   @override
-  Widget build(BuildContext context) {
-    final running = state == JobState.running;
-
+  Widget build(BuildContext context, WidgetRef ref) {
     return Container(
       padding: const EdgeInsets.all(3),
       decoration: BoxDecoration(
@@ -1430,45 +1380,65 @@ class _JobControls extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _CtrlBtn(
-            primary: !running,
-            onTap: () {},
-            label: running ? 'pause' : (state == JobState.paused ? 'resume' : 'start'),
-            icon: running
-                ? _PauseIcon()
-                : TrailheadIcon(
-                    icon: TrailheadIconData.play,
-                    size: 11,
-                    color: AppColors.accentInk,
-                  ),
-          ),
-          _CtrlBtn(
-            onTap: () {},
-            label: 'stop',
-            icon: Container(
-              width: 9,
-              height: 9,
-              decoration: BoxDecoration(
-                color: AppColors.fg0,
-                borderRadius: BorderRadius.circular(1),
+          if (job.jobState == JobState.running)
+            _CtrlBtn(
+              onTap: () => _cancelJob(context, ref, job.id),
+              label: 'stop',
+              icon: Container(
+                width: 9,
+                height: 9,
+                decoration: BoxDecoration(
+                  color: AppColors.fg0,
+                  borderRadius: BorderRadius.circular(1),
+                ),
               ),
             ),
-          ),
           _CtrlBtn(
-            onTap: () {},
+            onTap: () {
+              ref.invalidate(jobsProvider);
+              ref.read(autoRefreshJobsProvider.notifier).state++;
+            },
             icon: TrailheadIcon(
               icon: TrailheadIconData.refresh,
               size: 11,
               color: AppColors.fg0,
             ),
           ),
-          _CtrlBtn(
-            onTap: () {},
-            icon: TrailheadIcon(
-              icon: TrailheadIconData.bookmark,
-              size: 11,
-              color: AppColors.fg0,
-            ),
+        ],
+      ),
+    );
+  }
+
+  void _cancelJob(BuildContext context, WidgetRef ref, String jobId) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.bg2,
+        title: Text('Cancel job?', style: TextStyle(color: AppColors.fg0)),
+        content: Text('This will undeploy the flow and mark the job as cancelled.',
+            style: TextStyle(color: AppColors.fg2)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text('keep running'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(ctx);
+              try {
+                final api = ref.read(jobsApiProvider);
+                final cancelled = await api.cancel(jobId);
+                ref.read(selectedJobProvider.notifier).state = cancelled;
+                ref.invalidate(jobsProvider);
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('stop failed: $e')),
+                  );
+                }
+              }
+            },
+            child: Text('stop', style: TextStyle(color: AppColors.danger)),
           ),
         ],
       ),
@@ -1538,36 +1508,6 @@ class _CtrlBtnState extends State<_CtrlBtn> {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _PauseIcon extends StatelessWidget {
-  _PauseIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Container(
-          width: 3,
-          height: 11,
-          decoration: BoxDecoration(
-            color: AppColors.accentInk,
-            borderRadius: BorderRadius.circular(1),
-          ),
-        ),
-        const SizedBox(width: 2),
-        Container(
-          width: 3,
-          height: 11,
-          decoration: BoxDecoration(
-            color: AppColors.accentInk,
-            borderRadius: BorderRadius.circular(1),
-          ),
-        ),
-      ],
     );
   }
 }

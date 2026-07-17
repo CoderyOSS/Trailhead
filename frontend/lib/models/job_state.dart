@@ -1,0 +1,1 @@
+enum JobState { running, cancelled }

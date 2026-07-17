@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../theme/tokens.dart';
-import '../providers/mock_data.dart';
+import '../models/job_state.dart';
 
 class StatusDot extends StatelessWidget {
   final JobState status;
@@ -18,16 +18,7 @@ class StatusDot extends StatelessWidget {
     switch (status) {
       case JobState.running:
         return AppColors.accent;
-      case JobState.passed:
-        return AppColors.success;
-      case JobState.retrying:
-        return AppColors.warning;
-      case JobState.failed:
-        return AppColors.danger;
-      case JobState.queued:
-        return AppColors.info;
       case JobState.cancelled:
-      case JobState.paused:
         return AppColors.fg3;
     }
   }
@@ -119,16 +110,7 @@ class StatusTag extends StatelessWidget {
     switch (status) {
       case JobState.running:
         return AppColors.accent;
-      case JobState.passed:
-        return AppColors.success;
-      case JobState.retrying:
-        return AppColors.warning;
-      case JobState.failed:
-        return AppColors.danger;
-      case JobState.queued:
-        return AppColors.info;
       case JobState.cancelled:
-      case JobState.paused:
         return AppColors.fg3;
     }
   }
@@ -137,16 +119,7 @@ class StatusTag extends StatelessWidget {
     switch (status) {
       case JobState.running:
         return AppColors.accent.withValues(alpha: 0.15);
-      case JobState.passed:
-        return AppColors.success.withValues(alpha: 0.15);
-      case JobState.retrying:
-        return AppColors.warning.withValues(alpha: 0.15);
-      case JobState.failed:
-        return AppColors.danger.withValues(alpha: 0.15);
-      case JobState.queued:
-        return AppColors.info.withValues(alpha: 0.15);
       case JobState.cancelled:
-      case JobState.paused:
         return AppColors.bg3;
     }
   }
@@ -155,18 +128,8 @@ class StatusTag extends StatelessWidget {
     switch (status) {
       case JobState.running:
         return 'running';
-      case JobState.passed:
-        return 'passed';
-      case JobState.retrying:
-        return 'retrying';
-      case JobState.failed:
-        return 'failed';
-      case JobState.queued:
-        return 'queued';
       case JobState.cancelled:
         return 'cancelled';
-      case JobState.paused:
-        return 'paused';
     }
   }
 

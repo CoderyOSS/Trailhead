@@ -7,7 +7,9 @@ import 'providers/settings_provider.dart';
 import 'models/workflow_node.dart';
 import 'providers/api_provider.dart';
 import 'providers/mode_provider.dart';
+import 'services/jobs_api.dart';
 import 'providers/mock_data.dart' show WorkflowSummary;
+import 'providers/server_defs_provider.dart';
 import 'utils/workflow_to_yaml.dart';
 import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
@@ -115,17 +117,26 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
   Widget build(BuildContext context) {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
-    final showSidebar = mode != AppMode.build && (mode != AppMode.history || job != null);
+    final showSidebar = mode != AppMode.build;
     final yamlOpen = mode == AppMode.build && ref.watch(yamlDrawerOpenProvider);
     final nodeOpen = ref.watch(nodeDrawerOpenProvider);
     final selectedNodeId = ref.watch(selectedNodeIdProvider);
     final workflow = ref.watch(workflowProvider);
     final settingsOpen = ref.watch(settingsModalOpenProvider);
+    final jobsAsync = ref.watch(jobsProvider);
+    final runningCount = jobsAsync.maybeWhen(
+      data: (list) => list.where((j) => j.status == 'running').length,
+      orElse: () => 0,
+    );
     final isPortrait = MediaQuery.of(context).orientation == Orientation.portrait;
     final isEmptyWorkflow = workflow.id == emptyWorkflowId;
 
     // Autosave: debounce-write workflow state changes to backend.
     ref.listen<WorkflowSummary>(workflowProvider, (prev, next) {
+      if (prev?.id != next.id) {
+        // Workflow switched: sync server definitions.
+        ref.read(serverDefsProvider.notifier).state = next.servers;
+      }
       if (prev == null || prev.id != next.id) {
         // Workflow switched — reset autosave tracker.
         _lastSavedYaml = null;
@@ -150,7 +161,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     Widget workflowRegion({Widget? bottomPanel}) {
       return Row(
         children: [
-          ModeRail(activeCount: 3),
+          ModeRail(activeCount: runningCount),
           if (showSidebar) _buildSidebar(mode),
           Expanded(
             child: Column(
@@ -265,10 +276,16 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
           kind: JobsSidebarKind.active,
           activeId: ref.watch(selectedJobProvider)?.id,
           onPick: (id) {
-            final job = ref.read(jobsProvider).firstWhere(
-              (j) => j.id == id,
-            );
-            ref.read(selectedJobProvider.notifier).state = job;
+            final jobsAsync = ref.read(jobsProvider);
+            jobsAsync.whenData((list) {
+              final job = list.cast<JobDto?>().firstWhere(
+                (j) => j!.id == id,
+                orElse: () => null,
+              );
+              if (job != null) {
+                ref.read(selectedJobProvider.notifier).state = job;
+              }
+            });
           },
         );
       case AppMode.history:
@@ -276,10 +293,16 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
           kind: JobsSidebarKind.history,
           activeId: ref.watch(selectedJobProvider)?.id,
           onPick: (id) {
-            final job = ref.read(jobsProvider).firstWhere(
-              (j) => j.id == id,
-            );
-            ref.read(selectedJobProvider.notifier).state = job;
+            final jobsAsync = ref.read(jobsProvider);
+            jobsAsync.whenData((list) {
+              final job = list.cast<JobDto?>().firstWhere(
+                (j) => j!.id == id,
+                orElse: () => null,
+              );
+              if (job != null) {
+                ref.read(selectedJobProvider.notifier).state = job;
+              }
+            });
           },
         );
     }

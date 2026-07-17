@@ -3,7 +3,9 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/stage_data.dart';
 import '../../models/workflow_node.dart';
+import '../../models/server_def.dart';
 import '../../providers/mode_provider.dart';
+import '../../providers/server_defs_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'node_drawer.dart';
@@ -26,13 +28,12 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
   late TextEditingController _countCtrl;
   late TextEditingController _concurrencyCtrl;
   late TextEditingController _intervalMsCtrl;
-  late TextEditingController _httpIngressServerCtrl;
   late TextEditingController _httpIngressPathCtrl;
   late TextEditingController _httpEgressStatusCtrl;
   late TextEditingController _httpEgressContentTypeCtrl;
   late TextEditingController _httpEgressBodyCtrl;
-  late TextEditingController _httpRequestServerCtrl;
-  late TextEditingController _httpRequestPathCtrl;
+  late TextEditingController _httpRequestUrlCtrl;
+  late TextEditingController _exprCtrl;
 
   @override
   void initState() {
@@ -45,13 +46,12 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _countCtrl = TextEditingController(text: widget.node.count?.toString() ?? '8');
     _concurrencyCtrl = TextEditingController(text: widget.node.concurrency?.toString() ?? '3');
     _intervalMsCtrl = TextEditingController(text: widget.node.intervalMs?.toString() ?? '1000');
-    _httpIngressServerCtrl = TextEditingController(text: widget.node.httpIngressServer ?? '');
     _httpIngressPathCtrl = TextEditingController(text: widget.node.httpIngressPath ?? '/');
     _httpEgressStatusCtrl = TextEditingController(text: widget.node.httpEgressStatus?.toString() ?? '200');
     _httpEgressContentTypeCtrl = TextEditingController(text: widget.node.httpEgressContentType ?? 'application/json');
     _httpEgressBodyCtrl = TextEditingController(text: widget.node.httpEgressBody ?? '');
-    _httpRequestServerCtrl = TextEditingController(text: widget.node.httpRequestServer ?? '');
-    _httpRequestPathCtrl = TextEditingController(text: widget.node.httpRequestPath ?? '/');
+    _httpRequestUrlCtrl = TextEditingController(text: widget.node.httpRequestUrl ?? '');
+    _exprCtrl = TextEditingController(text: widget.node.expr ?? '');
   }
 
   @override
@@ -64,13 +64,12 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _countCtrl.dispose();
     _concurrencyCtrl.dispose();
     _intervalMsCtrl.dispose();
-    _httpIngressServerCtrl.dispose();
     _httpIngressPathCtrl.dispose();
     _httpEgressStatusCtrl.dispose();
     _httpEgressContentTypeCtrl.dispose();
     _httpEgressBodyCtrl.dispose();
-    _httpRequestServerCtrl.dispose();
-    _httpRequestPathCtrl.dispose();
+    _httpRequestUrlCtrl.dispose();
+    _exprCtrl.dispose();
     super.dispose();
   }
 
@@ -85,11 +84,12 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
   Widget build(BuildContext context) {
     final node = widget.node;
     final isWorker = node.kind == 'genserver';
-    final isBranch = node.kind == 'function';
+    final isBranch = node.kind == 'function' && node.expr == null;
+    final isTransform = node.expr != null;
     final isDelay = node.kind == 'delay';
-    final isHttpIngress = node.kind == 'http.ingress';
-    final isHttpEgress = node.kind == 'http.egress';
-    final isHttpRequest = node.kind == 'http.request';
+    final isHttpIngress = node.kind == 'http.server.ingress';
+    final isHttpEgress = node.kind == 'http.server.egress';
+    final isHttpRequest = node.kind == 'http.client.request';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -188,13 +188,12 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
               ),
             ),
           ] else if (isHttpIngress) ...[
-            Field(
+            _ServerDropdown(
               label: 'server',
-              hint: 'server instance id, default is "default"',
-              child: _TextInput(
-                controller: _httpIngressServerCtrl,
-                onChanged: (v) => _updateNode(node.copyWith(httpIngressServer: v.isEmpty ? null : v)),
-              ),
+              hint: 'Plug server this ingress binds to',
+              value: node.httpIngressServer ?? 'default',
+              ref: ref,
+              onChanged: (v) => _updateNode(node.copyWith(httpIngressServer: v.isEmpty ? null : v)),
             ),
             Field(
               label: 'method',
@@ -220,6 +219,13 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
               ),
             ),
           ] else if (isHttpEgress) ...[
+            _ServerDropdown(
+              label: 'server',
+              hint: 'Plug server this egress responds for',
+              value: node.httpEgressServer ?? '',
+              ref: ref,
+              onChanged: (v) => _updateNode(node.copyWith(httpEgressServer: v.isEmpty ? null : v)),
+            ),
             Field(
               label: 'status',
               hint: 'HTTP status code, default 200',
@@ -246,11 +252,11 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
             ),
           ] else if (isHttpRequest) ...[
             Field(
-              label: 'server',
-              hint: 'base url of the target server',
+              label: 'url',
+              hint: 'full target URL, e.g. https://api.example.com/v1/data',
               child: _TextInput(
-                controller: _httpRequestServerCtrl,
-                onChanged: (v) => _updateNode(node.copyWith(httpRequestServer: v.isEmpty ? null : v)),
+                controller: _httpRequestUrlCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(httpRequestUrl: v.isEmpty ? null : v)),
               ),
             ),
             Field(
@@ -268,12 +274,20 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
                 onChanged: (v) => _updateNode(node.copyWith(httpRequestMethod: v)),
               ),
             ),
+          ] else if (isTransform) ...[
             Field(
-              label: 'path',
-              hint: 'url path, e.g. /api/v1/data',
+              label: 'expression',
+              hint: 'elixir expression, payload as first arg',
               child: _TextInput(
-                controller: _httpRequestPathCtrl,
-                onChanged: (v) => _updateNode(node.copyWith(httpRequestPath: v.isEmpty ? null : v)),
+                controller: _exprCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(expr: v)),
+              ),
+            ),
+            Field(
+              label: 'label',
+              child: _TextInput(
+                controller: _labelCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(label: v)),
               ),
             ),
           ] else ...[
@@ -1039,13 +1053,395 @@ class _SubworkflowSelectorState extends State<_SubworkflowSelector> {
                           color: selected ? AppColors.fg0 : AppColors.fg2,
                         ),
                       ),
-                    ),
-                  );
-                }).toList(),
-              ),
+                     ),
+                   );
+                 }).toList(),
+               ),
+             ),
+           ],
+         ],
+       ),
+     );
+   }
+ }
+
+class _ServerDropdown extends ConsumerWidget {
+  final String label;
+  final String hint;
+  final String value;
+  final WidgetRef ref;
+  final ValueChanged<String> onChanged;
+
+  const _ServerDropdown({
+    required this.label,
+    required this.hint,
+    required this.value,
+    required this.ref,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context, WidgetRef widgetRef) {
+    final servers = widgetRef.watch(serverDefsProvider);
+
+    return Field(
+      label: label,
+      hint: hint,
+      child: Row(
+        children: [
+          Expanded(
+            child: _SelectField(
+              value: value,
+              options: [
+                ...servers.map((s) => (s.id, s.id)),
+                ('', '(none)'),
+                ('__new__', '+ new server'),
+              ],
+              onChanged: (v) {
+                if (v == '__new__') {
+                  _showServerConfigModal(context, widgetRef);
+                } else {
+                  onChanged(v);
+                }
+              },
             ),
-          ],
+          ),
+          SizedBox(width: 4),
+          SizedBox(
+            width: 28,
+            height: 28,
+            child: _IconButton(
+              icon: TrailheadIconData.plus,
+              onTap: () => _showServerConfigModal(context, widgetRef),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _showServerConfigModal(BuildContext context, WidgetRef widgetRef) {
+    showDialog(
+      context: context,
+      builder: (ctx) => _ServerConfigModal(
+        onSave: (server) {
+          final current = widgetRef.read(serverDefsProvider);
+          widgetRef.read(serverDefsProvider.notifier).state = [
+            ...current,
+            server,
+          ];
+          final wf = widgetRef.read(workflowProvider);
+          widgetRef.read(workflowProvider.notifier).state = wf.copyWith(
+            servers: [...wf.servers, server],
+          );
+          onChanged(server.id);
+        },
+      ),
+    );
+  }
+}
+
+class _ServerConfigModal extends StatefulWidget {
+  final ValueChanged<ServerDef> onSave;
+
+  const _ServerConfigModal({required this.onSave});
+
+  @override
+  State<_ServerConfigModal> createState() => _ServerConfigModalState();
+}
+
+class _ServerConfigModalState extends State<_ServerConfigModal> {
+  late TextEditingController _idCtrl;
+  late TextEditingController _portCtrl;
+  String _scheme = 'http';
+  late TextEditingController _tlsCertCtrl;
+  late TextEditingController _tlsKeyCtrl;
+  bool _enableCors = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _idCtrl = TextEditingController(text: 'default');
+    _portCtrl = TextEditingController(text: '8081');
+    _tlsCertCtrl = TextEditingController();
+    _tlsKeyCtrl = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _idCtrl.dispose();
+    _portCtrl.dispose();
+    _tlsCertCtrl.dispose();
+    _tlsKeyCtrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      backgroundColor: AppColors.bg2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(AppRadius.md),
+        side: BorderSide(color: AppColors.border2),
+      ),
+      title: Text(
+        'Define Plug Server',
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 13,
+          color: AppColors.fg0,
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      content: SizedBox(
+        width: 380,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _DialogField(
+                label: 'server id',
+                child: _DialogInput(controller: _idCtrl, hint: 'e.g. default'),
+              ),
+              SizedBox(height: 10),
+              _DialogField(
+                label: 'port',
+                child: _DialogInput(controller: _portCtrl, hint: '8081'),
+              ),
+              SizedBox(height: 10),
+              _DialogField(
+                label: 'scheme',
+                child: _DialogSelect(
+                  value: _scheme,
+                  options: const [('http', 'http'), ('https', 'https')],
+                  onChanged: (v) => setState(() => _scheme = v),
+                ),
+              ),
+              if (_scheme == 'https') ...[
+                SizedBox(height: 10),
+                _DialogField(
+                  label: 'tls cert path',
+                  child: _DialogInput(
+                    controller: _tlsCertCtrl,
+                    hint: '/path/to/cert.pem',
+                  ),
+                ),
+                SizedBox(height: 10),
+                _DialogField(
+                  label: 'tls key path',
+                  child: _DialogInput(
+                    controller: _tlsKeyCtrl,
+                    hint: '/path/to/key.pem',
+                  ),
+                ),
+              ],
+              SizedBox(height: 10),
+              Row(
+                children: [
+                  Text(
+                    'CORS',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11,
+                      color: AppColors.fg2,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Spacer(),
+                  SizedBox(
+                    height: 24,
+                    child: Switch(
+                      value: _enableCors,
+                      onChanged: (v) => setState(() => _enableCors = v),
+                      activeColor: AppColors.accent,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.of(context).pop(),
+          child: Text(
+            'Cancel',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12,
+              color: AppColors.fg2,
+            ),
+          ),
+        ),
+        TextButton(
+          onPressed: () {
+            final id = _idCtrl.text.trim();
+            if (id.isEmpty) return;
+            final port = int.tryParse(_portCtrl.text.trim()) ?? 8081;
+            widget.onSave(ServerDef(
+              id: id,
+              port: port,
+              scheme: _scheme,
+              tlsCert: _tlsCertCtrl.text.trim().isEmpty
+                  ? null
+                  : _tlsCertCtrl.text.trim(),
+              tlsKey: _tlsKeyCtrl.text.trim().isEmpty
+                  ? null
+                  : _tlsKeyCtrl.text.trim(),
+              cors: _enableCors ? const CorsDef() : null,
+            ));
+            Navigator.of(context).pop();
+          },
+          child: Text(
+            'Add Server',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 12,
+              color: AppColors.accent,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _DialogField extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _DialogField({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 10.5,
+            color: AppColors.fg2,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+        SizedBox(height: 4),
+        child,
+      ],
+    );
+  }
+}
+
+class _DialogInput extends StatelessWidget {
+  final TextEditingController controller;
+  final String hint;
+
+  const _DialogInput({required this.controller, this.hint = ''});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border1),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 8),
+      alignment: Alignment.centerLeft,
+      child: TextField(
+        controller: controller,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 12,
+          color: AppColors.fg0,
+        ),
+        decoration: InputDecoration(
+          border: InputBorder.none,
+          isDense: true,
+          hintText: hint,
+          hintStyle: TextStyle(color: AppColors.fg3),
+          contentPadding: EdgeInsets.zero,
+        ),
+      ),
+    );
+  }
+}
+
+class _DialogSelect extends StatelessWidget {
+  final String value;
+  final List<(String, String)> options;
+  final ValueChanged<String> onChanged;
+
+  const _DialogSelect({
+    required this.value,
+    required this.options,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 32,
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border1),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: 6),
+      child: DropdownButtonHideUnderline(
+        child: DropdownButton<String>(
+          value: value,
+          isExpanded: true,
+          dropdownColor: AppColors.bg2,
+          style: TextStyle(
+            fontFamily: 'monospace',
+            fontSize: 12,
+            color: AppColors.fg0,
+          ),
+          items: options.map((o) {
+            return DropdownMenuItem<String>(
+              value: o.$1,
+              child: Text(o.$2),
+            );
+          }).toList(),
+          onChanged: (v) {
+            if (v != null) onChanged(v);
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class _IconButton extends StatelessWidget {
+  final TrailheadIconData icon;
+  final VoidCallback onTap;
+
+  const _IconButton({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(4),
+        child: Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            border: Border.all(color: AppColors.border1),
+            borderRadius: BorderRadius.circular(4),
+          ),
+          child: Center(
+            child: TrailheadIcon(icon: icon, size: 12, color: AppColors.fg2),
+          ),
+        ),
       ),
     );
   }

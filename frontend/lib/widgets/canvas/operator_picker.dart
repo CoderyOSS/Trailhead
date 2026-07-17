@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:url_launcher/url_launcher.dart';
+import '../../models/node_catalog.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 
-class OperatorPicker extends StatelessWidget {
+class OperatorPicker extends StatefulWidget {
   final Offset anchor;
-  final void Function(OperatorType type) onSelect;
+  final void Function(NodeEntry entry) onSelect;
   final VoidCallback onClose;
 
   OperatorPicker({
@@ -15,24 +17,70 @@ class OperatorPicker extends StatelessWidget {
   });
 
   @override
+  State<OperatorPicker> createState() => _OperatorPickerState();
+}
+
+class _OperatorPickerState extends State<OperatorPicker> {
+  final _searchController = TextEditingController();
+  String _query = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _searchController.addListener(() {
+      setState(() => _query = _searchController.text.trim());
+    });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  bool _fuzzyMatch(String text, String query) {
+    if (query.isEmpty) return true;
+    text = text.toLowerCase();
+    query = query.toLowerCase();
+    var ti = 0;
+    for (var qi = 0; qi < query.length; qi++) {
+      ti = text.indexOf(query[qi], ti);
+      if (ti == -1) return false;
+      ti++;
+    }
+    return true;
+  }
+
+  bool _entryMatches(NodeEntry entry, String query) {
+    if (query.isEmpty) return true;
+    return _fuzzyMatch(entry.label, query) ||
+        _fuzzyMatch(entry.kind, query) ||
+        _fuzzyMatch(entry.desc, query);
+  }
+
+  List<NodeEntry> _filtered(List<NodeEntry> entries) {
+    if (_query.isEmpty) return entries;
+    return entries.where((e) => _entryMatches(e, _query)).toList();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Stack(
       children: [
-        // scrim
         Positioned.fill(
           child: GestureDetector(
-            onTap: onClose,
+            onTap: widget.onClose,
             child: Container(color: Colors.transparent),
           ),
         ),
-        // picker
         Positioned(
-          left: anchor.dx,
-          top: anchor.dy + 14,
+          left: widget.anchor.dx,
+          top: widget.anchor.dy + 14,
           child: Transform.translate(
-            offset: const Offset(-120, 0),
+            offset: const Offset(-135, 0),
             child: Container(
-              width: 240,
+              width: 270,
+              constraints: const BoxConstraints(maxHeight: 440),
               decoration: BoxDecoration(
                 color: AppColors.bg2,
                 border: Border.all(color: AppColors.border2),
@@ -49,11 +97,10 @@ class OperatorPicker extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  // header
+                  // header + search
                   Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 6),
+                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 4),
                     child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
                           'ADD NODE',
@@ -65,10 +112,11 @@ class OperatorPicker extends StatelessWidget {
                             fontWeight: FontWeight.w500,
                           ),
                         ),
+                        const Spacer(),
                         GestureDetector(
-                          onTap: onClose,
+                          onTap: widget.onClose,
                           child: Padding(
-                            padding: EdgeInsets.all(4),
+                            padding: const EdgeInsets.all(4),
                             child: TrailheadIcon(
                               icon: TrailheadIconData.x,
                               size: 10,
@@ -79,19 +127,86 @@ class OperatorPicker extends StatelessWidget {
                       ],
                     ),
                   ),
-                  Divider(height: 1, color: AppColors.border1),
-                  // list
+                  // search bar
                   Padding(
-                    padding: const EdgeInsets.all(4),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: OperatorType.values.map((type) {
-                        return _OperatorRow(
-                          type: type,
-                          onTap: () => onSelect(type),
-                        );
-                      }).toList(),
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+                    child: SizedBox(
+                      height: 26,
+                      child: TextField(
+                        controller: _searchController,
+                        autofocus: true,
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 11,
+                          color: AppColors.fg0,
+                        ),
+                        decoration: InputDecoration(
+                          filled: true,
+                          fillColor: AppColors.bg0,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 4,
+                          ),
+                          hintText: 'fuzzy search...',
+                          hintStyle: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 10.5,
+                            color: AppColors.fg3,
+                          ),
+                          isDense: true,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            borderSide: BorderSide(color: AppColors.border2),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            borderSide: BorderSide(color: AppColors.border2),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(5),
+                            borderSide: BorderSide(color: AppColors.accent),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Divider(height: 1, color: AppColors.border1),
+                  // scrollable list
+                  Flexible(
+                    child: ListView(
+                      padding: const EdgeInsets.all(4),
+                      shrinkWrap: true,
+                      children: () {
+                        final cats = <Widget>[];
+                        for (final cat in nodeCategories) {
+                          final filtered = _filtered(cat.entries);
+                          if (filtered.isEmpty) continue;
+                          cats.add(
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(8, 8, 8, 3),
+                              child: Text(
+                                cat.label,
+                                style: TextStyle(
+                                  fontFamily: 'monospace',
+                                  fontSize: 9,
+                                  letterSpacing: 0.06 * 9,
+                                  color: AppColors.fg3,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ),
+                          );
+                          for (final entry in filtered) {
+                            cats.add(
+                              _OperatorRow(
+                                entry: entry,
+                                onTap: () => widget.onSelect(entry),
+                              ),
+                            );
+                          }
+                        }
+                        return cats;
+                      }(),
                     ),
                   ),
                 ],
@@ -104,36 +219,11 @@ class OperatorPicker extends StatelessWidget {
   }
 }
 
-enum OperatorType {
-  genserver(kind: 'genserver', label: 'genserver', desc: 'stateful \u00b7 module or inline', icon: TrailheadIconData.zap),
-  task(kind: 'task', label: 'task', desc: 'stateless \u00b7 concurrent \u00b7 elixir expr', icon: TrailheadIconData.zap),
-  delay(kind: 'delay', label: 'delay', desc: 'timed delay \u00b7 configurable ms', icon: TrailheadIconData.clock),
-  httpIngress(kind: 'http.ingress', label: 'http ingress', desc: 'HTTP server endpoint', icon: TrailheadIconData.globe),
-  httpEgress(kind: 'http.egress', label: 'http egress', desc: 'HTTP response', icon: TrailheadIconData.globe),
-  httpRequest(kind: 'http.request', label: 'http request', desc: 'Outbound HTTP call', icon: TrailheadIconData.globe),
-  function(kind: 'function', label: 'function', desc: 'conditional routing', icon: TrailheadIconData.gitBranch),
-  sourceInject(kind: 'source.inject', label: 'source.inject', desc: 'timer or one-shot inject', icon: TrailheadIconData.send),
-  sinkLog(kind: 'sink.log', label: 'sink.log', desc: 'write messages to the log', icon: TrailheadIconData.zap);
-
-  const OperatorType({
-    required this.kind,
-    required this.label,
-    required this.desc,
-    required this.icon,
-  });
-
-  /// Internal kind string used in [WorkflowNode.kind].
-  final String kind;
-  final String label;
-  final String desc;
-  final TrailheadIconData icon;
-}
-
 class _OperatorRow extends StatefulWidget {
-  final OperatorType type;
+  final NodeEntry entry;
   final VoidCallback onTap;
 
-  _OperatorRow({required this.type, required this.onTap});
+  const _OperatorRow({required this.entry, required this.onTap});
 
   @override
   State<_OperatorRow> createState() => _OperatorRowState();
@@ -142,16 +232,27 @@ class _OperatorRow extends StatefulWidget {
 class _OperatorRowState extends State<_OperatorRow> {
   bool _hover = false;
 
+  Future<void> _openDocs() async {
+    final url = widget.entry.docsUrl;
+    if (url == null) return;
+    final uri = Uri.tryParse(url);
+    if (uri != null) {
+      await launchUrl(uri, mode: LaunchMode.externalApplication);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final isPrimary = widget.type != OperatorType.function;
+    final entry = widget.entry;
+    final isTransform = entry.isTransform;
+
     return MouseRegion(
       onEnter: (_) => setState(() => _hover = true),
       onExit: (_) => setState(() => _hover = false),
       child: GestureDetector(
         onTap: widget.onTap,
         child: Container(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 5),
           decoration: BoxDecoration(
             color: _hover ? AppColors.bg3 : Colors.transparent,
             borderRadius: BorderRadius.circular(5),
@@ -162,17 +263,17 @@ class _OperatorRowState extends State<_OperatorRow> {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: isPrimary
-                      ? AppColors.accent.withValues(alpha: 0.14)
-                      : AppColors.bg3,
+                  color: isTransform
+                      ? AppColors.bg3
+                      : AppColors.accent.withValues(alpha: 0.14),
                   border: Border.all(color: AppColors.border2),
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Center(
                   child: TrailheadIcon(
-                    icon: widget.type.icon,
+                    icon: entry.icon,
                     size: 11,
-                    color: isPrimary ? AppColors.accent : AppColors.fg2,
+                    color: isTransform ? AppColors.fg2 : AppColors.accent,
                   ),
                 ),
               ),
@@ -182,25 +283,40 @@ class _OperatorRowState extends State<_OperatorRow> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      widget.type.label,
+                      entry.label,
                       style: TextStyle(
                         fontFamily: 'monospace',
-                        fontSize: 11.5,
+                        fontSize: 11,
                         color: AppColors.fg0,
                         fontWeight: FontWeight.w500,
                       ),
                     ),
                     Text(
-                      widget.type.desc,
+                      entry.desc,
                       style: TextStyle(
                         fontFamily: 'monospace',
-                        fontSize: 10,
+                        fontSize: 9.5,
                         color: AppColors.fg3,
                       ),
                     ),
                   ],
                 ),
               ),
+              if (entry.docsUrl != null)
+                GestureDetector(
+                  onTap: _openDocs,
+                  child: MouseRegion(
+                    cursor: SystemMouseCursors.click,
+                    child: Padding(
+                      padding: const EdgeInsets.all(4),
+                      child: TrailheadIcon(
+                        icon: TrailheadIconData.globe,
+                        size: 11,
+                        color: AppColors.fg3,
+                      ),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),

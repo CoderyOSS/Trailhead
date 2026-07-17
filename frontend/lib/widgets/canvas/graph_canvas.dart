@@ -21,6 +21,8 @@ import '../../theme/tokens.dart';
 import '../../widgets/mode_rail.dart';
 import '../../providers/connection_drag_provider.dart';
 import '../../providers/scissors_provider.dart';
+import '../../providers/invalid_drop_flash_provider.dart';
+import '../../utils/connection_validator.dart';
 import 'connection_painter.dart';
 import 'cut_path_painter.dart';
 import 'dot_grid_painter.dart';
@@ -415,6 +417,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
       if (drag.targetNodeId != null) {
         final current = ref.read(workflowProvider);
+        final nodeMap = {for (final n in current.nodes) n.id: n};
         final alreadyExists = current.connections.any((e) =>
             e.from == sourceNodeId &&
             e.to == drag.targetNodeId &&
@@ -427,9 +430,21 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
             to: drag.targetNodeId!,
             sourcePort: drag.sourcePort,
           );
-          ref.read(workflowProvider.notifier).state = current.copyWith(
-            connections: [...current.connections, newEdge],
-          );
+
+          if (ConnectionValidator.wouldBeValid(newEdge, current.connections, nodeMap)) {
+            ref.read(workflowProvider.notifier).state = current.copyWith(
+              connections: [...current.connections, newEdge],
+            );
+          } else {
+            final dropPos = drag.currentWorldPos;
+            ref.read(invalidDropFlashProvider.notifier).state = InvalidDropFlash(
+              worldPos: dropPos,
+              id: DateTime.now().millisecondsSinceEpoch,
+            );
+            Timer(invalidDropFlashDuration, () {
+              ref.read(invalidDropFlashProvider.notifier).state = null;
+            });
+          }
         }
       }
 
@@ -918,6 +933,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                             dragOffset: dragOffset,
                                             selectedIds: selection.current,
                                             connectionDrag: connectionDrag,
+                                            invalidDropPos: ref.watch(invalidDropFlashProvider)?.worldPos,
                                           ),
                                           size: Size.infinite,
                                         ),

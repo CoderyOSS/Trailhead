@@ -18,6 +18,18 @@ class FlowStatus {
   factory FlowStatus.undeployed() => const FlowStatus(deployed: false);
 }
 
+class TermValidationResult {
+  final bool ok;
+  final String? error;
+  final int? line;
+
+  const TermValidationResult({required this.ok, this.error, this.line});
+
+  factory TermValidationResult.good() => const TermValidationResult(ok: true);
+  factory TermValidationResult.bad(String error, int? line) =>
+      TermValidationResult(ok: false, error: error, line: line);
+}
+
 class ThrtApi {
   final String _baseUrl;
   final http.Client _client;
@@ -62,15 +74,63 @@ class ThrtApi {
     return FlowStatus(deployed: true, nodes: nodes);
   }
 
-  /// Inject a payload into a specific node of a running flow.
-  Future<void> trigger(String name, String nodeId, dynamic payload) async {
-    final resp = await _post('/api/v1/workflows/${Uri.encodeComponent(name)}/trigger', {
+  /// Inject a payload (Elixir source code, backend parses) into a running node.
+  Future<void> injectCode(String name, String nodeId, String code) async {
+    final resp = await _post('/api/v1/workflows/${Uri.encodeComponent(name)}/inject', {
       'node_id': nodeId,
-      'payload': payload,
+      'code': code,
     });
     if (resp.statusCode != 200) {
       throw ThrtApiException(resp.statusCode, resp.body);
     }
+  }
+
+  /// Validate an Elixir term literal against the backend literal parser.
+  Future<TermValidationResult> validateElixirTerm(String code) async {
+    final resp = await _post('/api/v1/validate/elixir-term', {'code': code});
+    if (resp.statusCode != 200) {
+      throw ThrtApiException(resp.statusCode, resp.body);
+    }
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final ok = (body['ok'] as bool?) ?? false;
+    if (ok) return TermValidationResult.good();
+    final err = body['error'] as String?;
+    final line = body['line'] as int?;
+    return TermValidationResult.bad(err ?? 'invalid', line);
+  }
+
+  /// Hot-toggle log_in / log_out for a running node without redeploy.
+  Future<void> setLogFlags(
+    String name,
+    String nodeId, {
+    bool? logIn,
+    bool? logOut,
+  }) async {
+    final body = <String, dynamic>{'node_id': nodeId};
+    if (logIn != null) body['log_in'] = logIn;
+    if (logOut != null) body['log_out'] = logOut;
+
+    final resp = await _patch(
+      '/api/v1/workflows/${Uri.encodeComponent(name)}/log-flags',
+      body,
+    );
+    if (resp.statusCode != 200) {
+      throw ThrtApiException(resp.statusCode, resp.body);
+    }
+  }
+
+  /// WebSocket URL for the per-flow log stream.
+  String logsStreamUrl(String name) {
+    // Empty base = same-origin deployment: derive from the browser page
+    // origin so scheme/host are never empty (and https maps to wss).
+    final effectiveBase =
+        _baseUrl.isEmpty ? Uri.base.origin : _baseUrl;
+    final base = effectiveBase.endsWith('/')
+        ? effectiveBase.substring(0, effectiveBase.length - 1)
+        : effectiveBase;
+    final wsScheme = base.startsWith('https') ? 'wss' : 'ws';
+    final host = base.replaceFirst(RegExp(r'^https?://'), '');
+    return '$wsScheme://$host/api/v1/workflows/${Uri.encodeComponent(name)}/logs/stream';
   }
 
   // ---- HTTP plumbing ----
@@ -87,6 +147,9 @@ class ThrtApi {
 
   Future<http.Response> _post(String path, Map<String, dynamic> body) =>
       _client.post(_uri(path), headers: _headers(), body: jsonEncode(body));
+
+  Future<http.Response> _patch(String path, Map<String, dynamic> body) =>
+      _client.patch(_uri(path), headers: _headers(), body: jsonEncode(body));
 
   Map<String, String> _headers() => const {
         'Content-Type': 'application/json',

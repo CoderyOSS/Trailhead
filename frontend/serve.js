@@ -57,9 +57,22 @@ async function indexResponse() {
 
 Bun.serve({
   port: 8040,
-  async fetch(req) {
+  async fetch(req, server) {
     const url = new URL(req.url);
     let path = url.pathname;
+
+    // WebSocket upgrade for log stream. Bridges client <-> backend WS so the
+    // frontend keeps same-origin connectivity through this proxy.
+    if (
+      (path.startsWith('/api/') || path.startsWith('/mcp/')) &&
+      req.headers.get('upgrade')?.toLowerCase() === 'websocket'
+    ) {
+      const wsUrl = BACKEND_URL.replace(/^http/, 'ws') + path + url.search;
+      if (server.upgrade(req, { data: { wsUrl } })) {
+        return;
+      }
+      return new Response('WebSocket upgrade failed', { status: 400 });
+    }
 
     // Proxy API + MCP calls to backend. In production, the frontend is
     // served from the same Bun proxy as the API (same-origin), so no
@@ -126,5 +139,55 @@ Bun.serve({
     if (idx) return idx;
 
     return new Response('Not Found', { status: 404 });
+  },
+
+  // WebSocket bridge: on open, connect to the backend WS URL captured during
+  // upgrade; pipe frames both directions; close both sides on either end's
+  // close event.
+  websocket: {
+    open(ws) {
+      const { wsUrl } = ws.data;
+      const upstream = new WebSocket(wsUrl);
+      ws.data.upstream = upstream;
+      ws.data.pending = [];
+
+      upstream.addEventListener('open', () => {
+        for (const msg of ws.data.pending) upstream.send(msg);
+        ws.data.pending = [];
+      });
+      upstream.addEventListener('message', (ev) => {
+        try {
+          ws.send(ev.data);
+        } catch (_) {
+          // Client already gone — upstream close will follow.
+        }
+      });
+      upstream.addEventListener('close', (ev) => {
+        try {
+          ws.close(ev.code, ev.reason);
+        } catch (_) {}
+      });
+      upstream.addEventListener('error', () => {
+        try {
+          ws.close(1011, 'upstream error');
+        } catch (_) {}
+      });
+    },
+    message(ws, message) {
+      const upstream = ws.data.upstream;
+      if (upstream && upstream.readyState === WebSocket.OPEN) {
+        upstream.send(message);
+      } else {
+        ws.data.pending.push(message);
+      }
+    },
+    close(ws, code, reason) {
+      const upstream = ws.data.upstream;
+      if (upstream && upstream.readyState !== WebSocket.CLOSED) {
+        try {
+          upstream.close(code, reason);
+        } catch (_) {}
+      }
+    },
   },
 });

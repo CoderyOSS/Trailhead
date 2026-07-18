@@ -19,6 +19,7 @@ import 'widgets/empty_workflow_hero.dart';
 import 'widgets/runs_table.dart';
 import 'widgets/yaml_drawer.dart';
 import 'widgets/node_drawer/node_drawer.dart';
+import 'widgets/drawer_panel.dart';
 
 import 'widgets/settings/settings_modal.dart';
 
@@ -203,7 +204,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
               ),
             if (showNodeDrawer)
               Expanded(
-                child: NodeDrawer(
+                child: DrawerPanel(
                   key: _nodeDrawerKey(selectedNode.id, drawerView),
                   node: selectedNode,
                   view: drawerView,
@@ -230,7 +231,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
                   .state = false,
             ),
           if (showNodeDrawer)
-            NodeDrawer(
+            DrawerPanel(
               key: _nodeDrawerKey(selectedNode.id, drawerView),
               node: selectedNode,
               view: drawerView,

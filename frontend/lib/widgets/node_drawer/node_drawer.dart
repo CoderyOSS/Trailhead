@@ -7,6 +7,7 @@ import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'editor_settings_tab.dart';
 import 'editor_prompt_tab.dart';
+import 'editor_payload_tab.dart';
 import 'editor_result_tab.dart';
 import 'job_log_view.dart';
 
@@ -95,11 +96,18 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
     final isBuilder = widget.view == NodeDrawerView.builder;
 
     final tabs = isWorker
-        ? [
-            _Tab(value: 'settings', label: 'node'),
-            _Tab(value: 'prompt', label: 'prompt'),
-            _Tab(value: 'result', label: 'result'),
-          ]
+        ? (widget.node.kind == 'source.inject'
+            ? [
+                _Tab(value: 'settings', label: 'node'),
+                _Tab(value: 'payload', label: 'payload'),
+                _Tab(value: 'prompt', label: 'prompt'),
+                _Tab(value: 'result', label: 'result'),
+              ]
+            : [
+                _Tab(value: 'settings', label: 'node'),
+                _Tab(value: 'prompt', label: 'prompt'),
+                _Tab(value: 'result', label: 'result'),
+              ])
         : [_Tab(value: 'settings', label: 'routing')];
 
     return Container(
@@ -228,11 +236,13 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
             child: isBuilder
                 ? (_tab == 'settings'
                     ? EditorSettingsTab(node: widget.node)
-                    : _tab == 'prompt'
-                        ? EditorPromptTab(node: widget.node)
-                        : _tab == 'result'
-                            ? EditorResultTab(node: widget.node)
-                            : const SizedBox.shrink())
+                    : _tab == 'payload'
+                        ? EditorPayloadTab(node: widget.node)
+                        : _tab == 'prompt'
+                            ? EditorPromptTab(node: widget.node)
+                            : _tab == 'result'
+                                ? EditorResultTab(node: widget.node)
+                                : const SizedBox.shrink())
                 : JobLogView(node: widget.node),
           ),
         ],

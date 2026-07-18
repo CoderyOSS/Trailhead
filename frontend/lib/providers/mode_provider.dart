@@ -99,6 +99,15 @@ final selectedNodeIdProvider = StateProvider<String?>((ref) => null);
 
 final nodeDrawerTabProvider = StateProvider<Map<String, String>>((ref) => {});
 
+/// Top-level drawer panel selection ('node' | 'log'). Only visible in active
+/// mode — in build mode the panel defaults to 'node' and the toggle is hidden.
+final drawerPanelProvider = StateProvider<String>((ref) => 'node');
+
+/// Which log points are currently enabled for viewing in the LogDrawer.
+/// Each entry is a `${nodeId}.${dir}` string. Subset of all
+/// logging-enabled points on the flow.
+final enabledLogPointsProvider = StateProvider<Set<String>>((ref) => const {});
+
 /// Per-workflow canvas viewport snapshots. Lazily populated on switch.
 final documentsProvider =
     StateProvider<Map<String, WorkflowDocument>>((ref) {

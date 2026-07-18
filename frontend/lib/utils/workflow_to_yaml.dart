@@ -106,7 +106,16 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
       }
 
       // Node kinds with config sub-map
-      if (node.kind == 'delay' || node.kind == 'http.server.ingress' || node.kind == 'http.server.egress' || node.kind == 'http.client.request' || node.kind == 'source.inject') {
+      final wantsConfig = node.kind == 'delay' ||
+          node.kind == 'http.server.ingress' ||
+          node.kind == 'http.server.egress' ||
+          node.kind == 'http.client.request' ||
+          node.kind == 'source.inject' ||
+          node.loggingEnabled ||
+          node.logIn ||
+          node.logOut;
+
+      if (wantsConfig) {
         buf.writeln('    config:');
         if (node.kind == 'delay' && node.intervalMs != null) {
           buf.writeln('      interval_ms: ${node.intervalMs}');
@@ -126,6 +135,19 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           if (node.httpRequestUrl != null) buf.writeln('      url: "${node.httpRequestUrl}"');
           if (node.httpRequestMethod != null) buf.writeln('      method: ${node.httpRequestMethod}');
         }
+        if (node.kind == 'source.inject') {
+          if (node.payloadCode != null && node.payloadCode!.isNotEmpty) {
+            buf.writeln('      payload_code: |');
+            for (final line in node.payloadCode!.split('\n')) {
+              buf.writeln('        $line');
+            }
+          }
+          if (node.once == true) buf.writeln('      once: true');
+          if (node.intervalMs != null) buf.writeln('      interval_ms: ${node.intervalMs}');
+        }
+        if (node.loggingEnabled) buf.writeln('      logging_enabled: true');
+        if (node.logIn) buf.writeln('      log_in: true');
+        if (node.logOut) buf.writeln('      log_out: true');
       }
 
       // Join fields

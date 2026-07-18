@@ -148,7 +148,10 @@ DELETE /api/v1/workflows/{name}          - delete workflow
 POST   /api/v1/workflows/{name}/deploy   - deploy flow to runtime
 DELETE /api/v1/workflows/{name}/deploy   - undeploy flow
 GET    /api/v1/workflows/{name}/status   - runtime node status
-POST   /api/v1/workflows/{name}/trigger  - inject message {node_id, payload}
+POST   /api/v1/workflows/{name}/inject   - inject Elixir literal {node_id, code}
+PATCH  /api/v1/workflows/{name}/log-flags - hot-toggle {node_id, log_in?, log_out?}
+GET    /api/v1/workflows/{name}/logs/stream - WebSocket log stream (per-flow)
+POST   /api/v1/validate/elixir-term      - validate literal {code} → {ok, error?, line?}
 ```
 
 ## MCP Integration
@@ -168,6 +171,18 @@ Deferred. See roadmap.
 
 ## Recently Landed
 
+- **Per-node logging + WebSocket log stream (2026-07-17)**: Removed the
+  `sink.log` node. Logging is now a per-node build-time flag
+  (`config.logging_enabled`) plus runtime-hot-toggleable `log_in`/`log_out`.
+  Backend: `THRT.LogFlags` (ETS), `THRT.LogBus` (Registry pubsub),
+  `THRT.LogSocket` (Bandit WebSock handler), codegen emits guarded log hooks
+  for actor + function nodes. New endpoints: `POST .../inject` (raw Elixir
+  literal), `PATCH .../log-flags` (hot toggle), `GET .../logs/stream` (WS),
+  `POST /api/v1/validate/elixir-term`. Frontend: drawer gains top-level
+  [NODE | LOG] tabs in active mode; LogDrawer = per-point toggle rail +
+  aggregated stream view. `source.inject` payload is now `payload_code`
+  (Elixir source string, backend-parsed); drawer gets a payload tab with
+  syntax highlighting + live server-side validation.
 - **THRT runtime + same-origin proxy (2026-07-15)**: Active runtime is
   THRT (`/home/gem/projects/THRT`). Frontend served by Bun proxy at
   `trailhead.rancidgrandmas.online`, forwarding `/api/*` to THRT on
@@ -211,7 +226,7 @@ Runtime counters are stored in an in-memory ETS table (`:thrt_stats`) keyed by
 ```bash
 # create
 bash -c 'cat <<EOF > /tmp/flow.json
-{"name":"hello-world","content":"name: hello-world\nnodes:\n  - id: a\n    type: task\n    config:\n      expr: \"Map.put(payload, :greeted, true)\"\nedges: []\n"}'
+{"name":"hello-world","content":"name: hello-world\nnodes:\n  - id: a\n    type: source.inject\n    config:\n      payload_code: \"%{greeted: true}\"\nedges: []\n"}'
 curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows \
   -H "Content-Type: application/json" -d @/tmp/flow.json
 
@@ -221,9 +236,9 @@ curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-w
 # status
 curl -s https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-world/status
 
-# inject
-curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-world/trigger \
-  -H "Content-Type: application/json" -d '{"node_id":"a","payload":{"hello":"world"}}'
+# inject (Elixir literal source — backend parses tuples/maps/atoms/kw lists/structs)
+curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-world/inject \
+  -H "Content-Type: application/json" -d '{"node_id":"a","code":"%{hello: :world}"}'
 ```
 
 **Import workflows from disk (one-time bootstrap or batch load):**
@@ -237,8 +252,10 @@ cp /path/to/yaml/dir/*.yml /home/gem/projects/THRT/flows/
 **E2E test approach:**
 1. Author or load a workflow via the Flutter UI or API.
 2. Click **Deploy** in the top bar (or `POST .../deploy`).
-3. Right-click a source node and choose **Inject** (or `POST .../trigger`).
-4. Watch the node status badge update (`in:N out:M`).
+3. In Active mode, double-tap a `source.inject` node → edit payload in the
+   drawer's inject section → press **trigger** (or `POST .../inject`).
+4. Watch the node status badge update (`in:N out:M`) and the **log** drawer
+   stream frames over the per-flow WebSocket.
 5. Tail THRT logs at `/var/log/launchy/thrt.log` inside the apps container.
 
 **Unit tests:**
@@ -252,7 +269,15 @@ mix test --no-start
 ## Known Issues
 
 1. **Running flows do not survive THRT restart** — deployments are in-memory. After restart, reload/redeploy YAML definitions.
-2. **Client deployment modes** — Two connection models with different CORS requirements:
+2. ~~WebSocket through apps-container Nginx~~ **RESOLVED (2026-07-18)** — WS
+   upgrade headers landed in `CoderyOSS/Codery` (`c7db390`) and are live. Log
+   stream verified end-to-end: browser → Caddy → Nginx → Bun bridge → THRT
+   (`wss://trailhead.rancidgrandmas.online/api/v1/workflows/:name/logs/stream`
+   returns 101 + frames). Note: `logging_enabled` is a **build-time** codegen
+   gate for function nodes — flows deployed before the flag was added to YAML
+   must be redeployed to emit frames. Actor-node `log_in`/`log_out` are
+   runtime-hot-toggleable via PATCH.
+3. **Client deployment modes** — Two connection models with different CORS requirements:
    - **Web (current)**: Flutter SPA served by Bun proxy → THRT same-origin. No CORS needed. Simplest deployment.
    - **Native iOS (planned)**: App connects directly to THRT like a database client (e.g. MongoDB Compass → remote server). Requires CORS support on THRT. Not yet implemented.
 
@@ -280,9 +305,14 @@ CoderyTrailhead/
 │   ├── engine.ex
 │   ├── store.ex
 │   ├── yaml.ex
+│   ├── elixir_term.ex              ← literal-only Elixir source parser
+│   ├── log_flags.ex                ← ETS runtime log_in/log_out flags
+│   ├── log_bus.ex                  ← Registry pubsub for log frames
+│   ├── log_socket.ex               ← Bandit WebSock handler (per-flow)
 │   └── nodes/
 │       ├── task.ex
-│       └── genserver.ex
+│       ├── genserver.ex
+│       └── source/inject.ex        ← payload_code only (no legacy payload)
 └── flows/                        ← persisted YAML
 ```
 

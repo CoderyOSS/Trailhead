@@ -1,10 +1,15 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../models/stage_data.dart';
 import '../../models/workflow_node.dart';
+import '../../providers/mode_provider.dart';
 import '../../providers/mock_data.dart';
+import '../../providers/thrt_provider.dart';
+import '../../services/thrt_api.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'node_drawer.dart';
+import 'payload_editor.dart';
 
 class JobLogView extends StatefulWidget {
   final WorkflowNode node;
@@ -49,6 +54,8 @@ class _JobLogViewState extends State<JobLogView> {
       children: [
         if (widget.node.kind == 'genserver')
           _JobStageHeaderInfo(stage: widget.node),
+        if (widget.node.kind == 'source.inject')
+          _ActiveInjectSection(node: widget.node),
         Expanded(
           child: SingleChildScrollView(
             padding: const EdgeInsets.all(16),
@@ -749,4 +756,168 @@ String _fmtTokens(int n) {
   if (n == 0) return '0';
   if (n < 1000) return '$n';
   return '${(n / 1000).toStringAsFixed(n < 10000 ? 2 : 1)}k';
+}
+
+/// Active-mode inject panel for `source.inject` nodes.
+///
+/// Holds an in-memory payload buffer (initialized from the node's YAML
+/// `payload_code`, never written back). Trigger button POSTs the current
+/// buffer text to `/api/v1/workflows/:name/inject` — backend parses the
+/// Elixir literal and sends the envelope to the node.
+class _ActiveInjectSection extends ConsumerStatefulWidget {
+  final WorkflowNode node;
+
+  const _ActiveInjectSection({required this.node});
+
+  @override
+  ConsumerState<_ActiveInjectSection> createState() =>
+      _ActiveInjectSectionState();
+}
+
+class _ActiveInjectSectionState extends ConsumerState<_ActiveInjectSection> {
+  String? _lastResult;
+  bool _lastOk = true;
+  bool _sending = false;
+
+  String get _bufferKey {
+    final wf = ref.read(workflowProvider);
+    return '${wf.name}:${widget.node.id}';
+  }
+
+  String _bufferText() {
+    final buffers = ref.read(injectBufferProvider);
+    return buffers[_bufferKey] ?? widget.node.payloadCode ?? '';
+  }
+
+  void _setBuffer(String text) {
+    final buffers = Map<String, String>.from(ref.read(injectBufferProvider));
+    buffers[_bufferKey] = text;
+    ref.read(injectBufferProvider.notifier).state = buffers;
+  }
+
+  Future<void> _trigger() async {
+    final wf = ref.read(workflowProvider);
+    final code = _bufferText();
+
+    setState(() {
+      _sending = true;
+      _lastResult = null;
+    });
+
+    try {
+      await ref.read(thrtApiProvider).injectCode(wf.name, widget.node.id, code);
+      final status = await ref.read(thrtApiProvider).status(wf.name);
+      ref.read(flowStatusProvider.notifier).state =
+          Map<String, FlowStatus>.from(ref.read(flowStatusProvider))
+            ..[wf.name] = status;
+
+      if (!mounted) return;
+      final now = DateTime.now();
+      final hh = now.hour.toString().padLeft(2, '0');
+      final mm = now.minute.toString().padLeft(2, '0');
+      final ss = now.second.toString().padLeft(2, '0');
+      setState(() {
+        _sending = false;
+        _lastOk = true;
+        _lastResult = 'injected at $hh:$mm:$ss';
+      });
+    } catch (e) {
+      if (!mounted) return;
+      setState(() {
+        _sending = false;
+        _lastOk = false;
+        _lastResult = '$e';
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final wf = ref.watch(workflowProvider);
+    final statuses = ref.watch(flowStatusProvider);
+    final deployed = statuses[wf.name]?.deployed ?? false;
+
+    return Container(
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
+      decoration: BoxDecoration(
+        border: Border(bottom: BorderSide(color: AppColors.border1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'INJECT PAYLOAD',
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 10,
+              letterSpacing: 0.06 * 10,
+              color: AppColors.fg3,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          const SizedBox(height: 6),
+          PayloadEditor(
+            key: ValueKey(_bufferKey),
+            initialCode: _bufferText(),
+            onChanged: _setBuffer,
+            triggerSlot: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                GestureDetector(
+                  onTap: deployed && !_sending ? _trigger : null,
+                  child: MouseRegion(
+                    cursor: deployed && !_sending
+                        ? SystemMouseCursors.click
+                        : SystemMouseCursors.basic,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(vertical: 9),
+                      decoration: BoxDecoration(
+                        color: deployed ? AppColors.accent : AppColors.bg3,
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      alignment: Alignment.center,
+                      child: Text(
+                        _sending ? 'injecting…' : 'trigger',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          color: deployed
+                              ? AppColors.accentInk
+                              : AppColors.fg3,
+                          letterSpacing: 0.06 * 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                if (!deployed) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    'flow not deployed — trigger disabled',
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.5,
+                      color: AppColors.fg3,
+                    ),
+                  ),
+                ],
+                if (_lastResult != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _lastResult!,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.5,
+                      color: _lastOk ? AppColors.success : AppColors.danger,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }

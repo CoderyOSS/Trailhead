@@ -1,5 +1,4 @@
 import 'dart:async' show Timer;
-import 'dart:convert' show jsonDecode;
 import 'dart:math' show Random;
 import 'dart:ui' show PointerDeviceKind;
 import 'package:flutter/gestures.dart' show PointerScrollEvent, kPrimaryButton;
@@ -34,8 +33,8 @@ import '../../providers/marquee_provider.dart';
 import '../../providers/node_menu_provider.dart';
 import '../../providers/selection_notifier.dart';
 import 'node_context_menu.dart';
+import '../icons.dart';
 import 'routing_node.dart';
-import 'transform_node.dart';
 import 'worker_node.dart';
 import 'canvas_toolbar.dart';
 
@@ -88,8 +87,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
   void _beginMarquee(Offset startPos) {
     ref.read(selectionProvider.notifier).beginMarquee();
-    ref.read(marqueeProvider.notifier).state =
-        MarqueeState(screenRect: Rect.fromPoints(startPos, startPos), active: true);
+    ref.read(marqueeProvider.notifier).state = MarqueeState(
+      screenRect: Rect.fromPoints(startPos, startPos),
+      active: true,
+    );
   }
 
   void _updateMarquee(Offset startPos, Offset currentPos) {
@@ -100,13 +101,16 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       (screenRect.topLeft - viewport.pan) / viewport.zoom,
       (screenRect.bottomRight - viewport.pan) / viewport.zoom,
     );
-    final hits = workflow.nodes
-        .where((n) => n.rect.overlaps(world))
-        .map((n) => n.id)
-        .toSet();
+    final hits =
+        workflow.nodes
+            .where((n) => n.rect.overlaps(world))
+            .map((n) => n.id)
+            .toSet();
     ref.read(selectionProvider.notifier).updateMarqueeLive(hits);
-    ref.read(marqueeProvider.notifier).state =
-        MarqueeState(screenRect: screenRect, active: true);
+    ref.read(marqueeProvider.notifier).state = MarqueeState(
+      screenRect: screenRect,
+      active: true,
+    );
   }
 
   void _commitMarquee() {
@@ -124,94 +128,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     ref.read(nodeDrawerOpenProvider.notifier).state = true;
   }
 
-  void _showInjectDialog(String sourceNodeId) {
-    final controller = TextEditingController(text: '"hello"');
-    showDialog<String>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          backgroundColor: AppColors.bg1,
-          title: Text(
-            'Inject payload -> $sourceNodeId',
-            style: TextStyle(
-              fontFamily: 'monospace',
-              fontSize: 13,
-              color: AppColors.fg0,
-            ),
-          ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Elixir term. String values need double quotes.',
-                style: TextStyle(fontSize: 11, color: AppColors.fg3),
-              ),
-              const SizedBox(height: 10),
-              TextField(
-                controller: controller,
-                autofocus: true,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  color: AppColors.fg0,
-                ),
-                decoration: InputDecoration(
-                  filled: true,
-                  fillColor: AppColors.bg0,
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(6),
-                    borderSide: BorderSide(color: AppColors.border2),
-                  ),
-                ),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogContext),
-              child: Text('cancel', style: TextStyle(color: AppColors.fg2)),
-            ),
-            TextButton(
-              onPressed: () {
-                Navigator.pop(dialogContext, controller.text);
-              },
-              child: Text('inject', style: TextStyle(color: AppColors.accent)),
-            ),
-          ],
-        );
-      },
-    ).then((raw) async {
-      if (raw == null) return;
-      dynamic payload;
-      try {
-        payload = jsonDecode(raw);
-      } catch (_) {
-        if (raw.length >= 2 && raw.startsWith('"') && raw.endsWith('"')) {
-          payload = raw.substring(1, raw.length - 1);
-        } else {
-          payload = raw;
-        }
-      }
-      final wf = ref.read(workflowProvider);
-      try {
-        await ref.read(thrtApiProvider).trigger(wf.name, sourceNodeId, payload);
-        final status = await ref.read(thrtApiProvider).status(wf.name);
-        ref.read(flowStatusProvider.notifier).state =
-            Map<String, FlowStatus>.from(ref.read(flowStatusProvider))
-              ..[wf.name] = status;
-      } catch (e) {
-        debugPrint('inject failed: $e');
-      }
-    });
-  }
-
   Future<void> _pollStatus() async {
     final jobs = ref.read(jobsProvider).valueOrNull ?? [];
-    final runningFlows = jobs
-        .where((j) => j.status == 'running')
-        .map((j) => j.flowName)
-        .toSet();
+    final runningFlows =
+        jobs.where((j) => j.status == 'running').map((j) => j.flowName).toSet();
     if (runningFlows.isEmpty) return;
     try {
       final api = ref.read(thrtApiProvider);
@@ -332,7 +252,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       if (port == null || node.outputs.isEmpty) {
         return Offset(node.x + node.width, node.y + node.height / 2);
       }
-      final y = node.y +
+      final y =
+          node.y +
           WorkflowNode.branchPadY +
           port * WorkflowNode.branchRowHeight +
           WorkflowNode.branchRowHeight / 2;
@@ -341,7 +262,9 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
     Offset _handleWorldPos(WorkflowNode node, bool isOutput, int? port) {
       if (isOutput) {
-        if (node.kind == 'function' && node.expr == null && node.outputs.isNotEmpty) {
+        if (node.kind == 'function' &&
+            node.expr == null &&
+            node.outputs.isNotEmpty) {
           return _branchOutputWorldPos(node, port);
         }
         return Offset(node.x + node.width, node.y + node.height / 2);
@@ -363,6 +286,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
         if (node.id == sourceNodeId) continue;
 
         if (seekingInput) {
+          if (!node.hasInput) continue;
           final pos = _handleWorldPos(node, false, null);
           final dist = (pos - worldPos).distance;
           if (dist < bestDist) {
@@ -371,7 +295,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
           }
         } else {
           // Seeking output — function ports only
-          if (node.kind == 'function' && node.expr == null && node.outputs.isNotEmpty) {
+          if (!node.hasOutput) continue;
+          if (node.kind == 'function' &&
+              node.expr == null &&
+              node.outputs.isNotEmpty) {
             for (var p = 0; p < node.outputs.length; p++) {
               final pos = _handleWorldPos(node, true, p);
               final dist = (pos - worldPos).distance;
@@ -393,7 +320,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       return best;
     }
 
-    void _startConnectionDrag(String sourceNodeId, bool sourceIsOutput, Offset worldPos, int? sourcePort) {
+    void _startConnectionDrag(
+      String sourceNodeId,
+      bool sourceIsOutput,
+      Offset worldPos,
+      int? sourcePort,
+    ) {
       ref.read(connectionDragProvider.notifier).state = ConnectionDragState(
         sourceNodeId: sourceNodeId,
         sourcePort: sourcePort,
@@ -425,26 +357,35 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       if (drag.targetNodeId != null) {
         final current = ref.read(workflowProvider);
         final nodeMap = {for (final n in current.nodes) n.id: n};
-        final alreadyExists = current.connections.any((e) =>
-            e.from == sourceNodeId &&
-            e.to == drag.targetNodeId &&
-            e.sourcePort == drag.sourcePort);
+        final alreadyExists = current.connections.any(
+          (e) =>
+              e.from == sourceNodeId &&
+              e.to == drag.targetNodeId &&
+              e.sourcePort == drag.sourcePort,
+        );
 
         if (!alreadyExists) {
           final newEdge = WorkflowConnection(
-            id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+            id:
+                'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
             from: sourceNodeId,
             to: drag.targetNodeId!,
             sourcePort: drag.sourcePort,
           );
 
-          if (ConnectionValidator.wouldBeValid(newEdge, current.connections, nodeMap)) {
+          if (ConnectionValidator.wouldBeValid(
+            newEdge,
+            current.connections,
+            nodeMap,
+          )) {
             ref.read(workflowProvider.notifier).state = current.copyWith(
               connections: [...current.connections, newEdge],
             );
           } else {
             final dropPos = drag.currentWorldPos;
-            ref.read(invalidDropFlashProvider.notifier).state = InvalidDropFlash(
+            ref
+                .read(invalidDropFlashProvider.notifier)
+                .state = InvalidDropFlash(
               worldPos: dropPos,
               id: DateTime.now().millisecondsSinceEpoch,
             );
@@ -463,18 +404,22 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
         (screenRect.topLeft - viewport.pan) / viewport.zoom,
         (screenRect.bottomRight - viewport.pan) / viewport.zoom,
       );
-      final hits = workflow.nodes
-          .where((n) => n.rect.overlaps(world))
-          .map((n) => n.id)
-          .toSet();
+      final hits =
+          workflow.nodes
+              .where((n) => n.rect.overlaps(world))
+              .map((n) => n.id)
+              .toSet();
       ref.read(selectionProvider.notifier).updateMarqueeLive(hits);
-      ref.read(marqueeProvider.notifier).state =
-          MarqueeState(screenRect: screenRect, active: true);
+      ref.read(marqueeProvider.notifier).state = MarqueeState(
+        screenRect: screenRect,
+        active: true,
+      );
     }
 
     void addNode(NodeEntry entry) {
       final sourceId = pickerAnchor?.sourceNodeId;
-      final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+      final id =
+          'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
 
       if (sourceId == null) {
         final vp = ref.read(canvasControllerProvider);
@@ -487,9 +432,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
           label: entry.label,
           x: _snap(centerX - 100),
           y: _snap(centerY - 18),
-          outputs: entry.kind == 'function' && !entry.isTransform
-              ? WorkflowNode.defaultBranchOutputs
-              : const [],
+          outputs:
+              entry.kind == 'function' && !entry.isTransform
+                  ? WorkflowNode.defaultBranchOutputs
+                  : const [],
           expr: entry.isTransform ? entry.templateExpr : null,
         );
         ref.read(workflowProvider.notifier).state = workflow.copyWith(
@@ -506,23 +452,27 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
       );
 
       final sourceHeight = source.height;
-      final newNodeHeight = WorkflowNode(id: '', kind: entry.kind, label: '', x: 0, y: 0).height;
+      final newNodeHeight =
+          WorkflowNode(id: '', kind: entry.kind, label: '', x: 0, y: 0).height;
       final snappedX = _snap(source.x + 220);
-      final snappedY = _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
+      final snappedY =
+          _snapCenter(source.y + sourceHeight / 2) - newNodeHeight / 2;
       final newNode = WorkflowNode(
         id: id,
         kind: entry.kind,
         label: entry.label,
         x: snappedX,
         y: snappedY,
-        outputs: entry.kind == 'function' && !entry.isTransform
-            ? WorkflowNode.defaultBranchOutputs
-            : const [],
+        outputs:
+            entry.kind == 'function' && !entry.isTransform
+                ? WorkflowNode.defaultBranchOutputs
+                : const [],
         expr: entry.isTransform ? entry.templateExpr : null,
       );
 
       final edge = WorkflowConnection(
-        id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+        id:
+            'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
         from: sourceId,
         to: id,
         sourcePort: pickerAnchor?.sourcePort,
@@ -538,10 +488,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
     void deleteNode(String nodeId) {
       final currentWorkflow = ref.read(workflowProvider);
-      final newNodes = currentWorkflow.nodes.where((n) => n.id != nodeId).toList();
-      final newEdges = currentWorkflow.connections
-          .where((e) => e.from != nodeId && e.to != nodeId)
-          .toList();
+      final newNodes =
+          currentWorkflow.nodes.where((n) => n.id != nodeId).toList();
+      final newEdges =
+          currentWorkflow.connections
+              .where((e) => e.from != nodeId && e.to != nodeId)
+              .toList();
       ref.read(workflowProvider.notifier).state = currentWorkflow.copyWith(
         nodes: newNodes,
         connections: newEdges,
@@ -555,7 +507,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
     void duplicateNode(String nodeId) {
       final node = workflow.nodes.firstWhere((n) => n.id == nodeId);
-      final id = 'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+      final id =
+          'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
       final newNode = WorkflowNode(
         id: id,
         kind: node.kind,
@@ -572,24 +525,28 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
     }
 
     void collapseNode(String nodeId) {
-      final parentEdge = workflow.connections.cast<WorkflowConnection?>().firstWhere(
-        (e) => e?.to == nodeId,
-        orElse: () => null,
-      );
-      final childEdges = workflow.connections.where((e) => e.from == nodeId).toList();
+      final parentEdge = workflow.connections
+          .cast<WorkflowConnection?>()
+          .firstWhere((e) => e?.to == nodeId, orElse: () => null);
+      final childEdges =
+          workflow.connections.where((e) => e.from == nodeId).toList();
 
-      final newEdges = workflow.connections
-          .where((e) => e.to != nodeId && e.from != nodeId)
-          .toList();
+      final newEdges =
+          workflow.connections
+              .where((e) => e.to != nodeId && e.from != nodeId)
+              .toList();
 
       if (parentEdge != null) {
         for (final child in childEdges) {
-          newEdges.add(WorkflowConnection(
-            id: 'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
-            from: parentEdge.from,
-            to: child.to,
-            sourcePort: parentEdge.sourcePort,
-          ));
+          newEdges.add(
+            WorkflowConnection(
+              id:
+                  'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+              from: parentEdge.from,
+              to: child.to,
+              sourcePort: parentEdge.sourcePort,
+            ),
+          );
         }
       }
 
@@ -619,9 +576,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
               }
               if (event.logicalKey == LogicalKeyboardKey.delete ||
                   event.logicalKey == LogicalKeyboardKey.backspace) {
-                final current = ref.read(selectionProvider).current
-                    .where((id) => id != 'entrypoint')
-                    .toList();
+                final current =
+                    ref
+                        .read(selectionProvider)
+                        .current
+                        .where((id) => id != 'entrypoint')
+                        .toList();
                 if (current.isNotEmpty) {
                   for (final id in current) {
                     deleteNode(id);
@@ -646,35 +606,44 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                     onPointerDown: (event) {
                       if (event.buttons != kPrimaryButton) return;
                       if (!editable || spaceHeld) return;
-                      final worldPos = (event.localPosition - viewport.pan) / viewport.zoom;
-                      final overNode = workflow.nodes.any((n) => n.rect.contains(worldPos));
+                      final worldPos =
+                          (event.localPosition - viewport.pan) / viewport.zoom;
+                      final overNode = workflow.nodes.any(
+                        (n) => n.rect.contains(worldPos),
+                      );
                       if (overNode) {
                         _resetDoubleClick();
                         return;
                       }
-          
+
                       final now = DateTime.now();
                       if (_firstTapDownTime != null &&
                           _firstTapDownPos != null &&
-                          now.difference(_firstTapDownTime!).inMilliseconds <= _doubleTapMaxMs &&
-                          (event.localPosition - _firstTapDownPos!).distance <= _doubleTapMaxDist) {
+                          now.difference(_firstTapDownTime!).inMilliseconds <=
+                              _doubleTapMaxMs &&
+                          (event.localPosition - _firstTapDownPos!).distance <=
+                              _doubleTapMaxDist) {
                         _cancelTapTimer();
                         _doubleClickStartPos = event.localPosition;
                         _firstTapDownTime = null;
                         _firstTapDownPos = null;
                         return;
                       }
-          
+
                       _firstTapDownTime = now;
                       _firstTapDownPos = event.localPosition;
                       _cancelTapTimer();
-                      _tapTimer = Timer(const Duration(milliseconds: _doubleTapMaxMs), () {
-                        if (mounted) {
-                          ref.read(selectionProvider.notifier).clear();
-                          ref.read(operatorPickerProvider.notifier).state = null;
-                        }
-                        _resetDoubleClick();
-                      });
+                      _tapTimer = Timer(
+                        const Duration(milliseconds: _doubleTapMaxMs),
+                        () {
+                          if (mounted) {
+                            ref.read(selectionProvider.notifier).clear();
+                            ref.read(operatorPickerProvider.notifier).state =
+                                null;
+                          }
+                          _resetDoubleClick();
+                        },
+                      );
                     },
                     onPointerMove: (event) {
                       if (event.buttons != kPrimaryButton) return;
@@ -682,24 +651,32 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                         controller.pan(event.delta);
                         return;
                       }
-          
+
                       if (_firstTapDownPos != null &&
                           !_doubleClickDragActive &&
                           _doubleClickStartPos == null &&
-                          (event.localPosition - _firstTapDownPos!).distance > _dragThreshold) {
+                          (event.localPosition - _firstTapDownPos!).distance >
+                              _dragThreshold) {
                         _resetDoubleClick();
                         return;
                       }
-          
-                      if (_doubleClickStartPos != null && !_doubleClickDragActive) {
-                        if ((event.localPosition - _doubleClickStartPos!).distance > _dragThreshold) {
+
+                      if (_doubleClickStartPos != null &&
+                          !_doubleClickDragActive) {
+                        if ((event.localPosition - _doubleClickStartPos!)
+                                .distance >
+                            _dragThreshold) {
                           _doubleClickDragActive = true;
                           _beginMarquee(_doubleClickStartPos!);
                         }
                       }
-          
-                      if (_doubleClickDragActive && _doubleClickStartPos != null) {
-                        _updateMarquee(_doubleClickStartPos!, event.localPosition);
+
+                      if (_doubleClickDragActive &&
+                          _doubleClickStartPos != null) {
+                        _updateMarquee(
+                          _doubleClickStartPos!,
+                          event.localPosition,
+                        );
                       }
                     },
                     onPointerUp: (event) {
@@ -708,7 +685,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                         _resetDoubleClick();
                         return;
                       }
-          
+
                       if (_doubleClickStartPos != null) {
                         if (editable) _toggleScissors();
                         _resetDoubleClick();
@@ -724,122 +701,187 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                     onPointerSignal: (event) {
                       if (event is PointerScrollEvent &&
                           (event.kind == PointerDeviceKind.mouse ||
-                           event.kind == PointerDeviceKind.trackpad)) {
-                        controller.zoomAt(event.scrollDelta.dy, event.localPosition);
+                              event.kind == PointerDeviceKind.trackpad)) {
+                        controller.zoomAt(
+                          event.scrollDelta.dy,
+                          event.localPosition,
+                        );
                       }
                     },
                     child: GestureDetector(
                       behavior: HitTestBehavior.translucent,
-                      onScaleStart: scissors && editable
-                          ? null
-                          : (details) {
-                              if (_doubleClickDragActive) return;
-                              controller.beginScale(details.localFocalPoint);
-                            },
-                      onScaleUpdate: scissors && editable
-                          ? null
-                          : (details) {
-                              if (_doubleClickDragActive) return;
-                              controller.updateScale(details.scale, details.localFocalPoint);
-                            },
-                      onScaleEnd: scissors && editable
-                          ? null
-                          : (_) {
-                              if (_doubleClickDragActive) return;
-                              controller.endScale();
-                            },
-                      onPanStart: scissors && editable
-                          ? (details) {
-                              final worldPos = Offset(
-                                (details.localPosition.dx - viewport.pan.dx) / viewport.zoom,
-                                (details.localPosition.dy - viewport.pan.dy) / viewport.zoom,
-                              );
-                              ref.read(cutPathProvider.notifier).state = [worldPos];
-                            }
-                          : null,
-                      onPanUpdate: scissors && editable
-                          ? (details) {
-                              final worldPos = Offset(
-                                (details.localPosition.dx - viewport.pan.dx) / viewport.zoom,
-                                (details.localPosition.dy - viewport.pan.dy) / viewport.zoom,
-                              );
-                              ref.read(cutPathProvider.notifier).state = [
-                                ...ref.read(cutPathProvider),
-                                worldPos,
-                              ];
-                            }
-                          : null,
-                      onPanEnd: scissors && editable
-                          ? (_) {
-                              final path = ref.read(cutPathProvider);
-                              if (path.length >= 2) {
-                                final threshold = 6.0 / viewport.zoom;
-                                final toDelete = <String>{};
-          
-                                for (final edge in workflow.connections) {
-                                  final source = workflow.nodes.firstWhere((n) => n.id == edge.from);
-                                  final target = workflow.nodes.firstWhere((n) => n.id == edge.to);
-          
-                                  Offset exitPoint(WorkflowNode node) {
-                                    final pos = Offset(node.x, node.y);
-                                    return switch (node.kind) {
-                                      'worker' => Offset(pos.dx + node.width, pos.dy + node.height / 2),
-                                      'fan'    => Offset(pos.dx + node.width, pos.dy + node.height / 2),
-                                      _        => Offset(pos.dx + node.width, pos.dy + node.height / 2),
-                                    };
-                                  }
-          
-                                  Offset entryPoint(WorkflowNode node) {
-                                    final pos = Offset(node.x, node.y);
-                                    return Offset(pos.dx, pos.dy + node.height / 2);
-                                  }
-          
-                                  final p0 = exitPoint(source);
-                                  final p3 = entryPoint(target);
-                                  final dx = (p3.dx - p0.dx).abs();
-                                  final controlLen = dx.clamp(40.0, 150.0);
-                                  final p1 = Offset(p0.dx + controlLen, p0.dy);
-                                  final p2 = Offset(p3.dx - controlLen, p3.dy);
-          
-                                  for (var i = 0; i <= 20; i++) {
-                                    final t = i / 20.0;
-                                    final u = 1.0 - t;
-                                    final tt = t * t;
-                                    final uu = u * u;
-                                    final uuu = uu * u;
-                                    final ttt = tt * t;
-                                    final bx = uuu * p0.dx + 3 * uu * t * p1.dx + 3 * u * tt * p2.dx + ttt * p3.dx;
-                                    final by = uuu * p0.dy + 3 * uu * t * p1.dy + 3 * u * tt * p2.dy + ttt * p3.dy;
-          
-                                    var hit = false;
-                                    for (var j = 0; j < path.length - 1; j++) {
-                                      final dist = _pointToSegmentDistance(
-                                        Offset(bx, by),
-                                        path[j],
-                                        path[j + 1],
+                      onScaleStart:
+                          scissors && editable
+                              ? null
+                              : (details) {
+                                if (_doubleClickDragActive) return;
+                                controller.beginScale(details.localFocalPoint);
+                              },
+                      onScaleUpdate:
+                          scissors && editable
+                              ? null
+                              : (details) {
+                                if (_doubleClickDragActive) return;
+                                controller.updateScale(
+                                  details.scale,
+                                  details.localFocalPoint,
+                                );
+                              },
+                      onScaleEnd:
+                          scissors && editable
+                              ? null
+                              : (_) {
+                                if (_doubleClickDragActive) return;
+                                controller.endScale();
+                              },
+                      onPanStart:
+                          scissors && editable
+                              ? (details) {
+                                final worldPos = Offset(
+                                  (details.localPosition.dx - viewport.pan.dx) /
+                                      viewport.zoom,
+                                  (details.localPosition.dy - viewport.pan.dy) /
+                                      viewport.zoom,
+                                );
+                                ref.read(cutPathProvider.notifier).state = [
+                                  worldPos,
+                                ];
+                              }
+                              : null,
+                      onPanUpdate:
+                          scissors && editable
+                              ? (details) {
+                                final worldPos = Offset(
+                                  (details.localPosition.dx - viewport.pan.dx) /
+                                      viewport.zoom,
+                                  (details.localPosition.dy - viewport.pan.dy) /
+                                      viewport.zoom,
+                                );
+                                ref.read(cutPathProvider.notifier).state = [
+                                  ...ref.read(cutPathProvider),
+                                  worldPos,
+                                ];
+                              }
+                              : null,
+                      onPanEnd:
+                          scissors && editable
+                              ? (_) {
+                                final path = ref.read(cutPathProvider);
+                                if (path.length >= 2) {
+                                  final threshold = 6.0 / viewport.zoom;
+                                  final toDelete = <String>{};
+
+                                  for (final edge in workflow.connections) {
+                                    final source = workflow.nodes.firstWhere(
+                                      (n) => n.id == edge.from,
+                                    );
+                                    final target = workflow.nodes.firstWhere(
+                                      (n) => n.id == edge.to,
+                                    );
+
+                                    Offset exitPoint(WorkflowNode node) {
+                                      final pos = Offset(node.x, node.y);
+                                      return switch (node.kind) {
+                                        'worker' => Offset(
+                                          pos.dx + node.width,
+                                          pos.dy + node.height / 2,
+                                        ),
+                                        'fan' => Offset(
+                                          pos.dx + node.width,
+                                          pos.dy + node.height / 2,
+                                        ),
+                                        _ => Offset(
+                                          pos.dx + node.width,
+                                          pos.dy + node.height / 2,
+                                        ),
+                                      };
+                                    }
+
+                                    Offset entryPoint(WorkflowNode node) {
+                                      final pos = Offset(node.x, node.y);
+                                      return Offset(
+                                        pos.dx,
+                                        pos.dy + node.height / 2,
                                       );
-                                      if (dist < threshold) {
-                                        hit = true;
+                                    }
+
+                                    final p0 = exitPoint(source);
+                                    final p3 = entryPoint(target);
+                                    final dx = (p3.dx - p0.dx).abs();
+                                    final controlLen = dx.clamp(40.0, 150.0);
+                                    final p1 = Offset(
+                                      p0.dx + controlLen,
+                                      p0.dy,
+                                    );
+                                    final p2 = Offset(
+                                      p3.dx - controlLen,
+                                      p3.dy,
+                                    );
+
+                                    for (var i = 0; i <= 20; i++) {
+                                      final t = i / 20.0;
+                                      final u = 1.0 - t;
+                                      final tt = t * t;
+                                      final uu = u * u;
+                                      final uuu = uu * u;
+                                      final ttt = tt * t;
+                                      final bx =
+                                          uuu * p0.dx +
+                                          3 * uu * t * p1.dx +
+                                          3 * u * tt * p2.dx +
+                                          ttt * p3.dx;
+                                      final by =
+                                          uuu * p0.dy +
+                                          3 * uu * t * p1.dy +
+                                          3 * u * tt * p2.dy +
+                                          ttt * p3.dy;
+
+                                      var hit = false;
+                                      for (
+                                        var j = 0;
+                                        j < path.length - 1;
+                                        j++
+                                      ) {
+                                        final dist = _pointToSegmentDistance(
+                                          Offset(bx, by),
+                                          path[j],
+                                          path[j + 1],
+                                        );
+                                        if (dist < threshold) {
+                                          hit = true;
+                                          break;
+                                        }
+                                      }
+                                      if (hit) {
+                                        toDelete.add(
+                                          '${edge.from}\u2192${edge.to}',
+                                        );
                                         break;
                                       }
                                     }
-                                    if (hit) {
-                                      toDelete.add('${edge.from}\u2192${edge.to}');
-                                      break;
-                                    }
+                                  }
+
+                                  if (toDelete.isNotEmpty) {
+                                    final current = ref.read(workflowProvider);
+                                    ref
+                                        .read(workflowProvider.notifier)
+                                        .state = current.copyWith(
+                                      connections:
+                                          current.connections
+                                              .where(
+                                                (e) =>
+                                                    !toDelete.contains(
+                                                      '${e.from}\u2192${e.to}',
+                                                    ),
+                                              )
+                                              .toList(),
+                                    );
                                   }
                                 }
-          
-                                if (toDelete.isNotEmpty) {
-                                  final current = ref.read(workflowProvider);
-                                  ref.read(workflowProvider.notifier).state = current.copyWith(
-                                    connections: current.connections.where((e) => !toDelete.contains('${e.from}\u2192${e.to}')).toList(),
-                                  );
-                                }
+                                ref.read(cutPathProvider.notifier).state =
+                                    const [];
                               }
-                              ref.read(cutPathProvider.notifier).state = const [];
-                            }
-                          : null,
+                              : null,
                       child: Container(
                         decoration: BoxDecoration(
                           gradient: AppColors.hearthGradient,
@@ -868,76 +910,179 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                     Positioned.fill(
                                       child: GestureDetector(
                                         behavior: HitTestBehavior.translucent,
-                                        onTapDown: scissors && editable
-                                            ? (details) {
-                                                final tapWorld = details.localPosition;
-                                                const threshold = 18.0;
-                                                String? nearestEdgeKey;
-                                                double nearestDist = threshold;
-          
-                                                for (final edge in workflow.connections) {
-                                                  final source = workflow.nodes.firstWhere((n) => n.id == edge.from);
-                                                  final target = workflow.nodes.firstWhere((n) => n.id == edge.to);
-          
-                                                  // Compute dragged positions (same as painter)
-                                                  Offset nodePos(WorkflowNode node) {
-                                                    final inGroupDrag = draggingNodeId != null &&
-                                                        selection.current.length > 1 &&
-                                                        selection.current.contains(draggingNodeId) &&
-                                                        selection.current.contains(node.id);
-                                                    if (draggingNodeId == node.id || inGroupDrag) {
-                                                      return Offset(node.x + dragOffset.dx, node.y + dragOffset.dy);
+                                        onTapDown:
+                                            scissors && editable
+                                                ? (details) {
+                                                  final tapWorld =
+                                                      details.localPosition;
+                                                  const threshold = 18.0;
+                                                  String? nearestEdgeKey;
+                                                  double nearestDist =
+                                                      threshold;
+
+                                                  for (final edge
+                                                      in workflow.connections) {
+                                                    final source = workflow
+                                                        .nodes
+                                                        .firstWhere(
+                                                          (n) =>
+                                                              n.id == edge.from,
+                                                        );
+                                                    final target = workflow
+                                                        .nodes
+                                                        .firstWhere(
+                                                          (n) =>
+                                                              n.id == edge.to,
+                                                        );
+
+                                                    // Compute dragged positions (same as painter)
+                                                    Offset nodePos(
+                                                      WorkflowNode node,
+                                                    ) {
+                                                      final inGroupDrag =
+                                                          draggingNodeId !=
+                                                              null &&
+                                                          selection
+                                                                  .current
+                                                                  .length >
+                                                              1 &&
+                                                          selection.current
+                                                              .contains(
+                                                                draggingNodeId,
+                                                              ) &&
+                                                          selection.current
+                                                              .contains(
+                                                                node.id,
+                                                              );
+                                                      if (draggingNodeId ==
+                                                              node.id ||
+                                                          inGroupDrag) {
+                                                        return Offset(
+                                                          node.x +
+                                                              dragOffset.dx,
+                                                          node.y +
+                                                              dragOffset.dy,
+                                                        );
+                                                      }
+                                                      return Offset(
+                                                        node.x,
+                                                        node.y,
+                                                      );
                                                     }
-                                                    return Offset(node.x, node.y);
-                                                  }
-          
-                                                  Offset exitPoint(WorkflowNode node) {
-                                                    final pos = nodePos(node);
-                                                    return switch (node.kind) {
-                                                      'worker' => Offset(pos.dx + node.width, pos.dy + node.height / 2),
-                                                      'fan'    => Offset(pos.dx + node.width, pos.dy + node.height / 2),
-                                                      _        => Offset(pos.dx + node.width, pos.dy + node.height / 2),
-                                                    };
-                                                  }
-          
-                                                  Offset entryPoint(WorkflowNode node) {
-                                                    final pos = nodePos(node);
-                                                    return Offset(pos.dx, pos.dy + node.height / 2);
-                                                  }
-          
-                                                  final p0 = exitPoint(source);
-                                                  final p3 = entryPoint(target);
-                                                  final dx = (p3.dx - p0.dx).abs();
-                                                  final controlLen = dx.clamp(40.0, 150.0);
-                                                  final p1 = Offset(p0.dx + controlLen, p0.dy);
-                                                  final p2 = Offset(p3.dx - controlLen, p3.dy);
-          
-                                                  // Sample bezier curve
-                                                  for (var i = 0; i <= 20; i++) {
-                                                    final t = i / 20.0;
-                                                    final u = 1.0 - t;
-                                                    final tt = t * t;
-                                                    final uu = u * u;
-                                                    final uuu = uu * u;
-                                                    final ttt = tt * t;
-                                                    final bx = uuu * p0.dx + 3 * uu * t * p1.dx + 3 * u * tt * p2.dx + ttt * p3.dx;
-                                                    final by = uuu * p0.dy + 3 * uu * t * p1.dy + 3 * u * tt * p2.dy + ttt * p3.dy;
-                                                    final dist = (tapWorld.dx - bx).abs() + (tapWorld.dy - by).abs();
-                                                    if (dist < nearestDist) {
-                                                      nearestDist = dist;
-                                                      nearestEdgeKey = '${edge.from}\u2192${edge.to}';
+
+                                                    Offset exitPoint(
+                                                      WorkflowNode node,
+                                                    ) {
+                                                      final pos = nodePos(node);
+                                                      return switch (node
+                                                          .kind) {
+                                                        'worker' => Offset(
+                                                          pos.dx + node.width,
+                                                          pos.dy +
+                                                              node.height / 2,
+                                                        ),
+                                                        'fan' => Offset(
+                                                          pos.dx + node.width,
+                                                          pos.dy +
+                                                              node.height / 2,
+                                                        ),
+                                                        _ => Offset(
+                                                          pos.dx + node.width,
+                                                          pos.dy +
+                                                              node.height / 2,
+                                                        ),
+                                                      };
                                                     }
+
+                                                    Offset entryPoint(
+                                                      WorkflowNode node,
+                                                    ) {
+                                                      final pos = nodePos(node);
+                                                      return Offset(
+                                                        pos.dx,
+                                                        pos.dy +
+                                                            node.height / 2,
+                                                      );
+                                                    }
+
+                                                    final p0 = exitPoint(
+                                                      source,
+                                                    );
+                                                    final p3 = entryPoint(
+                                                      target,
+                                                    );
+                                                    final dx =
+                                                        (p3.dx - p0.dx).abs();
+                                                    final controlLen = dx.clamp(
+                                                      40.0,
+                                                      150.0,
+                                                    );
+                                                    final p1 = Offset(
+                                                      p0.dx + controlLen,
+                                                      p0.dy,
+                                                    );
+                                                    final p2 = Offset(
+                                                      p3.dx - controlLen,
+                                                      p3.dy,
+                                                    );
+
+                                                    // Sample bezier curve
+                                                    for (
+                                                      var i = 0;
+                                                      i <= 20;
+                                                      i++
+                                                    ) {
+                                                      final t = i / 20.0;
+                                                      final u = 1.0 - t;
+                                                      final tt = t * t;
+                                                      final uu = u * u;
+                                                      final uuu = uu * u;
+                                                      final ttt = tt * t;
+                                                      final bx =
+                                                          uuu * p0.dx +
+                                                          3 * uu * t * p1.dx +
+                                                          3 * u * tt * p2.dx +
+                                                          ttt * p3.dx;
+                                                      final by =
+                                                          uuu * p0.dy +
+                                                          3 * uu * t * p1.dy +
+                                                          3 * u * tt * p2.dy +
+                                                          ttt * p3.dy;
+                                                      final dist =
+                                                          (tapWorld.dx - bx)
+                                                              .abs() +
+                                                          (tapWorld.dy - by)
+                                                              .abs();
+                                                      if (dist < nearestDist) {
+                                                        nearestDist = dist;
+                                                        nearestEdgeKey =
+                                                            '${edge.from}\u2192${edge.to}';
+                                                      }
+                                                    }
+                                                  }
+
+                                                  if (nearestEdgeKey != null) {
+                                                    final current = ref.read(
+                                                      workflowProvider,
+                                                    );
+                                                    ref
+                                                        .read(
+                                                          workflowProvider
+                                                              .notifier,
+                                                        )
+                                                        .state = current.copyWith(
+                                                      connections:
+                                                          current.connections
+                                                              .where(
+                                                                (e) =>
+                                                                    '${e.from}\u2192${e.to}' !=
+                                                                    nearestEdgeKey,
+                                                              )
+                                                              .toList(),
+                                                    );
                                                   }
                                                 }
-          
-                                                if (nearestEdgeKey != null) {
-                                                  final current = ref.read(workflowProvider);
-                                                  ref.read(workflowProvider.notifier).state = current.copyWith(
-                                                    connections: current.connections.where((e) => '${e.from}\u2192${e.to}' != nearestEdgeKey).toList(),
-                                                  );
-                                                }
-                                              }
-                                            : null,
+                                                : null,
                                         child: CustomPaint(
                                           painter: ConnectionPainter(
                                             nodes: workflow.nodes,
@@ -946,7 +1091,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                             dragOffset: dragOffset,
                                             selectedIds: selection.current,
                                             connectionDrag: connectionDrag,
-                                            invalidDropPos: ref.watch(invalidDropFlashProvider)?.worldPos,
+                                            invalidDropPos:
+                                                ref
+                                                    .watch(
+                                                      invalidDropFlashProvider,
+                                                    )
+                                                    ?.worldPos,
                                           ),
                                           size: Size.infinite,
                                         ),
@@ -956,7 +1106,9 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                     if (cutPath.isNotEmpty)
                                       Positioned.fill(
                                         child: CustomPaint(
-                                          painter: CutPathPainter(points: cutPath),
+                                          painter: CutPathPainter(
+                                            points: cutPath,
+                                          ),
                                           size: Size.infinite,
                                         ),
                                       ),
@@ -982,55 +1134,63 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                         ...workflow.nodes.map((node) {
                           final current = selection.current;
                           final isSelected = current.contains(node.id);
-                          final inGroupDrag = draggingNodeId != null &&
+                          final inGroupDrag =
+                              draggingNodeId != null &&
                               current.contains(draggingNodeId) &&
                               current.length > 1 &&
                               current.contains(node.id);
-                          final isDragging = inGroupDrag || (draggingNodeId == node.id);
-                          final displayX = isDragging ? node.x + dragOffset.dx : node.x;
-                          final displayY = isDragging ? node.y + dragOffset.dy : node.y;
-          
-                          final nodeWidget = node.expr != null
-                              ? TransformNode(
-                                  node: node,
-                                  selected: isSelected,
-                                  onEnter: () {
-                                    ref.read(hoveredNodeProvider.notifier).state = node.id;
-                                  },
-                                  onExit: () {
-                                    ref.read(hoveredNodeProvider.notifier).state =
-                                        (hoveredNodeId == node.id) ? null : hoveredNodeId;
-                                  },
-                                )
-                              : node.kind == 'function'
+                          final isDragging =
+                              inGroupDrag || (draggingNodeId == node.id);
+                          final displayX =
+                              isDragging ? node.x + dragOffset.dx : node.x;
+                          final displayY =
+                              isDragging ? node.y + dragOffset.dy : node.y;
+
+                          final nodeWidget =
+                              node.kind == 'function' && node.expr == null
                                   ? BranchNode(
-                                      node: node,
-                                      selected: isSelected,
-                                      onEnter: () {
-                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
-                                      },
-                                      onExit: () {
-                                        ref.read(hoveredNodeProvider.notifier).state =
-                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
-                                      },
-                                    )
+                                    node: node,
+                                    selected: isSelected,
+                                    onEnter: () {
+                                      ref
+                                          .read(hoveredNodeProvider.notifier)
+                                          .state = node.id;
+                                    },
+                                    onExit: () {
+                                      ref
+                                          .read(hoveredNodeProvider.notifier)
+                                          .state = (hoveredNodeId == node.id)
+                                              ? null
+                                              : hoveredNodeId;
+                                    },
+                                  )
                                   : WorkerNode(
-                                      node: node,
-                                      selected: isSelected,
-                                      onEnter: () {
-                                        ref.read(hoveredNodeProvider.notifier).state = node.id;
-                                      },
-                                      onExit: () {
-                                        ref.read(hoveredNodeProvider.notifier).state =
-                                            (hoveredNodeId == node.id) ? null : hoveredNodeId;
-                                      },
-                                    );
-          
+                                    node: node,
+                                    selected: isSelected,
+                                    icon:
+                                        node.expr != null
+                                            ? TrailheadIconData.terminal
+                                            : TrailheadIconData.bot,
+                                    onEnter: () {
+                                      ref
+                                          .read(hoveredNodeProvider.notifier)
+                                          .state = node.id;
+                                    },
+                                    onExit: () {
+                                      ref
+                                          .read(hoveredNodeProvider.notifier)
+                                          .state = (hoveredNodeId == node.id)
+                                              ? null
+                                              : hoveredNodeId;
+                                    },
+                                  );
+
                           return AnimatedPositioned(
                             key: ValueKey('${workflow.id}_${node.id}'),
                             left: displayX,
                             top: displayY,
-                            duration: isDragging ? Duration.zero : _snapDuration,
+                            duration:
+                                isDragging ? Duration.zero : _snapDuration,
                             curve: Curves.easeOutCubic,
                             child: MultiHitStack(
                               clipBehavior: Clip.none,
@@ -1042,255 +1202,450 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                                       deleteNode(node.id);
                                       return;
                                     }
-                                    ref.read(selectionProvider.notifier).toggleOne(node.id);
+                                    ref
+                                        .read(selectionProvider.notifier)
+                                        .toggleOne(node.id);
                                     if (!isSelected) {
-                                      ref.read(operatorPickerProvider.notifier).state = null;
+                                      ref
+                                          .read(operatorPickerProvider.notifier)
+                                          .state = null;
                                     }
                                   },
                                   onDoubleTap: () => _openNodeDrawer(node.id),
-                                  onLongPressStart: isSelected && editable
-                                      ? (details) {
-                                          ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
-                                            nodeId: node.id,
-                                          );
-                                        }
-                                      : null,
-                                  onSecondaryTapDown: isSelected && editable
-                                      ? (details) {
-                                          ref.read(nodeMenuProvider.notifier).state = NodeMenuAnchor(
-                                            nodeId: node.id,
-                                          );
-                                        }
-                                      : null,
-                                  onPanStart: editable && !scissors
-                                      ? (_) {
-                                          ref.read(draggingNodeIdProvider.notifier).state = node.id;
-                                          ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-                                        }
-                                      : null,
-                                  onPanUpdate: editable && !scissors
-                                      ? (details) {
-                                          if (draggingNodeId == node.id) {
-                                            ref.read(dragOffsetProvider.notifier).state += details.delta;
+                                  onLongPressStart:
+                                      isSelected && editable
+                                          ? (details) {
+                                            ref
+                                                .read(nodeMenuProvider.notifier)
+                                                .state = NodeMenuAnchor(
+                                              nodeId: node.id,
+                                            );
                                           }
-                                        }
-                                      : null,
-                                  onPanEnd: editable && !scissors
-                                      ? (_) {
-                                          if (draggingNodeId != node.id) return;
-                                          final offset = ref.read(dragOffsetProvider);
-                                          final cur = ref.read(selectionProvider).current;
-                                          final currentWorkflow = ref.read(workflowProvider);
-                                          final isGroupDrag = cur.length > 1 && cur.contains(node.id);
-          
-                                          final newNodes = currentWorkflow.nodes.map((n) {
-                                            final shouldMove = isGroupDrag
-                                                ? cur.contains(n.id)
-                                                : (n.id == node.id);
-                                            if (!shouldMove) return n;
-                                            final h = n.height;
-                                            final snappedX = _snap(n.x + offset.dx);
-                                            final snappedY = _snapCenter(n.y + offset.dy + h / 2) - h / 2;
-                                            return n.copyWith(x: snappedX, y: snappedY);
-                                          }).toList();
-          
-                                          ref.read(workflowProvider.notifier).state =
-                                              currentWorkflow.copyWith(nodes: newNodes);
-                                          ref.read(draggingNodeIdProvider.notifier).state = null;
-                                          ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-                                        }
-                                      : null,
-                                  onPanCancel: editable && !scissors
-                                      ? () {
-                                          ref.read(draggingNodeIdProvider.notifier).state = null;
-                                          ref.read(dragOffsetProvider.notifier).state = Offset.zero;
-                                        }
-                                      : null,
+                                          : null,
+                                  onSecondaryTapDown:
+                                      isSelected && editable
+                                          ? (details) {
+                                            ref
+                                                .read(nodeMenuProvider.notifier)
+                                                .state = NodeMenuAnchor(
+                                              nodeId: node.id,
+                                            );
+                                          }
+                                          : null,
+                                  onPanStart:
+                                      editable && !scissors
+                                          ? (_) {
+                                            ref
+                                                .read(
+                                                  draggingNodeIdProvider
+                                                      .notifier,
+                                                )
+                                                .state = node.id;
+                                            ref
+                                                .read(
+                                                  dragOffsetProvider.notifier,
+                                                )
+                                                .state = Offset.zero;
+                                          }
+                                          : null,
+                                  onPanUpdate:
+                                      editable && !scissors
+                                          ? (details) {
+                                            if (draggingNodeId == node.id) {
+                                              ref
+                                                  .read(
+                                                    dragOffsetProvider.notifier,
+                                                  )
+                                                  .state += details.delta;
+                                            }
+                                          }
+                                          : null,
+                                  onPanEnd:
+                                      editable && !scissors
+                                          ? (_) {
+                                            if (draggingNodeId != node.id)
+                                              return;
+                                            final offset = ref.read(
+                                              dragOffsetProvider,
+                                            );
+                                            final cur =
+                                                ref
+                                                    .read(selectionProvider)
+                                                    .current;
+                                            final currentWorkflow = ref.read(
+                                              workflowProvider,
+                                            );
+                                            final isGroupDrag =
+                                                cur.length > 1 &&
+                                                cur.contains(node.id);
+
+                                            final newNodes =
+                                                currentWorkflow.nodes.map((n) {
+                                                  final shouldMove =
+                                                      isGroupDrag
+                                                          ? cur.contains(n.id)
+                                                          : (n.id == node.id);
+                                                  if (!shouldMove) return n;
+                                                  final h = n.height;
+                                                  final snappedX = _snap(
+                                                    n.x + offset.dx,
+                                                  );
+                                                  final snappedY =
+                                                      _snapCenter(
+                                                        n.y + offset.dy + h / 2,
+                                                      ) -
+                                                      h / 2;
+                                                  return n.copyWith(
+                                                    x: snappedX,
+                                                    y: snappedY,
+                                                  );
+                                                }).toList();
+
+                                            ref
+                                                .read(workflowProvider.notifier)
+                                                .state = currentWorkflow
+                                                .copyWith(nodes: newNodes);
+                                            ref
+                                                .read(
+                                                  draggingNodeIdProvider
+                                                      .notifier,
+                                                )
+                                                .state = null;
+                                            ref
+                                                .read(
+                                                  dragOffsetProvider.notifier,
+                                                )
+                                                .state = Offset.zero;
+                                          }
+                                          : null,
+                                  onPanCancel:
+                                      editable && !scissors
+                                          ? () {
+                                            ref
+                                                .read(
+                                                  draggingNodeIdProvider
+                                                      .notifier,
+                                                )
+                                                .state = null;
+                                            ref
+                                                .read(
+                                                  dragOffsetProvider.notifier,
+                                                )
+                                                .state = Offset.zero;
+                                          }
+                                          : null,
                                   child: nodeWidget,
                                 ),
-                                if (isSelected && editable)
+                                if (isSelected && editable && node.hasInput)
                                   Positioned(
                                     left: -44.0,
                                     top: node.height / 2 - 44.0,
                                     child: _InputHandle(
-                                      onPanStart: editable
-                                          ? (_) {
-                                              final worldPos = _handleWorldPos(node, false, null);
-                                              _startConnectionDrag(node.id, false, worldPos, null);
-                                            }
-                                          : null,
-                                      onPanUpdate: editable
-                                          ? (details) {
-                                              final drag = ref.read(connectionDragProvider);
-                                              if (drag != null) {
-                                                _updateConnectionDrag(
-                                                  drag.currentWorldPos + details.delta,
+                                      onPanStart:
+                                          editable
+                                              ? (_) {
+                                                final worldPos =
+                                                    _handleWorldPos(
+                                                      node,
+                                                      false,
+                                                      null,
+                                                    );
+                                                _startConnectionDrag(
                                                   node.id,
+                                                  false,
+                                                  worldPos,
+                                                  null,
                                                 );
                                               }
-                                            }
-                                          : null,
-                                      onPanEnd: editable
-                                          ? (_) => _endConnectionDrag(node.id)
-                                          : null,
-                                      onPanCancel: editable
-                                          ? () => ref.read(connectionDragProvider.notifier).state = null
-                                          : null,
+                                              : null,
+                                      onPanUpdate:
+                                          editable
+                                              ? (details) {
+                                                final drag = ref.read(
+                                                  connectionDragProvider,
+                                                );
+                                                if (drag != null) {
+                                                  _updateConnectionDrag(
+                                                    drag.currentWorldPos +
+                                                        details.delta,
+                                                    node.id,
+                                                  );
+                                                }
+                                              }
+                                              : null,
+                                      onPanEnd:
+                                          editable
+                                              ? (_) =>
+                                                  _endConnectionDrag(node.id)
+                                              : null,
+                                      onPanCancel:
+                                          editable
+                                              ? () =>
+                                                  ref
+                                                      .read(
+                                                        connectionDragProvider
+                                                            .notifier,
+                                                      )
+                                                      .state = null
+                                              : null,
                                     ),
                                   ),
-                                if (isSelected && editable && node.kind == 'function')
+                                if (isSelected &&
+                                    editable &&
+                                    node.kind == 'function' &&
+                                    node.expr == null)
                                   ...node.outputs.isNotEmpty
                                       ? node.outputs.asMap().entries.map((e) {
-                                          final port = e.key;
-                                          final top = BranchNode.padY + port * BranchNode.rowHeight;
-                                          return Positioned(
-                                            left: BranchNode.width - 22.0,
-                                            top: top,
-                                            child: _OutputHandle(
-                                              targetWidth: 44.0,
-                                              targetHeight: BranchNode.rowHeight,
-                                              onTap: () => showPicker(
-                                                Offset(
-                                                  displayX + BranchNode.width,
-                                                  displayY + BranchNode.padY + port * BranchNode.rowHeight + BranchNode.rowHeight / 2,
+                                        final port = e.key;
+                                        final top =
+                                            BranchNode.padY +
+                                            port * BranchNode.rowHeight;
+                                        return Positioned(
+                                          left: BranchNode.width - 22.0,
+                                          top: top,
+                                          child: _OutputHandle(
+                                            targetWidth: 44.0,
+                                            targetHeight: BranchNode.rowHeight,
+                                            onTap:
+                                                () => showPicker(
+                                                  Offset(
+                                                    displayX + BranchNode.width,
+                                                    displayY +
+                                                        BranchNode.padY +
+                                                        port *
+                                                            BranchNode
+                                                                .rowHeight +
+                                                        BranchNode.rowHeight /
+                                                            2,
+                                                  ),
+                                                  node.id,
+                                                  sourcePort: port,
                                                 ),
-                                                node.id,
-                                                sourcePort: port,
-                                              ),
-                                              onPanStart: editable
-                                                  ? (_) {
-                                                      final worldPos = _handleWorldPos(node, true, port);
-                                                      _startConnectionDrag(node.id, true, worldPos, port);
+                                            onPanStart:
+                                                editable
+                                                    ? (_) {
+                                                      final worldPos =
+                                                          _handleWorldPos(
+                                                            node,
+                                                            true,
+                                                            port,
+                                                          );
+                                                      _startConnectionDrag(
+                                                        node.id,
+                                                        true,
+                                                        worldPos,
+                                                        port,
+                                                      );
                                                     }
-                                                  : null,
-                                              onPanUpdate: editable
-                                                  ? (details) {
-                                                      final drag = ref.read(connectionDragProvider);
+                                                    : null,
+                                            onPanUpdate:
+                                                editable
+                                                    ? (details) {
+                                                      final drag = ref.read(
+                                                        connectionDragProvider,
+                                                      );
                                                       if (drag != null) {
                                                         _updateConnectionDrag(
-                                                          drag.currentWorldPos + details.delta,
+                                                          drag.currentWorldPos +
+                                                              details.delta,
                                                           node.id,
                                                         );
                                                       }
                                                     }
-                                                  : null,
-                                              onPanEnd: editable
-                                                  ? (_) => _endConnectionDrag(node.id)
-                                                  : null,
-                                              onPanCancel: editable
-                                                  ? () => ref.read(connectionDragProvider.notifier).state = null
-                                                  : null,
-                                            ),
-                                          );
-                                        })
-                                      : [
-                                          Positioned(
-                                            left: BranchNode.width - 44.0,
-                                            top: node.height / 2 - 44.0,
-                                            child: _OutputHandle(
-                                              onTap: () => showPicker(
-                                                Offset(
-                                                  displayX + BranchNode.width,
-                                                  displayY + node.height / 2,
-                                                ),
-                                                node.id,
-                                              ),
-                                              onPanStart: editable
-                                                  ? (_) {
-                                                      final worldPos = _handleWorldPos(node, true, null);
-                                                      _startConnectionDrag(node.id, true, worldPos, null);
-                                                    }
-                                                  : null,
-                                              onPanUpdate: editable
-                                                  ? (details) {
-                                                      final drag = ref.read(connectionDragProvider);
-                                                      if (drag != null) {
-                                                        _updateConnectionDrag(
-                                                          drag.currentWorldPos + details.delta,
-                                                          node.id,
-                                                        );
-                                                      }
-                                                    }
-                                                  : null,
-                                              onPanEnd: editable
-                                                  ? (_) => _endConnectionDrag(node.id)
-                                                  : null,
-                                              onPanCancel: editable
-                                                  ? () => ref.read(connectionDragProvider.notifier).state = null
-                                                  : null,
-                                            ),
+                                                    : null,
+                                            onPanEnd:
+                                                editable
+                                                    ? (_) => _endConnectionDrag(
+                                                      node.id,
+                                                    )
+                                                    : null,
+                                            onPanCancel:
+                                                editable
+                                                    ? () =>
+                                                        ref
+                                                            .read(
+                                                              connectionDragProvider
+                                                                  .notifier,
+                                                            )
+                                                            .state = null
+                                                    : null,
                                           ),
-                                        ],
-                                if (isSelected && editable && node.kind != 'function')
+                                        );
+                                      })
+                                      : [
+                                        Positioned(
+                                          left: BranchNode.width - 44.0,
+                                          top: node.height / 2 - 44.0,
+                                          child: _OutputHandle(
+                                            onTap:
+                                                () => showPicker(
+                                                  Offset(
+                                                    displayX + BranchNode.width,
+                                                    displayY + node.height / 2,
+                                                  ),
+                                                  node.id,
+                                                ),
+                                            onPanStart:
+                                                editable
+                                                    ? (_) {
+                                                      final worldPos =
+                                                          _handleWorldPos(
+                                                            node,
+                                                            true,
+                                                            null,
+                                                          );
+                                                      _startConnectionDrag(
+                                                        node.id,
+                                                        true,
+                                                        worldPos,
+                                                        null,
+                                                      );
+                                                    }
+                                                    : null,
+                                            onPanUpdate:
+                                                editable
+                                                    ? (details) {
+                                                      final drag = ref.read(
+                                                        connectionDragProvider,
+                                                      );
+                                                      if (drag != null) {
+                                                        _updateConnectionDrag(
+                                                          drag.currentWorldPos +
+                                                              details.delta,
+                                                          node.id,
+                                                        );
+                                                      }
+                                                    }
+                                                    : null,
+                                            onPanEnd:
+                                                editable
+                                                    ? (_) => _endConnectionDrag(
+                                                      node.id,
+                                                    )
+                                                    : null,
+                                            onPanCancel:
+                                                editable
+                                                    ? () =>
+                                                        ref
+                                                            .read(
+                                                              connectionDragProvider
+                                                                  .notifier,
+                                                            )
+                                                            .state = null
+                                                    : null,
+                                          ),
+                                        ),
+                                      ],
+                                if (isSelected &&
+                                    editable &&
+                                    !(node.kind == 'function' &&
+                                        node.expr == null) &&
+                                    node.hasOutput)
                                   Positioned(
                                     left: node.width - 44.0,
                                     top: node.height / 2 - 44.0,
                                     child: _OutputHandle(
-                                      onTap: () => showPicker(
-                                        Offset(
-                                          displayX + node.width,
-                                          displayY + node.height / 2,
-                                        ),
-                                        node.id,
-                                      ),
-                                      onPanStart: editable
-                                          ? (_) {
-                                              final worldPos = _handleWorldPos(node, true, null);
-                                              _startConnectionDrag(node.id, true, worldPos, null);
-                                            }
-                                          : null,
-                                      onPanUpdate: editable
-                                          ? (details) {
-                                              final drag = ref.read(connectionDragProvider);
-                                              if (drag != null) {
-                                                _updateConnectionDrag(
-                                                  drag.currentWorldPos + details.delta,
+                                      onTap:
+                                          () => showPicker(
+                                            Offset(
+                                              displayX + node.width,
+                                              displayY + node.height / 2,
+                                            ),
+                                            node.id,
+                                          ),
+                                      onPanStart:
+                                          editable
+                                              ? (_) {
+                                                final worldPos =
+                                                    _handleWorldPos(
+                                                      node,
+                                                      true,
+                                                      null,
+                                                    );
+                                                _startConnectionDrag(
                                                   node.id,
+                                                  true,
+                                                  worldPos,
+                                                  null,
                                                 );
                                               }
-                                            }
-                                          : null,
-                                      onPanEnd: editable
-                                          ? (_) => _endConnectionDrag(node.id)
-                                          : null,
-                                      onPanCancel: editable
-                                          ? () => ref.read(connectionDragProvider.notifier).state = null
-                                          : null,
+                                              : null,
+                                      onPanUpdate:
+                                          editable
+                                              ? (details) {
+                                                final drag = ref.read(
+                                                  connectionDragProvider,
+                                                );
+                                                if (drag != null) {
+                                                  _updateConnectionDrag(
+                                                    drag.currentWorldPos +
+                                                        details.delta,
+                                                    node.id,
+                                                  );
+                                                }
+                                              }
+                                              : null,
+                                      onPanEnd:
+                                          editable
+                                              ? (_) =>
+                                                  _endConnectionDrag(node.id)
+                                              : null,
+                                      onPanCancel:
+                                          editable
+                                              ? () =>
+                                                  ref
+                                                      .read(
+                                                        connectionDragProvider
+                                                            .notifier,
+                                                      )
+                                                      .state = null
+                                              : null,
                                     ),
                                   ),
                                 if (flowStatuses.containsKey(workflow.name))
-                                  Builder(builder: (context) {
-                                    final status = flowStatuses[workflow.name]!;
-                                    final nodeStats = status.nodes[node.id];
-                                    if (nodeStats == null) return const SizedBox.shrink();
-                                    return Positioned(
-                                      top: -12,
-                                      right: -6,
-                                      child: Container(
-                                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
-                                        decoration: BoxDecoration(
-                                          color: AppColors.bg2,
-                                          border: Border.all(color: AppColors.border1),
-                                          borderRadius: BorderRadius.circular(6),
-                                          boxShadow: const [
-                                            BoxShadow(
-                                              color: Color(0x40000000),
-                                              blurRadius: 4,
+                                  Builder(
+                                    builder: (context) {
+                                      final status =
+                                          flowStatuses[workflow.name]!;
+                                      final nodeStats = status.nodes[node.id];
+                                      if (nodeStats == null)
+                                        return const SizedBox.shrink();
+                                      return Positioned(
+                                        top: -12,
+                                        right: -6,
+                                        child: Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 5,
+                                            vertical: 2,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: AppColors.bg2,
+                                            border: Border.all(
+                                              color: AppColors.border1,
                                             ),
-                                          ],
-                                        ),
-                                        child: Text(
-                                          'in:${nodeStats.msgsIn} out:${nodeStats.msgsOut}',
-                                          style: TextStyle(
-                                            fontFamily: 'monospace',
-                                            fontSize: 9,
-                                            color: AppColors.accent,
-                                            fontWeight: FontWeight.w600,
+                                            borderRadius: BorderRadius.circular(
+                                              6,
+                                            ),
+                                            boxShadow: const [
+                                              BoxShadow(
+                                                color: Color(0x40000000),
+                                                blurRadius: 4,
+                                              ),
+                                            ],
+                                          ),
+                                          child: Text(
+                                            'in:${nodeStats.msgsIn} out:${nodeStats.msgsOut}',
+                                            style: TextStyle(
+                                              fontFamily: 'monospace',
+                                              fontSize: 9,
+                                              color: AppColors.accent,
+                                              fontWeight: FontWeight.w600,
+                                            ),
                                           ),
                                         ),
-                                      ),
-                                    );
-                                  }),
+                                      );
+                                    },
+                                  ),
                               ],
                             ),
                           );
@@ -1306,7 +1661,9 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                     if (!m.active) return const SizedBox.shrink();
                     return Positioned.fill(
                       child: IgnorePointer(
-                        child: CustomPaint(painter: MarqueePainter(m.screenRect)),
+                        child: CustomPaint(
+                          painter: MarqueePainter(m.screenRect),
+                        ),
                       ),
                     );
                   },
@@ -1314,7 +1671,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                 // Screen-space operator picker
                 if (pickerAnchor != null)
                   OperatorPicker(
-                    anchor: pickerAnchor.screenPos,
+                    anchor: const Offset(16, 16),
                     onSelect: addNode,
                     onClose: () {
                       ref.read(operatorPickerProvider.notifier).state = null;
@@ -1323,10 +1680,12 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                 if (menuAnchor != null)
                   Builder(
                     builder: (context) {
-                      final menuNode = workflow.nodes.cast<WorkflowNode?>().firstWhere(
-                        (n) => n!.id == menuAnchor.nodeId,
-                        orElse: () => null,
-                      );
+                      final menuNode = workflow.nodes
+                          .cast<WorkflowNode?>()
+                          .firstWhere(
+                            (n) => n!.id == menuAnchor.nodeId,
+                            orElse: () => null,
+                          );
                       if (menuNode == null) {
                         WidgetsBinding.instance.addPostFrameCallback((_) {
                           ref.read(nodeMenuProvider.notifier).state = null;
@@ -1334,8 +1693,14 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                         return const SizedBox.shrink();
                       }
                       final isMenuNodeDragging = draggingNodeId == menuNode.id;
-                      final menuDx = isMenuNodeDragging ? menuNode.x + dragOffset.dx : menuNode.x;
-                      final menuDy = isMenuNodeDragging ? menuNode.y + dragOffset.dy : menuNode.y;
+                      final menuDx =
+                          isMenuNodeDragging
+                              ? menuNode.x + dragOffset.dx
+                              : menuNode.x;
+                      final menuDy =
+                          isMenuNodeDragging
+                              ? menuNode.y + dragOffset.dy
+                              : menuNode.y;
                       final screenPos = Offset(
                         menuDx * viewport.zoom + viewport.pan.dx,
                         menuDy * viewport.zoom + viewport.pan.dy,
@@ -1346,8 +1711,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                         onDuplicate: () => duplicateNode(menuAnchor.nodeId),
                         onCollapse: () => collapseNode(menuAnchor.nodeId),
                         onDelete: () {
-                          final selected = ref.read(selectionProvider).current
-                              .toList();
+                          final selected =
+                              ref.read(selectionProvider).current.toList();
                           if (selected.isNotEmpty) {
                             for (final id in selected) {
                               deleteNode(id);
@@ -1356,10 +1721,6 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                         },
                         onInspect: () {
                           _openNodeDrawer(menuAnchor.nodeId);
-                          ref.read(nodeMenuProvider.notifier).state = null;
-                        },
-                        onInject: () {
-                          _showInjectDialog(menuAnchor.nodeId);
                           ref.read(nodeMenuProvider.notifier).state = null;
                         },
                         onClose: () {
@@ -1374,7 +1735,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
                   right: 16,
                   bottom: 16,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
                       color: AppColors.bg2,
                       border: Border.all(color: AppColors.border1),
@@ -1410,9 +1774,9 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
               ],
             ),
           ),
-  );
-  },
-  );
+        );
+      },
+    );
   }
 }
 
@@ -1665,7 +2029,8 @@ class _RenderMultiHitStack extends RenderStack {
     bool anyHit = false;
     RenderBox? child = lastChild;
     while (child != null) {
-      final StackParentData childParentData = child.parentData! as StackParentData;
+      final StackParentData childParentData =
+          child.parentData! as StackParentData;
       final bool isHit = result.addWithPaintOffset(
         offset: Offset(childParentData.left ?? 0.0, childParentData.top ?? 0.0),
         position: position,

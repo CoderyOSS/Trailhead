@@ -119,6 +119,12 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     throw WorkflowParseException('node at index $index missing "id" (or legacy "name")');
   }
   final kind = _toStr(stage['type']) ?? _toStr(stage['kind']) ?? 'genserver';
+  if (kind == 'sink.log') {
+    throw WorkflowParseException(
+      'node "$id" has type "sink.log" which has been removed. '
+      'Logging is now a per-node build-time flag (config.logging_enabled).',
+    );
+  }
   final label = _toStr(stage['label']) ?? id;
   final sub = stage['sub'] as String?;
   final model = stage['model'] as String?;
@@ -160,6 +166,11 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   String? httpRequestUrl;
   String? httpRequestMethod;
   String? httpEgressServer;
+  String? payloadCode;
+  bool? once;
+  bool loggingEnabled = false;
+  bool logIn = false;
+  bool logOut = false;
   if (config is YamlMap) {
     expr = _toStr(config['expr']);
     if (kind == 'delay') {
@@ -180,6 +191,14 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
       httpRequestUrl = _toStr(config['url']);
       httpRequestMethod = _toStr(config['method']);
     }
+    if (kind == 'source.inject') {
+      payloadCode = _toStr(config['payload_code']);
+      once = config['once'] as bool?;
+      intervalMs = config['interval_ms'] as int?;
+    }
+    loggingEnabled = (config['logging_enabled'] as bool?) ?? false;
+    logIn = (config['log_in'] as bool?) ?? false;
+    logOut = (config['log_out'] as bool?) ?? false;
   }
 
   // Kind-specific fields.
@@ -288,6 +307,11 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     httpRequestUrl: httpRequestUrl,
     httpRequestMethod: httpRequestMethod,
     httpEgressServer: httpEgressServer,
+    payloadCode: payloadCode,
+    once: once,
+    loggingEnabled: loggingEnabled,
+    logIn: logIn,
+    logOut: logOut,
   );
 }
 

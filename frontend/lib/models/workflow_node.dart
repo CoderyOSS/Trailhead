@@ -71,6 +71,16 @@ class WorkflowNode {
   final String? httpRequestMethod;
   final String? httpEgressServer;
 
+  // source.inject payload (Elixir literal source code; backend parses)
+  final String? payloadCode;
+  final bool? once;
+
+  // Per-node logging flags. `loggingEnabled` is build-time (codegen emits
+  // hooks only when true). `logIn` / `logOut` are runtime-toggleable.
+  final bool loggingEnabled;
+  final bool logIn;
+  final bool logOut;
+
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
     BranchOutput(id: '1', label: 'medium'),
@@ -126,6 +136,11 @@ class WorkflowNode {
     this.httpRequestUrl,
     this.httpRequestMethod,
     this.httpEgressServer,
+    this.payloadCode,
+    this.once,
+    this.loggingEnabled = false,
+    this.logIn = false,
+    this.logOut = false,
   });
 
   WorkflowNode copyWith({
@@ -167,6 +182,11 @@ class WorkflowNode {
     String? httpRequestUrl,
     String? httpRequestMethod,
     String? httpEgressServer,
+    String? payloadCode,
+    bool? once,
+    bool? loggingEnabled,
+    bool? logIn,
+    bool? logOut,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -207,6 +227,11 @@ class WorkflowNode {
       httpRequestUrl: httpRequestUrl ?? this.httpRequestUrl,
       httpRequestMethod: httpRequestMethod ?? this.httpRequestMethod,
       httpEgressServer: httpEgressServer ?? this.httpEgressServer,
+      payloadCode: payloadCode ?? this.payloadCode,
+      once: once ?? this.once,
+      loggingEnabled: loggingEnabled ?? this.loggingEnabled,
+      logIn: logIn ?? this.logIn,
+      logOut: logOut ?? this.logOut,
     );
   }
 }
@@ -230,7 +255,6 @@ extension WorkflowNodeKind on WorkflowNode {
   static const Set<String> functionKinds = <String>{
     'function',
     'delay',
-    'sink.log',
     'http.server.egress',
   };
 
@@ -241,6 +265,23 @@ extension WorkflowNodeKind on WorkflowNode {
   /// True when this node is a pure function (`transform/3`).
   /// A connection whose target `isFunction` is a pipe (`|>`).
   bool get isFunction => functionKinds.contains(kind);
+
+  /// Node kinds that originate messages (no incoming edges allowed).
+  static const Set<String> noInputKinds = <String>{
+    'source.inject',
+    'http.server.ingress',
+  };
+
+  /// Node kinds that terminate messages (no outgoing edges allowed).
+  static const Set<String> noOutputKinds = <String>{
+    'http.server.egress',
+  };
+
+  /// True when this node accepts incoming connections (shows input dot/handle).
+  bool get hasInput => !noInputKinds.contains(kind);
+
+  /// True when this node produces outgoing connections (shows output dot/handle).
+  bool get hasOutput => !noOutputKinds.contains(kind);
 }
 
 extension WorkflowNodeRect on WorkflowNode {

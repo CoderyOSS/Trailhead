@@ -62,16 +62,23 @@ BACKEND_URL=http://localhost:8060 bun run serve.js
 ```
 
 Runtime actions (deploy, status, inject) are also sent through the same-origin
-proxy to `/api/v1/workflows/:name/deploy|status|trigger`.
+proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
+`serve.js` also bridges WebSocket upgrades to THRT for the log stream.
 
 ### Key files
 - `lib/services/workflows_api.dart` — HTTP client for `/workflows/*` CRUD endpoints
-- `lib/services/thrt_api.dart` — HTTP client for runtime deploy/status/trigger
-- `lib/providers/thrt_provider.dart` — deployed-flow set + polled status map
+- `lib/services/thrt_api.dart` — HTTP client for runtime deploy/status/inject/validate/log-flags
+- `lib/services/log_socket.dart` — WebSocket wrapper with auto-reconnect (log stream)
+- `lib/providers/thrt_provider.dart` — deployed-flow set + polled status map + inject buffers
+- `lib/providers/log_provider.dart` — log socket lifecycle + per-flow frame ring buffers (cap 200)
 - `lib/utils/yaml_to_workflow.dart` — parses stored YAML into canvas model
 - `lib/utils/workflow_to_yaml.dart` — serializes canvas model to YAML
 - `lib/providers/api_provider.dart` — `workflowsApiProvider` (relative URL)
-- `serve.js` — Bun dev preview + THRT proxy
+- `lib/widgets/drawer_panel.dart` — top-level [NODE | LOG] tab switcher (active mode only)
+- `lib/widgets/log_drawer/log_drawer.dart` — per-point toggle rail + stream container
+- `lib/widgets/log_drawer/log_stream_view.dart` — aggregated timestamp-ordered log stream
+- `lib/widgets/node_drawer/payload_editor.dart` — Elixir code field (flutter_code_editor) + live validation pip
+- `serve.js` — Bun dev preview + THRT proxy (HTTP + WebSocket bridge)
 
 ### Autosave
 Canvas edits trigger debounced (800ms) `PUT /workflows/{name}` via the autosave
@@ -178,6 +185,10 @@ frontend/
 | `http` | HTTP client for backend API (`/api/v1/workflows/*`) |
 | `yaml` | YAML parser for stored workflow content |
 | `cupertino_icons` | iOS-style icons |
+| `flutter_code_editor` | Multiline code field with line numbers (payload editor) |
+| `flutter_highlight` | Syntax highlight themes for the code field |
+| `highlight` | Language grammars (Elixir) for the code field |
+| `web_socket_channel` | WebSocket client for the per-flow log stream |
 
 ## Design System
 

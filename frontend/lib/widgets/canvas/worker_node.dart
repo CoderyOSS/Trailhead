@@ -9,6 +9,7 @@ class WorkerNode extends StatelessWidget {
   final WorkflowNode node;
   final JobState? status;
   final bool selected;
+  final TrailheadIconData icon;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
   WorkerNode({
@@ -16,6 +17,7 @@ class WorkerNode extends StatelessWidget {
     required this.node,
     this.status,
     this.selected = false,
+    this.icon = TrailheadIconData.bot,
     this.onEnter,
     this.onExit,
   });
@@ -107,7 +109,7 @@ class WorkerNode extends StatelessWidget {
                       ),
                       child: Center(
                         child: TrailheadIcon(
-                          icon: TrailheadIconData.bot,
+                          icon: icon,
                           size: 14,
                           color: AppColors.accentInk,
                         ),
@@ -158,8 +160,8 @@ class WorkerNode extends StatelessWidget {
               borderRadius: BorderRadius.circular(AppRadius.md),
             ),
           ),
-          _ConnectorDot(left: true),
-          _ConnectorDot(left: false),
+          if (node.hasInput) _ConnectorDot(left: true),
+          if (node.hasOutput) _ConnectorDot(left: false),
           if (running)
             Positioned(
               left: 36,

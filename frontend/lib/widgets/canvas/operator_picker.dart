@@ -75,142 +75,142 @@ class _OperatorPickerState extends State<OperatorPicker> {
         ),
         Positioned(
           left: widget.anchor.dx,
-          top: widget.anchor.dy + 14,
-          child: Transform.translate(
-            offset: const Offset(-135, 0),
-            child: Container(
-              width: 270,
-              constraints: const BoxConstraints(maxHeight: 440),
-              decoration: BoxDecoration(
-                color: AppColors.bg2,
-                border: Border.all(color: AppColors.border2),
-                borderRadius: BorderRadius.circular(AppRadius.md),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x66000000),
-                    blurRadius: 24,
-                    offset: Offset(0, 8),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  // header + search
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(10, 8, 6, 4),
-                    child: Row(
-                      children: [
-                        Text(
-                          'ADD NODE',
-                          style: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10,
-                            letterSpacing: 0.08 * 10,
-                            color: AppColors.fg3,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const Spacer(),
-                        GestureDetector(
-                          onTap: widget.onClose,
-                          child: Padding(
-                            padding: const EdgeInsets.all(4),
-                            child: TrailheadIcon(
-                              icon: TrailheadIconData.x,
-                              size: 10,
-                              color: AppColors.fg3,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  // search bar
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
-                    child: SizedBox(
-                      height: 26,
-                      child: TextField(
-                        controller: _searchController,
-                        autofocus: true,
+          top: widget.anchor.dy,
+          child: Container(
+            width: 270,
+            constraints: const BoxConstraints(maxHeight: 440),
+            decoration: BoxDecoration(
+              color: AppColors.bg2,
+              border: Border.all(color: AppColors.border2),
+              borderRadius: BorderRadius.circular(AppRadius.md),
+              boxShadow: const [
+                BoxShadow(
+                  color: Color(0x66000000),
+                  blurRadius: 24,
+                  offset: Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                // header + search
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(10, 8, 6, 4),
+                  child: Row(
+                    children: [
+                      Text(
+                        'ADD NODE',
                         style: TextStyle(
                           fontFamily: 'monospace',
-                          fontSize: 11,
-                          color: AppColors.fg0,
+                          fontSize: 10,
+                          letterSpacing: 0.08 * 10,
+                          color: AppColors.fg3,
+                          fontWeight: FontWeight.w500,
                         ),
-                        decoration: InputDecoration(
-                          filled: true,
-                          fillColor: AppColors.bg0,
-                          contentPadding: const EdgeInsets.symmetric(
-                            horizontal: 8,
-                            vertical: 4,
-                          ),
-                          hintText: 'fuzzy search...',
-                          hintStyle: TextStyle(
-                            fontFamily: 'monospace',
-                            fontSize: 10.5,
+                      ),
+                      const Spacer(),
+                      GestureDetector(
+                        onTap: widget.onClose,
+                        child: Padding(
+                          padding: const EdgeInsets.all(4),
+                          child: TrailheadIcon(
+                            icon: TrailheadIconData.x,
+                            size: 10,
                             color: AppColors.fg3,
                           ),
-                          isDense: true,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            borderSide: BorderSide(color: AppColors.border2),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            borderSide: BorderSide(color: AppColors.border2),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(5),
-                            borderSide: BorderSide(color: AppColors.accent),
-                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                // search bar
+                Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 3,
+                  ),
+                  child: SizedBox(
+                    height: 26,
+                    child: TextField(
+                      controller: _searchController,
+                      autofocus: true,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 11,
+                        color: AppColors.fg0,
+                      ),
+                      decoration: InputDecoration(
+                        filled: true,
+                        fillColor: AppColors.bg0,
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 8,
+                          vertical: 4,
+                        ),
+                        hintText: 'fuzzy search...',
+                        hintStyle: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10.5,
+                          color: AppColors.fg3,
+                        ),
+                        isDense: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: AppColors.border2),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: AppColors.border2),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(5),
+                          borderSide: BorderSide(color: AppColors.accent),
                         ),
                       ),
                     ),
                   ),
-                  Divider(height: 1, color: AppColors.border1),
-                  // scrollable list
-                  Flexible(
-                    child: ListView(
-                      padding: const EdgeInsets.all(4),
-                      shrinkWrap: true,
-                      children: () {
-                        final cats = <Widget>[];
-                        for (final cat in nodeCategories) {
-                          final filtered = _filtered(cat.entries);
-                          if (filtered.isEmpty) continue;
-                          cats.add(
-                            Padding(
-                              padding: const EdgeInsets.fromLTRB(8, 8, 8, 3),
-                              child: Text(
-                                cat.label,
-                                style: TextStyle(
-                                  fontFamily: 'monospace',
-                                  fontSize: 9,
-                                  letterSpacing: 0.06 * 9,
-                                  color: AppColors.fg3,
-                                  fontWeight: FontWeight.w600,
-                                ),
+                ),
+                Divider(height: 1, color: AppColors.border1),
+                // scrollable list
+                Flexible(
+                  child: ListView(
+                    padding: const EdgeInsets.all(4),
+                    shrinkWrap: true,
+                    children: () {
+                      final cats = <Widget>[];
+                      for (final cat in nodeCategories) {
+                        final filtered = _filtered(cat.entries);
+                        if (filtered.isEmpty) continue;
+                        cats.add(
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(8, 8, 8, 3),
+                            child: Text(
+                              cat.label,
+                              style: TextStyle(
+                                fontFamily: 'monospace',
+                                fontSize: 9,
+                                letterSpacing: 0.06 * 9,
+                                color: AppColors.fg3,
+                                fontWeight: FontWeight.w600,
                               ),
                             ),
+                          ),
+                        );
+                        for (final entry in filtered) {
+                          cats.add(
+                            _OperatorRow(
+                              entry: entry,
+                              onTap: () => widget.onSelect(entry),
+                            ),
                           );
-                          for (final entry in filtered) {
-                            cats.add(
-                              _OperatorRow(
-                                entry: entry,
-                                onTap: () => widget.onSelect(entry),
-                              ),
-                            );
-                          }
                         }
-                        return cats;
-                      }(),
-                    ),
+                      }
+                      return cats;
+                    }(),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ),
@@ -263,9 +263,10 @@ class _OperatorRowState extends State<_OperatorRow> {
                 width: 22,
                 height: 22,
                 decoration: BoxDecoration(
-                  color: isTransform
-                      ? AppColors.bg3
-                      : AppColors.accent.withValues(alpha: 0.14),
+                  color:
+                      isTransform
+                          ? AppColors.bg3
+                          : AppColors.accent.withValues(alpha: 0.14),
                   border: Border.all(color: AppColors.border2),
                   borderRadius: BorderRadius.circular(5),
                 ),

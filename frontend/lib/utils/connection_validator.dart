@@ -48,6 +48,7 @@ abstract final class ConnectionValidator {
   ///
   /// Rules checked:
   ///   - both endpoints reference declared nodes
+  ///   - target accepts input (`hasInput`) and source emits output (`hasOutput`)
   ///   - if target is a function (pipe): `from` has zero existing pipes
   ///   - if target is an actor  (message): always allowed (unlimited)
   static bool wouldBeValid(
@@ -59,7 +60,9 @@ abstract final class ConnectionValidator {
         !nodes.containsKey(candidate.to)) {
       return false;
     }
+    final source = nodes[candidate.from]!;
     final target = nodes[candidate.to]!;
+    if (!source.hasOutput || !target.hasInput) return false;
     if (target.isActor) return true; // messages unlimited
     // Pipe: at most one per source.
     for (final c in existing) {
@@ -103,7 +106,12 @@ abstract final class ConnectionValidator {
         invalid.add(c.id);
         continue;
       }
+      final source = nodes[c.from]!;
       final target = nodes[c.to]!;
+      if (!source.hasOutput || !target.hasInput) {
+        invalid.add(c.id);
+        continue;
+      }
       if (!target.isActor && (pipeCountPerSource[c.from] ?? 0) > 1) {
         invalid.add(c.id);
       }

@@ -56,8 +56,7 @@ final List<NodeCategory> nodeCategories = [
   ]),
   NodeCategory(label: 'FUNCTIONS', entries: [
     const NodeEntry(kind: 'function', label: 'function', desc: 'conditional routing', icon: _branch),
-    const NodeEntry(kind: 'delay', label: 'delay', desc: 'timed delay \u00b7 configurable ms', icon: _clock),
-    const NodeEntry(kind: 'sink.log', label: 'sink.log', desc: 'write messages to the log', icon: _zap),
+    const NodeEntry(kind: 'delay', label: 'delay', desc: 'timed delay  configurable ms', icon: _clock),
     const NodeEntry(kind: 'http.server.egress', label: 'http server egress', desc: 'HTTP response', icon: _globe),
   ]),
   NodeCategory(label: 'Elixir.String', entries: [

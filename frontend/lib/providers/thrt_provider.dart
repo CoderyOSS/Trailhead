@@ -11,3 +11,8 @@ final thrtApiProvider = Provider<ThrtApi>((ref) {
 /// Latest runtime status per workflow, keyed by name. Null = not yet fetched.
 final flowStatusProvider =
     StateProvider<Map<String, FlowStatus>>((ref) => const {});
+
+/// Active-mode in-memory inject buffer. Keyed `${workflowName}:${nodeId}`.
+/// Initialized from the node's YAML `payload_code` on first open; runtime
+/// edits here never write back to YAML.
+final injectBufferProvider = StateProvider<Map<String, String>>((ref) => const {});

@@ -6,6 +6,7 @@ import '../../models/workflow_node.dart';
 import '../../models/server_def.dart';
 import '../../providers/mode_provider.dart';
 import '../../providers/server_defs_provider.dart';
+import '../../providers/thrt_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'node_drawer.dart';
@@ -352,7 +353,140 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
               ),
             ],
           ],
+
+          // ── Per-node logging section (applies to all node kinds) ──
+          Field(
+            label: 'logging',
+            hint: node.loggingEnabled
+                ? 'hooks compiled into route_fn'
+                : 'enable to expose log_in / log_out',
+            child: Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: AppColors.bg0,
+                border: Border.all(color: AppColors.border2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _LogToggle(
+                    label: 'logging_enabled',
+                    description: 'compile log hooks for this node (build-time)',
+                    value: node.loggingEnabled,
+                    onChanged: (v) =>
+                        _updateNode(node.copyWith(loggingEnabled: v)),
+                  ),
+                  if (node.loggingEnabled) ...[
+                    const SizedBox(height: 8),
+                    _LogToggle(
+                      label: 'log_in',
+                      description: 'emit on incoming message',
+                      value: node.logIn,
+                      onChanged: (v) {
+                        _updateNode(node.copyWith(logIn: v));
+                        // Hot-toggle the running flow too, if deployed.
+                        _maybeHotToggle(node, logIn: v);
+                      },
+                    ),
+                    const SizedBox(height: 4),
+                    _LogToggle(
+                      label: 'log_out',
+                      description: 'emit on outgoing message',
+                      value: node.logOut,
+                      onChanged: (v) {
+                        _updateNode(node.copyWith(logOut: v));
+                        _maybeHotToggle(node, logOut: v);
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            ),
+          ),
         ],
+      ),
+    );
+  }
+
+  void _maybeHotToggle(WorkflowNode node, {bool? logIn, bool? logOut}) {
+    final wf = ref.read(workflowProvider);
+    final statuses = ref.read(flowStatusProvider);
+    final status = statuses[wf.name];
+    if (status == null || !status.deployed) return;
+
+    final api = ref.read(thrtApiProvider);
+    api.setLogFlags(wf.name, node.id, logIn: logIn, logOut: logOut).catchError(
+          (_) {},
+        );
+  }
+}
+
+class _LogToggle extends StatelessWidget {
+  final String label;
+  final String description;
+  final bool value;
+  final ValueChanged<bool> onChanged;
+
+  const _LogToggle({
+    required this.label,
+    required this.description,
+    required this.value,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => onChanged(!value),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              width: 16,
+              height: 16,
+              margin: const EdgeInsets.only(top: 2),
+              decoration: BoxDecoration(
+                color: value ? AppColors.accent : AppColors.bg2,
+                border: Border.all(
+                  color: value ? AppColors.accent : AppColors.border2,
+                ),
+                borderRadius: BorderRadius.circular(3),
+              ),
+              alignment: Alignment.center,
+              child: value
+                  ? Icon(Icons.check, size: 12, color: AppColors.accentInk)
+                  : null,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    label,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 12,
+                      color: AppColors.fg0,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 10.5,
+                      color: AppColors.fg3,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

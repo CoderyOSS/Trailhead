@@ -1,3 +1,4 @@
+import '../services/thrt_api.dart';
 import '../widgets/icons.dart';
 
 class NodeEntry {
@@ -45,6 +46,28 @@ const _globe = TrailheadIconData.globe;
 const _branch = TrailheadIconData.gitBranch;
 const _send = TrailheadIconData.send;
 const _terminal = TrailheadIconData.terminal;
+
+/// Dynamic picker category for modules installed in the connected runtime
+/// (builtins already in [nodeCategories] are skipped). Returns null when
+/// nothing new is installed.
+NodeCategory? installedModulesCategory(List<InstalledNode> nodes) {
+  const builtinKinds = {
+    'genserver',
+    'task',
+    'source.inject',
+    'http.server.ingress',
+    'http.client.request',
+    'function',
+    'delay',
+    'http.server.egress',
+  };
+  final entries = nodes
+      .where((n) => !builtinKinds.contains(n.type))
+      .map((n) => NodeEntry(kind: n.type, label: n.label, desc: n.desc, icon: _zap))
+      .toList();
+  if (entries.isEmpty) return null;
+  return NodeCategory(label: 'INSTALLED MODULES', entries: entries);
+}
 
 final List<NodeCategory> nodeCategories = [
   NodeCategory(label: 'ACTORS', entries: [

@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/node_catalog.dart';
+import '../../providers/thrt_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 
-class OperatorPicker extends StatefulWidget {
+class OperatorPicker extends ConsumerStatefulWidget {
   final Offset anchor;
   final void Function(NodeEntry entry) onSelect;
   final VoidCallback onClose;
@@ -17,10 +19,10 @@ class OperatorPicker extends StatefulWidget {
   });
 
   @override
-  State<OperatorPicker> createState() => _OperatorPickerState();
+  ConsumerState<OperatorPicker> createState() => _OperatorPickerState();
 }
 
-class _OperatorPickerState extends State<OperatorPicker> {
+class _OperatorPickerState extends ConsumerState<OperatorPicker> {
   final _searchController = TextEditingController();
   String _query = '';
 
@@ -178,8 +180,15 @@ class _OperatorPickerState extends State<OperatorPicker> {
                     padding: const EdgeInsets.all(4),
                     shrinkWrap: true,
                     children: () {
+                      final installed = ref
+                          .watch(installedNodesProvider)
+                          .whenData(installedModulesCategory)
+                          .value;
                       final cats = <Widget>[];
-                      for (final cat in nodeCategories) {
+                      for (final cat in [
+                        ...nodeCategories,
+                        if (installed != null) installed,
+                      ]) {
                         final filtered = _filtered(cat.entries);
                         if (filtered.isEmpty) continue;
                         cats.add(

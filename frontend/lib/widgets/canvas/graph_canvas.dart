@@ -16,7 +16,7 @@ import '../../providers/settings_provider.dart';
 import '../../providers/mock_data.dart';
 import '../../providers/operator_picker_provider.dart';
 import '../../providers/thrt_provider.dart';
-import '../../services/thrt_api.dart' show FlowStatus;
+import '../../services/thrt_api.dart' show FlowStatus, InstalledNode;
 import '../../theme/tokens.dart';
 import '../../widgets/mode_rail.dart';
 import '../../providers/connection_drag_provider.dart';
@@ -61,6 +61,22 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
   double _snap(double value) => (value / _snapGrid).round() * _snapGrid;
   double _snapCenter(double center) => (center / _snapGrid).round() * _snapGrid;
+
+  /// Actor kinds reported by the runtime feed edge classification.
+  static void _syncInstalledActorKinds(List<InstalledNode> nodes) {
+    WorkflowNodeKind.installedActorKinds = {
+      for (final n in nodes)
+        if (n.actor) n.type,
+    };
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Seed classification with whatever the provider already has (the
+    // ref.listen in build only fires on subsequent changes).
+    ref.read(installedNodesProvider).whenData(_syncInstalledActorKinds);
+  }
 
   static double _pointToSegmentDistance(Offset p, Offset a, Offset b) {
     final ab = b - a;
@@ -172,6 +188,11 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
 
   @override
   Widget build(BuildContext context) {
+    // Keep actor classification in sync with runtime-installed modules so
+    // edges into harness/tool/etc. get message semantics.
+    ref.listen(installedNodesProvider, (_, next) {
+      next.whenData(_syncInstalledActorKinds);
+    });
     final viewport = ref.watch(canvasControllerProvider);
     final controller = ref.read(canvasControllerProvider.notifier);
     final workflow = ref.watch(workflowProvider);

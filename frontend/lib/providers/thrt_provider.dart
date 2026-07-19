@@ -16,3 +16,10 @@ final flowStatusProvider =
 /// Initialized from the node's YAML `payload_code` on first open; runtime
 /// edits here never write back to YAML.
 final injectBufferProvider = StateProvider<Map<String, String>>((ref) => const {});
+
+/// Node modules installed in the connected runtime. Drives the dynamic
+/// "INSTALLED MODULES" category in the add-node picker and actor/function
+/// edge classification for non-builtin kinds.
+final installedNodesProvider = FutureProvider<List<InstalledNode>>((ref) async {
+  return ref.read(thrtApiProvider).fetchNodes();
+});

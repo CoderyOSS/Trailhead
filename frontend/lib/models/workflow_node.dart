@@ -258,9 +258,15 @@ extension WorkflowNodeKind on WorkflowNode {
     'http.server.egress',
   };
 
+  /// Actor kinds reported by the runtime (`GET /api/v1/nodes`), populated
+  /// from `installedNodesProvider`. Non-builtin installed modules classify
+  /// here so their edges get message (not pipe) semantics.
+  static Set<String> installedActorKinds = <String>{};
+
   /// True when this node wraps an Erlang process (has a mailbox).
   /// A connection whose target `isActor` is a message (`send/2`).
-  bool get isActor => actorKinds.contains(kind);
+  bool get isActor =>
+      actorKinds.contains(kind) || installedActorKinds.contains(kind);
 
   /// True when this node is a pure function (`transform/3`).
   /// A connection whose target `isFunction` is a pipe (`|>`).

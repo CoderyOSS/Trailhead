@@ -18,6 +18,32 @@ class FlowStatus {
   factory FlowStatus.undeployed() => const FlowStatus(deployed: false);
 }
 
+/// A node type installed in the THRT runtime (builtin or from a project
+/// `trailhead.yaml` `node_modules` entry). Drives the "new node" picker.
+class InstalledNode {
+  final String type;
+  final String module;
+  final bool actor;
+  final String label;
+  final String desc;
+
+  const InstalledNode({
+    required this.type,
+    required this.module,
+    required this.actor,
+    required this.label,
+    required this.desc,
+  });
+
+  factory InstalledNode.fromJson(Map<String, dynamic> j) => InstalledNode(
+        type: j['type'] as String,
+        module: j['module'] as String? ?? '',
+        actor: j['actor'] as bool? ?? false,
+        label: j['label'] as String? ?? (j['type'] as String),
+        desc: j['desc'] as String? ?? '',
+      );
+}
+
 class TermValidationResult {
   final bool ok;
   final String? error;
@@ -36,6 +62,21 @@ class ThrtApi {
 
   ThrtApi(this._baseUrl, {http.Client? client})
       : _client = client ?? http.Client();
+
+  /// List node modules installed in the runtime (builtins + project
+  /// trailhead.yaml node_modules). Empty list on 404 (older runtime).
+  Future<List<InstalledNode>> fetchNodes() async {
+    final resp = await _get('/api/v1/nodes');
+    if (resp.statusCode == 404) return const [];
+    if (resp.statusCode != 200) {
+      throw ThrtApiException(resp.statusCode, resp.body);
+    }
+    final body = jsonDecode(resp.body) as List;
+    return body
+        .cast<Map<String, dynamic>>()
+        .map(InstalledNode.fromJson)
+        .toList();
+  }
 
   /// Deploy an already-saved flow (must exist in THRT.Store).
   Future<void> deploy(String name) async {

@@ -3,6 +3,8 @@ import '../models/workflow_edge.dart';
 import '../models/workflow_node.dart';
 import '../models/server_def.dart';
 
+const _unset = Object();
+
 class WorkflowSummary {
   final String id;
   final String name;
@@ -15,6 +17,10 @@ class WorkflowSummary {
   final List<WorkflowNode> nodes;
   final List<WorkflowConnection> connections;
   final List<ServerDef> servers;
+
+  /// Absolute path of the THRT project this workflow deploys against.
+  /// Null = current/default project on the runtime.
+  final String? project;
 
   /// Raw YAML from backend when this workflow was loaded remotely.
   /// Null for freshly-created (unsaved) workflows.
@@ -36,6 +42,7 @@ class WorkflowSummary {
     this.nodes = const [],
     this.connections = const [],
     this.servers = const [],
+    this.project,
     this.remoteContent,
     this.parseError,
   });
@@ -71,6 +78,7 @@ class WorkflowSummary {
     List<WorkflowNode>? nodes,
     List<WorkflowConnection>? connections,
     List<ServerDef>? servers,
+    Object? project = _unset,
     String? remoteContent,
     String? parseError,
   }) {
@@ -86,6 +94,7 @@ class WorkflowSummary {
       nodes: nodes ?? this.nodes,
       connections: connections ?? this.connections,
       servers: servers ?? this.servers,
+      project: project == _unset ? this.project : project as String?,
       remoteContent: remoteContent ?? this.remoteContent,
       parseError: parseError ?? this.parseError,
     );

@@ -17,6 +17,9 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
   if (workflow.draft != null && workflow.draft != workflow.version) {
     buf.writeln('draft: ${workflow.draft}');
   }
+  if (workflow.project != null) {
+    buf.writeln('project: ${workflow.project}');
+  }
 
   // Servers section
   if (workflow.servers.isNotEmpty) {

@@ -109,6 +109,7 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
     nodes: nodes,
     connections: connections,
     servers: serverDefs,
+    project: _toStr(doc['project']),
     remoteContent: yamlText,
   );
 }

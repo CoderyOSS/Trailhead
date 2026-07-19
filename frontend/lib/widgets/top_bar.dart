@@ -15,6 +15,7 @@ import '../services/jobs_api.dart';
 import '../models/job_state.dart';
 import 'icons.dart';
 import 'app_button.dart';
+import 'project_picker.dart';
 import 'status_tag.dart';
 import 'mode_rail.dart';
 
@@ -1021,6 +1022,8 @@ class _BuildBar extends ConsumerWidget {
           onNew: () => _createNewWorkflow(ref),
         ),
         const Spacer(),
+        const ProjectPicker(),
+        const SizedBox(width: 10),
         if (dirty)
           Padding(
             padding: const EdgeInsets.only(right: 8),

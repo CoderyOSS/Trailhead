@@ -27,12 +27,19 @@ class InstalledNode {
   final String label;
   final String desc;
 
+  /// Linked package identity for `mod.<package>.<type>` nodes; null for
+  /// builtins and config-registered modules.
+  final String? package;
+  final String? version;
+
   const InstalledNode({
     required this.type,
     required this.module,
     required this.actor,
     required this.label,
     required this.desc,
+    this.package,
+    this.version,
   });
 
   factory InstalledNode.fromJson(Map<String, dynamic> j) => InstalledNode(
@@ -41,7 +48,34 @@ class InstalledNode {
         actor: j['actor'] as bool? ?? false,
         label: j['label'] as String? ?? (j['type'] as String),
         desc: j['desc'] as String? ?? '',
+        package: j['package'] as String?,
+        version: j['version'] as String?,
       );
+}
+
+/// Project registry from GET /api/v1/projects.
+class ThrtProjects {
+  /// The runtime's current/default project dir.
+  final String current;
+
+  /// Registered project dirs (~/.trailhead/projects.yaml).
+  final List<String> registered;
+
+  /// Global package names (~/.trailhead/packages/*).
+  final List<String> packages;
+
+  const ThrtProjects({
+    required this.current,
+    required this.registered,
+    required this.packages,
+  });
+
+  /// All selectable project dirs: current first, then registered
+  /// (deduplicated, order preserved).
+  List<String> get dirs => [
+        current,
+        ...registered.where((d) => d != current),
+      ];
 }
 
 class TermValidationResult {
@@ -124,6 +158,43 @@ class ThrtApi {
     if (resp.statusCode != 200) {
       throw ThrtApiException(resp.statusCode, resp.body);
     }
+  }
+
+  /// Project registry: current dir, registered dirs, global packages.
+  Future<ThrtProjects> fetchProjects() async {
+    final resp = await _get('/api/v1/projects');
+    if (resp.statusCode != 200) {
+      throw ThrtApiException(resp.statusCode, resp.body);
+    }
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    return ThrtProjects(
+      current: body['current'] as String? ?? '',
+      registered:
+          (body['registered'] as List? ?? []).map((e) => e.toString()).toList(),
+      packages:
+          (body['packages'] as List? ?? []).map((e) => e.toString()).toList(),
+    );
+  }
+
+  /// Validate a workflow without deploying. Pass either [content] (YAML
+  /// text) or [name] (stored workflow). Returns error strings, empty when
+  /// valid. Backend always answers 200 with an `errors` array.
+  Future<List<String>> validateWorkflow({
+    String? name,
+    String? content,
+  }) async {
+    final resp = await _post('/api/v1/workflows/validate', {
+      if (content != null) 'content': content else 'name': name,
+    });
+    if (resp.statusCode != 200) {
+      throw ThrtApiException(resp.statusCode, resp.body);
+    }
+    final body = jsonDecode(resp.body) as Map<String, dynamic>;
+    final errors = (body['errors'] as List? ?? []).cast<Map<String, dynamic>>();
+    return errors.map((e) {
+      final where = e['node'] ?? e['path'] ?? '?';
+      return '$where: ${e['reason']}';
+    }).toList();
   }
 
   /// Validate an Elixir term literal against the backend literal parser.

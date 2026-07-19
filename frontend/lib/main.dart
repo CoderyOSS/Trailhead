@@ -7,6 +7,8 @@ import 'providers/settings_provider.dart';
 import 'models/workflow_node.dart';
 import 'providers/api_provider.dart';
 import 'providers/mode_provider.dart';
+import 'providers/thrt_provider.dart';
+import 'widgets/validation_banner.dart';
 import 'services/jobs_api.dart';
 import 'providers/mock_data.dart' show WorkflowSummary;
 import 'providers/server_defs_provider.dart';
@@ -112,6 +114,26 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     } finally {
       if (mounted) ref.read(workflowDirtyProvider.notifier).state = false;
     }
+    _validate(wf, yaml);
+  }
+
+  /// Run THRT validation for the workflow and update the banner provider.
+  /// Fire-and-forget: network failures keep the previous error state.
+  Future<void> _validate(WorkflowSummary wf, [String? yaml]) async {
+    if (wf.id == emptyWorkflowId || wf.parseError != null) {
+      ref.read(validationErrorsProvider.notifier).state = const [];
+      return;
+    }
+    try {
+      final errors = await ref
+          .read(thrtApiProvider)
+          .validateWorkflow(content: yaml ?? workflowToYaml(wf));
+      if (mounted) {
+        ref.read(validationErrorsProvider.notifier).state = errors;
+      }
+    } catch (e) {
+      debugPrint('validation failed: $e');
+    }
   }
 
   @override
@@ -143,6 +165,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
         _lastSavedYaml = null;
         // Still schedule a save in case the new workflow is dirty.
         _scheduleAutosave(next);
+        _validate(next);
         return;
       }
       _scheduleAutosave(next);
@@ -165,9 +188,10 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
           ModeRail(activeCount: runningCount),
           if (showSidebar) _buildSidebar(mode),
           Expanded(
-            child: Column(
+              child: Column(
               children: [
                 TopBar(),
+                const ValidationBanner(),
                 Expanded(
                   child: isEmptyWorkflow
                       ? EmptyWorkflowHero()

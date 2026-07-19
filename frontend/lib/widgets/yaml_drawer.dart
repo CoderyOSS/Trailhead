@@ -3,14 +3,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
+import '../providers/api_provider.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart' show WorkflowSummary;
 import '../services/jobs_api.dart';
 import '../utils/workflow_to_yaml.dart';
+import '../utils/yaml_to_workflow.dart';
 import '../utils/clipboard_stub.dart'
     if (dart.library.html) '../utils/clipboard_web.dart';
 import 'app_button.dart';
 import 'icons.dart';
+import 'validation_banner.dart';
 
 class YamlDrawer extends ConsumerStatefulWidget {
   final WorkflowSummary workflow;
@@ -33,7 +36,27 @@ class YamlDrawer extends ConsumerStatefulWidget {
 class _YamlDrawerState extends ConsumerState<YamlDrawer> {
   bool _copied = false;
   bool _showFind = false;
+  bool _reloading = false;
   final _searchController = TextEditingController();
+
+  /// Refetch the stored workflow YAML from the backend and replace the
+  /// active canvas model. The drawer itself compiles from the canvas model,
+  /// so this is how server-side changes (or a stale local draft) get pulled.
+  Future<void> _reload() async {
+    if (_reloading) return;
+    setState(() => _reloading = true);
+    try {
+      final api = ref.read(workflowsApiProvider);
+      final dto = await api.get(widget.workflow.name);
+      final updated = yamlToWorkflow(dto.name, dto.content);
+      ref.read(workflowProvider.notifier).state = updated;
+      ref.invalidate(remoteWorkflowsProvider);
+    } catch (e) {
+      debugPrint('yaml reload failed: $e');
+    } finally {
+      if (mounted) setState(() => _reloading = false);
+    }
+  }
 
   String get _fileName {
     if (widget.job != null) return '${widget.job!.id}.resolved.yaml';
@@ -235,6 +258,15 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                       label: 'download',
                       onTap: () {},
                     ),
+                    const SizedBox(width: 6),
+                    AppButton(
+                      key: const Key('yaml_reload_button'),
+                      variant: AppButtonVariant.ghost,
+                      size: AppButtonSize.sm,
+                      icon: TrailheadIconData.refresh,
+                      label: _reloading ? 'reloading…' : 'reload',
+                      onTap: _reloading ? () {} : _reload,
+                    ),
                     const Spacer(),
                     GestureDetector(
                       onTap: () => setState(() => _showFind = !_showFind),
@@ -297,6 +329,8 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
               ],
             ),
           ),
+          // validation problems for this workflow (deploy-blocking)
+          const ValidationBanner(),
           // body
           Expanded(
             child: Container(

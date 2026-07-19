@@ -23,3 +23,14 @@ final injectBufferProvider = StateProvider<Map<String, String>>((ref) => const {
 final installedNodesProvider = FutureProvider<List<InstalledNode>>((ref) async {
   return ref.read(thrtApiProvider).fetchNodes();
 });
+
+/// Project registry: current project dir, registered project dirs, and
+/// global package names. Drives the workflow project picker.
+final projectsProvider = FutureProvider<ThrtProjects>((ref) async {
+  return ref.read(thrtApiProvider).fetchProjects();
+});
+
+/// Validation problems for the active workflow, from
+/// POST /api/v1/workflows/validate. Empty = valid (or not yet checked).
+/// Updated by the shell after autosave and on workflow switch.
+final validationErrorsProvider = StateProvider<List<String>>((ref) => const []);

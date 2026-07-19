@@ -5,7 +5,7 @@
     "semantic_hash": "758c5bf8bd1b695dd11523c800baf5c8"
   },
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784487401.4940853,
+    "mtime": 1784497924.97713,
     "ast_hash": "5256cc49698b6509f42403c1f86ecb1b",
     "semantic_hash": ""
   },
@@ -45,12 +45,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784487401.8670838,
+    "mtime": 1784497925.2711291,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784487401.8690836,
+    "mtime": 1784497925.272129,
     "ast_hash": "efe843859d073e34bc63bb1d089af6a7",
     "semantic_hash": ""
   },
@@ -65,8 +65,8 @@
     "semantic_hash": "a225a382d14d7b16b6f602a5c1d49331"
   },
   "frontend/lib/main.dart": {
-    "mtime": 1784479174.047466,
-    "ast_hash": "2faebd19de899815dd1aa157575d5c03",
+    "mtime": 1784497845.4463034,
+    "ast_hash": "915fcacdcb593257c993ca5c0187a515",
     "semantic_hash": ""
   },
   "frontend/lib/models/settings_state.dart": {
@@ -110,8 +110,8 @@
     "semantic_hash": "8514043ea7a91c76cdf5c739a60fe724"
   },
   "frontend/lib/providers/mock_data.dart": {
-    "mtime": 1784479174.0484662,
-    "ast_hash": "099f2b9bd0debcce939a4b59539806c4",
+    "mtime": 1784497663.1956866,
+    "ast_hash": "f027feb394ab6ac35b923aa3ec4f5d2a",
     "semantic_hash": ""
   },
   "frontend/lib/providers/mode_provider.dart": {
@@ -165,8 +165,8 @@
     "semantic_hash": "9eaca0dd47eb1436f314cc0c865b1fb4"
   },
   "frontend/lib/utils/workflow_to_yaml.dart": {
-    "mtime": 1784479174.050466,
-    "ast_hash": "b8bb177ef4571bdbe6340f54abdbd92a",
+    "mtime": 1784497670.5726717,
+    "ast_hash": "7b5bb112d84836ae18248b58d3bad459",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/app_button.dart": {
@@ -270,8 +270,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/top_bar.dart": {
-    "mtime": 1784479174.057466,
-    "ast_hash": "6dafc0b656ab132bff48abb5702484aa",
+    "mtime": 1784497886.4842143,
+    "ast_hash": "5368aa4ce6e960c0c809d2f0e8d43e48",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/view_toggle.dart": {
@@ -280,8 +280,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/yaml_drawer.dart": {
-    "mtime": 1784479174.057466,
-    "ast_hash": "f94bf65836d08df876f2c2cecb892826",
+    "mtime": 1784497808.6993823,
+    "ast_hash": "64bc3c00ec51d2b4847b5f2abddb16d5",
     "semantic_hash": ""
   },
   "frontend/serve.js": {
@@ -1950,8 +1950,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/utils/yaml_to_workflow.dart": {
-    "mtime": 1784479174.050466,
-    "ast_hash": "e8eeb9797d5b95f1e4bce8607eaa6447",
+    "mtime": 1784497667.1086786,
+    "ast_hash": "965cecccf77cc909efb75c1715c22a33",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/empty_workflow_hero.dart": {
@@ -1980,13 +1980,13 @@
     "semantic_hash": ""
   },
   "frontend/lib/providers/thrt_provider.dart": {
-    "mtime": 1784479174.0494661,
-    "ast_hash": "c348d99f8d065f5d7f5ec47d90c4b420",
+    "mtime": 1784497713.2335837,
+    "ast_hash": "6b2e23ed8e95a4552138599d362e574d",
     "semantic_hash": ""
   },
   "frontend/lib/services/thrt_api.dart": {
-    "mtime": 1784479174.0494661,
-    "ast_hash": "b48cb56d341c955ffdb6dfb65d57ef2d",
+    "mtime": 1784497701.8296072,
+    "ast_hash": "66710b4b608f5443a7b6ed7f14bf2f0b",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/node_drawer/editor_prompt_tab.dart": {
@@ -2025,22 +2025,22 @@
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_isolatedDiff.png": {
-    "mtime": 1784487230.6077642,
+    "mtime": 1784497923.7171326,
     "ast_hash": "ffd1e8e8091906322ce5cbeb7684ff53",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_maskedDiff.png": {
-    "mtime": 1784487230.5887642,
+    "mtime": 1784497923.7011325,
     "ast_hash": "ffd1e8e8091906322ce5cbeb7684ff53",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_masterImage.png": {
-    "mtime": 1784487230.5507643,
+    "mtime": 1784497923.6681328,
     "ast_hash": "3ea774141d70b2b5616dacaf2b2fcc44",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_testImage.png": {
-    "mtime": 1784487230.5697644,
+    "mtime": 1784497923.6851327,
     "ast_hash": "d04b81a251b964b14ab6d4a38eaf9114",
     "semantic_hash": ""
   },
@@ -2145,7 +2145,7 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dart_plugin_registrant.dart": {
-    "mtime": 1784487404.386074,
+    "mtime": 1784497922.7941346,
     "ast_hash": "75d59b80420856968e90f15d4a7178e0",
     "semantic_hash": ""
   },
@@ -2162,6 +2162,36 @@
   "frontend/test/operator_picker_test.dart": {
     "mtime": 1784487394.4201126,
     "ast_hash": "3f187a55789469e75c6951d00cee256a",
+    "semantic_hash": ""
+  },
+  "frontend/lib/widgets/project_picker.dart": {
+    "mtime": 1784497769.2124665,
+    "ast_hash": "904f7597d3257c3f098ca058d01f2229",
+    "semantic_hash": ""
+  },
+  "frontend/lib/widgets/validation_banner.dart": {
+    "mtime": 1784497754.8174968,
+    "ast_hash": "d3a37a52baea75500b6b033c355f58a4",
+    "semantic_hash": ""
+  },
+  "frontend/test/project_picker_test.dart": {
+    "mtime": 1784497606.8378003,
+    "ast_hash": "0b5b886d8e2edb7390c97a15e22efd3f",
+    "semantic_hash": ""
+  },
+  "frontend/test/validation_banner_test.dart": {
+    "mtime": 1784497589.2548351,
+    "ast_hash": "87608b64b113a72bba8fddb80db0a0a1",
+    "semantic_hash": ""
+  },
+  "frontend/test/workflow_project_test.dart": {
+    "mtime": 1784497578.2638566,
+    "ast_hash": "5b9d90e7f4601a7bbb5ae49396d0d417",
+    "semantic_hash": ""
+  },
+  "frontend/test/yaml_drawer_reload_test.dart": {
+    "mtime": 1784497624.9017642,
+    "ast_hash": "d6092600d0c0974e0f56499a0ba80f74",
     "semantic_hash": ""
   }
 }

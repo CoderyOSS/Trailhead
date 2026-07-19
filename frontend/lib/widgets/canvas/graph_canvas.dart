@@ -590,6 +590,18 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas> {
           autofocus: true,
           onKeyEvent: (node, event) {
             if (!editable) return KeyEventResult.ignored;
+            // Never handle canvas shortcuts while a text field owns primary
+            // focus (on web, key events still bubble to ancestor Focus nodes;
+            // EditableText deletes characters via the text-input channel, not
+            // the raw key path — so without this guard backspace in any field
+            // deletes the selected nodes).
+            final pfCtx = FocusManager.instance.primaryFocus?.context;
+            if (pfCtx != null &&
+                (pfCtx.widget is EditableText ||
+                    pfCtx.findAncestorWidgetOfExactType<EditableText>() !=
+                        null)) {
+              return KeyEventResult.ignored;
+            }
             if (event is KeyDownEvent) {
               if (event.logicalKey == LogicalKeyboardKey.space) {
                 ref.read(spaceHeldProvider.notifier).state = true;

@@ -171,6 +171,19 @@ Deferred. See roadmap.
 
 ## Recently Landed
 
+- **Namespaced module system + multi-project THRT (2026-07-19)**: Linked
+  packages register node types only as `mod.<package>.<type>` (bare linked
+  types hard-fail). Package manifests (`thrt_package.yaml`) require `name` +
+  `version`. THRT registry: `~/.trailhead/projects.yaml` (project dirs),
+  `~/.trailhead/packages/<pkg>/` (global implicit links). Flow YAML gains
+  `project:` binding a workflow to a project dir; `mod.*` types resolve only
+  against that project's links + global packages. New endpoints:
+  `POST /api/v1/workflows/validate`, `GET /api/v1/projects`. Frontend:
+  TopBar project picker, deploy-blocking ValidationBanner (edit view + YAML
+  drawer, refreshed after autosave / on workflow switch), YAML drawer reload
+  button, `InstalledNode.package/version`. Canvas backspace guard: canvas
+  shortcuts ignore key events while a text field holds primary focus.
+  Operator picker order: ACTORS → INSTALLED MODULES → FUNCTIONS → Elixir.*.
 - **Per-node logging + WebSocket log stream (2026-07-17)**: Removed the
   `sink.log` node. Logging is now a per-node build-time flag
   (`config.logging_enabled`) plus runtime-hot-toggleable `log_in`/`log_out`.

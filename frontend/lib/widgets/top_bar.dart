@@ -10,6 +10,7 @@ import '../providers/canvas_controller.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart' show WorkflowSummary;
 import '../providers/selection_notifier.dart';
+import '../providers/thrt_provider.dart';
 import '../utils/workflow_to_yaml.dart';
 import '../utils/yaml_to_workflow.dart';
 import '../services/jobs_api.dart';
@@ -1058,6 +1059,23 @@ class _BuildBar extends ConsumerWidget {
           onTap: () async {
             try {
               final yaml = workflowToYaml(wf);
+              // Gate: server-side validation first — a bad flow must not be
+              // persisted or launched. Blocks with a readable error list.
+              final errors = await ref
+                  .read(thrtApiProvider)
+                  .validateWorkflow(content: yaml);
+              if (errors.isNotEmpty) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(
+                        'invalid workflow:\n${errors.take(3).join('\n')}',
+                      ),
+                    ),
+                  );
+                }
+                return;
+              }
               await ref.read(workflowsApiProvider).replace(wf.name, yaml);
               final jobsApi = ref.read(jobsApiProvider);
               final job = await jobsApi.create(wf.name);

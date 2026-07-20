@@ -41,7 +41,14 @@ class _LogStreamViewState extends ConsumerState<LogStreamView> {
     final frames = all
         .where((f) => enabled.contains('${f.nodeId}.${f.dir}'))
         .toList()
-      ..sort((a, b) => a.ts.compareTo(b.ts));
+      ..sort((a, b) {
+        final byTs = a.ts.compareTo(b.ts);
+        if (byTs != 0) return byTs;
+        // Monotonic seq tie-breaks frames in the same millisecond (server
+        // emits it; null = older server without seq — keep arrival order).
+        if (a.seq != null && b.seq != null) return a.seq!.compareTo(b.seq!);
+        return 0;
+      });
 
     // Auto-scroll when frame count changes.
     _scrollToEnd();

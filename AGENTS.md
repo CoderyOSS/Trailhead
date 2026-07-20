@@ -176,6 +176,35 @@ Deferred. See roadmap.
 
 ## Recently Landed
 
+- **Config validation + log ordering + editor fixes (2026-07-20)**: Root cause
+  of the "job reload badmap" report was the frontend emitting **duplicate
+  `config:` blocks** on transform nodes (expr + logging flags each wrote
+  their own) — YAML keeps only the last, silently dropping `expr`, so the
+  function node died in init with `:missing_expr`. Fixes, THRT:
+  `Engine.prepare` gains `validate_node_configs` — function nodes require a
+  syntactically valid `config.expr`, inject nodes require exactly one
+  parseable `payload_code` XOR `payload_expr` (`payload_expr` syntax-only at
+  validate; eval stays deploy-time). Deploy/validate/job-launch all fail
+  fast with `{node_id, reason}`. Job-create errors humanized (readable
+  strings, no raw tuples); `format_compile_errors` shares the humanizer.
+  Actor `log_out` now emits **before** `route_fn` runs (downstream frames no
+  longer precede the injector's out frame — causal inversion fixed);
+  `LogBus` events carry monotonic `seq`, forwarded over the WS and used by
+  the frontend as same-ms tie-breaker. `links_test` seed flake fixed
+  (compiles its own `FakeGlobalActor` beam instead of relying on in-memory
+  leakage from another test). Frontend: `workflowToYaml` emits a **single
+  config block** with `expr: |` block scalar (also fixes quote escaping);
+  `trigger-test` workflow repaired server-side. Transform expr field is now
+  a `PayloadEditor` (`isExpr: true`, keyed by node id — unkeyed editors kept
+  the previous node's text; same fix applied to `EditorPayloadTab`). Node
+  catalog gains `Kernel.put_in/3`, `update_in/3`, `get_in/2` + a generic
+  "transform" entry. Log toggles show a "redeploy to apply" hint on deployed
+  flows for function-kind nodes (hooks compile at deploy; actor toggles
+  still hot-apply). Launch button gates on server-side validation (blocks
+  with error list, no PUT). `jobs_api` parses `{"errors":[...]}` bodies into
+  readable messages. Node/edge ids are short base36 (`n_x4k9q2`,
+  collision-checked). Log drawer header has a clear button; literal-mode
+  validation failures hint at expression mode.
 - **Deploy-time `payload_expr` + nil-config crash fix (2026-07-19)**: Bare
   `config:` in flow YAML (emitted by the frontend for empty config maps)
   parsed as nil and crashed deploys with `BadMapError` in node init —

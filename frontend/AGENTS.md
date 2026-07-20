@@ -75,8 +75,24 @@ proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
 - `lib/widgets/drawer_panel.dart` — active mode: forced-open 2-column panel (logs left, node details right); builder mode: NodeDrawer only
 - `lib/widgets/log_drawer/log_drawer.dart` — per-point toggle rail + stream container
 - `lib/widgets/log_drawer/log_stream_view.dart` — aggregated timestamp-ordered log stream
-- `lib/widgets/node_drawer/payload_editor.dart` — Elixir code field (flutter_code_editor) + live validation pip
+- `lib/widgets/node_drawer/payload_editor.dart` — Elixir code field (flutter_code_editor) + live validation pip. Shared by the inject payload tab and the transform expr field; **always key it by node id** (`ValueKey('...-${node.id}')`) — `initialCode` binds in `initState` only, so an unkeyed editor keeps the previous node's text
 - `serve.js` — Bun dev preview + THRT proxy (HTTP + WebSocket bridge)
+
+### Conventions (hard-won)
+
+- **One `config:` block per node** in emitted YAML — duplicate keys silently
+  drop earlier entries server-side. `workflow_to_yaml.dart` folds everything
+  (expr, payload, log flags) into a single block; function `expr` uses the
+  `expr: |` block scalar (no quote escaping).
+- Node/edge ids are short base36 (`n_x4k9q2` / `e_8z1m0p`) via `_shortId()`
+  in `graph_canvas.dart`, collision-checked against existing ids.
+- Launch (JobBar) gates on `POST /workflows/validate` before PUT — a flow
+  that fails server validation is neither persisted nor launched.
+- Log flags: `log_in`/`log_out` hot-apply to actor nodes via PATCH, but
+  function-kind nodes compile hooks at deploy — the settings tab shows a
+  "redeploy to apply" hint for function kinds on deployed flows.
+- Log frames carry a monotonic `seq`; the stream view tie-breaks same-ms
+  frames with it.
 
 ### Autosave
 Canvas edits trigger debounced (800ms) `PUT /workflows/{name}` via the autosave

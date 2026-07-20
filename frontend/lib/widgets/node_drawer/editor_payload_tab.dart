@@ -43,6 +43,9 @@ class EditorPayloadTab extends ConsumerWidget {
                 ),
                 const SizedBox(height: 8),
                 PayloadEditor(
+                  // Keyed by node id — initialCode binds in initState only,
+                  // so an unkeyed editor keeps the previous node's payload.
+                  key: ValueKey('payload-${node.id}'),
                   initialCode: node.payloadCode ?? '',
                   isExpr: node.payloadIsExpr,
                   onChanged: (code) {

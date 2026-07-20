@@ -127,6 +127,30 @@ class _DrawerHeader extends ConsumerWidget {
             ),
           ),
           const Spacer(),
+          // Clear accumulated frames for the current flow.
+          GestureDetector(
+            onTap: () {
+              final name = ref.read(canvasWorkflowProvider).name;
+              if (name.isNotEmpty) {
+                ref.read(logBufferProvider.notifier).clear(name);
+              }
+            },
+            child: MouseRegion(
+              cursor: SystemMouseCursors.click,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                child: Text(
+                  'clear',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10.5,
+                    color: AppColors.fg3,
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 6),
           Container(
             width: 7,
             height: 7,

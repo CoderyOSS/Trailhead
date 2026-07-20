@@ -79,7 +79,8 @@ final List<NodeCategory> nodeCategories = [
   ]),
   NodeCategory(label: 'FUNCTIONS', entries: [
     const NodeEntry(kind: 'function', label: 'function', desc: 'conditional routing', icon: _branch),
-    const NodeEntry(kind: 'delay', label: 'delay', desc: 'timed delay  configurable ms', icon: _stopwatch),
+    const NodeEntry(kind: 'function', label: 'transform', desc: 'custom Elixir expr — full Kernel/Map/Access', icon: _terminal, templateExpr: 'payload'),
+    const NodeEntry(kind: 'delay', label: 'delay', desc: 'timed delay  configurable ms', icon: _stopwatch),
     const NodeEntry(kind: 'http.server.egress', label: 'http server egress', desc: 'HTTP response', icon: _globe),
   ]),
   NodeCategory(label: 'Elixir.String', entries: [
@@ -214,6 +215,9 @@ final List<NodeCategory> nodeCategories = [
     NodeEntry(kind: 'function', label: 'Regex.split/3', desc: 'Splits string on regex match', icon: _terminal, docsUrl: _doc('Regex', 'split', 3), templateExpr: _e3('Regex.split')),
   ]),
   NodeCategory(label: 'Elixir.Kernel', entries: [
+    NodeEntry(kind: 'function', label: 'Kernel.put_in/3', desc: 'Puts value at an Access path (payload[:key])', icon: _terminal, docsUrl: _doc('Kernel', 'put_in', 3), templateExpr: 'put_in(payload[:key], _)'),
+    NodeEntry(kind: 'function', label: 'Kernel.update_in/3', desc: 'Updates value at an Access path via capture', icon: _terminal, docsUrl: _doc('Kernel', 'update_in', 3), templateExpr: 'update_in(payload[:key], &(&1))'),
+    NodeEntry(kind: 'function', label: 'Kernel.get_in/2', desc: 'Gets value at a key list or Access path', icon: _terminal, docsUrl: _doc('Kernel', 'get_in', 2), templateExpr: 'get_in(payload, [:key])'),
     NodeEntry(kind: 'function', label: 'Kernel.is_nil/1', desc: 'Checks if value is nil', icon: _terminal, docsUrl: _doc('Kernel', 'is_nil', 1), templateExpr: _e1('is_nil')),
     NodeEntry(kind: 'function', label: 'Kernel.abs/1', desc: 'Returns absolute value', icon: _terminal, docsUrl: _doc('Kernel', 'abs', 1), templateExpr: _e1('abs')),
     NodeEntry(kind: 'function', label: 'Kernel.div/2', desc: 'Integer division', icon: _terminal, docsUrl: _doc('Kernel', 'div', 2), templateExpr: _e2('div')),

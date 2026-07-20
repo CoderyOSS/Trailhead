@@ -50,9 +50,24 @@ class JobsApi {
   JobsApi(this.baseUrl, [http.Client? client])
       : client = client ?? http.Client();
 
+  /// THRT error bodies are `{"errors": [...]}` or `{"error": "..."}` — parse
+  /// them into a readable message instead of showing raw JSON in snackbars.
+  static String _errMsg(String fallback, String body) {
+    try {
+      final j = jsonDecode(body);
+      if (j is Map && j['errors'] is List) {
+        return (j['errors'] as List).join('; ');
+      }
+      if (j is Map && j['error'] != null) return '${j['error']}';
+    } catch (_) {}
+    return '$fallback: $body';
+  }
+
   Future<List<JobDto>> list() async {
     final res = await client.get(Uri.parse('$baseUrl/jobs'));
-    if (res.statusCode != 200) throw Exception('list jobs failed: ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(_errMsg('list jobs failed', res.body));
+    }
     final list = jsonDecode(res.body) as List<dynamic>;
     return list
         .map((e) => JobDto.fromJson(e as Map<String, dynamic>))
@@ -67,13 +82,17 @@ class JobsApi {
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode(body),
     );
-    if (res.statusCode != 201) throw Exception('create job failed: ${res.body}');
+    if (res.statusCode != 201) {
+      throw Exception(_errMsg('create job failed', res.body));
+    }
     return JobDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 
   Future<JobDto> cancel(String jobId) async {
     final res = await client.post(Uri.parse('$baseUrl/jobs/$jobId/cancel'));
-    if (res.statusCode != 200) throw Exception('cancel job failed: ${res.body}');
+    if (res.statusCode != 200) {
+      throw Exception(_errMsg('cancel job failed', res.body));
+    }
     return JobDto.fromJson(jsonDecode(res.body) as Map<String, dynamic>);
   }
 }

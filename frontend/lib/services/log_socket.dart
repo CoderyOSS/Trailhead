@@ -6,12 +6,14 @@ class LogFrame {
   final String nodeId;
   final String dir; // "in" or "out"
   final int ts;
+  final int? seq; // monotonic tie-breaker when two frames share a millisecond
   final String payload;
 
   const LogFrame({
     required this.nodeId,
     required this.dir,
     required this.ts,
+    this.seq,
     required this.payload,
   });
 
@@ -20,6 +22,7 @@ class LogFrame {
       nodeId: json['node_id'] as String,
       dir: json['dir'] as String,
       ts: (json['ts'] as num).toInt(),
+      seq: (json['seq'] as num?)?.toInt(),
       payload: json['payload'] as String,
     );
   }

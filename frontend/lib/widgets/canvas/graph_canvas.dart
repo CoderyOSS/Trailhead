@@ -38,6 +38,21 @@ import 'routing_node.dart';
 import 'worker_node.dart';
 import 'canvas_toolbar.dart';
 
+final _idRng = Random();
+
+/// Short base36 id (`n_x4k9q2` / `e_8z1m0p`), collision-checked against
+/// [existing]. Replaces the long `node_${millis}_${rand4}` form.
+String _shortId(String prefix, Set<String> existing) {
+  const chars = '0123456789abcdefghijklmnopqrstuvwxyz';
+  for (var attempt = 0; attempt < 100; attempt++) {
+    final id =
+        '$prefix${List.generate(6, (_) => chars[_idRng.nextInt(36)]).join()}';
+    if (!existing.contains(id)) return id;
+  }
+  // Pathological collision streak — timestamp fallback stays unique.
+  return '$prefix${DateTime.now().millisecondsSinceEpoch.toRadixString(36)}';
+}
+
 class GraphCanvas extends ConsumerStatefulWidget {
   GraphCanvas({super.key});
 
@@ -590,8 +605,10 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
 
         if (!alreadyExists) {
           final newEdge = WorkflowConnection(
-            id:
-                'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+            id: _shortId(
+              'e_',
+              current.connections.map((e) => e.id).toSet(),
+            ),
             from: sourceNodeId,
             to: drag.targetNodeId!,
             sourcePort: drag.sourcePort,
@@ -643,8 +660,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
 
     void addNode(NodeEntry entry) {
       final sourceId = pickerAnchor?.sourceNodeId;
-      final id =
-          'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+      final id = _shortId('n_', workflow.nodes.map((n) => n.id).toSet());
 
       if (sourceId == null) {
         final vp = ref.read(canvasControllerProvider);
@@ -697,8 +713,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
       );
 
       final edge = WorkflowConnection(
-        id:
-            'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+        id: _shortId('e_', workflow.connections.map((e) => e.id).toSet()),
         from: sourceId,
         to: id,
         sourcePort: pickerAnchor?.sourcePort,
@@ -736,8 +751,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
 
     void duplicateNode(String nodeId) {
       final node = workflow.nodes.firstWhere((n) => n.id == nodeId);
-      final id =
-          'node_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}';
+      final id = _shortId('n_', workflow.nodes.map((n) => n.id).toSet());
       final newNode = WorkflowNode(
         id: id,
         kind: node.kind,
@@ -767,11 +781,13 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
               .toList();
 
       if (parentEdge != null) {
+        final taken = workflow.connections.map((e) => e.id).toSet();
         for (final child in childEdges) {
+          final id = _shortId('e_', taken);
+          taken.add(id);
           newEdges.add(
             WorkflowConnection(
-              id:
-                  'edge_${DateTime.now().millisecondsSinceEpoch}_${Random().nextInt(9999)}',
+              id: id,
               from: parentEdge.from,
               to: child.to,
               sourcePort: parentEdge.sourcePort,

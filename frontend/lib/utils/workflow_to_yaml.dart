@@ -88,12 +88,12 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         _writeJson(buf, node.schema!, indent: 6);
       }
 
-      // Function outputs (routing) or transform expression
+      // Function outputs (routing). The transform expression is NOT emitted
+      // here — it folds into the single `config:` block below so logging
+      // flags and expr never produce duplicate `config:` keys (YAML keeps
+      // only the last duplicate, silently dropping the expr).
       if (node.kind == 'function') {
-        if (node.expr != null) {
-          buf.writeln('    config:');
-          buf.writeln('      expr: "${node.expr}"');
-        } else if (node.outputs.isNotEmpty) {
+        if (node.expr == null && node.outputs.isNotEmpty) {
           if (node.matchAll) {
             buf.writeln('    match_all: true');
           }
@@ -114,6 +114,7 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           node.kind == 'http.server.egress' ||
           node.kind == 'http.client.request' ||
           node.kind == 'source.inject' ||
+          (node.kind == 'function' && node.expr != null) ||
           node.loggingEnabled ||
           node.logIn ||
           node.logOut;
@@ -122,6 +123,14 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         // Build child lines first — a bare `config:` header with no entries
         // parses as nil server-side and crashes node init.
         final configLines = <String>[];
+        // Function expr as block scalar — avoids quote-escaping bugs with
+        // exprs containing double quotes, and keeps a single config block.
+        if (node.kind == 'function' && node.expr != null) {
+          configLines.add('      expr: |');
+          for (final line in node.expr!.split('\n')) {
+            configLines.add('        $line');
+          }
+        }
         if (node.kind == 'delay' && node.intervalMs != null) {
           configLines.add('      interval_ms: ${node.intervalMs}');
         }

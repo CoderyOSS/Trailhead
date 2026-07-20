@@ -10,6 +10,7 @@ import '../../providers/thrt_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'node_drawer.dart';
+import 'payload_editor.dart';
 
 class EditorSettingsTab extends ConsumerStatefulWidget {
   final WorkflowNode node;
@@ -34,7 +35,6 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
   late TextEditingController _httpEgressContentTypeCtrl;
   late TextEditingController _httpEgressBodyCtrl;
   late TextEditingController _httpRequestUrlCtrl;
-  late TextEditingController _exprCtrl;
 
   @override
   void initState() {
@@ -52,7 +52,6 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _httpEgressContentTypeCtrl = TextEditingController(text: widget.node.httpEgressContentType ?? 'application/json');
     _httpEgressBodyCtrl = TextEditingController(text: widget.node.httpEgressBody ?? '');
     _httpRequestUrlCtrl = TextEditingController(text: widget.node.httpRequestUrl ?? '');
-    _exprCtrl = TextEditingController(text: widget.node.expr ?? '');
   }
 
   @override
@@ -70,7 +69,6 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _httpEgressContentTypeCtrl.dispose();
     _httpEgressBodyCtrl.dispose();
     _httpRequestUrlCtrl.dispose();
-    _exprCtrl.dispose();
     super.dispose();
   }
 
@@ -88,6 +86,15 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     final isHttpIngress = node.kind == 'http.server.ingress';
     final isHttpEgress = node.kind == 'http.server.egress';
     final isHttpRequest = node.kind == 'http.client.request';
+
+    // Deployed truth for the redeploy hint on log toggles: function-kind
+    // nodes compile their log hooks into route_fn at deploy time, so PATCH
+    // toggles are silent no-ops unless hooks were built in. Actors check
+    // flags at runtime and hot-toggle fine.
+    final deployed = ref
+            .watch(flowStatusProvider)[ref.watch(canvasWorkflowProvider).name]
+        ?.deployed ??
+        false;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
@@ -277,9 +284,14 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
           ] else if (isTransform) ...[
             Field(
               label: 'expression',
-              hint: 'elixir expression, payload as first arg',
-              child: _TextInput(
-                controller: _exprCtrl,
+              hint: 'elixir expression — runs per message with payload bound',
+              child: PayloadEditor(
+                // Keyed by node id: PayloadEditor binds initialCode in
+                // initState only — without a key, switching nodes shows the
+                // previous node's expr.
+                key: ValueKey('expr-${node.id}'),
+                initialCode: node.expr ?? '',
+                isExpr: true,
                 onChanged: (v) => _updateNode(node.copyWith(expr: v)),
               ),
             ),
@@ -399,6 +411,19 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
                       },
                     ),
                   ],
+                  if (deployed && !node.isActor)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: Text(
+                        'deployed: function hooks compile at deploy — redeploy to apply',
+                        style: TextStyle(
+                          fontFamily: 'monospace',
+                          fontSize: 10,
+                          color: AppColors.warning,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),

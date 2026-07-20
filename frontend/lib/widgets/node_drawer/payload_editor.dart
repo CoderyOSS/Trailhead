@@ -156,6 +156,20 @@ class _PayloadEditorState extends ConsumerState<PayloadEditor> {
               ),
           ],
         ),
+        // Literal mode rejects anything outside the whitelist parser — point
+        // users at expression mode instead of leaving a bare "invalid".
+        if (!widget.isExpr && !_isValid && !_validating)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              'literals only — switch to expression mode for calls/operators',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 10,
+                color: AppColors.fg3,
+              ),
+            ),
+          ),
         const SizedBox(height: 8),
         // Code editor
         Container(

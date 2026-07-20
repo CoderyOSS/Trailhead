@@ -119,38 +119,48 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           node.logOut;
 
       if (wantsConfig) {
-        buf.writeln('    config:');
+        // Build child lines first — a bare `config:` header with no entries
+        // parses as nil server-side and crashes node init.
+        final configLines = <String>[];
         if (node.kind == 'delay' && node.intervalMs != null) {
-          buf.writeln('      interval_ms: ${node.intervalMs}');
+          configLines.add('      interval_ms: ${node.intervalMs}');
         }
         if (node.kind == 'http.server.ingress') {
-          if (node.httpIngressServer != null) buf.writeln('      server: "${node.httpIngressServer}"');
-          if (node.httpIngressMethod != null) buf.writeln('      method: ${node.httpIngressMethod}');
-          if (node.httpIngressPath != null) buf.writeln('      path: "${node.httpIngressPath}"');
+          if (node.httpIngressServer != null) configLines.add('      server: "${node.httpIngressServer}"');
+          if (node.httpIngressMethod != null) configLines.add('      method: ${node.httpIngressMethod}');
+          if (node.httpIngressPath != null) configLines.add('      path: "${node.httpIngressPath}"');
         }
         if (node.kind == 'http.server.egress') {
-          if (node.httpEgressServer != null) buf.writeln('      server: "${node.httpEgressServer}"');
-          if (node.httpEgressStatus != null) buf.writeln('      status: ${node.httpEgressStatus}');
-          if (node.httpEgressContentType != null) buf.writeln('      content_type: "${node.httpEgressContentType}"');
-          if (node.httpEgressBody != null) buf.writeln('      body: ${_yamlValue(node.httpEgressBody)}');
+          if (node.httpEgressServer != null) configLines.add('      server: "${node.httpEgressServer}"');
+          if (node.httpEgressStatus != null) configLines.add('      status: ${node.httpEgressStatus}');
+          if (node.httpEgressContentType != null) configLines.add('      content_type: "${node.httpEgressContentType}"');
+          if (node.httpEgressBody != null) configLines.add('      body: ${_yamlValue(node.httpEgressBody)}');
         }
         if (node.kind == 'http.client.request') {
-          if (node.httpRequestUrl != null) buf.writeln('      url: "${node.httpRequestUrl}"');
-          if (node.httpRequestMethod != null) buf.writeln('      method: ${node.httpRequestMethod}');
+          if (node.httpRequestUrl != null) configLines.add('      url: "${node.httpRequestUrl}"');
+          if (node.httpRequestMethod != null) configLines.add('      method: ${node.httpRequestMethod}');
         }
         if (node.kind == 'source.inject') {
           if (node.payloadCode != null && node.payloadCode!.isNotEmpty) {
-            buf.writeln('      payload_code: |');
+            final key = node.payloadIsExpr ? 'payload_expr' : 'payload_code';
+            configLines.add('      $key: |');
             for (final line in node.payloadCode!.split('\n')) {
-              buf.writeln('        $line');
+              configLines.add('        $line');
             }
           }
-          if (node.once == true) buf.writeln('      once: true');
-          if (node.intervalMs != null) buf.writeln('      interval_ms: ${node.intervalMs}');
+          if (node.once == true) configLines.add('      once: true');
+          if (node.intervalMs != null) configLines.add('      interval_ms: ${node.intervalMs}');
         }
-        if (node.loggingEnabled) buf.writeln('      logging_enabled: true');
-        if (node.logIn) buf.writeln('      log_in: true');
-        if (node.logOut) buf.writeln('      log_out: true');
+        if (node.loggingEnabled) configLines.add('      logging_enabled: true');
+        if (node.logIn) configLines.add('      log_in: true');
+        if (node.logOut) configLines.add('      log_out: true');
+
+        if (configLines.isNotEmpty) {
+          buf.writeln('    config:');
+          for (final line in configLines) {
+            buf.writeln(line);
+          }
+        }
       }
 
       // Join fields

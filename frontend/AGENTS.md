@@ -19,11 +19,9 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 | Design tokens | `lib/theme/tokens.dart` | Colors, spacing, radii from slate dark theme |
 | SVG icons | `lib/widgets/icons.dart` | 12 Lucide stroke icons via `flutter_svg` |
 | Mode rail | `lib/widgets/mode_rail.dart` | 52px ConsumerWidget rail, reads/writes `modeProvider` |
-| Top bar | `lib/widgets/top_bar.dart` | ConsumerWidget — BuildBar, JobBar, HistoryListBar per mode |
+| Top bar | `lib/widgets/top_bar.dart` | ConsumerWidget — BuildBar, JobBar (active: job dropdown + YAML/stop/reload + status chip), HistoryListBar per mode |
 | App button | `lib/widgets/app_button.dart` | ghost/secondary/trail/primary/danger variants |
 | Status tag | `lib/widgets/status_tag.dart` | StatusDot (with pulse) + StatusTag (colored pill) |
-| Workflows sidebar | `lib/widgets/workflows_sidebar.dart` | 240px, Build mode, workflow list with active rail |
-| Jobs sidebar | `lib/widgets/jobs_sidebar.dart` | 260px, Active + History modes, grouped/flat toggle |
 | State providers | `lib/providers/mode_provider.dart` | `modeProvider`, `selectedJobProvider`, `workflowProvider` |
 | Mock data | `lib/providers/mock_data.dart` | `JobSummary`, `WorkflowSummary`, `JobState` + mock instances |
 | App shell | `lib/main.dart` | ProviderScope + ConsumerWidget shell: rail + top bar + content |
@@ -74,7 +72,7 @@ proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
 - `lib/utils/yaml_to_workflow.dart` — parses stored YAML into canvas model
 - `lib/utils/workflow_to_yaml.dart` — serializes canvas model to YAML
 - `lib/providers/api_provider.dart` — `workflowsApiProvider` (relative URL)
-- `lib/widgets/drawer_panel.dart` — top-level [NODE | LOG] tab switcher (active mode only)
+- `lib/widgets/drawer_panel.dart` — active mode: forced-open 2-column panel (logs left, node details right); builder mode: NodeDrawer only
 - `lib/widgets/log_drawer/log_drawer.dart` — per-point toggle rail + stream container
 - `lib/widgets/log_drawer/log_stream_view.dart` — aggregated timestamp-ordered log stream
 - `lib/widgets/node_drawer/payload_editor.dart` — Elixir code field (flutter_code_editor) + live validation pip
@@ -175,13 +173,11 @@ frontend/
 │       │   └── zoom_controls.dart      # Zoom bar: − / % / + / fit (TODO)
 │       ├── delete_button.dart # Circular delete button with icon
 │       ├── icons.dart         # TrailheadIcon (12 Lucide SVG stroke icons)
-│       ├── jobs_sidebar.dart  # JobsSidebar (Active + History, 260px)
 │       ├── mode_rail.dart     # ModeRail (ConsumerWidget) + AppMode enum
 │       ├── runs_table.dart    # Grouped/flat history runs table
 │       ├── status_tag.dart    # StatusDot + StatusTag
 │       ├── top_bar.dart       # TopBar (ConsumerWidget) + BuildBar/JobBar/HistoryListBar
 │       ├── view_toggle.dart   # Grouped/flat view toggle
-│       ├── workflows_sidebar.dart # WorkflowsSidebar (Build mode, 240px)
 │       └── yaml_drawer.dart   # Right slide-over, syntax-highlighted YAML
 ├── serve.js                   # Bun static server for dev preview
 ├── assets/

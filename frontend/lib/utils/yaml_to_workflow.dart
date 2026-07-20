@@ -168,6 +168,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   String? httpRequestMethod;
   String? httpEgressServer;
   String? payloadCode;
+  var payloadIsExpr = false;
   bool? once;
   bool loggingEnabled = false;
   bool logIn = false;
@@ -193,7 +194,14 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
       httpRequestMethod = _toStr(config['method']);
     }
     if (kind == 'source.inject') {
-      payloadCode = _toStr(config['payload_code']);
+      // payload_expr (evaluated at deploy) wins over payload_code (literal).
+      final exprSrc = _toStr(config['payload_expr']);
+      if (exprSrc != null) {
+        payloadCode = exprSrc;
+        payloadIsExpr = true;
+      } else {
+        payloadCode = _toStr(config['payload_code']);
+      }
       once = config['once'] as bool?;
       intervalMs = config['interval_ms'] as int?;
     }
@@ -309,6 +317,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     httpRequestMethod: httpRequestMethod,
     httpEgressServer: httpEgressServer,
     payloadCode: payloadCode,
+    payloadIsExpr: payloadIsExpr,
     once: once,
     loggingEnabled: loggingEnabled,
     logIn: logIn,

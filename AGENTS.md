@@ -148,10 +148,10 @@ DELETE /api/v1/workflows/{name}          - delete workflow
 POST   /api/v1/workflows/{name}/deploy   - deploy flow to runtime
 DELETE /api/v1/workflows/{name}/deploy   - undeploy flow
 GET    /api/v1/workflows/{name}/status   - runtime node status
-POST   /api/v1/workflows/{name}/inject   - inject Elixir literal {node_id, code}
+POST   /api/v1/workflows/{name}/inject   - inject payload {node_id, code, kind?} — kind:"expr" evaluates; default parses literal
 PATCH  /api/v1/workflows/{name}/log-flags - hot-toggle {node_id, log_in?, log_out?}
 GET    /api/v1/workflows/{name}/logs/stream - WebSocket log stream (per-flow)
-POST   /api/v1/validate/elixir-term      - validate literal {code} → {ok, error?, line?}
+POST   /api/v1/validate/elixir-term      - validate source {code, kind?} → {ok, error?, line?} — kind:"expr" is syntax-only
 POST   /api/v1/jobs                      - launch flow as job {flow_name, description?} → job incl. YAML snapshot {content}
 GET    /api/v1/jobs                      - list jobs (each with content snapshot)
 GET    /api/v1/jobs/{id}                 - get job
@@ -176,6 +176,22 @@ Deferred. See roadmap.
 
 ## Recently Landed
 
+- **Deploy-time `payload_expr` + nil-config crash fix (2026-07-19)**: Bare
+  `config:` in flow YAML (emitted by the frontend for empty config maps)
+  parsed as nil and crashed deploys with `BadMapError` in node init —
+  job launch/reload failed with a raw supervisor shutdown tuple. Fixes:
+  THRT `Yaml.parse_node` normalizes non-map config to `%{}`; frontend
+  `workflowToYaml` only emits `config:` when ≥1 child entry exists. Feature:
+  `source.inject` gains `payload_expr` — arbitrary Elixir (e.g.
+  `Map.merge/2`) evaluated ONCE at deploy via new `THRT.Expr`; static result
+  fires every time (dynamic per-fire values deferred). Mutually exclusive
+  with `payload_code` (`:ambiguous_payload`). Inject + validate endpoints
+  accept `kind: "expr"` (inject: eval per trigger click; validate:
+  syntax-only). Frontend: payload drawer literal/expression toggle
+  (`payloadIsExpr` on WorkflowNode), YAML round-trip via `payload_expr`,
+  validation pip + trigger paths send `kind`. Note: THRT tests must run
+  with `mix test` (app booted) — deploy-touching tests fail under
+  `--no-start` (pre-existing Registry startup assumption).
 - **Job-scoped workflow snapshots in Active mode (2026-07-19)**: Fixes payload
   edits in Active mode never persisting (root cause: `_ActiveInjectSection`
   buffer was runtime-only, so job restarts redeployed stale disk YAML).
@@ -309,8 +325,11 @@ cp /path/to/yaml/dir/*.yml /home/gem/projects/THRT/flows/
 **Unit tests:**
 ```bash
 cd /home/gem/projects/THRT
-mix test --no-start
+mix test
 ```
+
+(`--no-start` is stale guidance — deploy-touching tests need the booted app's
+`THRT.Registry` and fail without it.)
 
 **Known gap:** No automated frontend widget/E2E tests yet. Manual testing via UI + `curl`.
 
@@ -354,13 +373,14 @@ CoderyTrailhead/
 │   ├── store.ex
 │   ├── yaml.ex
 │   ├── elixir_term.ex              ← literal-only Elixir source parser
+│   ├── expr.ex                     ← deploy-time Elixir expr eval + syntax check
 │   ├── log_flags.ex                ← ETS runtime log_in/log_out flags
 │   ├── log_bus.ex                  ← Registry pubsub for log frames
 │   ├── log_socket.ex               ← Bandit WebSock handler (per-flow)
 │   └── nodes/
 │       ├── task.ex
 │       ├── genserver.ex
-│       └── source/inject.ex        ← payload_code only (no legacy payload)
+│       └── source/inject.ex        ← payload_code (literal) | payload_expr (deploy-time eval)
 └── flows/                        ← persisted YAML
 ```
 
@@ -370,5 +390,5 @@ CoderyTrailhead/
 2. **Runtime changes** go in `/home/gem/projects/THRT/`.
 3. **New node types**: implement the `THRT.Node` behaviour and register in `THRT.Engine`.
 4. **YAML schema changes**: update `THRT.Yaml` + add tests.
-5. **Always test THRT with `mix test --no-start`**.
+5. **Always test THRT with `mix test`** (app booted — `--no-start` breaks deploy tests).
 6. **After frontend changes**, run `~/projects/flutter/bin/flutter build web --release` and restart the `trailhead` Launchy app.

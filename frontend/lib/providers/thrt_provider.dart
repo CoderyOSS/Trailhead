@@ -15,14 +15,16 @@ final flowStatusProvider =
     StateProvider<Map<String, FlowStatus>>((ref) => const {});
 
 /// POST [code] to the inject endpoint for [nodeId], then refresh the flow's
-/// runtime status so counters/badges update everywhere.
+/// runtime status so counters/badges update everywhere. [isExpr] routes the
+/// code through backend expression evaluation instead of literal parsing.
 Future<void> triggerNodeInject(
   WidgetRef ref,
   String workflowName,
   String nodeId,
-  String code,
-) async {
-  await ref.read(thrtApiProvider).injectCode(workflowName, nodeId, code);
+  String code, {
+  bool isExpr = false,
+}) async {
+  await ref.read(thrtApiProvider).injectCode(workflowName, nodeId, code, isExpr: isExpr);
   final status = await ref.read(thrtApiProvider).status(workflowName);
   ref.read(flowStatusProvider.notifier).state =
       Map<String, FlowStatus>.from(ref.read(flowStatusProvider))

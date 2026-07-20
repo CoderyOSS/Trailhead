@@ -9,13 +9,11 @@ import 'providers/api_provider.dart';
 import 'providers/mode_provider.dart';
 import 'providers/thrt_provider.dart';
 import 'widgets/validation_banner.dart';
-import 'services/jobs_api.dart';
 import 'providers/mock_data.dart' show WorkflowSummary;
 import 'providers/server_defs_provider.dart';
 import 'utils/workflow_to_yaml.dart';
 import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
-import 'widgets/jobs_sidebar.dart';
 import 'widgets/canvas/graph_canvas.dart';
 import 'widgets/empty_workflow_hero.dart';
 import 'widgets/runs_table.dart';
@@ -140,7 +138,6 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
   Widget build(BuildContext context) {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
-    final showSidebar = mode != AppMode.build;
     final yamlOpen = mode == AppMode.build && ref.watch(yamlDrawerOpenProvider);
     final nodeOpen = ref.watch(nodeDrawerOpenProvider);
     final selectedNodeId = ref.watch(selectedNodeIdProvider);
@@ -182,7 +179,8 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
             )
         : null;
 
-    final drawerView = (mode == AppMode.active || mode == AppMode.history) && job != null
+    final drawerView = mode == AppMode.active ||
+            (mode == AppMode.history && job != null)
         ? NodeDrawerView.job
         : NodeDrawerView.builder;
 
@@ -190,7 +188,6 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
       return Row(
         children: [
           ModeRail(activeCount: runningCount),
-          if (showSidebar) _buildSidebar(mode),
           Expanded(
               child: Column(
               children: [
@@ -212,9 +209,19 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     }
 
     Widget buildDrawerPanel() {
-      if (!yamlOpen && !nodeOpen) return const SizedBox.shrink();
+      // Active mode: drawer is forced open (2-column logs | node layout).
+      final activeForced = mode == AppMode.active;
+      if (!yamlOpen && !nodeOpen && !activeForced) {
+        return const SizedBox.shrink();
+      }
 
-      final showNodeDrawer = nodeOpen && selectedNode != null && mode != AppMode.history;
+      final showNodeDrawer = activeForced ||
+          (nodeOpen && selectedNode != null && mode != AppMode.history);
+
+      void closeDrawer() {
+        ref.read(nodeDrawerOpenProvider.notifier).state = false;
+        ref.read(selectedNodeIdProvider.notifier).state = null;
+      }
 
       if (isPortrait) {
         return Row(
@@ -233,13 +240,10 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
             if (showNodeDrawer)
               Expanded(
                 child: DrawerPanel(
-                  key: _nodeDrawerKey(selectedNode.id, drawerView),
+                  key: _nodeDrawerKey(selectedNode?.id ?? 'none', drawerView),
                   node: selectedNode,
                   view: drawerView,
-                  onClose: () {
-                    ref.read(nodeDrawerOpenProvider.notifier).state = false;
-                    ref.read(selectedNodeIdProvider.notifier).state = null;
-                  },
+                  onClose: closeDrawer,
                   isPortrait: true,
                 ),
               ),
@@ -260,13 +264,10 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
             ),
           if (showNodeDrawer)
             DrawerPanel(
-              key: _nodeDrawerKey(selectedNode.id, drawerView),
+              key: _nodeDrawerKey(selectedNode?.id ?? 'none', drawerView),
               node: selectedNode,
               view: drawerView,
-              onClose: () {
-                ref.read(nodeDrawerOpenProvider.notifier).state = false;
-                ref.read(selectedNodeIdProvider.notifier).state = null;
-              },
+              onClose: closeDrawer,
             ),
         ],
       );
@@ -278,7 +279,8 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
           Column(
             children: [
               Expanded(
-                child: isPortrait && (yamlOpen || nodeOpen)
+                child: isPortrait &&
+                        (yamlOpen || nodeOpen || mode == AppMode.active)
                     ? workflowRegion(bottomPanel: buildDrawerPanel())
                     : Row(
                         children: [
@@ -294,48 +296,5 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
         ],
       ),
     );
-  }
-
-  Widget _buildSidebar(AppMode mode) {
-    switch (mode) {
-      case AppMode.build:
-        return const SizedBox.shrink();
-      case AppMode.active:
-        return JobsSidebar(
-          kind: JobsSidebarKind.active,
-          activeId: ref.watch(selectedJobProvider)?.id,
-          onPick: (id) {
-            final jobsAsync = ref.read(jobsProvider);
-            jobsAsync.whenData((list) {
-              final job = list.cast<JobDto?>().firstWhere(
-                (j) => j!.id == id,
-                orElse: () => null,
-              );
-              if (job != null) {
-                ensureJobDocument(ref, job);
-                ref.read(selectedJobProvider.notifier).state = job;
-              }
-            });
-          },
-        );
-      case AppMode.history:
-        return JobsSidebar(
-          kind: JobsSidebarKind.history,
-          activeId: ref.watch(selectedJobProvider)?.id,
-          onPick: (id) {
-            final jobsAsync = ref.read(jobsProvider);
-            jobsAsync.whenData((list) {
-              final job = list.cast<JobDto?>().firstWhere(
-                (j) => j!.id == id,
-                orElse: () => null,
-              );
-              if (job != null) {
-                ensureJobDocument(ref, job);
-                ref.read(selectedJobProvider.notifier).state = job;
-              }
-            });
-          },
-        );
-    }
   }
 }

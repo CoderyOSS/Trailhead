@@ -320,7 +320,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
         '';
     setState(() => _injecting.add(node.id));
     try {
-      await triggerNodeInject(ref, wf.name, node.id, code);
+      await triggerNodeInject(ref, wf.name, node.id, code,
+          isExpr: node.payloadIsExpr);
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -817,6 +818,8 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
               }
               if (event.logicalKey == LogicalKeyboardKey.delete ||
                   event.logicalKey == LogicalKeyboardKey.backspace) {
+                // Node deletion is build-mode only.
+                if (!editable) return KeyEventResult.ignored;
                 final current =
                     ref
                         .read(selectionProvider)
@@ -846,7 +849,22 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
                   child: Listener(
                     onPointerDown: (event) {
                       if (event.buttons != kPrimaryButton) return;
-                      if (!editable || spaceHeld) return;
+                      if (spaceHeld) return;
+                      if (!editable) {
+                        // Active/history: tap on empty space clears the
+                        // single-selection (hides the node details column).
+                        final worldPos =
+                            (event.localPosition - viewport.pan) /
+                            viewport.zoom;
+                        final overNode = workflow.nodes.any(
+                          (n) => n.rect.contains(worldPos),
+                        );
+                        if (overNode) return;
+                        ref.read(selectionProvider.notifier).clear();
+                        ref.read(selectedNodeIdProvider.notifier).state = null;
+                        ref.read(operatorPickerProvider.notifier).state = null;
+                        return;
+                      }
                       final worldPos =
                           (event.localPosition - viewport.pan) / viewport.zoom;
                       final overNode = workflow.nodes.any(
@@ -1430,6 +1448,20 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
                                             false) &&
                                         details.localPosition.dx <= 30) {
                                       _triggerNodeInject(node);
+                                      return;
+                                    }
+                                    if (!editable) {
+                                      // Active/history: single-select drives
+                                      // the node drawer. Multi-select is a
+                                      // build-mode-only feature.
+                                      ref
+                                          .read(selectionProvider.notifier)
+                                          .selectOne(node.id);
+                                      ref
+                                          .read(
+                                            selectedNodeIdProvider.notifier,
+                                          )
+                                          .state = node.id;
                                       return;
                                     }
                                     ref

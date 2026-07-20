@@ -71,8 +71,11 @@ class WorkflowNode {
   final String? httpRequestMethod;
   final String? httpEgressServer;
 
-  // source.inject payload (Elixir literal source code; backend parses)
+  // source.inject payload. Literal mode: Elixir literal source, backend
+  // parses (THRT.ElixirTerm). Expr mode (payloadIsExpr): arbitrary Elixir
+  // source, evaluated once at deploy time (THRT.Expr) — emits payload_expr.
   final String? payloadCode;
+  final bool payloadIsExpr;
   final bool? once;
 
   // Per-node logging flags. `loggingEnabled` is build-time (codegen emits
@@ -137,6 +140,7 @@ class WorkflowNode {
     this.httpRequestMethod,
     this.httpEgressServer,
     this.payloadCode,
+    this.payloadIsExpr = false,
     this.once,
     this.loggingEnabled = false,
     this.logIn = false,
@@ -183,6 +187,7 @@ class WorkflowNode {
     String? httpRequestMethod,
     String? httpEgressServer,
     String? payloadCode,
+    bool? payloadIsExpr,
     bool? once,
     bool? loggingEnabled,
     bool? logIn,
@@ -228,6 +233,7 @@ class WorkflowNode {
       httpRequestMethod: httpRequestMethod ?? this.httpRequestMethod,
       httpEgressServer: httpEgressServer ?? this.httpEgressServer,
       payloadCode: payloadCode ?? this.payloadCode,
+      payloadIsExpr: payloadIsExpr ?? this.payloadIsExpr,
       once: once ?? this.once,
       loggingEnabled: loggingEnabled ?? this.loggingEnabled,
       logIn: logIn ?? this.logIn,

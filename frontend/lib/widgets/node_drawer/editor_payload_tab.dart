@@ -25,16 +25,35 @@ class EditorPayloadTab extends ConsumerWidget {
         children: [
           Field(
             label: 'payload code',
-            hint: 'elixir literal — backend parses',
-            child: PayloadEditor(
-              initialCode: node.payloadCode ?? '',
-              onChanged: (code) {
-                updateCanvasNode(
-                  ref,
-                  node.id,
-                  (n) => n.copyWith(payloadCode: code),
-                );
-              },
+            hint: node.payloadIsExpr
+                ? 'elixir expression — evaluated once at deploy'
+                : 'elixir literal — backend parses',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ModeToggle(
+                  isExpr: node.payloadIsExpr,
+                  onChanged: (isExpr) {
+                    updateCanvasNode(
+                      ref,
+                      node.id,
+                      (n) => n.copyWith(payloadIsExpr: isExpr),
+                    );
+                  },
+                ),
+                const SizedBox(height: 8),
+                PayloadEditor(
+                  initialCode: node.payloadCode ?? '',
+                  isExpr: node.payloadIsExpr,
+                  onChanged: (code) {
+                    updateCanvasNode(
+                      ref,
+                      node.id,
+                      (n) => n.copyWith(payloadCode: code),
+                    );
+                  },
+                ),
+              ],
             ),
           ),
           const SizedBox(height: 8),
@@ -67,6 +86,60 @@ class EditorPayloadTab extends ConsumerWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ModeToggle extends StatelessWidget {
+  final bool isExpr;
+  final ValueChanged<bool> onChanged;
+
+  const _ModeToggle({required this.isExpr, required this.onChanged});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: AppColors.bg0,
+        border: Border.all(color: AppColors.border2),
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _option(label: 'literal', selected: !isExpr, onTap: () => onChanged(false)),
+          _option(label: 'expression', selected: isExpr, onTap: () => onChanged(true)),
+        ],
+      ),
+    );
+  }
+
+  Widget _option({
+    required String label,
+    required bool selected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.accent : null,
+            borderRadius: BorderRadius.circular(5),
+          ),
+          child: Text(
+            label,
+            style: TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11,
+              color: selected ? AppColors.accentInk : AppColors.fg2,
+              fontWeight: selected ? FontWeight.w600 : FontWeight.w400,
+            ),
+          ),
+        ),
       ),
     );
   }

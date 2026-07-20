@@ -801,7 +801,8 @@ class _ActiveInjectSectionState extends ConsumerState<_ActiveInjectSection> {
     });
 
     try {
-      await triggerNodeInject(ref, wf.name, widget.node.id, code);
+      await triggerNodeInject(ref, wf.name, widget.node.id, code,
+          isExpr: widget.node.payloadIsExpr);
 
       if (!mounted) return;
       final now = DateTime.now();
@@ -851,6 +852,7 @@ class _ActiveInjectSectionState extends ConsumerState<_ActiveInjectSection> {
           PayloadEditor(
             key: ValueKey(_bufferKey),
             initialCode: _bufferText(),
+            isExpr: widget.node.payloadIsExpr,
             onChanged: _setBuffer,
             triggerSlot: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,

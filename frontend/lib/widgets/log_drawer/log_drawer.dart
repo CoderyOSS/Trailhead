@@ -23,9 +23,10 @@ class _LogDrawerState extends ConsumerState<LogDrawer> {
   @override
   void initState() {
     super.initState();
-    // Attach buffer listener to the current workflow's socket.
+    // Attach buffer listener to the canvas document's socket (job snapshot
+    // in Active mode, live workflow otherwise).
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final wf = ref.read(workflowProvider);
+      final wf = ref.read(canvasWorkflowProvider);
       if (wf.name.isNotEmpty) {
         ref.read(logBufferProvider.notifier).attach(wf.name);
       }
@@ -34,7 +35,7 @@ class _LogDrawerState extends ConsumerState<LogDrawer> {
 
   @override
   Widget build(BuildContext context) {
-    final wf = ref.watch(workflowProvider);
+    final wf = ref.watch(canvasWorkflowProvider);
     final statuses = ref.watch(flowStatusProvider);
     final deployed = statuses[wf.name]?.deployed ?? false;
 

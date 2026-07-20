@@ -18,11 +18,17 @@ class PayloadEditor extends ConsumerStatefulWidget {
   final ValueChanged<String> onChanged;
   final Widget? triggerSlot;
 
+  /// When true, validation runs in expression mode (syntax-only server
+  /// check) and the status line reads "expression". The code is evaluated
+  /// once at deploy time / per trigger click — never per message.
+  final bool isExpr;
+
   const PayloadEditor({
     super.key,
     required this.initialCode,
     required this.onChanged,
     this.triggerSlot,
+    this.isExpr = false,
   });
 
   @override
@@ -47,6 +53,16 @@ class _PayloadEditorState extends ConsumerState<PayloadEditor> {
     _controller.addListener(_onChanged);
     // Initial validation.
     if (widget.initialCode.trim().isNotEmpty) {
+      _scheduleValidation();
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant PayloadEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // Mode switch changes the validation semantics — re-run on existing text.
+    if (oldWidget.isExpr != widget.isExpr &&
+        _controller.text.trim().isNotEmpty) {
       _scheduleValidation();
     }
   }
@@ -84,7 +100,9 @@ class _PayloadEditorState extends ConsumerState<PayloadEditor> {
     setState(() => _validating = true);
 
     try {
-      final result = await ref.read(thrtApiProvider).validateElixirTerm(code);
+      final result = await ref
+          .read(thrtApiProvider)
+          .validateElixirTerm(code, isExpr: widget.isExpr);
       if (!mounted) return;
       setState(() {
         _isValid = result.ok;
@@ -115,7 +133,9 @@ class _PayloadEditorState extends ConsumerState<PayloadEditor> {
             Expanded(
               child: Text(
                 _isValid
-                    ? 'valid Elixir literal'
+                    ? (widget.isExpr
+                        ? 'valid Elixir expression'
+                        : 'valid Elixir literal')
                     : (_error ?? 'invalid'),
                 style: TextStyle(
                   fontFamily: 'monospace',

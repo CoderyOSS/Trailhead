@@ -149,11 +149,15 @@ class ThrtApi {
     return FlowStatus(deployed: true, nodes: nodes);
   }
 
-  /// Inject a payload (Elixir source code, backend parses) into a running node.
-  Future<void> injectCode(String name, String nodeId, String code) async {
+  /// Inject a payload into a running node. [isExpr] selects backend handling:
+  /// literal source (parsed, whitelist) vs Elixir expression (evaluated once
+  /// per trigger click).
+  Future<void> injectCode(String name, String nodeId, String code,
+      {bool isExpr = false}) async {
     final resp = await _post('/api/v1/workflows/${Uri.encodeComponent(name)}/inject', {
       'node_id': nodeId,
       'code': code,
+      if (isExpr) 'kind': 'expr',
     });
     if (resp.statusCode != 200) {
       throw ThrtApiException(resp.statusCode, resp.body);
@@ -197,9 +201,15 @@ class ThrtApi {
     }).toList();
   }
 
-  /// Validate an Elixir term literal against the backend literal parser.
-  Future<TermValidationResult> validateElixirTerm(String code) async {
-    final resp = await _post('/api/v1/validate/elixir-term', {'code': code});
+  /// Validate Elixir source against the backend. Literal mode (default)
+  /// checks against the whitelist literal parser; [isExpr] mode is a
+  /// syntax-only check (server does not evaluate).
+  Future<TermValidationResult> validateElixirTerm(String code,
+      {bool isExpr = false}) async {
+    final resp = await _post('/api/v1/validate/elixir-term', {
+      'code': code,
+      if (isExpr) 'kind': 'expr',
+    });
     if (resp.statusCode != 200) {
       throw ThrtApiException(resp.statusCode, resp.body);
     }

@@ -193,6 +193,9 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                   ),
                 ),
                 const SizedBox(width: 8),
+                // Close button hidden in job view — the active-mode panel is
+                // forced open and has no close affordance.
+                if (isBuilder)
                 GestureDetector(
                   onTap: widget.onClose,
                   child: MouseRegion(

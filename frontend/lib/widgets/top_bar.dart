@@ -1195,13 +1195,51 @@ class _JobBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (mode == AppMode.active) {
+      // Active bar: job dropdown on the left; YAML + stop/reload on the
+      // right; running-status chip on a second row under the controls.
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _JobSelect(job: job),
+              const Spacer(),
+              AppButton(
+                variant: yamlOpen
+                    ? AppButtonVariant.secondary
+                    : AppButtonVariant.ghost,
+                size: AppButtonSize.sm,
+                icon: TrailheadIconData.file,
+                label: 'YAML',
+                onTap: onToggleYaml,
+              ),
+              if (job != null) ...[
+                const SizedBox(width: 6),
+                _JobControls(job: job!),
+              ],
+            ],
+          ),
+          if (job != null) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                const Spacer(),
+                StatusTag(status: job!.jobState),
+              ],
+            ),
+          ],
+        ],
+      );
+    }
+
+    // History mode.
     if (job == null) {
       return Row(
         children: [
           Text(
-            mode == AppMode.active
-                ? 'select a running job from the sidebar'
-                : 'select a past job \u2014 or browse the table',
+            'select a past job  or browse the table',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 12,
@@ -1302,19 +1340,6 @@ class _JobRow1 extends ConsumerWidget {
         const SizedBox(width: 6),
         StatusTag(status: job.jobState),
         const Spacer(),
-        if (mode == AppMode.active) ...[
-          AppButton(
-            variant: yamlOpen
-                ? AppButtonVariant.secondary
-                : AppButtonVariant.ghost,
-            size: AppButtonSize.sm,
-            icon: TrailheadIconData.file,
-            label: 'YAML',
-            onTap: onToggleYaml,
-          ),
-          const SizedBox(width: 6),
-          _JobControls(job: job),
-        ],
       ],
     );
   }
@@ -1579,6 +1604,259 @@ class _CtrlBtnState extends State<_CtrlBtn> {
                   ),
                 ),
               ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Job selector dropdown (Active mode) — lists running jobs only.
+// ──────────────────────────────────────────────────────────────────────────
+
+class _JobSelect extends ConsumerStatefulWidget {
+  final JobDto? job;
+
+  _JobSelect({required this.job});
+
+  @override
+  ConsumerState<_JobSelect> createState() => _JobSelectState();
+}
+
+class _JobSelectState extends ConsumerState<_JobSelect> {
+  final _layerLink = LayerLink();
+  OverlayEntry? _overlay;
+  bool _open = false;
+
+  void _close() {
+    if (!_open) return;
+    setState(() => _open = false);
+    _overlay?.remove();
+    _overlay = null;
+  }
+
+  void _toggle(List<JobDto> running) {
+    if (running.isEmpty) return;
+    if (_open) {
+      _close();
+      return;
+    }
+    setState(() => _open = true);
+    _overlay = _createOverlay(running);
+    Overlay.of(context).insert(_overlay!);
+  }
+
+  void _pick(JobDto job) {
+    ensureJobDocument(ref, job);
+    ref.read(selectedJobProvider.notifier).state = job;
+    _close();
+  }
+
+  OverlayEntry _createOverlay(List<JobDto> running) {
+    return OverlayEntry(
+      builder: (context) {
+        return Stack(
+          children: [
+            Positioned.fill(
+              child: GestureDetector(
+                onTap: _close,
+                behavior: HitTestBehavior.translucent,
+                child: Container(color: Colors.transparent),
+              ),
+            ),
+            CompositedTransformFollower(
+              link: _layerLink,
+              showWhenUnlinked: false,
+              targetAnchor: Alignment.bottomLeft,
+              followerAnchor: Alignment.topLeft,
+              offset: const Offset(0, 4),
+              child: Material(
+                color: Colors.transparent,
+                child: Container(
+                  width: 288,
+                  decoration: BoxDecoration(
+                    color: AppColors.bg2,
+                    border: Border.all(color: AppColors.border2),
+                    borderRadius: BorderRadius.circular(8),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x40000000),
+                        blurRadius: 16,
+                        offset: Offset(0, 8),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(10, 8, 8, 8),
+                        child: Text(
+                          'RUNNING JOBS \u00b7 ${running.length}',
+                          style: TextStyle(
+                            fontFamily: 'monospace',
+                            fontSize: 9.5,
+                            fontWeight: FontWeight.w500,
+                            letterSpacing: 0.08,
+                            color: AppColors.fg3,
+                          ),
+                        ),
+                      ),
+                      Divider(height: 1, color: AppColors.border1),
+                      ConstrainedBox(
+                        constraints: const BoxConstraints(maxHeight: 340),
+                        child: ListView.builder(
+                          padding: const EdgeInsets.all(4),
+                          itemCount: running.length,
+                          itemBuilder: (context, i) => _JobMenuRow(
+                            job: running[i],
+                            active: running[i].id == widget.job?.id,
+                            onPick: () => _pick(running[i]),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  @override
+  void dispose() {
+    _overlay?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final jobsAsync = ref.watch(jobsProvider);
+    final running = jobsAsync.maybeWhen(
+      data: (list) =>
+          list.where((j) => j.jobState == JobState.running).toList(),
+      orElse: () => const <JobDto>[],
+    );
+    final enabled = running.isNotEmpty;
+    final label = widget.job?.id ?? (enabled ? 'select job' : 'no running jobs');
+
+    return CompositedTransformTarget(
+      link: _layerLink,
+      child: Opacity(
+        opacity: enabled ? 1 : 0.5,
+        child: Container(
+          width: 288,
+          decoration: BoxDecoration(
+            color: AppColors.bg1,
+            border: Border.all(
+              color: _open ? AppColors.accent : AppColors.border2,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: GestureDetector(
+            onTap: enabled ? () => _toggle(running) : null,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      label,
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: widget.job != null
+                            ? AppColors.fg0
+                            : AppColors.fg2,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  AnimatedRotation(
+                    turns: _open ? 0.5 : 0,
+                    duration: const Duration(milliseconds: 160),
+                    child: Icon(
+                      Icons.keyboard_arrow_down,
+                      size: 16,
+                      color: AppColors.fg2,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _JobMenuRow extends StatefulWidget {
+  final JobDto job;
+  final bool active;
+  final VoidCallback onPick;
+
+  _JobMenuRow({
+    required this.job,
+    required this.active,
+    required this.onPick,
+  });
+
+  @override
+  State<_JobMenuRow> createState() => _JobMenuRowState();
+}
+
+class _JobMenuRowState extends State<_JobMenuRow> {
+  bool _hovering = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: widget.onPick,
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        onEnter: (_) => setState(() => _hovering = true),
+        onExit: (_) => setState(() => _hovering = false),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 7),
+          decoration: BoxDecoration(
+            color: _hovering ? AppColors.bg3 : Colors.transparent,
+            borderRadius: BorderRadius.circular(6),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.job.id,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: widget.active ? AppColors.accent : AppColors.fg0,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Flexible(
+                child: Text(
+                  widget.job.flowName,
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10,
+                    color: AppColors.fg2,
+                  ),
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
             ],
           ),
         ),

@@ -192,13 +192,25 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
               child: Column(
               children: [
                 TopBar(),
-                const ValidationBanner(),
                 Expanded(
-                  child: isEmptyWorkflow
-                      ? EmptyWorkflowHero()
-                      : mode == AppMode.history && job == null
-                          ? RunsTable()
-                          : GraphCanvas(),
+                  child: Stack(
+                    children: [
+                      Positioned.fill(
+                        child: isEmptyWorkflow
+                            ? EmptyWorkflowHero()
+                            : mode == AppMode.history && job == null
+                                ? RunsTable()
+                                : GraphCanvas(),
+                      ),
+                      // Floating overlay — must not affect layout (jumping fix).
+                      const Positioned(
+                        top: 0,
+                        left: 0,
+                        right: 0,
+                        child: IgnorePointer(child: ValidationBanner()),
+                      ),
+                    ],
+                  ),
                 ),
                 if (bottomPanel != null) Expanded(child: bottomPanel),
               ],

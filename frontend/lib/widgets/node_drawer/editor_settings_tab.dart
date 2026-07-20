@@ -1245,52 +1245,104 @@ class _ServerDropdown extends ConsumerWidget {
     return Field(
       label: label,
       hint: hint,
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: _SelectField(
-              value: value,
-              options: [
-                ...servers.map((s) => (s.id, s.id)),
-                ('', '(none)'),
-                ('__new__', '+ new server'),
-              ],
-              onChanged: (v) {
-                if (v == '__new__') {
-                  _showServerConfigModal(context, widgetRef);
-                } else {
-                  onChanged(v);
-                }
-              },
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: _SelectField(
+                  value: value,
+                  options: [
+                    ...servers.map((s) => (s.id, s.id)),
+                    ('', '(none)'),
+                    ('__new__', '+ new server'),
+                  ],
+                  onChanged: (v) {
+                    if (v == '__new__') {
+                      _showServerConfigModal(context, widgetRef);
+                    } else {
+                      onChanged(v);
+                    }
+                  },
+                ),
+              ),
+              SizedBox(width: 4),
+              SizedBox(
+                width: 28,
+                height: 28,
+                child: _IconButton(
+                  icon: TrailheadIconData.plus,
+                  onTap: () => _showServerConfigModal(context, widgetRef),
+                ),
+              ),
+            ],
           ),
-          SizedBox(width: 4),
-          SizedBox(
-            width: 28,
-            height: 28,
-            child: _IconButton(
-              icon: TrailheadIconData.plus,
-              onTap: () => _showServerConfigModal(context, widgetRef),
-            ),
-          ),
+          if (servers.isNotEmpty) ...[
+            SizedBox(height: 6),
+            for (final s in servers)
+              Padding(
+                padding: const EdgeInsets.only(bottom: 4),
+                child: _ServerRow(
+                  server: s,
+                  onEdit: () => _showServerConfigModal(context, widgetRef, initialServer: s),
+                  onDelete: () => _deleteServer(widgetRef, s),
+                ),
+              ),
+          ],
         ],
       ),
     );
   }
 
-  void _showServerConfigModal(BuildContext context, WidgetRef widgetRef) {
+  void _deleteServer(WidgetRef widgetRef, ServerDef server) {
+    final current = widgetRef.read(serverDefsProvider);
+    widgetRef.read(serverDefsProvider.notifier).state =
+        current.where((s) => s.id != server.id).toList();
+    updateCanvasWorkflow(
+      widgetRef,
+      (wf) => wf.copyWith(
+        servers: wf.servers.where((s) => s.id != server.id).toList(),
+      ),
+    );
+    if (value == server.id) {
+      onChanged('');
+    }
+  }
+
+  void _showServerConfigModal(BuildContext context, WidgetRef widgetRef, {ServerDef? initialServer}) {
     showDialog(
       context: context,
       builder: (ctx) => _ServerConfigModal(
+        initialServer: initialServer,
         onSave: (server) {
           final current = widgetRef.read(serverDefsProvider);
-          widgetRef.read(serverDefsProvider.notifier).state = [
-            ...current,
-            server,
-          ];
+          final existingIdx = current.indexWhere((s) => s.id == server.id);
+          List<ServerDef> next;
+          if (initialServer != null || existingIdx >= 0) {
+            // Edit: replace by id (initialServer id wins; fall back to same-id match).
+            final targetId = initialServer?.id ?? server.id;
+            next = current
+                .map((s) => s.id == targetId ? server : s)
+                .toList();
+          } else {
+            next = [...current, server];
+          }
+          widgetRef.read(serverDefsProvider.notifier).state = next;
           updateCanvasWorkflow(
             widgetRef,
-            (wf) => wf.copyWith(servers: [...wf.servers, server]),
+            (wf) {
+              final targetId = initialServer?.id ?? server.id;
+              final exists = wf.servers.any((s) => s.id == targetId);
+              return wf.copyWith(
+                servers: exists
+                    ? wf.servers
+                        .map((s) => s.id == targetId ? server : s)
+                        .toList()
+                    : [...wf.servers, server],
+              );
+            },
           );
           onChanged(server.id);
         },
@@ -1299,10 +1351,91 @@ class _ServerDropdown extends ConsumerWidget {
   }
 }
 
+class _ServerRow extends StatelessWidget {
+  final ServerDef server;
+  final VoidCallback onEdit;
+  final VoidCallback onDelete;
+
+  const _ServerRow({
+    required this.server,
+    required this.onEdit,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 28,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
+      decoration: BoxDecoration(
+        color: AppColors.bg1,
+        borderRadius: BorderRadius.circular(4),
+        border: Border.all(color: AppColors.border1),
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Text(
+              '${server.id}  :${server.port}',
+              style: TextStyle(
+                fontFamily: 'monospace',
+                fontSize: 11,
+                color: AppColors.fg0,
+              ),
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          SizedBox(width: 4),
+          _RowIconBtn(
+            icon: TrailheadIconData.pencil,
+            onTap: onEdit,
+          ),
+          SizedBox(width: 3),
+          _RowIconBtn(
+            icon: TrailheadIconData.trash,
+            onTap: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RowIconBtn extends StatelessWidget {
+  final TrailheadIconData icon;
+  final VoidCallback onTap;
+
+  const _RowIconBtn({required this.icon, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(3),
+        child: Container(
+          width: 20,
+          height: 20,
+          decoration: BoxDecoration(
+            color: AppColors.bg3,
+            border: Border.all(color: AppColors.border1),
+            borderRadius: BorderRadius.circular(3),
+          ),
+          child: Center(
+            child: TrailheadIcon(icon: icon, size: 10, color: AppColors.fg2),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ServerConfigModal extends StatefulWidget {
   final ValueChanged<ServerDef> onSave;
+  final ServerDef? initialServer;
 
-  const _ServerConfigModal({required this.onSave});
+  const _ServerConfigModal({required this.onSave, this.initialServer});
 
   @override
   State<_ServerConfigModal> createState() => _ServerConfigModalState();
@@ -1319,10 +1452,13 @@ class _ServerConfigModalState extends State<_ServerConfigModal> {
   @override
   void initState() {
     super.initState();
-    _idCtrl = TextEditingController(text: 'default');
-    _portCtrl = TextEditingController(text: '8081');
-    _tlsCertCtrl = TextEditingController();
-    _tlsKeyCtrl = TextEditingController();
+    final init = widget.initialServer;
+    _idCtrl = TextEditingController(text: init?.id ?? 'default');
+    _portCtrl = TextEditingController(text: (init?.port ?? 8081).toString());
+    _scheme = init?.scheme ?? 'http';
+    _tlsCertCtrl = TextEditingController(text: init?.tlsCert ?? '');
+    _tlsKeyCtrl = TextEditingController(text: init?.tlsKey ?? '');
+    _enableCors = init?.cors != null;
   }
 
   @override
@@ -1343,7 +1479,7 @@ class _ServerConfigModalState extends State<_ServerConfigModal> {
         side: BorderSide(color: AppColors.border2),
       ),
       title: Text(
-        'Define Plug Server',
+        widget.initialServer == null ? 'Define Plug Server' : 'Edit Plug Server',
         style: TextStyle(
           fontFamily: 'monospace',
           fontSize: 13,
@@ -1453,7 +1589,7 @@ class _ServerConfigModalState extends State<_ServerConfigModal> {
             Navigator.of(context).pop();
           },
           child: Text(
-            'Add Server',
+            widget.initialServer == null ? 'Add Server' : 'Save',
             style: TextStyle(
               fontFamily: 'monospace',
               fontSize: 12,

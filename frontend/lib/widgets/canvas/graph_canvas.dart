@@ -1948,10 +1948,11 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
                   },
                 ),
                 CanvasToolbar(canvasSize: canvasSize),
-                // Screen-space operator picker
+                // Operator picker — rendered via root Overlay (outside the
+                // canvas ClipRect) so it is never clipped by the graph region
+                // and paints above sibling panels (e.g. the portrait drawer).
                 if (pickerAnchor != null)
-                  OperatorPicker(
-                    anchor: const Offset(16, 16),
+                  _PickerOverlayHost(
                     onSelect: addNode,
                     onClose: () {
                       ref.read(operatorPickerProvider.notifier).state = null;
@@ -2055,6 +2056,73 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
           ),
         );
       },
+    );
+  }
+}
+
+/// Hosts the [OperatorPicker] in the root [Overlay] instead of the canvas
+/// stack. The canvas is wrapped in a [ClipRect], so an in-stack picker is
+/// clipped to the graph region and painted over by sibling panels (portrait
+/// drawer). A root overlay entry escapes both: the picker is never clipped
+/// and sits above drawers — including when the iOS keyboard pushes the
+/// drawer up into the canvas area.
+///
+/// The host itself is a zero-hit [Positioned.fill] inside the canvas stack;
+/// its render box spans the canvas region, giving the overlay entry the
+/// canvas's global origin for anchor placement.
+class _PickerOverlayHost extends StatefulWidget {
+  final void Function(NodeEntry entry) onSelect;
+  final VoidCallback onClose;
+
+  const _PickerOverlayHost({required this.onSelect, required this.onClose});
+
+  @override
+  State<_PickerOverlayHost> createState() => _PickerOverlayHostState();
+}
+
+class _PickerOverlayHostState extends State<_PickerOverlayHost> {
+  OverlayEntry? _entry;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) => _insertEntry());
+  }
+
+  void _insertEntry() {
+    if (!mounted || _entry != null) return;
+    final overlay = Overlay.of(context, rootOverlay: true);
+    final hostContext = context;
+    _entry = OverlayEntry(
+      builder: (_) {
+        // Recomputed on every entry build (host rebuilds mark it dirty), so
+        // the anchor tracks the canvas origin across resizes.
+        final box = hostContext.findRenderObject() as RenderBox?;
+        final origin = box?.localToGlobal(Offset.zero) ?? Offset.zero;
+        return Material(
+          type: MaterialType.transparency,
+          child: OperatorPicker(
+            anchor: origin + const Offset(16, 16),
+            onSelect: widget.onSelect,
+            onClose: widget.onClose,
+          ),
+        );
+      },
+    );
+    overlay.insert(_entry!);
+  }
+
+  @override
+  void dispose() {
+    _entry?.remove();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    _entry?.markNeedsBuild();
+    return const Positioned.fill(
+      child: IgnorePointer(child: SizedBox.shrink()),
     );
   }
 }

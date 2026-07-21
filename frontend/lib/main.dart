@@ -184,6 +184,26 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
         ? NodeDrawerView.job
         : NodeDrawerView.builder;
 
+    Widget _buildCanvasContent() {
+      return Stack(
+        children: [
+          Positioned.fill(
+            child: isEmptyWorkflow
+                ? EmptyWorkflowHero()
+                : mode == AppMode.history && job == null
+                    ? RunsTable()
+                    : GraphCanvas(),
+          ),
+          const Positioned(
+            top: 0,
+            left: 0,
+            right: 0,
+            child: IgnorePointer(child: ValidationBanner()),
+          ),
+        ],
+      );
+    }
+
     Widget workflowRegion({Widget? bottomPanel}) {
       return Row(
         children: [
@@ -192,26 +212,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
               child: Column(
               children: [
                 TopBar(),
-                Expanded(
-                  child: Stack(
-                    children: [
-                      Positioned.fill(
-                        child: isEmptyWorkflow
-                            ? EmptyWorkflowHero()
-                            : mode == AppMode.history && job == null
-                                ? RunsTable()
-                                : GraphCanvas(),
-                      ),
-                      // Floating overlay — must not affect layout (jumping fix).
-                      const Positioned(
-                        top: 0,
-                        left: 0,
-                        right: 0,
-                        child: IgnorePointer(child: ValidationBanner()),
-                      ),
-                    ],
-                  ),
-                ),
+                Expanded(child: _buildCanvasContent()),
                 if (bottomPanel != null) Expanded(child: bottomPanel),
               ],
             ),
@@ -293,13 +294,27 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
               Expanded(
                 child: isPortrait &&
                         (yamlOpen || nodeOpen || mode == AppMode.active)
-                    ? workflowRegion(bottomPanel: buildDrawerPanel())
-                    : Row(
-                        children: [
-                          Expanded(child: workflowRegion()),
-                          buildDrawerPanel(),
-                        ],
-                      ),
+                     ? workflowRegion(bottomPanel: buildDrawerPanel())
+                     : Row(
+                         children: [
+                           ModeRail(activeCount: runningCount),
+                           Expanded(
+                             child: Column(
+                               children: [
+                                 TopBar(),
+                                 Expanded(
+                                   child: Row(
+                                     children: [
+                                       Expanded(child: _buildCanvasContent()),
+                                       buildDrawerPanel(),
+                                     ],
+                                   ),
+                                 ),
+                               ],
+                             ),
+                           ),
+                         ],
+                       ),
               ),
               Container(height: 1, color: AppColors.border1),
             ],

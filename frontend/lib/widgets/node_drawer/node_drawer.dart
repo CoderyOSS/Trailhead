@@ -10,6 +10,7 @@ import 'editor_prompt_tab.dart';
 import 'editor_payload_tab.dart';
 import 'editor_result_tab.dart';
 import 'job_log_view.dart';
+import 'subflow_settings_tab.dart';
 
 enum NodeDrawerView { builder, job }
 
@@ -63,7 +64,7 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
   @override
   Widget build(BuildContext context) {
     final tabsMap = ref.watch(nodeDrawerTabProvider);
-    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http.server.ingress' || widget.node.kind == 'http.server.egress' || widget.node.kind == 'http.client.request' || widget.node.kind == 'source.inject' || widget.node.kind == 'sink.log';
+    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http.server.ingress' || widget.node.kind == 'http.server.egress' || widget.node.kind == 'http.client.request' || widget.node.kind == 'source.inject' || widget.node.kind == 'subflow' || widget.node.kind == 'sink.log';
     final isBuilder = widget.view == NodeDrawerView.builder;
 
     // Job view prepends a runtime 'job' tab (executions + inject trigger)
@@ -236,15 +237,17 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
           Expanded(
             child: !isBuilder && _tab == 'job'
                 ? JobLogView(node: widget.node)
-                : (_tab == 'settings'
-                    ? EditorSettingsTab(node: widget.node)
-                    : _tab == 'payload'
-                        ? EditorPayloadTab(node: widget.node)
-                        : _tab == 'prompt'
-                            ? EditorPromptTab(node: widget.node)
-                            : _tab == 'result'
-                                ? EditorResultTab(node: widget.node)
-                                : const SizedBox.shrink()),
+                : (widget.node.kind == 'subflow'
+                    ? SubflowSettingsTab(node: widget.node)
+                    : (_tab == 'settings'
+                        ? EditorSettingsTab(node: widget.node)
+                        : _tab == 'payload'
+                            ? EditorPayloadTab(node: widget.node)
+                            : _tab == 'prompt'
+                                ? EditorPromptTab(node: widget.node)
+                                : _tab == 'result'
+                                    ? EditorResultTab(node: widget.node)
+                                    : const SizedBox.shrink())),
           ),
         ],
       ),

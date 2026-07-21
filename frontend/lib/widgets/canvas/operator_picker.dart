@@ -187,6 +187,7 @@ class _OperatorPickerState extends ConsumerState<OperatorPicker> {
                       final cats = <Widget>[];
                        for (final cat in [
                          nodeCategories.first, // ACTORS
+                         subflowCategory,      // COMPOSE
                          if (installed != null) installed,
                          ...nodeCategories.skip(1),
                        ]) {

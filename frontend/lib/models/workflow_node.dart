@@ -84,6 +84,11 @@ class WorkflowNode {
   final bool logIn;
   final bool logOut;
 
+  // Generic config map for node kinds without a dedicated field. Today this
+  // holds the `subflow` node's `subflow:` name + declared params; future
+  // pseudo-builtins can reuse it. Emitted as a single `config:` block in YAML.
+  final Map<String, dynamic>? config;
+
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
     BranchOutput(id: '1', label: 'medium'),
@@ -145,6 +150,7 @@ class WorkflowNode {
     this.loggingEnabled = false,
     this.logIn = false,
     this.logOut = false,
+    this.config,
   });
 
   WorkflowNode copyWith({
@@ -192,6 +198,7 @@ class WorkflowNode {
     bool? loggingEnabled,
     bool? logIn,
     bool? logOut,
+    Map<String, dynamic>? config,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -238,6 +245,7 @@ class WorkflowNode {
       loggingEnabled: loggingEnabled ?? this.loggingEnabled,
       logIn: logIn ?? this.logIn,
       logOut: logOut ?? this.logOut,
+      config: config ?? this.config,
     );
   }
 }
@@ -256,6 +264,9 @@ extension WorkflowNodeKind on WorkflowNode {
     'http.client.request',
     'task',
     'source.inject',
+    // `subflow` nodes deploy as actor-flattened graphs (THRT.Subflow.expand);
+    // their in/out ports behave as actors on the canvas before deploy.
+    'subflow',
   };
 
   static const Set<String> functionKinds = <String>{

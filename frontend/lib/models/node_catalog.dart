@@ -60,6 +60,7 @@ NodeCategory? installedModulesCategory(List<InstalledNode> nodes) {
     'function',
     'delay',
     'http.server.egress',
+    'subflow',
   };
   final entries = nodes
       .where((n) => !builtinKinds.contains(n.type))
@@ -68,6 +69,17 @@ NodeCategory? installedModulesCategory(List<InstalledNode> nodes) {
   if (entries.isEmpty) return null;
   return NodeCategory(label: 'INSTALLED MODULES', entries: entries);
 }
+
+/// Static picker category for the `subflow` pseudo-builtin. Sits between
+/// ACTORS and INSTALLED MODULES so it's discoverable.
+const subflowCategory = NodeCategory(label: 'COMPOSE', entries: [
+  NodeEntry(
+    kind: 'subflow',
+    label: 'subflow',
+    desc: 'embed a reusable flow as a node (params resolved at deploy)',
+    icon: TrailheadIconData.workflow,
+  ),
+]);
 
 final List<NodeCategory> nodeCategories = [
   NodeCategory(label: 'ACTORS', entries: [

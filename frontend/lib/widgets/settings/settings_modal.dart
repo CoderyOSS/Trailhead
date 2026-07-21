@@ -7,6 +7,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/settings_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
+import 'modules_section.dart';
+import 'packages_section.dart';
 import 'package:flutter/material.dart' as m;
 
 // ---------------------------------------------------------------------------
@@ -38,7 +40,8 @@ const _sections = [
   _SectionMeta(value: 'canvas',     label: 'Canvas',     icon: TrailheadIconData.layout),
   _SectionMeta(value: 'workflow',   label: 'Workflow',   icon: TrailheadIconData.workflow),
   _SectionMeta(value: 'messaging',  label: 'Messaging',  icon: TrailheadIconData.send),
-  _SectionMeta(value: 'plugins',    label: 'Plugins',    icon: TrailheadIconData.plug),
+  _SectionMeta(value: 'modules',    label: 'Modules',    icon: TrailheadIconData.plug),
+  _SectionMeta(value: 'packages',   label: 'Packages',   icon: TrailheadIconData.globe),
 ];
 
 // ---------------------------------------------------------------------------
@@ -383,8 +386,10 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
         return WorkflowSection();
       case 'messaging':
         return MessagingSection();
-      case 'plugins':
-        return PluginsSection();
+      case 'modules':
+        return const ModulesSection();
+      case 'packages':
+        return const PackagesSection();
       default:
         return const SizedBox.shrink();
     }
@@ -1283,81 +1288,6 @@ class _FieldLabel extends StatelessWidget {
         fontSize: 11.5,
         fontWeight: FontWeight.w600,
         color: AppColors.fg2,
-      ),
-    );
-  }
-}
-
-class PluginsSection extends ConsumerWidget {
-  PluginsSection({super.key});
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 44, 16, 36),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 46,
-              height: 46,
-              decoration: BoxDecoration(
-                color: AppColors.bg3,
-                border: Border.all(color: AppColors.border2),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Center(
-                child: TrailheadIcon(
-                  icon: TrailheadIconData.plug,
-                  size: 22,
-                  color: AppColors.fg2,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              'No plugins installed',
-              style: TextStyle(
-                fontFamily: 'monospace',
-                fontSize: 14,
-                fontWeight: FontWeight.w600,
-                color: AppColors.fg0,
-              ),
-            ),
-            const SizedBox(height: 6),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 320),
-              child: Text(
-                'Extend Trailhead with custom nodes, reviewers, and integrations.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12.5,
-                  color: AppColors.fg2,
-                  height: 1.55,
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: AppColors.bg0,
-                border: Border.all(color: AppColors.border1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Text(
-                'trailhead plugin add <name>',
-                style: TextStyle(
-                  fontFamily: 'monospace',
-                  fontSize: 12,
-                  color: AppColors.fg1,
-                ),
-              ),
-            ),
-          ],
-        ),
       ),
     );
   }

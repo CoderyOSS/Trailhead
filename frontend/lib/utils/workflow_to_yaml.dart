@@ -114,6 +114,7 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           node.kind == 'http.server.egress' ||
           node.kind == 'http.client.request' ||
           node.kind == 'source.inject' ||
+          node.kind == 'subflow' ||
           (node.kind == 'function' && node.expr != null) ||
           node.loggingEnabled ||
           node.logIn ||
@@ -163,6 +164,15 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         if (node.loggingEnabled) configLines.add('      logging_enabled: true');
         if (node.logIn) configLines.add('      log_in: true');
         if (node.logOut) configLines.add('      log_out: true');
+
+        // Subflow nodes — emit `subflow:` plus one entry per param. The
+        // node.config map carries the full payload (key 'subflow' is the
+        // "module/subflow" identifier; remaining keys are param values).
+        if (node.kind == 'subflow' && node.config != null) {
+          for (final entry in node.config!.entries) {
+            configLines.add('      ${entry.key}: ${_yamlValue(entry.value)}');
+          }
+        }
 
         if (configLines.isNotEmpty) {
           buf.writeln('    config:');

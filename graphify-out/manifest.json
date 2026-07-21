@@ -5,7 +5,7 @@
     "semantic_hash": "758c5bf8bd1b695dd11523c800baf5c8"
   },
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784664758.7130334,
+    "mtime": 1784672206.9174902,
     "ast_hash": "5256cc49698b6509f42403c1f86ecb1b",
     "semantic_hash": ""
   },
@@ -45,12 +45,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784664759.0240326,
+    "mtime": 1784672207.298489,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784664759.0260324,
+    "mtime": 1784672207.3014889,
     "ast_hash": "efe843859d073e34bc63bb1d089af6a7",
     "semantic_hash": ""
   },
@@ -165,8 +165,8 @@
     "semantic_hash": "9eaca0dd47eb1436f314cc0c865b1fb4"
   },
   "frontend/lib/utils/workflow_to_yaml.dart": {
-    "mtime": 1784658381.921291,
-    "ast_hash": "4fdef0e67100eb2c2fd347c070c1704b",
+    "mtime": 1784672198.6775172,
+    "ast_hash": "0c70fadc777cc00a89fdcef986c29d92",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/app_button.dart": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/settings/settings_modal.dart": {
-    "mtime": 1784658227.2977362,
-    "ast_hash": "430d43d511b9a120b3030a64f3b81830",
+    "mtime": 1784672198.678517,
+    "ast_hash": "539ab0d49ea1dcabb1cbd7b48e8bf35b",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/status_tag.dart": {
@@ -2020,22 +2020,22 @@
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_isolatedDiff.png": {
-    "mtime": 1784517089.0776947,
+    "mtime": 1784672198.4745178,
     "ast_hash": "ffd1e8e8091906322ce5cbeb7684ff53",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_maskedDiff.png": {
-    "mtime": 1784517089.0606947,
+    "mtime": 1784672198.459518,
     "ast_hash": "ffd1e8e8091906322ce5cbeb7684ff53",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_masterImage.png": {
-    "mtime": 1784517089.0286949,
+    "mtime": 1784672198.426518,
     "ast_hash": "3ea774141d70b2b5616dacaf2b2fcc44",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_testImage.png": {
-    "mtime": 1784517089.0446947,
+    "mtime": 1784672198.443518,
     "ast_hash": "d04b81a251b964b14ab6d4a38eaf9114",
     "semantic_hash": ""
   },
@@ -2140,7 +2140,7 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dart_plugin_registrant.dart": {
-    "mtime": 1784517113.7855418,
+    "mtime": 1784672207.953487,
     "ast_hash": "75d59b80420856968e90f15d4a7178e0",
     "semantic_hash": ""
   },
@@ -2180,8 +2180,8 @@
     "semantic_hash": ""
   },
   "frontend/test/workflow_project_test.dart": {
-    "mtime": 1784497578.2638566,
-    "ast_hash": "5b9d90e7f4601a7bbb5ae49396d0d417",
+    "mtime": 1784672198.678517,
+    "ast_hash": "c87428211f9d79fcc660cb6c73d04fc3",
     "semantic_hash": ""
   },
   "frontend/test/yaml_drawer_reload_test.dart": {
@@ -2222,6 +2222,36 @@
   "frontend/lib/widgets/settings/packages_section.dart": {
     "mtime": 1784660514.5200007,
     "ast_hash": "2714b108006ae4e145263ab661e289a8",
+    "semantic_hash": ""
+  },
+  "frontend/lib/providers/project_provider.dart": {
+    "mtime": 1784672043.5430298,
+    "ast_hash": "f7b6d73d1127443622012cb3c7f44fc1",
+    "semantic_hash": ""
+  },
+  "frontend/lib/providers/subflows_provider.dart": {
+    "mtime": 1784672045.9710217,
+    "ast_hash": "8e6fd96858235614fcedd8e21b8458db",
+    "semantic_hash": ""
+  },
+  "frontend/lib/services/project_api.dart": {
+    "mtime": 1784672017.6421163,
+    "ast_hash": "ec685a14fbcbcb3322fc89a36343f029",
+    "semantic_hash": ""
+  },
+  "frontend/lib/services/subflows_api.dart": {
+    "mtime": 1784672035.2290576,
+    "ast_hash": "46328354a97bcf5ef0321e5bcb62f6cf",
+    "semantic_hash": ""
+  },
+  "frontend/lib/widgets/settings/instance_section.dart": {
+    "mtime": 1784672073.3029306,
+    "ast_hash": "6a7f3b27f3d4a7479cc26caff765f550",
+    "semantic_hash": ""
+  },
+  "openspec/changes/local-install-projects/design.md": {
+    "mtime": 1784671310.857692,
+    "ast_hash": "3ebb9fae0e0ac3a24da3aa18d3617eb3",
     "semantic_hash": ""
   }
 }

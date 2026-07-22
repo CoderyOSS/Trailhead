@@ -68,18 +68,6 @@ final _emptyWorkflow = WorkflowSummary(
 /// sentinel until remote workflows load and one is auto-selected.
 final workflowProvider = StateProvider<WorkflowSummary>((ref) => _emptyWorkflow);
 
-/// Auto-selects the first remote workflow on initial load.
-final autoSelectFirstWorkflowProvider =
-    FutureProvider<WorkflowSummary?>((ref) async {
-  final list = await ref.watch(remoteWorkflowsProvider.future);
-  final current = ref.read(workflowProvider);
-  if (current.id != emptyWorkflowId) return current;
-  if (list.isEmpty) return null;
-  final first = list.first;
-  ref.read(workflowProvider.notifier).state = first;
-  return first;
-});
-
 /// Jobs list — fetched from backend.
 final jobsProvider = FutureProvider<List<JobDto>>((ref) async {
   ref.watch(autoRefreshJobsProvider);

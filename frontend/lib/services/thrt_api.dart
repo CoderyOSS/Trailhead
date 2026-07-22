@@ -53,31 +53,6 @@ class InstalledNode {
       );
 }
 
-/// Project registry from GET /api/v1/projects.
-class ThrtProjects {
-  /// The runtime's current/default project dir.
-  final String current;
-
-  /// Registered project dirs (~/.trailhead/projects.yaml).
-  final List<String> registered;
-
-  /// Global package names (~/.trailhead/packages/*).
-  final List<String> packages;
-
-  const ThrtProjects({
-    required this.current,
-    required this.registered,
-    required this.packages,
-  });
-
-  /// All selectable project dirs: current first, then registered
-  /// (deduplicated, order preserved).
-  List<String> get dirs => [
-        current,
-        ...registered.where((d) => d != current),
-      ];
-}
-
 class TermValidationResult {
   final bool ok;
   final String? error;
@@ -162,22 +137,6 @@ class ThrtApi {
     if (resp.statusCode != 200) {
       throw ThrtApiException(resp.statusCode, resp.body);
     }
-  }
-
-  /// Project registry: current dir, registered dirs, global packages.
-  Future<ThrtProjects> fetchProjects() async {
-    final resp = await _get('/api/v1/projects');
-    if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
-    }
-    final body = jsonDecode(resp.body) as Map<String, dynamic>;
-    return ThrtProjects(
-      current: body['current'] as String? ?? '',
-      registered:
-          (body['registered'] as List? ?? []).map((e) => e.toString()).toList(),
-      packages:
-          (body['packages'] as List? ?? []).map((e) => e.toString()).toList(),
-    );
   }
 
   /// Validate a workflow without deploying. Pass either [content] (YAML

@@ -229,6 +229,14 @@ class WorkerNode extends StatelessWidget {
               right: 8,
               child: _StatusBadge(status: status!),
             ),
+          // Display-only channel chip on port nodes (peer counts and
+          // cross-tab edge visualization are deferred by design).
+          if (node.kind == 'port.in' || node.kind == 'port.out')
+            Positioned(
+              bottom: -8,
+              right: 8,
+              child: _ChannelChip(channel: node.channel),
+            ),
         ],
       ),
     );
@@ -332,6 +340,37 @@ class _StatusBadge extends StatelessWidget {
           fontSize: 9,
           fontWeight: FontWeight.w600,
           color: AppColors.fg2,
+        ),
+      ),
+    );
+  }
+}
+
+/// Small pill under a port node showing its channel name. Display-only —
+/// editing happens in the node drawer's channel field.
+class _ChannelChip extends StatelessWidget {
+  final String? channel;
+  const _ChannelChip({required this.channel});
+
+  @override
+  Widget build(BuildContext context) {
+    final unset = channel == null || channel!.isEmpty;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 1),
+      decoration: BoxDecoration(
+        color: AppColors.bg4,
+        border: Border.all(
+          color: unset ? AppColors.warning : AppColors.border2,
+        ),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        unset ? 'no channel' : channel!,
+        style: TextStyle(
+          fontFamily: 'monospace',
+          fontSize: 9,
+          fontWeight: FontWeight.w600,
+          color: unset ? AppColors.warning : AppColors.accent,
         ),
       ),
     );

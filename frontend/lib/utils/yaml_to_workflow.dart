@@ -174,6 +174,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   bool logIn = false;
   bool logOut = false;
   Map<String, dynamic>? genericConfig;
+  String? channel;
   if (config is YamlMap) {
     expr = _toStr(config['expr']);
     if (kind == 'delay') {
@@ -205,6 +206,9 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
       }
       once = config['once'] as bool?;
       intervalMs = config['interval_ms'] as int?;
+    }
+    if (kind == 'port.in' || kind == 'port.out') {
+      channel = _toStr(config['channel']);
     }
     loggingEnabled = (config['logging_enabled'] as bool?) ?? false;
     logIn = (config['log_in'] as bool?) ?? false;
@@ -333,6 +337,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     logIn: logIn,
     logOut: logOut,
     config: genericConfig,
+    channel: channel,
   );
 }
 

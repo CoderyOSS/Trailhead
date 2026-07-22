@@ -35,6 +35,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
   late TextEditingController _httpEgressContentTypeCtrl;
   late TextEditingController _httpEgressBodyCtrl;
   late TextEditingController _httpRequestUrlCtrl;
+  late TextEditingController _channelCtrl;
 
   @override
   void initState() {
@@ -52,6 +53,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _httpEgressContentTypeCtrl = TextEditingController(text: widget.node.httpEgressContentType ?? 'application/json');
     _httpEgressBodyCtrl = TextEditingController(text: widget.node.httpEgressBody ?? '');
     _httpRequestUrlCtrl = TextEditingController(text: widget.node.httpRequestUrl ?? '');
+    _channelCtrl = TextEditingController(text: widget.node.channel ?? '');
   }
 
   @override
@@ -69,6 +71,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _httpEgressContentTypeCtrl.dispose();
     _httpEgressBodyCtrl.dispose();
     _httpRequestUrlCtrl.dispose();
+    _channelCtrl.dispose();
     super.dispose();
   }
 
@@ -86,6 +89,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     final isHttpIngress = node.kind == 'http.server.ingress';
     final isHttpEgress = node.kind == 'http.server.egress';
     final isHttpRequest = node.kind == 'http.client.request';
+    final isPort = node.kind == 'port.in' || node.kind == 'port.out';
 
     // Deployed truth for the redeploy hint on log toggles: function-kind
     // nodes compile their log hooks into route_fn at deploy time, so PATCH
@@ -281,6 +285,27 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
                 onChanged: (v) => _updateNode(node.copyWith(httpRequestMethod: v)),
               ),
             ),
+          ] else if (isPort) ...[
+            Field(
+              label: 'channel',
+              hint: 'required — pairs with matching ${node.kind == 'port.in' ? 'port.out' : 'port.in'} nodes across flows',
+              child: _TextInput(
+                controller: _channelCtrl,
+                onChanged: (v) => _updateNode(node.copyWith(channel: v.isEmpty ? null : v)),
+              ),
+            ),
+            if (node.channel == null || node.channel!.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(top: 4, bottom: 16),
+                child: Text(
+                  'channel is required — deploy fails without it',
+                  style: TextStyle(
+                    fontFamily: 'monospace',
+                    fontSize: 10.5,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ),
           ] else if (isTransform) ...[
             Field(
               label: 'expression',

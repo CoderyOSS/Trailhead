@@ -89,6 +89,10 @@ class WorkflowNode {
   // pseudo-builtins can reuse it. Emitted as a single `config:` block in YAML.
   final Map<String, dynamic>? config;
 
+  // `port.in` / `port.out` channel name (required server-side). Ports pair
+  // across flows by matching channel via the runtime PortRegistry.
+  final String? channel;
+
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
     BranchOutput(id: '1', label: 'medium'),
@@ -151,6 +155,7 @@ class WorkflowNode {
     this.logIn = false,
     this.logOut = false,
     this.config,
+    this.channel,
   });
 
   WorkflowNode copyWith({
@@ -199,6 +204,7 @@ class WorkflowNode {
     bool? logIn,
     bool? logOut,
     Map<String, dynamic>? config,
+    String? channel,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -246,6 +252,7 @@ class WorkflowNode {
       logIn: logIn ?? this.logIn,
       logOut: logOut ?? this.logOut,
       config: config ?? this.config,
+      channel: channel ?? this.channel,
     );
   }
 }
@@ -264,6 +271,10 @@ extension WorkflowNodeKind on WorkflowNode {
     'http.client.request',
     'task',
     'source.inject',
+    // Port nodes are actors (THRT.Nodes.Port.In/Out): mailbox send/receive
+    // semantics, channel pairing resolved at runtime via PortRegistry.
+    'port.in',
+    'port.out',
     // `subflow` nodes deploy as actor-flattened graphs (THRT.Subflow.expand);
     // their in/out ports behave as actors on the canvas before deploy.
     'subflow',
@@ -293,11 +304,15 @@ extension WorkflowNodeKind on WorkflowNode {
   static const Set<String> noInputKinds = <String>{
     'source.inject',
     'http.server.ingress',
+    // port.in's input is its channel (cross-flow), never an in-flow edge.
+    'port.in',
   };
 
   /// Node kinds that terminate messages (no outgoing edges allowed).
   static const Set<String> noOutputKinds = <String>{
     'http.server.egress',
+    // port.out's output is its channel (cross-flow), never an in-flow edge.
+    'port.out',
   };
 
   /// True when this node accepts incoming connections (shows input dot/handle).

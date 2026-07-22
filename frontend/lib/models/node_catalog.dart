@@ -46,6 +46,8 @@ const _globe = TrailheadIconData.globe;
 const _branch = TrailheadIconData.gitBranch;
 const _play = TrailheadIconData.play;
 const _terminal = TrailheadIconData.terminal;
+const _plug = TrailheadIconData.plug;
+const _send = TrailheadIconData.send;
 
 /// Dynamic picker category for modules installed in the connected runtime
 /// (builtins already in [nodeCategories] are skipped). Returns null when
@@ -61,6 +63,8 @@ NodeCategory? installedModulesCategory(List<InstalledNode> nodes) {
     'delay',
     'http.server.egress',
     'subflow',
+    'port.in',
+    'port.out',
   };
   final entries = nodes
       .where((n) => !builtinKinds.contains(n.type))
@@ -86,6 +90,8 @@ final List<NodeCategory> nodeCategories = [
     const NodeEntry(kind: 'genserver', label: 'genserver', desc: 'stateful \u00b7 module or inline', icon: _zap),
     const NodeEntry(kind: 'task', label: 'task', desc: 'stateless \u00b7 concurrent \u00b7 elixir expr', icon: _zap),
     const NodeEntry(kind: 'source.inject', label: 'source.inject', desc: 'timer or one-shot inject', icon: _play),
+    const NodeEntry(kind: 'port.in', label: 'port.in', desc: 'receive messages from other flows via channel', icon: _plug),
+    const NodeEntry(kind: 'port.out', label: 'port.out', desc: 'send messages to other flows via channel', icon: _send),
     const NodeEntry(kind: 'http.server.ingress', label: 'http server ingress', desc: 'HTTP server endpoint', icon: _globe),
     const NodeEntry(kind: 'http.client.request', label: 'http client request', desc: 'Outbound HTTP call', icon: _globe),
   ]),

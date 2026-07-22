@@ -115,6 +115,8 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           node.kind == 'http.client.request' ||
           node.kind == 'source.inject' ||
           node.kind == 'subflow' ||
+          node.kind == 'port.in' ||
+          node.kind == 'port.out' ||
           (node.kind == 'function' && node.expr != null) ||
           node.loggingEnabled ||
           node.logIn ||
@@ -160,6 +162,11 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           }
           if (node.once == true) configLines.add('      once: true');
           if (node.intervalMs != null) configLines.add('      interval_ms: ${node.intervalMs}');
+        }
+        if (node.kind == 'port.in' || node.kind == 'port.out') {
+          if (node.channel != null && node.channel!.isNotEmpty) {
+            configLines.add('      channel: ${_yamlValue(node.channel)}');
+          }
         }
         if (node.loggingEnabled) configLines.add('      logging_enabled: true');
         if (node.logIn) configLines.add('      log_in: true');

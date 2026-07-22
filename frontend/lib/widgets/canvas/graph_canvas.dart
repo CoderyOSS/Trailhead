@@ -1413,11 +1413,15 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
                                             ? TrailheadIconData.play
                                             : node.kind == 'delay'
                                                 ? TrailheadIconData.stopwatch
-                                                : node.kind.startsWith('http.')
-                                                    ? TrailheadIconData.globe
-                                                    : node.expr != null
-                                                        ? TrailheadIconData.terminal
-                                                        : TrailheadIconData.bot,
+                                                : node.kind == 'port.in'
+                                                    ? TrailheadIconData.plug
+                                                    : node.kind == 'port.out'
+                                                        ? TrailheadIconData.send
+                                                        : node.kind.startsWith('http.')
+                                                            ? TrailheadIconData.globe
+                                                            : node.expr != null
+                                                                ? TrailheadIconData.terminal
+                                                                : TrailheadIconData.bot,
                                     triggerable:
                                         node.kind == 'source.inject' &&
                                             !editable &&

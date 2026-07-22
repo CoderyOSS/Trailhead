@@ -64,7 +64,7 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
   @override
   Widget build(BuildContext context) {
     final tabsMap = ref.watch(nodeDrawerTabProvider);
-    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http.server.ingress' || widget.node.kind == 'http.server.egress' || widget.node.kind == 'http.client.request' || widget.node.kind == 'source.inject' || widget.node.kind == 'subflow' || widget.node.kind == 'sink.log';
+    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http.server.ingress' || widget.node.kind == 'http.server.egress' || widget.node.kind == 'http.client.request' || widget.node.kind == 'source.inject' || widget.node.kind == 'subflow' || widget.node.kind == 'sink.log' || widget.node.kind == 'port.in' || widget.node.kind == 'port.out';
     final isBuilder = widget.view == NodeDrawerView.builder;
 
     // Job view prepends a runtime 'job' tab (executions + inject trigger)
@@ -103,7 +103,11 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                             ? 'http client request node'
                             : widget.node.kind == 'source.inject'
                         ? 'inject node'
-                        : widget.node.kind == 'function'
+                        : widget.node.kind == 'port.in'
+                            ? 'port in node'
+                            : widget.node.kind == 'port.out'
+                                ? 'port out node'
+                                : widget.node.kind == 'function'
                             ? 'function \u2014 if/else router'
                             : widget.node.kind == 'sink.log'
                                 ? 'log sink node'

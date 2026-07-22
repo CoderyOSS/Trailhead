@@ -23,8 +23,8 @@ void main() {
       }
     });
 
-    test('isFunction is true for the 4 function kinds', () {
-      for (final kind in ['function', 'delay', 'sink.log', 'http.server.egress']) {
+    test('isFunction is true for the 3 function kinds', () {
+      for (final kind in ['function', 'delay', 'http.server.egress']) {
         expect(_node('n', kind).isFunction, isTrue,
             reason: '$kind should be function');
       }

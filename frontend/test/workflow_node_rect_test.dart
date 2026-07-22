@@ -17,9 +17,9 @@ void main() {
       expect(n.height, 36.0);
     });
 
-    test('branch with outputs uses outputs.length', () {
+    test('branch (function with no expr) with outputs uses outputs.length', () {
       final n = WorkflowNode(
-        id: 'b', kind: 'branch', label: 'b', x: 5, y: 6,
+        id: 'b', kind: 'function', label: 'b', x: 5, y: 6,
         outputs: const [
           BranchOutput(id: '0', label: 'a'),
           BranchOutput(id: '1', label: 'b'),
@@ -33,7 +33,7 @@ void main() {
 
     test('branch rect composes correctly', () {
       final n = WorkflowNode(
-        id: 'b', kind: 'branch', label: 'b', x: 5, y: 6,
+        id: 'b', kind: 'function', label: 'b', x: 5, y: 6,
         outputs: const [BranchOutput(id: '0', label: 'a')],
       );
       // padY*2 + 1*rowHeight = 18 + 27 = 45
@@ -41,7 +41,7 @@ void main() {
     });
 
     test('branch with no outputs defaults to defaultBranchOutputs.length rows', () {
-      const n = WorkflowNode(id: 'b', kind: 'branch', label: 'b', x: 0, y: 0);
+      const n = WorkflowNode(id: 'b', kind: 'function', label: 'b', x: 0, y: 0);
       expect(
         n.height,
         WorkflowNode.branchPadY * 2 +

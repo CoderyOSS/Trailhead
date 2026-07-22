@@ -27,7 +27,7 @@ class _CloseIntent extends Intent {
 class _SectionMeta {
   final String value;
   final String label;
-  final TrailheadIconData icon;
+  final CartaIconData icon;
 
   const _SectionMeta({
     required this.value,
@@ -37,13 +37,13 @@ class _SectionMeta {
 }
 
 const _sections = [
-  _SectionMeta(value: 'appearance', label: 'Appearance', icon: TrailheadIconData.sun),
-  _SectionMeta(value: 'canvas',     label: 'Canvas',     icon: TrailheadIconData.layout),
-  _SectionMeta(value: 'workflow',   label: 'Workflow',   icon: TrailheadIconData.workflow),
-  _SectionMeta(value: 'messaging',  label: 'Messaging',  icon: TrailheadIconData.send),
-  _SectionMeta(value: 'modules',    label: 'Modules',    icon: TrailheadIconData.plug),
-  _SectionMeta(value: 'packages',   label: 'Packages',   icon: TrailheadIconData.globe),
-  _SectionMeta(value: 'instance',   label: 'Instance',   icon: TrailheadIconData.terminal),
+  _SectionMeta(value: 'appearance', label: 'Appearance', icon: CartaIconData.sun),
+  _SectionMeta(value: 'canvas',     label: 'Canvas',     icon: CartaIconData.layout),
+  _SectionMeta(value: 'workflow',   label: 'Workflow',   icon: CartaIconData.workflow),
+  _SectionMeta(value: 'messaging',  label: 'Messaging',  icon: CartaIconData.send),
+  _SectionMeta(value: 'modules',    label: 'Modules',    icon: CartaIconData.plug),
+  _SectionMeta(value: 'packages',   label: 'Packages',   icon: CartaIconData.globe),
+  _SectionMeta(value: 'instance',   label: 'Instance',   icon: CartaIconData.terminal),
 ];
 
 // ---------------------------------------------------------------------------
@@ -199,8 +199,8 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
-              child: TrailheadIcon(
-                icon: TrailheadIconData.settings,
+              child: CartaIcon(
+                icon: CartaIconData.settings,
                 color: AppColors.accent,
                 size: 16,
               ),
@@ -242,8 +242,8 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
                 borderRadius: BorderRadius.circular(6),
               ),
               child: Center(
-                child: TrailheadIcon(
-                  icon: TrailheadIconData.x,
+                child: CartaIcon(
+                  icon: CartaIconData.x,
                   size: 14,
                   color: AppColors.fg2,
                 ),
@@ -288,7 +288,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    TrailheadIcon(
+                    CartaIcon(
                       icon: s.icon,
                       size: 14,
                       color: on ? AppColors.accent : AppColors.fg2,
@@ -345,7 +345,7 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
                       ),
                       child: Row(
                         children: [
-                          TrailheadIcon(
+                          CartaIcon(
                             icon: s.icon,
                             size: 15,
                             color: on ? AppColors.accent : AppColors.fg2,
@@ -735,8 +735,8 @@ const _themes = [
     swatch: [Color(0xFF0c0d10), Color(0xFF1a1d23), Color(0xFF2b303a), Color(0xFF6ea8d9)],
   ),
   _ThemeData(
-    value: 'trailhead',
-    name: 'Trailhead',
+    value: 'carta',
+    name: 'Carta',
     desc: 'Deep forest, mossy canvas.',
     mode: 'dark',
     swatch: [Color(0xFF0a120c), Color(0xFF142319), Color(0xFF253a2c), Color(0xFFa4c97a)],
@@ -967,8 +967,8 @@ class _ThemeCard extends StatelessWidget {
                       shape: BoxShape.circle,
                     ),
                     child: Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.check,
+                      child: CartaIcon(
+                        icon: CartaIconData.check,
                         size: 11,
                         color: AppColors.accentInk,
                       ),
@@ -1171,8 +1171,8 @@ class MessagingSection extends ConsumerWidget {
                       borderRadius: BorderRadius.circular(9),
                     ),
                     child: Center(
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.send,
+                      child: CartaIcon(
+                        icon: CartaIconData.send,
                         size: 17,
                         color: on ? AppColors.accent : AppColors.fg2,
                       ),

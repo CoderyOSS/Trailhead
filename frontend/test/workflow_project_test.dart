@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend/services/thrt_api.dart';
+import 'package:frontend/services/carta_api.dart';
 import 'package:frontend/utils/workflow_to_yaml.dart';
 import 'package:frontend/utils/yaml_to_workflow.dart';
 
@@ -9,10 +9,10 @@ void main() {
       final wf = yamlToWorkflow('w', '''
 name: w
 version: 1
-project: /home/gem/projects/TrailheadTests
+project: /home/gem/projects/CartaTests
 nodes: []
 ''');
-      expect(wf.project, '/home/gem/projects/TrailheadTests');
+      expect(wf.project, '/home/gem/projects/CartaTests');
     });
 
     test('yamlToWorkflow without project: leaves it null', () {
@@ -24,7 +24,7 @@ nodes: []
       final wf = yamlToWorkflow('w', '''
 name: w
 version: 1
-project: /home/gem/projects/TrailheadTests
+project: /home/gem/projects/CartaTests
 nodes: []
 ''');
       expect(workflowToYaml(wf), isNot(contains('project:')));
@@ -49,22 +49,22 @@ nodes: []
   group('InstalledNode package identity', () {
     test('fromJson parses package and version', () {
       final n = InstalledNode.fromJson(const {
-        'type': 'mod.trailhead_ai_node.harness',
+        'type': 'mod.carta_ai_node.harness',
         'module': 'Elixir.X',
         'actor': true,
         'label': 'harness',
         'desc': 'd',
-        'package': 'trailhead_ai_node',
+        'package': 'carta_ai_node',
         'version': '0.1.0',
       });
-      expect(n.package, 'trailhead_ai_node');
+      expect(n.package, 'carta_ai_node');
       expect(n.version, '0.1.0');
     });
 
     test('fromJson tolerates missing package/version (builtins)', () {
       final n = InstalledNode.fromJson(const {
         'type': 'function',
-        'module': 'Elixir.THRT.Nodes.Function',
+        'module': 'Elixir.Carta.Nodes.Function',
         'actor': false,
         'label': 'function',
         'desc': '',

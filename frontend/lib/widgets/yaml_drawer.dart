@@ -187,8 +187,8 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       alignment: Alignment.center,
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.file,
+                      child: CartaIcon(
+                        icon: CartaIconData.file,
                         size: 14,
                         color: AppColors.accent,
                       ),
@@ -242,8 +242,8 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           alignment: Alignment.center,
-                          child: TrailheadIcon(
-                            icon: TrailheadIconData.x,
+                          child: CartaIcon(
+                            icon: CartaIconData.x,
                             size: 14,
                             color: AppColors.fg2,
                           ),
@@ -259,7 +259,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                     AppButton(
                       variant: AppButtonVariant.secondary,
                       size: AppButtonSize.sm,
-                      icon: _copied ? TrailheadIconData.check : TrailheadIconData.copy,
+                      icon: _copied ? CartaIconData.check : CartaIconData.copy,
                       label: _copied ? 'copied' : 'copy',
                       onTap: _copyAll,
                     ),
@@ -267,7 +267,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                     AppButton(
                       variant: AppButtonVariant.ghost,
                       size: AppButtonSize.sm,
-                      icon: TrailheadIconData.save,
+                      icon: CartaIconData.save,
                       label: 'download',
                       onTap: () {},
                     ),
@@ -276,7 +276,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                       key: const Key('yaml_reload_button'),
                       variant: AppButtonVariant.ghost,
                       size: AppButtonSize.sm,
-                      icon: TrailheadIconData.refresh,
+                      icon: CartaIconData.refresh,
                       label: _reloading ? 'reloading…' : 'reload',
                       onTap: _reloading ? () {} : _reload,
                     ),
@@ -293,8 +293,8 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                             borderRadius: BorderRadius.circular(6),
                           ),
                           alignment: Alignment.center,
-                          child: TrailheadIcon(
-                            icon: TrailheadIconData.search,
+                          child: CartaIcon(
+                            icon: CartaIconData.search,
                             size: 14,
                             color: _showFind ? AppColors.fg0 : AppColors.fg2,
                           ),
@@ -382,8 +382,8 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
             ),
             child: Row(
               children: [
-                TrailheadIcon(
-                  icon: TrailheadIconData.lock,
+                CartaIcon(
+                  icon: CartaIconData.lock,
                   size: 11,
                   color: AppColors.fg2,
                 ),
@@ -469,8 +469,8 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                           borderRadius: BorderRadius.circular(4),
                         ),
                         alignment: Alignment.center,
-                        child: TrailheadIcon(
-                          icon: TrailheadIconData.settings,
+                        child: CartaIcon(
+                          icon: CartaIconData.settings,
                           size: 10,
                           color: isSelectedNode ? AppColors.accent : AppColors.fg3,
                         ),
@@ -512,8 +512,8 @@ class _ReadOnlyPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          TrailheadIcon(
-            icon: TrailheadIconData.lock,
+          CartaIcon(
+            icon: CartaIconData.lock,
             size: 9,
             color: AppColors.fg2,
           ),

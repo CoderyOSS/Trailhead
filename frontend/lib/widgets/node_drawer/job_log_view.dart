@@ -4,7 +4,7 @@ import '../../models/stage_data.dart';
 import '../../models/workflow_node.dart';
 import '../../providers/mode_provider.dart';
 import '../../providers/mock_data.dart';
-import '../../providers/thrt_provider.dart';
+import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'node_drawer.dart';
@@ -147,8 +147,8 @@ class _JobStageHeaderInfo extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    TrailheadIcon(
-                      icon: TrailheadIconData.zap,
+                    CartaIcon(
+                      icon: CartaIconData.zap,
                       size: 11,
                       color: AppColors.fg3,
                     ),
@@ -266,8 +266,8 @@ class _ExecutionRowState extends State<ExecutionRow> {
                   AnimatedRotation(
                     turns: widget.expanded ? 0.25 : 0,
                     duration: const Duration(milliseconds: 120),
-                    child: TrailheadIcon(
-                      icon: TrailheadIconData.chevRight,
+                    child: CartaIcon(
+                      icon: CartaIconData.chevRight,
                       size: 11,
                       color: AppColors.fg3,
                     ),

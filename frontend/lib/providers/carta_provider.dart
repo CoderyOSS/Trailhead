@@ -1,13 +1,13 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../services/thrt_api.dart';
+import '../services/carta_api.dart';
 import '../widgets/mode_rail.dart';
 import 'mode_provider.dart';
 
-/// THRT runtime API client. Targets the same-origin Bun proxy at
-/// `trailhead.rancidgrandmas.online`, which forwards `/api/v1/workflows/*`
-/// runtime routes to THRT.
-final thrtApiProvider = Provider<ThrtApi>((ref) {
-  return ThrtApi('');
+/// Carta runtime API client. Targets the same-origin Bun proxy at
+/// `carta.rancidgrandmas.online`, which forwards `/api/v1/workflows/*`
+/// runtime routes to Carta.
+final cartaApiProvider = Provider<CartaApi>((ref) {
+  return CartaApi('');
 });
 
 /// Latest runtime status per workflow, keyed by name. Null = not yet fetched.
@@ -24,8 +24,8 @@ Future<void> triggerNodeInject(
   String code, {
   bool isExpr = false,
 }) async {
-  await ref.read(thrtApiProvider).injectCode(workflowName, nodeId, code, isExpr: isExpr);
-  final status = await ref.read(thrtApiProvider).status(workflowName);
+  await ref.read(cartaApiProvider).injectCode(workflowName, nodeId, code, isExpr: isExpr);
+  final status = await ref.read(cartaApiProvider).status(workflowName);
   ref.read(flowStatusProvider.notifier).state =
       Map<String, FlowStatus>.from(ref.read(flowStatusProvider))
         ..[workflowName] = status;
@@ -51,7 +51,7 @@ String injectBufferKey(WidgetRef ref, String nodeId) {
 /// "INSTALLED MODULES" category in the add-node picker and actor/function
 /// edge classification for non-builtin kinds.
 final installedNodesProvider = FutureProvider<List<InstalledNode>>((ref) async {
-  return ref.read(thrtApiProvider).fetchNodes();
+  return ref.read(cartaApiProvider).fetchNodes();
 });
 
 /// Validation problems for the active workflow, from

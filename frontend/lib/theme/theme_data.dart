@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 @immutable
-class TrailheadThemeData {
+class CartaThemeData {
   final Color bg0, bg1, bg2, bg3, bg4, bg5;
   final Color fg0, fg1, fg2, fg3, fg4, fg5;
   final Color border1, border2, border3;
@@ -15,7 +15,7 @@ class TrailheadThemeData {
   final Gradient loafGradient;
   final Gradient crustGradient;
 
-  const TrailheadThemeData({
+  const CartaThemeData({
     required this.bg0,
     required this.bg1,
     required this.bg2,

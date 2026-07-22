@@ -22,8 +22,8 @@ class DeleteButton extends StatelessWidget {
         ],
       ),
       child: Center(
-        child: TrailheadIcon(
-          icon: TrailheadIconData.x,
+        child: CartaIcon(
+          icon: CartaIconData.x,
           size: 9,
           color: AppColors.fg2,
         ),

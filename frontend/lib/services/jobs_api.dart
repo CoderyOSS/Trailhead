@@ -11,7 +11,7 @@ class JobDto {
   final String? finishedAt;
   final int nodeCount;
 
-  /// YAML the job was launched with (snapshot stored by THRT at create
+  /// YAML the job was launched with (snapshot stored by Carta at create
   /// time). Null for jobs created before snapshots existed.
   final String? content;
 
@@ -50,7 +50,7 @@ class JobsApi {
   JobsApi(this.baseUrl, [http.Client? client])
       : client = client ?? http.Client();
 
-  /// THRT error bodies are `{"errors": [...]}` or `{"error": "..."}` — parse
+  /// Carta error bodies are `{"errors": [...]}` or `{"error": "..."}` — parse
   /// them into a readable message instead of showing raw JSON in snackbars.
   static String _errMsg(String fallback, String body) {
     try {

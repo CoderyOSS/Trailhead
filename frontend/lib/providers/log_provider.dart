@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/log_socket.dart';
-import 'thrt_provider.dart';
+import 'carta_provider.dart';
 
 /// A single log point: node + direction.
 class LogPoint {
@@ -34,7 +34,7 @@ class LogSocketNotifier extends StateNotifier<LogSocket?> {
     final existing = _sockets[flowName];
     if (existing != null) return existing;
 
-    final api = _ref.read(thrtApiProvider);
+    final api = _ref.read(cartaApiProvider);
     final url = api.logsStreamUrl(flowName);
     final socket = LogSocket(url: url);
     socket.connect();

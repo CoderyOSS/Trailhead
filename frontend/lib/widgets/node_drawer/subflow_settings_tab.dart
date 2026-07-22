@@ -107,8 +107,8 @@ class _SubflowSettingsTabState extends ConsumerState<SubflowSettingsTab> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                TrailheadIcon(
-                    icon: TrailheadIconData.workflow,
+                CartaIcon(
+                    icon: CartaIconData.workflow,
                     size: 14,
                     color: AppColors.fg2),
                 const SizedBox(width: 8),
@@ -197,7 +197,7 @@ class _SubflowSettingsTabState extends ConsumerState<SubflowSettingsTab> {
                 child: AppButton(
                   variant: AppButtonVariant.ghost,
                   size: AppButtonSize.sm,
-                  icon: TrailheadIconData.pencil,
+                  icon: CartaIconData.pencil,
                   label: 'edit subflow',
                   onTap: () => _openSubflowTab(context),
                 ),

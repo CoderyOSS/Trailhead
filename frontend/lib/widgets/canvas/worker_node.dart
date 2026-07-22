@@ -9,7 +9,7 @@ class WorkerNode extends StatelessWidget {
   final WorkflowNode node;
   final JobState? status;
   final bool selected;
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final VoidCallback? onEnter;
   final VoidCallback? onExit;
 
@@ -28,7 +28,7 @@ class WorkerNode extends StatelessWidget {
     required this.node,
     this.status,
     this.selected = false,
-    this.icon = TrailheadIconData.bot,
+    this.icon = CartaIconData.bot,
     this.onEnter,
     this.onExit,
     this.triggerable = false,
@@ -134,7 +134,7 @@ class WorkerNode extends StatelessWidget {
                                     color: AppColors.accentInk,
                                   ),
                                 )
-                              : TrailheadIcon(
+                              : CartaIcon(
                                   icon: icon,
                                   size: 14,
                                   color: AppColors.accentInk,

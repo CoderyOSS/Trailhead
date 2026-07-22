@@ -2,20 +2,20 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
-/// The THRT instance's open project, from GET /api/v1/project. In
-/// local-install mode THRT is a Mix dependency of the project, so the
+/// The Carta instance's open project, from GET /api/v1/project. In
+/// local-install mode Carta is a Mix dependency of the project, so the
 /// project dir is fixed at boot (cwd) and there is no folder switching.
 class ProjectInfo {
   final String dir;
   final String mode;
-  final String? thrtSource;
+  final String? cartaSource;
   final String installDir;
   final List<String> flowOrder;
 
   const ProjectInfo({
     required this.dir,
     required this.mode,
-    this.thrtSource,
+    this.cartaSource,
     required this.installDir,
     this.flowOrder = const [],
   });
@@ -24,7 +24,7 @@ class ProjectInfo {
     return ProjectInfo(
       dir: json['dir'] as String? ?? '',
       mode: json['mode'] as String? ?? 'local',
-      thrtSource: json['thrt_source'] as String?,
+      cartaSource: json['carta_source'] as String?,
       installDir: json['install_dir'] as String? ?? '',
       flowOrder:
           (json['flow_order'] as List? ?? []).map((e) => e.toString()).toList(),

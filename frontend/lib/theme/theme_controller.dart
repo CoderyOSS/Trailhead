@@ -10,8 +10,8 @@ class ThemeController extends ChangeNotifier {
   factory ThemeController() => _instance;
   ThemeController._internal();
 
-  TrailheadThemeData _current = _buildTheme('slate', 'green');
-  TrailheadThemeData get current => _current;
+  CartaThemeData _current = _buildTheme('slate', 'green');
+  CartaThemeData get current => _current;
 
   String _theme = 'slate';
   String _accent = 'green';
@@ -43,7 +43,7 @@ class ThemeController extends ChangeNotifier {
     notifyListeners();
   }
 
-  static TrailheadThemeData _buildTheme(String theme, String accent) {
+  static CartaThemeData _buildTheme(String theme, String accent) {
     final base = _themeBases[theme]!;
     final accentData = _accentData[accent]!;
     final isPaperGreen = theme == 'paper' && accent == 'green';
@@ -51,7 +51,7 @@ class ThemeController extends ChangeNotifier {
     final accentColor = isPaperGreen ? const Color(0xFF455429) : accentData.accent;
     final accentInkColor = isPaperGreen ? const Color(0xFFFFFFFF) : accentData.accentInk;
 
-    return TrailheadThemeData(
+    return CartaThemeData(
       bg0: base.bg0,
       bg1: base.bg1,
       bg2: base.bg2,
@@ -171,7 +171,7 @@ class ThemeController extends ChangeNotifier {
         colors: [Color(0xFF1a1d23), Color(0xFF1f232a)],
       ),
     ),
-    'trailhead': _ThemeBase(
+    'carta': _ThemeBase(
       bg0: const Color(0xFF0a120c),
       bg1: const Color(0xFF0f1a12),
       bg2: const Color(0xFF142319),

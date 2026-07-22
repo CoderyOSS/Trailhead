@@ -116,8 +116,8 @@ class BranchNode extends StatelessWidget {
                         ),
                       ),
                       child: Center(
-                        child: TrailheadIcon(
-                          icon: TrailheadIconData.gitBranch,
+                        child: CartaIcon(
+                          icon: CartaIconData.gitBranch,
                           size: 14,
                           color: AppColors.accentInk,
                         ),

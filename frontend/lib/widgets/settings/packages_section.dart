@@ -246,8 +246,8 @@ class _PackagesSectionState extends ConsumerState<PackagesSection> {
             ),
             child: Row(
               children: [
-                TrailheadIcon(
-                    icon: TrailheadIconData.refresh,
+                CartaIcon(
+                    icon: CartaIconData.refresh,
                     size: 14,
                     color: AppColors.accent),
                 const SizedBox(width: 10),
@@ -364,8 +364,8 @@ class _SearchField extends StatelessWidget {
           child: Row(
             children: [
               const SizedBox(width: 10),
-              TrailheadIcon(
-                  icon: TrailheadIconData.search,
+              CartaIcon(
+                  icon: CartaIconData.search,
                   size: 14,
                   color: AppColors.fg2),
               const SizedBox(width: 8),
@@ -399,8 +399,8 @@ class _SearchField extends StatelessWidget {
                     cursor: SystemMouseCursors.click,
                     child: Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 10),
-                      child: TrailheadIcon(
-                          icon: TrailheadIconData.x,
+                      child: CartaIcon(
+                          icon: CartaIconData.x,
                           size: 12,
                           color: AppColors.fg2),
                     ),
@@ -569,8 +569,8 @@ class _SearchResultRowState extends State<_SearchResultRow> {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            TrailheadIcon(
-                                icon: TrailheadIconData.plus,
+                            CartaIcon(
+                                icon: CartaIconData.plus,
                                 size: 10,
                                 color: AppColors.accentInk),
                             const SizedBox(width: 4),
@@ -669,8 +669,8 @@ class _InstalledRow extends ConsumerWidget {
               onTap: onUninstall,
               child: Padding(
                 padding: const EdgeInsets.all(4),
-                child: TrailheadIcon(
-                    icon: TrailheadIconData.trash,
+                child: CartaIcon(
+                    icon: CartaIconData.trash,
                     size: 13,
                     color: AppColors.fg2),
               ),
@@ -798,8 +798,8 @@ class _PendingRow extends StatelessWidget {
       margin: const EdgeInsets.only(bottom: 4),
       child: Row(
         children: [
-          TrailheadIcon(
-              icon: pendingUninstall ? TrailheadIconData.trash : TrailheadIconData.plus,
+          CartaIcon(
+              icon: pendingUninstall ? CartaIconData.trash : CartaIconData.plus,
               size: 12,
               color: errored ? AppColors.danger : AppColors.accent),
           const SizedBox(width: 8),

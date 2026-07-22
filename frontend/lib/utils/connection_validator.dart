@@ -3,7 +3,7 @@ import '../models/workflow_node.dart';
 
 /// Shared validation for pipe/message connections.
 ///
-/// Mirrors the THRT backend Phase 1 contracts (spec §4):
+/// Mirrors the Carta backend Phase 1 contracts (spec §4):
 ///   1. Each node is classified actor vs function (see `WorkflowNode.isActor`).
 ///   2. Connection type is inferred from the `to` node — never stored.
 ///   3. Max 1 pipe per `from` node (you can't pipe one value into two functions).

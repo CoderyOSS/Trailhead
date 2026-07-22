@@ -111,7 +111,7 @@ final workflowDirtyProvider = StateProvider<bool>((ref) => false);
 /// Per-job independent workflow snapshots, keyed by job id.
 ///
 /// A job launches from a copy of the workflow YAML (`JobDto.content`, stored
-/// by THRT at create time). In Active mode the canvas and drawer bind to
+/// by Carta at create time). In Active mode the canvas and drawer bind to
 /// this copy — edits here never touch [workflowProvider], so the stored
 /// workflow and the autosave path stay untouched.
 final jobDocumentsProvider =

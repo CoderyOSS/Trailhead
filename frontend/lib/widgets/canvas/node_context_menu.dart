@@ -55,7 +55,7 @@ class NodeContextMenu extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _MenuItem(
-                  icon: TrailheadIconData.settings,
+                  icon: CartaIconData.settings,
                   label: 'inspect node',
                   desc: 'open node editor',
                   onTap: onInspect,
@@ -66,13 +66,13 @@ class NodeContextMenu extends StatelessWidget {
                 ),
                 if (canDuplicate)
                   _MenuItem(
-                    icon: TrailheadIconData.copy,
+                    icon: CartaIconData.copy,
                     label: 'duplicate',
                     desc: 'clone this node downstream',
                     onTap: onDuplicate,
                   ),
                 _MenuItem(
-                  icon: TrailheadIconData.collapseLink,
+                  icon: CartaIconData.collapseLink,
                   label: 'remove + collapse',
                   desc: 'delete & rewire parent -> child',
                   onTap: onCollapse,
@@ -82,7 +82,7 @@ class NodeContextMenu extends StatelessWidget {
                   child: Container(height: 1, color: AppColors.border1),
                 ),
                 _MenuItem(
-                  icon: TrailheadIconData.x,
+                  icon: CartaIconData.x,
                   label: 'delete node',
                   desc: 'removes its connections too',
                   danger: true,
@@ -137,7 +137,7 @@ class NodeContextMenu extends StatelessWidget {
 }
 
 class _MenuItem extends StatefulWidget {
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final String label;
   final String desc;
   final bool danger;
@@ -180,7 +180,7 @@ class _MenuItemState extends State<_MenuItem> {
               SizedBox(
                 width: 20,
                 child: Center(
-                  child: TrailheadIcon(
+                  child: CartaIcon(
                     icon: widget.icon,
                     size: 14,
                     color: widget.danger ? AppColors.danger : AppColors.fg2,

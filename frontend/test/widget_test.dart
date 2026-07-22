@@ -7,7 +7,7 @@ import 'package:frontend/widgets/top_bar.dart';
 
 void main() {
   Future<void> pumpApp(WidgetTester tester) async {
-    await tester.pumpWidget(ProviderScope(child: TrailheadApp()));
+    await tester.pumpWidget(ProviderScope(child: CartaApp()));
     await tester.pumpAndSettle(const Duration(seconds: 5));
   }
 
@@ -16,7 +16,7 @@ void main() {
 
     expect(find.byType(ModeRail), findsOneWidget);
     expect(find.byType(TopBar), findsOneWidget);
-    expect(find.byType(TrailheadShell), findsOneWidget);
+    expect(find.byType(CartaShell), findsOneWidget);
   });
 
   // Default mode is `build` (was `active` before the flow-tabs redesign —
@@ -26,7 +26,7 @@ void main() {
     await pumpApp(tester);
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(TrailheadApp)),
+      tester.element(find.byType(CartaApp)),
       listen: false,
     );
     expect(container.read(modeProvider), AppMode.build);
@@ -36,7 +36,7 @@ void main() {
     await pumpApp(tester);
 
     final container = ProviderScope.containerOf(
-      tester.element(find.byType(TrailheadApp)),
+      tester.element(find.byType(CartaApp)),
       listen: false,
     );
     expect(container.read(modeProvider), AppMode.build);

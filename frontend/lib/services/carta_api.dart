@@ -1,12 +1,12 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
-class ThrtApiException implements Exception {
+class CartaApiException implements Exception {
   final int statusCode;
   final String body;
-  ThrtApiException(this.statusCode, this.body);
+  CartaApiException(this.statusCode, this.body);
   @override
-  String toString() => 'ThrtApiException($statusCode): $body';
+  String toString() => 'CartaApiException($statusCode): $body';
 }
 
 class FlowStatus {
@@ -18,8 +18,8 @@ class FlowStatus {
   factory FlowStatus.undeployed() => const FlowStatus(deployed: false);
 }
 
-/// A node type installed in the THRT runtime (builtin or from a project
-/// `trailhead.yaml` `node_modules` entry). Drives the "new node" picker.
+/// A node type installed in the Carta runtime (builtin or from a project
+/// `carta.yaml` `node_modules` entry). Drives the "new node" picker.
 class InstalledNode {
   final String type;
   final String module;
@@ -65,20 +65,20 @@ class TermValidationResult {
       TermValidationResult(ok: false, error: error, line: line);
 }
 
-class ThrtApi {
+class CartaApi {
   final String _baseUrl;
   final http.Client _client;
 
-  ThrtApi(this._baseUrl, {http.Client? client})
+  CartaApi(this._baseUrl, {http.Client? client})
       : _client = client ?? http.Client();
 
   /// List node modules installed in the runtime (builtins + project
-  /// trailhead.yaml node_modules). Empty list on 404 (older runtime).
+  /// carta.yaml node_modules). Empty list on 404 (older runtime).
   Future<List<InstalledNode>> fetchNodes() async {
     final resp = await _get('/api/v1/nodes');
     if (resp.statusCode == 404) return const [];
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
     final body = jsonDecode(resp.body) as List;
     return body
@@ -87,11 +87,11 @@ class ThrtApi {
         .toList();
   }
 
-  /// Deploy an already-saved flow (must exist in THRT.Store).
+  /// Deploy an already-saved flow (must exist in Carta.Store).
   Future<void> deploy(String name) async {
     final resp = await _post('/api/v1/workflows/${Uri.encodeComponent(name)}/deploy', {});
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
   }
 
@@ -100,7 +100,7 @@ class ThrtApi {
       _uri('/api/v1/workflows/${Uri.encodeComponent(name)}/deploy'),
     );
     if (resp.statusCode != 200 && resp.statusCode != 404) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
   }
 
@@ -109,7 +109,7 @@ class ThrtApi {
     final resp = await _get('/api/v1/workflows/${Uri.encodeComponent(name)}/status');
     if (resp.statusCode == 404) return FlowStatus.undeployed();
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final nodesList = (body['nodes'] as List).cast<Map<String, dynamic>>();
@@ -135,7 +135,7 @@ class ThrtApi {
       if (isExpr) 'kind': 'expr',
     });
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
   }
 
@@ -150,7 +150,7 @@ class ThrtApi {
       if (content != null) 'content': content else 'name': name,
     });
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final errors = (body['errors'] as List? ?? []).cast<Map<String, dynamic>>();
@@ -170,7 +170,7 @@ class ThrtApi {
       if (isExpr) 'kind': 'expr',
     });
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
     final body = jsonDecode(resp.body) as Map<String, dynamic>;
     final ok = (body['ok'] as bool?) ?? false;
@@ -196,7 +196,7 @@ class ThrtApi {
       body,
     );
     if (resp.statusCode != 200) {
-      throw ThrtApiException(resp.statusCode, resp.body);
+      throw CartaApiException(resp.statusCode, resp.body);
     }
   }
 

@@ -43,7 +43,7 @@ class CanvasToolbar extends ConsumerWidget {
 
     Widget toolBtn({
       required VoidCallback onTap,
-      required TrailheadIconData icon,
+      required CartaIconData icon,
       required bool active,
       String? tooltip,
     }) {
@@ -64,7 +64,7 @@ class CanvasToolbar extends ConsumerWidget {
                 color: active ? AppColors.accent : Colors.transparent,
                 borderRadius: BorderRadius.circular(AppRadius.xs),
               ),
-              child: TrailheadIcon(
+              child: CartaIcon(
                 icon: icon,
                 size: 14,
                 color: active ? AppColors.accentInk : AppColors.fg0,
@@ -102,7 +102,7 @@ class CanvasToolbar extends ConsumerWidget {
                     screenPos: Offset(canvasSize.width / 2 - 120, canvasSize.height / 2 - 80),
                   );
                 },
-                icon: TrailheadIconData.plus,
+                icon: CartaIconData.plus,
                 active: false,
                 tooltip: 'Add node to canvas',
               ),
@@ -116,7 +116,7 @@ class CanvasToolbar extends ConsumerWidget {
                     id: (currentFlash?.id ?? 0) + 1,
                   );
                 },
-                icon: TrailheadIconData.mousePointer,
+                icon: CartaIconData.mousePointer,
                 active: !scissors,
                 tooltip: 'Select — move and select nodes',
               ),
@@ -130,7 +130,7 @@ class CanvasToolbar extends ConsumerWidget {
                     id: (currentFlash?.id ?? 0) + 1,
                   );
                 },
-                icon: TrailheadIconData.scissors,
+                icon: CartaIconData.scissors,
                 active: scissors,
                 tooltip: 'Scissors — cut connections',
               ),
@@ -143,7 +143,7 @@ class CanvasToolbar extends ConsumerWidget {
             ],
             toolBtn(
               onTap: fitToView,
-              icon: TrailheadIconData.maximize,
+              icon: CartaIconData.maximize,
               active: false,
               tooltip: 'Fit to view',
             ),

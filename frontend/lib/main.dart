@@ -9,7 +9,7 @@ import 'providers/api_provider.dart';
 import 'providers/flow_tabs_provider.dart';
 import 'providers/mode_provider.dart';
 import 'providers/subflows_provider.dart';
-import 'providers/thrt_provider.dart';
+import 'providers/carta_provider.dart';
 import 'widgets/validation_banner.dart';
 import 'providers/mock_data.dart' show WorkflowSummary;
 import 'providers/server_defs_provider.dart';
@@ -38,14 +38,14 @@ GlobalObjectKey _nodeDrawerKey(String nodeId, NodeDrawerView view) {
 const _yamlDrawerKey = GlobalObjectKey('yaml_drawer');
 
 void main() {
-  runApp(ProviderScope(child: TrailheadApp()));
+  runApp(ProviderScope(child: CartaApp()));
 }
 
-// TrailheadApp watches settingsProvider so theme/accent changes force a full
-// root rebuild. Do NOT make TrailheadShell const in MaterialApp.home — const
+// CartaApp watches settingsProvider so theme/accent changes force a full
+// root rebuild. Do NOT make CartaShell const in MaterialApp.home — const
 // widgets skip rebuilds even when ancestors rebuild, breaking theme propagation.
-class TrailheadApp extends ConsumerWidget {
-  TrailheadApp({super.key});
+class CartaApp extends ConsumerWidget {
+  CartaApp({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -54,26 +54,26 @@ class TrailheadApp extends ConsumerWidget {
       child: ListenableBuilder(
         listenable: ThemeController(),
         builder: (context, child) => MaterialApp(
-          title: 'Trailhead',
+          title: 'Carta',
           debugShowCheckedModeBanner: false,
           theme: ThemeData.dark().copyWith(
             scaffoldBackgroundColor: AppColors.bg0,
           ),
-          home: TrailheadShell(),
+          home: CartaShell(),
         ),
       ),
     );
   }
 }
 
-class TrailheadShell extends ConsumerStatefulWidget {
-  TrailheadShell({super.key});
+class CartaShell extends ConsumerStatefulWidget {
+  CartaShell({super.key});
 
   @override
-  ConsumerState<TrailheadShell> createState() => _TrailheadShellState();
+  ConsumerState<CartaShell> createState() => _CartaShellState();
 }
 
-class _TrailheadShellState extends ConsumerState<TrailheadShell> {
+class _CartaShellState extends ConsumerState<CartaShell> {
   Timer? _autosaveTimer;
   String? _lastSavedYaml;
 
@@ -128,7 +128,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     _validate(wf, yaml);
   }
 
-  /// Run THRT validation for the workflow and update the banner provider.
+  /// Run Carta validation for the workflow and update the banner provider.
   /// Fire-and-forget: network failures keep the previous error state.
   /// Subflow tabs skip validation — subflows aren't deployable standalone,
   /// so flow validation would produce false positives (param placeholders).
@@ -141,7 +141,7 @@ class _TrailheadShellState extends ConsumerState<TrailheadShell> {
     }
     try {
       final errors = await ref
-          .read(thrtApiProvider)
+          .read(cartaApiProvider)
           .validateWorkflow(content: yaml ?? workflowToYaml(wf));
       if (mounted) {
         ref.read(validationErrorsProvider.notifier).state = errors;

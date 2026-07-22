@@ -6,7 +6,7 @@ import '../../models/workflow_node.dart';
 import '../../models/server_def.dart';
 import '../../providers/mode_provider.dart';
 import '../../providers/server_defs_provider.dart';
-import '../../providers/thrt_provider.dart';
+import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 import 'node_drawer.dart';
@@ -464,7 +464,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     final status = statuses[wf.name];
     if (status == null || !status.deployed) return;
 
-    final api = ref.read(thrtApiProvider);
+    final api = ref.read(cartaApiProvider);
     api.setLogFlags(wf.name, node.id, logIn: logIn, logOut: logOut).catchError(
           (_) {},
         );
@@ -615,8 +615,8 @@ class _SelectFieldState extends State<_SelectField> {
               value: widget.value,
               isDense: true,
               isExpanded: true,
-              icon: TrailheadIcon(
-                icon: TrailheadIconData.chevRight,
+              icon: CartaIcon(
+                icon: CartaIconData.chevRight,
                 size: 10,
                 color: AppColors.fg2,
               ),
@@ -695,8 +695,8 @@ class _ConfigListState extends State<_ConfigList> {
                     ),
                     child: Row(
                       children: [
-                        TrailheadIcon(
-                          icon: TrailheadIconData.file,
+                        CartaIcon(
+                          icon: CartaIconData.file,
                           size: 11,
                           color: AppColors.fg3,
                         ),
@@ -723,8 +723,8 @@ class _ConfigListState extends State<_ConfigList> {
                               width: 16,
                               height: 16,
                               alignment: Alignment.center,
-                              child: TrailheadIcon(
-                                icon: TrailheadIconData.x,
+                              child: CartaIcon(
+                                icon: CartaIconData.x,
                                 size: 9,
                                 color: AppColors.fg2,
                               ),
@@ -755,8 +755,8 @@ class _ConfigListState extends State<_ConfigList> {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          TrailheadIcon(
-                            icon: TrailheadIconData.copy,
+                          CartaIcon(
+                            icon: CartaIconData.copy,
                             size: 10,
                             color: AppColors.fg2,
                           ),
@@ -903,8 +903,8 @@ class _BranchOutputsEditorState extends State<_BranchOutputsEditor> {
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  TrailheadIcon(
-                    icon: TrailheadIconData.copy,
+                  CartaIcon(
+                    icon: CartaIconData.copy,
                     size: 10,
                     color: AppColors.fg2,
                   ),
@@ -1016,8 +1016,8 @@ class _BranchOutputRowState extends State<_BranchOutputRow> {
                     width: 20,
                     height: 20,
                     alignment: Alignment.center,
-                    child: TrailheadIcon(
-                      icon: TrailheadIconData.x,
+                    child: CartaIcon(
+                      icon: CartaIconData.x,
                       size: 10,
                       color: AppColors.fg2,
                     ),
@@ -1166,8 +1166,8 @@ class _SubworkflowSelectorState extends State<_SubworkflowSelector> {
                       color: AppColors.bg3,
                       borderRadius: BorderRadius.circular(4),
                     ),
-                    child: TrailheadIcon(
-                      icon: TrailheadIconData.chevRight,
+                    child: CartaIcon(
+                      icon: CartaIconData.chevRight,
                       size: 10,
                       color: AppColors.fg2,
                     ),
@@ -1298,7 +1298,7 @@ class _ServerDropdown extends ConsumerWidget {
                 width: 28,
                 height: 28,
                 child: _IconButton(
-                  icon: TrailheadIconData.plus,
+                  icon: CartaIconData.plus,
                   onTap: () => _showServerConfigModal(context, widgetRef),
                 ),
               ),
@@ -1412,12 +1412,12 @@ class _ServerRow extends StatelessWidget {
           ),
           SizedBox(width: 4),
           _RowIconBtn(
-            icon: TrailheadIconData.pencil,
+            icon: CartaIconData.pencil,
             onTap: onEdit,
           ),
           SizedBox(width: 3),
           _RowIconBtn(
-            icon: TrailheadIconData.trash,
+            icon: CartaIconData.trash,
             onTap: onDelete,
           ),
         ],
@@ -1427,7 +1427,7 @@ class _ServerRow extends StatelessWidget {
 }
 
 class _RowIconBtn extends StatelessWidget {
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final VoidCallback onTap;
 
   const _RowIconBtn({required this.icon, required this.onTap});
@@ -1448,7 +1448,7 @@ class _RowIconBtn extends StatelessWidget {
             borderRadius: BorderRadius.circular(3),
           ),
           child: Center(
-            child: TrailheadIcon(icon: icon, size: 10, color: AppColors.fg2),
+            child: CartaIcon(icon: icon, size: 10, color: AppColors.fg2),
           ),
         ),
       ),
@@ -1738,7 +1738,7 @@ class _DialogSelect extends StatelessWidget {
 }
 
 class _IconButton extends StatelessWidget {
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final VoidCallback onTap;
 
   const _IconButton({required this.icon, required this.onTap});
@@ -1758,7 +1758,7 @@ class _IconButton extends StatelessWidget {
             borderRadius: BorderRadius.circular(4),
           ),
           child: Center(
-            child: TrailheadIcon(icon: icon, size: 12, color: AppColors.fg2),
+            child: CartaIcon(icon: icon, size: 12, color: AppColors.fg2),
           ),
         ),
       ),

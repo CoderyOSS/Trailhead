@@ -5,7 +5,7 @@ import '../../providers/project_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 
-/// Connected THRT instance identity: which project is open, where THRT is
+/// Connected Carta instance identity: which project is open, where Carta is
 /// installed from, and the runtime mode. Read-only — local-install mode fixes
 /// the project dir at boot, so there is nothing to edit here.
 class InstanceSection extends ConsumerWidget {
@@ -20,7 +20,7 @@ class InstanceSection extends ConsumerWidget {
       children: [
         _header(
           'INSTANCE',
-          'The THRT runtime this frontend is talking to. Local installs fix '
+          'The Carta runtime this frontend is talking to. Local installs fix '
           'the project at boot (cwd) — one instance, one project.',
         ),
         const SizedBox(height: 14),
@@ -53,22 +53,22 @@ class InstanceSection extends ConsumerWidget {
                 _InfoRow(
                   label: 'Mode',
                   value: project.mode,
-                  icon: TrailheadIconData.zap,
+                  icon: CartaIconData.zap,
                 ),
                 _InfoRow(
                   label: 'Project dir',
                   value: project.dir,
-                  icon: TrailheadIconData.file,
+                  icon: CartaIconData.file,
                 ),
                 _InfoRow(
-                  label: 'THRT source',
-                  value: project.thrtSource ?? '—',
-                  icon: TrailheadIconData.gitBranch,
+                  label: 'Carta source',
+                  value: project.cartaSource ?? '—',
+                  icon: CartaIconData.gitBranch,
                 ),
                 _InfoRow(
                   label: 'Install dir',
                   value: project.installDir,
-                  icon: TrailheadIconData.plug,
+                  icon: CartaIconData.plug,
                   last: true,
                 ),
               ],
@@ -105,7 +105,7 @@ class InstanceSection extends ConsumerWidget {
 class _InfoRow extends StatelessWidget {
   final String label;
   final String value;
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final bool last;
 
   const _InfoRow({
@@ -128,7 +128,7 @@ class _InfoRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          TrailheadIcon(icon: icon, size: 12, color: AppColors.fg2),
+          CartaIcon(icon: icon, size: 12, color: AppColors.fg2),
           const SizedBox(width: 10),
           SizedBox(
             width: 110,

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../providers/log_provider.dart';
 import '../../providers/mode_provider.dart';
-import '../../providers/thrt_provider.dart';
+import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
 import 'log_stream_view.dart';
 
@@ -101,7 +101,7 @@ class _LogDrawerState extends ConsumerState<LogDrawer> {
   }
 }
 
-/// flowStatusProvider lives in thrt_provider; imported above.
+/// flowStatusProvider lives in carta_provider; imported above.
 class _DrawerHeader extends ConsumerWidget {
   final bool deployed;
 

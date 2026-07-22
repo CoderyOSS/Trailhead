@@ -4,7 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_code_editor/flutter_code_editor.dart';
 import 'package:flutter_highlight/themes/monokai-sublime.dart';
 import 'package:highlight/languages/elixir.dart';
-import '../../providers/thrt_provider.dart';
+import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
 
 /// Reusable payload editor widget.
@@ -101,7 +101,7 @@ class _PayloadEditorState extends ConsumerState<PayloadEditor> {
 
     try {
       final result = await ref
-          .read(thrtApiProvider)
+          .read(cartaApiProvider)
           .validateElixirTerm(code, isExpr: widget.isExpr);
       if (!mounted) return;
       setState(() {

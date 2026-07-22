@@ -6,7 +6,7 @@
 > - ---
 > - *(AI harness nodes and MCP integration — deferred. See roadmap below.)*
 
-# Trailhead Service - Agent Guide
+# Carta Service - Agent Guide
 
 ## Project Layout
 
@@ -24,13 +24,13 @@ For frontend work, read `frontend/AGENTS.md`. For the runtime backend, read `/ho
 
 ## Runtime Architecture
 
-The runtime engine is **THRT** (`/home/gem/projects/THRT`), an Elixir service
+The runtime engine is **Carta** (`/home/gem/projects/THRT`), an Elixir service
 that stores workflow YAML and executes node graphs. The Flutter frontend at
-`trailhead.rancidgrandmas.online` is served by a Bun proxy that forwards
-`/api/*` to THRT.
+`carta.rancidgrandmas.online` is served by a Bun proxy that forwards
+`/api/*` to Carta.
 
 The earlier Rust prototype has been retired entirely. The runtime is
-exclusively THRT (Elixir).
+exclusively Carta (Elixir).
 
 ## Knowledge Graph (graphify)
 
@@ -69,33 +69,33 @@ truth. They are a reference for design direction only.
 
 ## Agent Environment Setup
 
-**Critical:** Trailhead runs in the **apps container**, not on the host machine.
+**Critical:** Carta runs in the **apps container**, not on the host machine.
 Access via:
 
-- Web UI: `https://trailhead.rancidgrandmas.online/`
-- API: `https://trailhead.rancidgrandmas.online/api/v1/*` (proxied to THRT)
-- THRT direct: `https://thrt.rancidgrandmas.online/`
+- Web UI: `https://carta.rancidgrandmas.online/`
+- API: `https://carta.rancidgrandmas.online/api/v1/*` (proxied to Carta)
+- Carta direct: `https://carta.rancidgrandmas.online/`
 
-THRT is managed as a Launchy app named `thrt` on internal port `8060`. The
-`trailhead` Launchy app serves the Flutter build with a Bun proxy to THRT.
+Carta is managed as a Launchy app named `cbe1` on internal port `8060`. The
+`cartaclient` Launchy app serves the Flutter build with a Bun proxy to Carta.
 
 ## Architecture
 
 ```
-Trailhead Flutter (apps container, port 8040)
+Carta Flutter (apps container, port 8040)
 ├── Bun static server + /api/* proxy
 └── serves build/web
 
-THRT (apps container, port 8060)
-├── Store          : YAML persistence in THRT/flows/
+Carta (apps container, port 8060)
+├── Store          : YAML persistence in Carta/flows/
 ├── Engine         : deploy / undeploy flow supervisors
 ├── Api            : CRUD + runtime HTTP endpoints
 └── Nodes          : task, genserver
 ```
 
 **Deployment modes:**
-- **Web (current)**: Flutter SPA → Bun proxy (same-origin) → THRT. No CORS needed.
-- **Native iOS (planned)**: Flutter app → THRT directly (like MongoDB Compass → remote DB). Requires CORS on THRT.
+- **Web (current)**: Flutter SPA → Bun proxy (same-origin) → Carta. No CORS needed.
+- **Native iOS (planned)**: Flutter app → Carta directly (like MongoDB Compass → remote DB). Requires CORS on Carta.
 
 ## Core Data Model
 
@@ -113,29 +113,29 @@ edges:
 ```
 
 **Flow runtime**: A deployed workflow becomes a supervised tree of per-node
-`THRT.Node.Server` processes. Messages are routed along edges.
+`Carta.Node.Server` processes. Messages are routed along edges.
 
-*(Job/Worker lifecycle re-implementation on THRT planned — see roadmap.)*
+*(Job/Worker lifecycle re-implementation on Carta planned — see roadmap.)*
 
 ## Worker Providers
 
 > **Planned module.** Work containers (Docker, Daytona VMs, MicroK8s pods,
-> localhost processes) for isolated stage execution. Not yet implemented in THRT.
+> localhost processes) for isolated stage execution. Not yet implemented in Carta.
 > Design reference: `openspec/changes/multi-provider-workers/design.md`.
 
 ## Feature Status
 
 ### Implemented (✅)
 - Workflow CRUD via REST API
-- THRT YAML parser + node graph execution
-- Workflow YAML storage in THRT
+- Carta YAML parser + node graph execution
+- Workflow YAML storage in Carta
 
 ### Planned (🚧)
-- Job/worker lifecycle re-implementation on THRT
+- Job/worker lifecycle re-implementation on Carta
 - Human-in-the-loop approvals between stages
 - Real SSE event streaming
 - Token usage tracking
-- Native iOS client with direct THRT connection
+- Native iOS client with direct Carta connection
 
 ## API Endpoints
 
@@ -165,7 +165,7 @@ Deferred. See roadmap.
 
 ## Configuration
 
-**THRT Environment:**
+**Carta Environment:**
 - `PORT`: HTTP port (default `4000`; Launchy sets `8060`)
 - `FLOWS_DIR`: directory for persisted workflow YAML (default `./flows`)
 - `HOME`: must be `/home/gem/projects` so the Erlang cookie is found
@@ -181,8 +181,8 @@ Deferred. See roadmap.
   (e.g. `Kernel.put_in(payload, [:payload, :meta], 1)` on `%{}`) crashed the
   node's route_fn → GenServer stopped → supervisor restarted it →
   `Stats.init_node` re-**inserted** `{0,0}`, wiping counters every crash —
-  status polls showed 0/0 forever and the crash was only in THRT stdout.
-  Fixes, THRT: `Stats.init_node` uses `:ets.insert_new` (counters survive
+  status polls showed 0/0 forever and the crash was only in Carta stdout.
+  Fixes, Carta: `Stats.init_node` uses `:ets.insert_new` (counters survive
   node restarts; crash asymmetry in:1 out:0 now visible). `Engine.undeploy`
   now calls `Stats.clear_flow/1` (previously only LogFlags) — `/status` no
   longer shows ghost nodes from dead deployments. `Node.Server` emits
@@ -199,15 +199,15 @@ Deferred. See roadmap.
   passes `dir == 'error'` frames unconditionally (no toggle required) and
   styles them `AppColors.danger`. Verified E2E: `mix test` 279 green; inject
   on crashing flow → counters in:2 out:0 persist; error frame received over
-  `wss://trailhead.../logs/stream` through Caddy+Nginx+Bun bridge.
+  `wss://carta.../logs/stream` through Caddy+Nginx+Bun bridge.
   Infra note: `/var/log/launchy/` in the apps container is EMPTY — Launchy
   pipes app stdout to the container's own stdout (see container logs), the
-  documented `thrt.log` path does not exist.
+  documented `carta.log` path does not exist.
 - **Config validation + log ordering + editor fixes (2026-07-20)**: Root cause
   of the "job reload badmap" report was the frontend emitting **duplicate
   `config:` blocks** on transform nodes (expr + logging flags each wrote
   their own) — YAML keeps only the last, silently dropping `expr`, so the
-  function node died in init with `:missing_expr`. Fixes, THRT:
+  function node died in init with `:missing_expr`. Fixes, Carta:
   `Engine.prepare` gains `validate_node_configs` — function nodes require a
   syntactically valid `config.expr`, inject nodes require exactly one
   parseable `payload_code` XOR `payload_expr` (`payload_expr` syntax-only at
@@ -236,22 +236,22 @@ Deferred. See roadmap.
   `config:` in flow YAML (emitted by the frontend for empty config maps)
   parsed as nil and crashed deploys with `BadMapError` in node init —
   job launch/reload failed with a raw supervisor shutdown tuple. Fixes:
-  THRT `Yaml.parse_node` normalizes non-map config to `%{}`; frontend
+  Carta `Yaml.parse_node` normalizes non-map config to `%{}`; frontend
   `workflowToYaml` only emits `config:` when ≥1 child entry exists. Feature:
   `source.inject` gains `payload_expr` — arbitrary Elixir (e.g.
-  `Map.merge/2`) evaluated ONCE at deploy via new `THRT.Expr`; static result
+  `Map.merge/2`) evaluated ONCE at deploy via new `Carta.Expr`; static result
   fires every time (dynamic per-fire values deferred). Mutually exclusive
   with `payload_code` (`:ambiguous_payload`). Inject + validate endpoints
   accept `kind: "expr"` (inject: eval per trigger click; validate:
   syntax-only). Frontend: payload drawer literal/expression toggle
   (`payloadIsExpr` on WorkflowNode), YAML round-trip via `payload_expr`,
-  validation pip + trigger paths send `kind`. Note: THRT tests must run
+  validation pip + trigger paths send `kind`. Note: Carta tests must run
   with `mix test` (app booted) — deploy-touching tests fail under
   `--no-start` (pre-existing Registry startup assumption).
 - **Job-scoped workflow snapshots in Active mode (2026-07-19)**: Fixes payload
   edits in Active mode never persisting (root cause: `_ActiveInjectSection`
   buffer was runtime-only, so job restarts redeployed stale disk YAML).
-  THRT `Job.Manager` now stores the launched YAML in the job row and exposes
+  Carta `Job.Manager` now stores the launched YAML in the job row and exposes
   it as `content` on all `/api/v1/jobs/*` responses. Frontend: launching or
   selecting a job parses that YAML into `jobDocumentsProvider` (keyed by job
   id) — an independent copy. Canvas + drawer bind to the derived
@@ -264,7 +264,7 @@ Deferred. See roadmap.
   node/payload/prompt/result tabs bound to the job doc. JobBar `reload`
   button = kill + re-sync + relaunch (cancel → create → fresh snapshot from
   `newJob.content`), discarding job-local edits. Inject buffer keys are
-  job-scoped (`injectBufferKey` in thrt_provider.dart).
+  job-scoped (`injectBufferKey` in carta_provider.dart).
 - **Inject trigger cap on canvas nodes (2026-07-19)**: `source.inject` nodes
   get a trigger button in Active mode when the flow is deployed — the left
   colorized cap gains a pulsing accent glow (same animation as the active
@@ -273,16 +273,16 @@ Deferred. See roadmap.
   detector on the cap loses the gesture arena to the parent node detector.
   In-flight inject shows a spinner in the cap. Icons: `source.inject` → play
   triangle, `delay` → stopwatch (canvas + node picker). Canvas now also polls
-  the current workflow's THRT status every 1s while in Active mode
+  the current workflow's Carta status every 1s while in Active mode
   (`_pollActiveFlow`), independent of the (unimplemented) jobs backend — this
   is what populates `flowStatusProvider` for badges, the drawer trigger and
   the cap. Shared `triggerNodeInject(WidgetRef, ...)` helper in
-  `thrt_provider.dart` (drawer + canvas).
-- **Namespaced module system + multi-project THRT (2026-07-19)**: Linked
+  `carta_provider.dart` (drawer + canvas).
+- **Namespaced module system + multi-project Carta (2026-07-19)**: Linked
   packages register node types only as `mod.<package>.<type>` (bare linked
-  types hard-fail). Package manifests (`thrt_package.yaml`) require `name` +
-  `version`. THRT registry: `~/.trailhead/projects.yaml` (project dirs),
-  `~/.trailhead/packages/<pkg>/` (global implicit links). Flow YAML gains
+  types hard-fail). Package manifests (`carta_package.yaml`) require `name` +
+  `version`. Carta registry: `~/.carta/projects.yaml` (project dirs),
+  `~/.carta/packages/<pkg>/` (global implicit links). Flow YAML gains
   `project:` binding a workflow to a project dir; `mod.*` types resolve only
   against that project's links + global packages. New endpoints:
   `POST /api/v1/workflows/validate`, `GET /api/v1/projects`. Frontend:
@@ -294,8 +294,8 @@ Deferred. See roadmap.
 - **Per-node logging + WebSocket log stream (2026-07-17)**: Removed the
   `sink.log` node. Logging is now a per-node build-time flag
   (`config.logging_enabled`) plus runtime-hot-toggleable `log_in`/`log_out`.
-  Backend: `THRT.LogFlags` (ETS), `THRT.LogBus` (Registry pubsub),
-  `THRT.LogSocket` (Bandit WebSock handler), codegen emits guarded log hooks
+  Backend: `Carta.LogFlags` (ETS), `Carta.LogBus` (Registry pubsub),
+  `Carta.LogSocket` (Bandit WebSock handler), codegen emits guarded log hooks
   for actor + function nodes. New endpoints: `POST .../inject` (raw Elixir
   literal), `PATCH .../log-flags` (hot toggle), `GET .../logs/stream` (WS),
   `POST /api/v1/validate/elixir-term`. Frontend: drawer gains top-level
@@ -303,32 +303,36 @@ Deferred. See roadmap.
   aggregated stream view. `source.inject` payload is now `payload_code`
   (Elixir source string, backend-parsed); drawer gets a payload tab with
   syntax highlighting + live server-side validation.
-- **THRT runtime + same-origin proxy (2026-07-15)**: Active runtime is
-  THRT (`/home/gem/projects/THRT`). Frontend served by Bun proxy at
-  `trailhead.rancidgrandmas.online`, forwarding `/api/*` to THRT on
+- **Carta runtime + same-origin proxy (2026-07-15)**: Active runtime is
+  Carta (`/home/gem/projects/THRT`). Frontend served by Bun proxy at
+  `carta.rancidgrandmas.online`, forwarding `/api/*` to Carta on
   `localhost:8060`. Added Deploy button, Inject dialog, and node
   status badges.
 
 ## Deployment
 
-THRT and the Flutter frontend both run inside the **apps container** as Launchy
+Carta and the Flutter frontend both run inside the **apps container** as Launchy
 apps. They are not managed by the host supervisor.
 
 | App | Subdomain | Internal Port | Directory | Command |
 |-----|-----------|---------------|-----------|---------|
-| `thrt` | `thrt.rancidgrandmas.online` | 8060 | `/home/gem/projects/THRT` | `elixir --sname thrt -S mix run --no-halt` |
-| `trailhead` | `trailhead.rancidgrandmas.online` | 8040 | `/home/gem/projects/CoderyTrailhead/frontend` | `bun run serve.js` |
+| `cbe1` | (internal) | 8060 | `/home/gem/projects/THRT` | `elixir --sname cbe1 -S mix run --no-halt` |
+| `cartaclient` | `carta.rancidgrandmas.online` | 8040 | `/home/gem/projects/CoderyTrailhead/frontend` | `bun run serve.js` |
+
+`cbe1` is the personal Carta Engine instance (cbe1 = Carta Backend Engine #1; future
+instances would be `cbe2`, `cbe3`, etc.). `cartaclient` serves the Flutter build and
+proxies `/api/*` to `cbe1` on `localhost:8060`.
 
 To pick up code changes:
 
 1. `cd /home/gem/projects/THRT && mix compile`
-2. Restart the `thrt` Launchy app (`remove_app` + `add_app`).
+2. Restart the `cbe1` Launchy app.
 3. `cd /home/gem/projects/CoderyTrailhead/frontend && ~/projects/flutter/bin/flutter build web --release`
-4. Restart the `trailhead` Launchy app.
+4. Restart the `cartaclient` Launchy app.
 
 ## Store Schema
 
-THRT persists workflows as individual YAML files in `THRT/flows/` (configured by
+Carta persists workflows as individual YAML files in `Carta/flows/` (configured by
 `FLOWS_DIR`). Each file is named `{name}.yaml`.
 
 Metadata returned by the CRUD API:
@@ -337,7 +341,7 @@ Metadata returned by the CRUD API:
 - `content_hash`: SHA-256 hash of content (for change detection)
 - `updated_at`: file mtime in ISO-8601 UTC
 
-Runtime counters are stored in an in-memory ETS table (`:thrt_stats`) keyed by
+Runtime counters are stored in an in-memory ETS table (`:carta_stats`) keyed by
 `{flow_id, node_id}`.
 
 ## Common Tasks
@@ -347,23 +351,23 @@ Runtime counters are stored in an in-memory ETS table (`:thrt_stats`) keyed by
 # create
 bash -c 'cat <<EOF > /tmp/flow.json
 {"name":"hello-world","content":"name: hello-world\nnodes:\n  - id: a\n    type: source.inject\n    config:\n      payload_code: \"%{greeted: true}\"\nedges: []\n"}'
-curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows \
+curl -s -X POST https://carta.rancidgrandmas.online/api/v1/workflows \
   -H "Content-Type: application/json" -d @/tmp/flow.json
 
 # deploy
-curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-world/deploy
+curl -s -X POST https://carta.rancidgrandmas.online/api/v1/workflows/hello-world/deploy
 
 # status
-curl -s https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-world/status
+curl -s https://carta.rancidgrandmas.online/api/v1/workflows/hello-world/status
 
 # inject (Elixir literal source — backend parses tuples/maps/atoms/kw lists/structs)
-curl -s -X POST https://trailhead.rancidgrandmas.online/api/v1/workflows/hello-world/inject \
+curl -s -X POST https://carta.rancidgrandmas.online/api/v1/workflows/hello-world/inject \
   -H "Content-Type: application/json" -d '{"node_id":"a","code":"%{hello: :world}"}'
 ```
 
 **Import workflows from disk (one-time bootstrap or batch load):**
 ```bash
-# THRT.Store expects one YAML file per workflow in FLOWS_DIR.
+# Carta.Store expects one YAML file per workflow in FLOWS_DIR.
 cp /path/to/yaml/dir/*.yml /home/gem/projects/THRT/flows/
 ```
 
@@ -376,7 +380,7 @@ cp /path/to/yaml/dir/*.yml /home/gem/projects/THRT/flows/
    drawer's inject section → press **trigger** (or `POST .../inject`).
 4. Watch the node status badge update (`in:N out:M`) and the **log** drawer
    stream frames over the per-flow WebSocket.
-5. THRT logs go to the apps container's stdout (Launchy pipes; `/var/log/launchy/`
+5. Carta logs go to the apps container's stdout (Launchy pipes; `/var/log/launchy/`
    is empty) — read via container logs (`codery_get_container_info service=apps`).
 
 **Unit tests:**
@@ -386,24 +390,24 @@ mix test
 ```
 
 (`--no-start` is stale guidance — deploy-touching tests need the booted app's
-`THRT.Registry` and fail without it.)
+`Carta.Registry` and fail without it.)
 
 **Known gap:** No automated frontend widget/E2E tests yet. Manual testing via UI + `curl`.
 
 ## Known Issues
 
-1. **Running flows do not survive THRT restart** — deployments are in-memory. After restart, reload/redeploy YAML definitions.
+1. **Running flows do not survive Carta restart** — deployments are in-memory. After restart, reload/redeploy YAML definitions.
 2. ~~WebSocket through apps-container Nginx~~ **RESOLVED (2026-07-18)** — WS
    upgrade headers landed in `CoderyOSS/Codery` (`c7db390`) and are live. Log
-   stream verified end-to-end: browser → Caddy → Nginx → Bun bridge → THRT
-   (`wss://trailhead.rancidgrandmas.online/api/v1/workflows/:name/logs/stream`
+   stream verified end-to-end: browser → Caddy → Nginx → Bun bridge → Carta
+   (`wss://carta.rancidgrandmas.online/api/v1/workflows/:name/logs/stream`
    returns 101 + frames). Log hooks are runtime-only: `exec/3` checks
    `log_in`/`log_out` flags on every message; no redeploy needed for toggles.
    The `logging_enabled` YAML key no longer gates anything (consumed only as
    seed for runtime flags if present).
 3. **Client deployment modes** — Two connection models with different CORS requirements:
-   - **Web (current)**: Flutter SPA served by Bun proxy → THRT same-origin. No CORS needed. Simplest deployment.
-   - **Native iOS (planned)**: App connects directly to THRT like a database client (e.g. MongoDB Compass → remote server). Requires CORS support on THRT. Not yet implemented.
+   - **Web (current)**: Flutter SPA served by Bun proxy → Carta same-origin. No CORS needed. Simplest deployment.
+   - **Native iOS (planned)**: App connects directly to Carta like a database client (e.g. MongoDB Compass → remote server). Requires CORS support on Carta. Not yet implemented.
 
 3. **App container restarts wipe installed Flutter SDK** — install Flutter to `/home/gem/projects/flutter` (bind-mounted) instead of `/home/gem/flutter`.
 
@@ -415,16 +419,16 @@ CoderyTrailhead/
 │   ├── lib/
 │   │   ├── services/
 │   │   │   ├── workflows_api.dart
-│   │   │   └── thrt_api.dart
+│   │   │   └── carta_api.dart
 │   │   ├── providers/
-│   │   │   └── thrt_provider.dart
+│   │   │   └── carta_provider.dart
 │   │   └── widgets/canvas/
 │   │       └── graph_canvas.dart
-│   └── serve.js                  ← Bun proxy to THRT
+│   └── serve.js                  ← Bun proxy to Carta
 └── openspec/                     ← design proposals
 
 /home/gem/projects/THRT/          ← active Elixir runtime
-├── lib/thrt/
+├── lib/carta/
 │   ├── api.ex
 │   ├── engine.ex
 │   ├── runtime.ex                  ← call adapters for exec graph entries
@@ -447,7 +451,7 @@ CoderyTrailhead/
 
 1. **Frontend changes** go in `frontend/`; never edit `design/` prototype files.
 2. **Runtime changes** go in `/home/gem/projects/THRT/`.
-3. **New node types**: implement the `THRT.Node` behaviour and register in `THRT.Engine`.
-4. **YAML schema changes**: update `THRT.Yaml` + add tests.
-5. **Always test THRT with `mix test`** (app booted — `--no-start` breaks deploy tests).
-6. **After frontend changes**, run `~/projects/flutter/bin/flutter build web --release` and restart the `trailhead` Launchy app.
+3. **New node types**: implement the `Carta.Node` behaviour and register in `Carta.Engine`.
+4. **YAML schema changes**: update `Carta.Yaml` + add tests.
+5. **Always test Carta with `mix test`** (app booted — `--no-start` breaks deploy tests).
+6. **After frontend changes**, run `~/projects/flutter/bin/flutter build web --release` and restart the `cartaclient` Launchy app.

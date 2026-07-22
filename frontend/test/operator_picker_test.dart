@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend/models/node_catalog.dart';
-import 'package:frontend/services/thrt_api.dart';
+import 'package:frontend/services/carta_api.dart';
 
 void main() {
   // Pure logic check: the category list the picker assembles must keep

@@ -8,7 +8,7 @@ import '../../providers/flow_tabs_provider.dart';
 import '../../providers/mode_provider.dart';
 import '../../providers/mock_data.dart' show WorkflowSummary;
 import '../../providers/subflows_provider.dart';
-import '../../providers/thrt_provider.dart';
+import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
 import '../../utils/workflow_to_yaml.dart';
 import '../icons.dart';
@@ -321,7 +321,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     _PlusMenuRow(
-                      icon: TrailheadIconData.workflow,
+                      icon: CartaIconData.workflow,
                       label: 'new flow',
                       onTap: () {
                         _closeMenus();
@@ -329,7 +329,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
                       },
                     ),
                     _PlusMenuRow(
-                      icon: TrailheadIconData.gitBranch,
+                      icon: CartaIconData.gitBranch,
                       label: 'new subflow',
                       iconColor: AppColors.info,
                       onTap: () {
@@ -443,8 +443,8 @@ class _PlusButtonState extends State<_PlusButton> {
             borderRadius: BorderRadius.circular(7),
           ),
           child: Center(
-            child: TrailheadIcon(
-              icon: TrailheadIconData.plus,
+            child: CartaIcon(
+              icon: CartaIconData.plus,
               size: 13,
               color: AppColors.fg2,
             ),
@@ -530,10 +530,10 @@ class _TabChipState extends State<_TabChip> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                TrailheadIcon(
+                CartaIcon(
                   icon: isFlow
-                      ? TrailheadIconData.workflow
-                      : TrailheadIconData.gitBranch,
+                      ? CartaIconData.workflow
+                      : CartaIconData.gitBranch,
                   size: 12,
                   color: iconColor,
                 ),
@@ -734,12 +734,12 @@ class _TabMenu extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _TabMenuRow(
-              icon: TrailheadIconData.pencil,
+              icon: CartaIconData.pencil,
               label: 'rename',
               onTap: onRename,
             ),
             _TabMenuRow(
-              icon: TrailheadIconData.trash,
+              icon: CartaIconData.trash,
               label: 'delete',
               danger: true,
               onTap: onDelete,
@@ -752,7 +752,7 @@ class _TabMenu extends StatelessWidget {
 }
 
 class _TabMenuRow extends StatefulWidget {
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final String label;
   final bool danger;
   final VoidCallback onTap;
@@ -788,7 +788,7 @@ class _TabMenuRowState extends State<_TabMenuRow> {
           ),
           child: Row(
             children: [
-              TrailheadIcon(icon: widget.icon, size: 13, color: fg),
+              CartaIcon(icon: widget.icon, size: 13, color: fg),
               const SizedBox(width: 8),
               Text(
                 widget.label,
@@ -808,7 +808,7 @@ class _TabMenuRowState extends State<_TabMenuRow> {
 }
 
 class _PlusMenuRow extends StatefulWidget {
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final String label;
   final Color? iconColor;
   final VoidCallback onTap;
@@ -843,7 +843,7 @@ class _PlusMenuRowState extends State<_PlusMenuRow> {
           ),
           child: Row(
             children: [
-              TrailheadIcon(
+              CartaIcon(
                 icon: widget.icon,
                 size: 13,
                 color: widget.iconColor ?? AppColors.fg2,

@@ -10,7 +10,7 @@ class AppButton extends StatefulWidget {
   final AppButtonVariant variant;
   final AppButtonSize size;
   final String? label;
-  final TrailheadIconData? icon;
+  final CartaIconData? icon;
   final VoidCallback? onTap;
 
   AppButton({
@@ -100,7 +100,7 @@ class _AppButtonState extends State<AppButton> {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (widget.icon != null) ...[
-                TrailheadIcon(
+                CartaIcon(
                   icon: widget.icon!,
                   size: _iconSize,
                   color: _fg,

@@ -84,8 +84,8 @@ class _EmptyWorkflowHeroState extends ConsumerState<EmptyWorkflowHero> {
               border: Border.all(color: AppColors.border2),
             ),
             child: Center(
-              child: TrailheadIcon(
-                icon: TrailheadIconData.bot,
+              child: CartaIcon(
+                icon: CartaIconData.bot,
                 size: 38,
                 color: AppColors.accent,
               ),
@@ -118,7 +118,7 @@ class _EmptyWorkflowHeroState extends ConsumerState<EmptyWorkflowHero> {
           AppButton(
             variant: AppButtonVariant.primary,
             size: AppButtonSize.md,
-            icon: TrailheadIconData.plus,
+            icon: CartaIconData.plus,
             label: _busy ? 'creating…' : 'Create workflow',
             onTap: _busy ? null : _create,
           ),

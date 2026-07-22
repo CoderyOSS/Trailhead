@@ -15,8 +15,8 @@ import '../../providers/mode_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/mock_data.dart';
 import '../../providers/operator_picker_provider.dart';
-import '../../providers/thrt_provider.dart';
-import '../../services/thrt_api.dart' show FlowStatus, InstalledNode;
+import '../../providers/carta_provider.dart';
+import '../../services/carta_api.dart' show FlowStatus, InstalledNode;
 import '../../theme/tokens.dart';
 import '../../widgets/mode_rail.dart';
 import '../../providers/connection_drag_provider.dart';
@@ -283,7 +283,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
         jobs.where((j) => j.status == 'running').map((j) => j.flowName).toSet();
     if (runningFlows.isEmpty) return;
     try {
-      final api = ref.read(thrtApiProvider);
+      final api = ref.read(cartaApiProvider);
       final updates = <String, FlowStatus>{};
       for (final name in runningFlows) {
         updates[name] = await api.status(name);
@@ -304,7 +304,7 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
     final wf = ref.read(canvasWorkflowProvider);
     if (wf.name.isEmpty) return;
     try {
-      final status = await ref.read(thrtApiProvider).status(wf.name);
+      final status = await ref.read(cartaApiProvider).status(wf.name);
       ref.read(flowStatusProvider.notifier).state =
           Map<String, FlowStatus>.from(ref.read(flowStatusProvider))
             ..[wf.name] = status;
@@ -1410,18 +1410,18 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
                                     selected: isSelected,
                                     icon:
                                         node.kind == 'source.inject'
-                                            ? TrailheadIconData.play
+                                            ? CartaIconData.play
                                             : node.kind == 'delay'
-                                                ? TrailheadIconData.stopwatch
+                                                ? CartaIconData.stopwatch
                                                 : node.kind == 'port.in'
-                                                    ? TrailheadIconData.plug
+                                                    ? CartaIconData.plug
                                                     : node.kind == 'port.out'
-                                                        ? TrailheadIconData.send
+                                                        ? CartaIconData.send
                                                         : node.kind.startsWith('http.')
-                                                            ? TrailheadIconData.globe
+                                                            ? CartaIconData.globe
                                                             : node.expr != null
-                                                                ? TrailheadIconData.terminal
-                                                                : TrailheadIconData.bot,
+                                                                ? CartaIconData.terminal
+                                                                : CartaIconData.bot,
                                     triggerable:
                                         node.kind == 'source.inject' &&
                                             !editable &&

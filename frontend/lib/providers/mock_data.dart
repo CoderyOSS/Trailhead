@@ -18,7 +18,7 @@ class WorkflowSummary {
   final List<WorkflowConnection> connections;
   final List<ServerDef> servers;
 
-  /// Absolute path of the THRT project this workflow deploys against.
+  /// Absolute path of the Carta project this workflow deploys against.
   /// Null = current/default project on the runtime.
   final String? project;
 

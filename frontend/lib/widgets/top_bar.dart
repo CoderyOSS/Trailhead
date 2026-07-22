@@ -7,7 +7,7 @@ import '../providers/api_provider.dart';
 import '../providers/flow_tabs_provider.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart' show WorkflowSummary;
-import '../providers/thrt_provider.dart';
+import '../providers/carta_provider.dart';
 import '../utils/workflow_to_yaml.dart';
 import '../utils/yaml_to_workflow.dart';
 import '../services/jobs_api.dart';
@@ -126,8 +126,8 @@ class _BuildBar extends ConsumerWidget {
     if (remoteAsync.hasError && workflows.isEmpty) {
       return Row(
         children: [
-          TrailheadIcon(
-            icon: TrailheadIconData.x,
+          CartaIcon(
+            icon: CartaIconData.x,
             size: 14,
             color: AppColors.danger,
           ),
@@ -143,7 +143,7 @@ class _BuildBar extends ConsumerWidget {
           AppButton(
             variant: AppButtonVariant.ghost,
             size: AppButtonSize.sm,
-            icon: TrailheadIconData.copy,
+            icon: CartaIconData.copy,
             label: 'retry',
             onTap: () { ref.invalidate(remoteWorkflowsProvider); },
           ),
@@ -158,7 +158,7 @@ class _BuildBar extends ConsumerWidget {
           AppButton(
             variant: AppButtonVariant.primary,
             size: AppButtonSize.sm,
-            icon: TrailheadIconData.plus,
+            icon: CartaIconData.plus,
             label: 'create your first workflow',
             onTap: () => createUntitledFlow(ref),
           ),
@@ -201,7 +201,7 @@ class _BuildBar extends ConsumerWidget {
         AppButton(
           variant: yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
           size: AppButtonSize.sm,
-          icon: TrailheadIconData.file,
+          icon: CartaIconData.file,
           label: 'YAML',
           onTap: () {
             ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
@@ -220,7 +220,7 @@ class _BuildBar extends ConsumerWidget {
           AppButton(
             variant: AppButtonVariant.trail,
             size: AppButtonSize.sm,
-            icon: TrailheadIconData.play,
+            icon: CartaIconData.play,
             label: 'launch',
             onTap: () async {
             try {
@@ -228,7 +228,7 @@ class _BuildBar extends ConsumerWidget {
               // Gate: server-side validation first — a bad flow must not be
               // persisted or launched. Blocks with a readable error list.
               final errors = await ref
-                  .read(thrtApiProvider)
+                  .read(cartaApiProvider)
                   .validateWorkflow(content: yaml);
               if (errors.isNotEmpty) {
                 if (context.mounted) {
@@ -308,7 +308,7 @@ class _HistoryListBar extends ConsumerWidget {
         AppButton(
           variant: AppButtonVariant.ghost,
           size: AppButtonSize.sm,
-          icon: TrailheadIconData.refresh,
+          icon: CartaIconData.refresh,
           label: 'refresh',
           onTap: () => ref.invalidate(jobsProvider),
         ),
@@ -350,7 +350,7 @@ class _JobBar extends StatelessWidget {
                     ? AppButtonVariant.secondary
                     : AppButtonVariant.ghost,
                 size: AppButtonSize.sm,
-                icon: TrailheadIconData.file,
+                icon: CartaIconData.file,
                 label: 'YAML',
                 onTap: onToggleYaml,
               ),
@@ -436,8 +436,8 @@ class _JobRow1 extends ConsumerWidget {
               child: Center(
                 child: Transform.rotate(
                   angle: 3.14159,
-                  child: TrailheadIcon(
-                    icon: TrailheadIconData.chevRight,
+                  child: CartaIcon(
+                    icon: CartaIconData.chevRight,
                     size: 14,
                     color: AppColors.fg2,
                   ),
@@ -572,8 +572,8 @@ class _JobControls extends ConsumerWidget {
             _CtrlBtn(
               onTap: () => _reloadJob(context, ref, job),
               label: 'reload',
-              icon: TrailheadIcon(
-                icon: TrailheadIconData.refresh,
+              icon: CartaIcon(
+                icon: CartaIconData.refresh,
                 size: 11,
                 color: AppColors.fg0,
               ),
@@ -584,8 +584,8 @@ class _JobControls extends ConsumerWidget {
                 ref.invalidate(jobsProvider);
                 ref.read(autoRefreshJobsProvider.notifier).state++;
               },
-              icon: TrailheadIcon(
-                icon: TrailheadIconData.refresh,
+              icon: CartaIcon(
+                icon: CartaIconData.refresh,
                 size: 11,
                 color: AppColors.fg0,
               ),
@@ -596,7 +596,7 @@ class _JobControls extends ConsumerWidget {
   }
 
   /// Kill the job, re-sync it to the current stored workflow, and relaunch.
-  /// The new job gets a fresh snapshot parsed from the YAML THRT redeploys;
+  /// The new job gets a fresh snapshot parsed from the YAML Carta redeploys;
   /// the old job's snapshot (with any Active-mode edits) is discarded.
   void _reloadJob(BuildContext context, WidgetRef ref, JobDto job) {
     showDialog(

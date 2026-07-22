@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../providers/thrt_provider.dart';
+import '../providers/carta_provider.dart';
 import '../theme/tokens.dart';
 
-/// Error banner listing THRT validation problems for the active workflow.
+/// Error banner listing Carta validation problems for the active workflow.
 /// Hidden when the workflow is valid. Shown above the canvas in build mode
 /// and inside the YAML drawer.
 class ValidationBanner extends ConsumerWidget {

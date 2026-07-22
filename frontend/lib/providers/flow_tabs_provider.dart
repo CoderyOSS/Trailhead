@@ -68,7 +68,7 @@ List<String> flowOrderNames(List<FlowTab> tabs) => [
         if (t.kind == FlowTabKind.flow) t.name,
     ];
 
-/// Persist the flow-tab order (flow names only) to trailhead.yaml.
+/// Persist the flow-tab order (flow names only) to carta.yaml.
 void persistFlowOrder(WidgetRef ref, List<FlowTab> tabs) {
   ref.read(projectApiProvider).putFlowOrder(flowOrderNames(tabs)).then((_) {
     ref.invalidate(projectInfoProvider);
@@ -175,7 +175,7 @@ final flowTabSyncProvider = FutureProvider<void>((ref) async {
   }
 
   // Persist a rename-swap so the stale old name never lingers in
-  // trailhead.yaml (the flow-order endpoint rejects unknown names).
+  // carta.yaml (the flow-order endpoint rejects unknown names).
   if (renamedFromTo.isNotEmpty) {
     ref
         .read(projectApiProvider)

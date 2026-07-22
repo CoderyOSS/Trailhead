@@ -7,7 +7,7 @@ import 'theme_controller.dart';
 // ancestors rebuild. Therefore:
 //   1. NEVER use `const` on any widget that reads AppColors (directly or in
 //      descendants) unless that widget itself watches settingsProvider.
-//   2. TrailheadApp MUST watch settingsProvider to force root rebuild.
+//   2. CartaApp MUST watch settingsProvider to force root rebuild.
 //   3. When in doubt, remove const. The performance cost is negligible;
 //      broken theme propagation is not.
 // See theme_controller.dart and main.dart for related rules.

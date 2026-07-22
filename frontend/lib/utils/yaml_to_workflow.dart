@@ -37,7 +37,7 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
   final version = (doc['version'] as int?) ?? 1;
   final draft = doc['draft'] as int?;
 
-  // Try nodes (THRT schema) first, fall back to stages (legacy frontend).
+  // Try nodes (Carta schema) first, fall back to stages (legacy frontend).
   var nodeList = doc['nodes'];
   if (nodeList is! YamlList) {
     nodeList = doc['stages'];
@@ -64,7 +64,7 @@ WorkflowSummary yamlToWorkflow(String name, String yamlText) {
   }
 
   // Read `connections:` (canonical) first; fall back to legacy `edges:` key
-  // so existing persisted workflows auto-migrate. Matches THRT backend.
+  // so existing persisted workflows auto-migrate. Matches Carta backend.
   final connectionsNode = doc['connections'] ?? doc['edges'];
   final connections = <WorkflowConnection>[];
   if (connectionsNode is YamlList) {
@@ -168,7 +168,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   final connection = stage['connection']?.toString();
   final configs = _toStringList(stage['configs']);
 
-  // Node config sub-map (THRT node types)
+  // Node config sub-map (Carta node types)
   final config = stage['config'];
   String? expr;
   int? intervalMs;

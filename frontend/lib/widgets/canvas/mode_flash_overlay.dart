@@ -126,10 +126,10 @@ class _ModeFlashOverlayState extends State<ModeFlashOverlay>
                         ],
                       ),
                       child: Center(
-                        child: TrailheadIcon(
+                        child: CartaIcon(
                           icon: isScissors
-                              ? TrailheadIconData.scissors
-                              : TrailheadIconData.mousePointer,
+                              ? CartaIconData.scissors
+                              : CartaIconData.mousePointer,
                           size: 62,
                           color: isScissors ? AppColors.accent : AppColors.fg0,
                         ),

@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../models/node_catalog.dart';
-import '../../providers/thrt_provider.dart';
+import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 
@@ -117,8 +117,8 @@ class _OperatorPickerState extends ConsumerState<OperatorPicker> {
                         onTap: widget.onClose,
                         child: Padding(
                           padding: const EdgeInsets.all(4),
-                          child: TrailheadIcon(
-                            icon: TrailheadIconData.x,
+                          child: CartaIcon(
+                            icon: CartaIconData.x,
                             size: 10,
                             color: AppColors.fg3,
                           ),
@@ -282,7 +282,7 @@ class _OperatorRowState extends State<_OperatorRow> {
                   borderRadius: BorderRadius.circular(5),
                 ),
                 child: Center(
-                  child: TrailheadIcon(
+                  child: CartaIcon(
                     icon: entry.icon,
                     size: 11,
                     color: isTransform ? AppColors.fg2 : AppColors.accent,
@@ -321,8 +321,8 @@ class _OperatorRowState extends State<_OperatorRow> {
                     cursor: SystemMouseCursors.click,
                     child: Padding(
                       padding: const EdgeInsets.all(4),
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.globe,
+                      child: CartaIcon(
+                        icon: CartaIconData.globe,
                         size: 11,
                         color: AppColors.fg3,
                       ),

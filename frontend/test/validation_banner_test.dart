@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:frontend/providers/thrt_provider.dart';
+import 'package:frontend/providers/carta_provider.dart';
 import 'package:frontend/widgets/validation_banner.dart';
 
 void main() {

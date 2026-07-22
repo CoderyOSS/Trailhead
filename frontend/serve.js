@@ -13,7 +13,7 @@ async function initBuildVersion() {
 }
 await initBuildVersion();
 
-// THRT runtime lives in the same container. Use same-origin proxy.
+// Carta runtime lives in the same container. Use same-origin proxy.
 const BACKEND_URL = process.env.BACKEND_URL || 'http://localhost:8060';
 
 const MIME = {

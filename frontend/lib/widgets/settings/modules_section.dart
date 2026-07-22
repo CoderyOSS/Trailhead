@@ -6,10 +6,10 @@ import '../../services/modules_api.dart';
 import '../../theme/tokens.dart';
 import '../../widgets/icons.dart';
 
-/// THRT module (linked package) browser. Lists every visible package —
+/// Carta module (linked package) browser. Lists every visible package —
 /// project links, registered project dirs, and global packages — with their
 /// node types and packaged subflows. Register/unregister writes through to
-/// `~/.trailhead/projects.yaml` (idempotent — no restart needed).
+/// `~/.carta/projects.yaml` (idempotent — no restart needed).
 class ModulesSection extends ConsumerStatefulWidget {
   const ModulesSection({super.key});
 
@@ -107,7 +107,7 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
       children: [
         _header(
           'MODULES',
-          'THRT-linked packages provide node types and reusable subflows. '
+          'Carta-linked packages provide node types and reusable subflows. '
           'Changes appear without restart — link/unlink is hot.',
         ),
         const SizedBox(height: 14),
@@ -123,13 +123,13 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
                       fontWeight: FontWeight.w600)),
             ),
             _iconButton(
-              icon: TrailheadIconData.refresh,
+              icon: CartaIconData.refresh,
               tip: 'Reload registry',
               onTap: _reload,
             ),
             const SizedBox(width: 6),
             _iconButton(
-              icon: TrailheadIconData.plus,
+              icon: CartaIconData.plus,
               tip: 'Register package path',
               onTap: () => setState(() => _showRegister = !_showRegister),
             ),
@@ -157,7 +157,7 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
                     decoration: InputDecoration(
                       isDense: true,
                       contentPadding: const EdgeInsets.symmetric(vertical: 8),
-                      hintText: '/abs/path/to/package (must have thrt_package.yaml)',
+                      hintText: '/abs/path/to/package (must have carta_package.yaml)',
                       hintStyle: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 11,
@@ -252,7 +252,7 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
   }
 
   Widget _iconButton({
-    required TrailheadIconData icon,
+    required CartaIconData icon,
     required String tip,
     required VoidCallback onTap,
   }) {
@@ -270,7 +270,7 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
               border: Border.all(color: AppColors.border2),
               borderRadius: BorderRadius.circular(4),
             ),
-            child: TrailheadIcon(
+            child: CartaIcon(
                 icon: icon, size: 11, color: AppColors.fg1),
           ),
         ),
@@ -306,8 +306,8 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Center(
-              child: TrailheadIcon(
-                  icon: TrailheadIconData.plug,
+              child: CartaIcon(
+                  icon: CartaIconData.plug,
                   size: 18,
                   color: AppColors.fg2),
             ),
@@ -321,7 +321,7 @@ class _ModulesSectionState extends ConsumerState<ModulesSection> {
                   color: AppColors.fg0)),
           const SizedBox(height: 6),
           Text(
-            'Register a package directory (one with a thrt_package.yaml) '
+            'Register a package directory (one with a carta_package.yaml) '
             'using the + button above.',
             textAlign: TextAlign.center,
             style: TextStyle(
@@ -376,8 +376,8 @@ class _ModuleCardState extends State<_ModuleCard> {
                     const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                 child: Row(
                   children: [
-                    TrailheadIcon(
-                        icon: TrailheadIconData.chevRight,
+                    CartaIcon(
+                        icon: CartaIconData.chevRight,
                         size: 10,
                         color: AppColors.fg2),
                     const SizedBox(width: 6),
@@ -427,7 +427,7 @@ class _ModuleCardState extends State<_ModuleCard> {
                       ),
                     ),
                     // Unlink (only for registered — current project's own
-                    // links can't be removed here, user must edit trailhead.yaml).
+                    // links can't be removed here, user must edit carta.yaml).
                     if (m.origin != ModuleOrigin.project)
                       MouseRegion(
                         cursor: SystemMouseCursors.click,
@@ -435,8 +435,8 @@ class _ModuleCardState extends State<_ModuleCard> {
                           onTap: widget.onUnregister,
                           child: Padding(
                             padding: const EdgeInsets.all(4),
-                            child: TrailheadIcon(
-                                icon: TrailheadIconData.x,
+                            child: CartaIcon(
+                                icon: CartaIconData.x,
                                 size: 11,
                                 color: AppColors.fg2),
                           ),
@@ -544,8 +544,8 @@ class _NodeTypeRow extends StatelessWidget {
               borderRadius: BorderRadius.circular(4),
             ),
             child: Center(
-              child: TrailheadIcon(
-                  icon: node.actor ? TrailheadIconData.zap : TrailheadIconData.terminal,
+              child: CartaIcon(
+                  icon: node.actor ? CartaIconData.zap : CartaIconData.terminal,
                   size: 9,
                   color: node.actor ? AppColors.accent : AppColors.fg2),
             ),
@@ -600,8 +600,8 @@ class _SubflowRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(vertical: 3),
       child: Row(
         children: [
-          TrailheadIcon(
-              icon: TrailheadIconData.workflow,
+          CartaIcon(
+              icon: CartaIconData.workflow,
               size: 11,
               color: AppColors.fg2),
           const SizedBox(width: 8),
@@ -631,8 +631,8 @@ class _SubflowRow extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  TrailheadIcon(
-                      icon: TrailheadIconData.lock,
+                  CartaIcon(
+                      icon: CartaIconData.lock,
                       size: 9,
                       color: AppColors.fg3),
                   const SizedBox(width: 4),

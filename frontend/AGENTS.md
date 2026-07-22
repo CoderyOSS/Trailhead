@@ -1,8 +1,8 @@
-# Trailhead Frontend - Agent Guide
+# Carta Frontend - Agent Guide
 
 ## Purpose
 
-Flutter SPA for Trailhead workflow visualization and management. Follows the Codery design system (dark slate theme variant).
+Flutter SPA for Carta workflow visualization and management. Follows the Codery design system (dark slate theme variant).
 
 ## Current State
 
@@ -27,7 +27,7 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 | State providers | `lib/providers/mode_provider.dart` | `modeProvider`, `selectedJobProvider`, `workflowProvider` |
 | Mock data | `lib/providers/mock_data.dart` | `JobSummary`, `WorkflowSummary`, `JobState` + mock instances |
 | App shell | `lib/main.dart` | ProviderScope + ConsumerWidget shell: rail + top bar + content |
-| Static server | `serve.js` | Bun server for dev preview at trailhead-dev subdomain |
+| Static server | `serve.js` | Bun server for dev preview at carta-dev subdomain |
 | **Graph canvas** | `lib/widgets/canvas/graph_canvas.dart` | Pan, zoom (gesture), snap-to-grid, dot grid, bezier connections |
 | **Worker node** | `lib/widgets/canvas/worker_node.dart` | 168x36 capsule, direction F, selection glow, rail; inject trigger cap (glow + spinner) when deployed in Active mode |
 | **Branch node** | `lib/widgets/canvas/routing_node.dart` | Per-port output routing, case rows |
@@ -50,11 +50,11 @@ Flutter SPA for Trailhead workflow visualization and management. Follows the Cod
 
 ## Backend Connectivity (Build mode)
 
-Workflows are read from and written to the THRT backend (`/api/v1/workflows/*`).
+Workflows are read from and written to the Carta backend (`/api/v1/workflows/*`).
 The frontend uses **relative URLs** — in production it is served from the same
-Bun proxy that forwards to THRT. No connection configuration is needed.
+Bun proxy that forwards to Carta. No connection configuration is needed.
 
-The dev preview (`serve.js` Bun server) proxies `/api/*` to THRT via the
+The dev preview (`serve.js` Bun server) proxies `/api/*` to Carta via the
 `BACKEND_URL` env var (default `http://localhost:8060`). Override for local dev:
 
 ```bash
@@ -63,13 +63,13 @@ BACKEND_URL=http://localhost:8060 bun run serve.js
 
 Runtime actions (deploy, status, inject) are also sent through the same-origin
 proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
-`serve.js` also bridges WebSocket upgrades to THRT for the log stream.
+`serve.js` also bridges WebSocket upgrades to Carta for the log stream.
 
 ### Key files
 - `lib/services/workflows_api.dart` — HTTP client for `/workflows/*` CRUD endpoints
-- `lib/services/thrt_api.dart` — HTTP client for runtime deploy/status/inject/validate/log-flags
+- `lib/services/carta_api.dart` — HTTP client for runtime deploy/status/inject/validate/log-flags
 - `lib/services/log_socket.dart` — WebSocket wrapper with auto-reconnect (log stream)
-- `lib/providers/thrt_provider.dart` — deployed-flow set + polled status map + inject buffers
+- `lib/providers/carta_provider.dart` — deployed-flow set + polled status map + inject buffers
 - `lib/providers/log_provider.dart` — log socket lifecycle + per-flow frame ring buffers (cap 200)
 - `lib/utils/yaml_to_workflow.dart` — parses stored YAML into canvas model
 - `lib/utils/workflow_to_yaml.dart` — serializes canvas model to YAML
@@ -78,7 +78,7 @@ proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
 - `lib/widgets/log_drawer/log_drawer.dart` — per-point toggle rail + stream container
 - `lib/widgets/log_drawer/log_stream_view.dart` — aggregated timestamp-ordered log stream
 - `lib/widgets/node_drawer/payload_editor.dart` — Elixir code field (flutter_code_editor) + live validation pip. Shared by the inject payload tab and the transform expr field; **always key it by node id** (`ValueKey('...-${node.id}')`) — `initialCode` binds in `initState` only, so an unkeyed editor keeps the previous node's text
-- `serve.js` — Bun dev preview + THRT proxy (HTTP + WebSocket bridge)
+- `serve.js` — Bun dev preview + Carta proxy (HTTP + WebSocket bridge)
 
 ### Conventions (hard-won)
 
@@ -109,7 +109,7 @@ placeholders would false-positive). Subflow-only top-level keys (`params`,
 
 A job runs an **independent copy** of the workflow, not the live workflow:
 
-- THRT stores the launched YAML on the job row and returns it as `content`
+- Carta stores the launched YAML on the job row and returns it as `content`
   on `/api/v1/jobs/*`.
 - On launch or job select, the YAML is parsed into `jobDocumentsProvider`
   (keyed by job id) — see `lib/providers/mode_provider.dart`.
@@ -121,7 +121,7 @@ A job runs an **independent copy** of the workflow, not the live workflow:
 - Node repositioning is allowed in Active mode (job-local only).
 - The JobBar **reload** button kills the job, re-syncs to the current stored
   workflow, and relaunches (fresh snapshot, job-local edits discarded).
-- Inject buffers are job-scoped via `injectBufferKey` (thrt_provider.dart).
+- Inject buffers are job-scoped via `injectBufferKey` (carta_provider.dart).
 
 ## Build Commands
 
@@ -133,7 +133,7 @@ A job runs an **independent copy** of the workflow, not the live workflow:
 | Analyze | `~/projects/flutter/bin/flutter analyze` |
 | Run iOS build | `~/projects/flutter/bin/flutter build ios --release --no-codesign` (macOS only) |
 
-**Agent rule:** After any code change, run `~/projects/flutter/bin/flutter build web --release` and refresh `trailhead.rancidgrandmas.online`.
+**Agent rule:** After any code change, run `~/projects/flutter/bin/flutter build web --release` and refresh `carta.rancidgrandmas.online`.
 
 ## iOS Development
 
@@ -141,7 +141,7 @@ See [`ios/README.md`](ios/README.md) for the full iOS build/test/device recipe. 
 
 ## Dev Preview
 
-The Flutter web build is served live at **trailhead.rancidgrandmas.online** via a Bun static server in the apps container.
+The Flutter web build is served live at **carta.rancidgrandmas.online** via a Bun static server in the apps container.
 
 **Iterate cycle:**
 ```bash
@@ -149,11 +149,11 @@ The Flutter web build is served live at **trailhead.rancidgrandmas.online** via 
 # Refresh browser — changes are live
 ```
 
-The dev preview proxies `/api/*` to the THRT runtime (`http://localhost:8060`).
+The dev preview proxies `/api/*` to the Carta runtime (`http://localhost:8060`).
 
-**App config:** `trailhead` app, internal port 8040, directory `/home/gem/projects/CoderyTrailhead/frontend`, command `bun run serve.js`.
+**App config:** `cartaclient` app, internal port 8040, directory `/home/gem/projects/CoderyTrailhead/frontend`, command `bun run serve.js`.
 
-**Production** (`trailhead.rancidgrandmas.online`): served by Bun proxy + THRT runtime.
+**Production** (`carta.rancidgrandmas.online`): served by Bun proxy + Carta runtime.
 
 ## Code Style
 
@@ -167,7 +167,7 @@ The dev preview proxies `/api/*` to the THRT runtime (`http://localhost:8060`).
 ```
 frontend/
 ├── lib/
-│   ├── main.dart              # TrailheadApp (ProviderScope) + TrailheadShell (ConsumerWidget)
+│   ├── main.dart              # CartaApp (ProviderScope) + CartaShell (ConsumerWidget)
 │   ├── models/
 │   │   ├── workflow_document.dart  # WorkflowDocument (workflow + viewport snapshot)
 │   │   ├── workflow_edge.dart      # WorkflowEdge (from, to, case, loop)
@@ -195,7 +195,7 @@ frontend/
 │       │   ├── worker_node.dart        # WorkerNode (168x36 direction F capsule)
 │       │   └── zoom_controls.dart      # Zoom bar: − / % / + / fit (TODO)
 │       ├── delete_button.dart # Circular delete button with icon
-│       ├── icons.dart         # TrailheadIcon (12 Lucide SVG stroke icons)
+│       ├── icons.dart         # CartaIcon (12 Lucide SVG stroke icons)
 │       ├── mode_rail.dart     # ModeRail (ConsumerWidget) + AppMode enum
 │       ├── runs_table.dart    # Grouped/flat history runs table
 │       ├── status_tag.dart    # StatusDot + StatusTag
@@ -207,7 +207,7 @@ frontend/
 ├── serve.js                   # Bun static server for dev preview
 ├── assets/
 │   └── images/
-│       └── trailhead-logo.png
+│       └── carta-logo.png
 ├── test/
 │   └── widget_test.dart
 ├── ios/
@@ -250,4 +250,4 @@ Theme: **dark** with **slate** variant. Key tokens:
 
 ## Backend
 
-The backend runtime is **THRT** (`/home/gem/projects/THRT`) — an Elixir service that stores workflow YAML and executes node graphs.
+The backend runtime is **Carta** (`/home/gem/projects/THRT`) — an Elixir service that stores workflow YAML and executes node graphs.

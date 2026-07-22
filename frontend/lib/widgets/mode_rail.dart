@@ -33,13 +33,13 @@ class ModeRail extends ConsumerWidget {
           _BrandGlyph(),
           const SizedBox(height: 8),
           _RailButton(
-            icon: TrailheadIconData.pencil,
+            icon: CartaIconData.pencil,
             label: 'Build \u00b7 workflows',
             active: mode == AppMode.build,
             onTap: () => ref.read(modeProvider.notifier).state = AppMode.build,
           ),
           _RailButton(
-            icon: TrailheadIconData.stopwatch,
+            icon: CartaIconData.stopwatch,
             label: 'Active \u00b7 running jobs',
             active: mode == AppMode.active,
             badge: activeCount,
@@ -50,7 +50,7 @@ class ModeRail extends ConsumerWidget {
             },
           ),
           _RailButton(
-            icon: TrailheadIconData.list,
+            icon: CartaIconData.list,
             label: 'History \u00b7 past jobs',
             active: mode == AppMode.history,
             onTap: () {
@@ -61,12 +61,12 @@ class ModeRail extends ConsumerWidget {
           ),
           const Spacer(),
           _RailButton(
-            icon: TrailheadIconData.terminal,
+            icon: CartaIconData.terminal,
             label: 'CLI \u00b7 tokens',
             onTap: () {},
           ),
           _RailButton(
-            icon: TrailheadIconData.settings,
+            icon: CartaIconData.settings,
             label: 'Settings',
             onTap: () => ref.read(settingsModalOpenProvider.notifier).state = true,
           ),
@@ -114,7 +114,7 @@ class _BrandGlyph extends StatelessWidget {
         ),
       ),
       child: SvgPicture.asset(
-        'assets/images/trailhead-logo.svg',
+        'assets/images/carta-logo.svg',
         width: 32,
         height: 32,
       ),
@@ -123,7 +123,7 @@ class _BrandGlyph extends StatelessWidget {
 }
 
 class _RailButton extends StatefulWidget {
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final String label;
   final bool active;
   final int? badge;
@@ -212,7 +212,7 @@ class _RailButtonState extends State<_RailButton> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   alignment: Alignment.center,
-                  child: TrailheadIcon(
+                  child: CartaIcon(
                     icon: widget.icon,
                     size: 16,
                     color: _fg,

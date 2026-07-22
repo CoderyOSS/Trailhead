@@ -155,10 +155,10 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                     borderRadius: BorderRadius.circular(6),
                   ),
                   alignment: Alignment.center,
-                  child: TrailheadIcon(
+                  child: CartaIcon(
                     icon: isWorker
-                        ? TrailheadIconData.zap
-                        : TrailheadIconData.gitBranch,
+                        ? CartaIconData.zap
+                        : CartaIconData.gitBranch,
                     size: 14,
                     color: (isWorker)
                         ? AppColors.accentInk
@@ -213,8 +213,8 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                         borderRadius: BorderRadius.circular(6),
                       ),
                       alignment: Alignment.center,
-                      child: TrailheadIcon(
-                        icon: TrailheadIconData.x,
+                      child: CartaIcon(
+                        icon: CartaIconData.x,
                         size: 14,
                         color: AppColors.fg2,
                       ),

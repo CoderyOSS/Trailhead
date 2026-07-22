@@ -7,8 +7,8 @@ import 'package:frontend/providers/mode_provider.dart';
 import 'package:frontend/providers/mock_data.dart';
 import 'package:frontend/providers/operator_picker_provider.dart';
 import 'package:frontend/providers/selection_notifier.dart';
-import 'package:frontend/providers/thrt_provider.dart';
-import 'package:frontend/services/thrt_api.dart';
+import 'package:frontend/providers/carta_provider.dart';
+import 'package:frontend/services/carta_api.dart';
 import 'package:frontend/widgets/canvas/graph_canvas.dart';
 
 void main() {

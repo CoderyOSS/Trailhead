@@ -72,8 +72,8 @@ class WorkflowNode {
   final String? httpEgressServer;
 
   // source.inject payload. Literal mode: Elixir literal source, backend
-  // parses (THRT.ElixirTerm). Expr mode (payloadIsExpr): arbitrary Elixir
-  // source, evaluated once at deploy time (THRT.Expr) — emits payload_expr.
+  // parses (Carta.ElixirTerm). Expr mode (payloadIsExpr): arbitrary Elixir
+  // source, evaluated once at deploy time (Carta.Expr) — emits payload_expr.
   final String? payloadCode;
   final bool payloadIsExpr;
   final bool? once;
@@ -257,9 +257,9 @@ class WorkflowNode {
   }
 }
 
-/// Node kind classification shared with the THRT backend.
+/// Node kind classification shared with the Carta backend.
 ///
-/// Mirrors `THRT.Node.actor?/1` (module introspection on `handle_message/3`).
+/// Mirrors `Carta.Node.actor?/1` (module introspection on `handle_message/3`).
 /// Actor kinds wrap an Erlang process (mailbox + send/receive); function kinds
 /// are pure transforms inlined into the caller's pipe chain.
 ///
@@ -271,11 +271,11 @@ extension WorkflowNodeKind on WorkflowNode {
     'http.client.request',
     'task',
     'source.inject',
-    // Port nodes are actors (THRT.Nodes.Port.In/Out): mailbox send/receive
+    // Port nodes are actors (Carta.Nodes.Port.In/Out): mailbox send/receive
     // semantics, channel pairing resolved at runtime via PortRegistry.
     'port.in',
     'port.out',
-    // `subflow` nodes deploy as actor-flattened graphs (THRT.Subflow.expand);
+    // `subflow` nodes deploy as actor-flattened graphs (Carta.Subflow.expand);
     // their in/out ports behave as actors on the canvas before deploy.
     'subflow',
   };

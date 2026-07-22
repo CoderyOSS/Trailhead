@@ -1,11 +1,11 @@
-import '../services/thrt_api.dart';
+import '../services/carta_api.dart';
 import '../widgets/icons.dart';
 
 class NodeEntry {
   final String kind;
   final String label;
   final String desc;
-  final TrailheadIconData icon;
+  final CartaIconData icon;
   final String? docsUrl;
   final String? templateExpr;
 
@@ -40,14 +40,14 @@ String _e1(String call) => '$call(payload)';
 String _e2(String call) => '$call(payload, _)';
 String _e3(String call) => '$call(payload, _, _)';
 
-const _zap = TrailheadIconData.zap;
-const _stopwatch = TrailheadIconData.stopwatch;
-const _globe = TrailheadIconData.globe;
-const _branch = TrailheadIconData.gitBranch;
-const _play = TrailheadIconData.play;
-const _terminal = TrailheadIconData.terminal;
-const _plug = TrailheadIconData.plug;
-const _send = TrailheadIconData.send;
+const _zap = CartaIconData.zap;
+const _stopwatch = CartaIconData.stopwatch;
+const _globe = CartaIconData.globe;
+const _branch = CartaIconData.gitBranch;
+const _play = CartaIconData.play;
+const _terminal = CartaIconData.terminal;
+const _plug = CartaIconData.plug;
+const _send = CartaIconData.send;
 
 /// Dynamic picker category for modules installed in the connected runtime
 /// (builtins already in [nodeCategories] are skipped). Returns null when
@@ -81,7 +81,7 @@ const subflowCategory = NodeCategory(label: 'COMPOSE', entries: [
     kind: 'subflow',
     label: 'subflow',
     desc: 'embed a reusable flow as a node (params resolved at deploy)',
-    icon: TrailheadIconData.workflow,
+    icon: CartaIconData.workflow,
   ),
 ]);
 

@@ -33,7 +33,7 @@ class SubflowsApiException implements Exception {
   String toString() => 'SubflowsApiException($statusCode): $body';
 }
 
-/// CRUD for project subflows (`subflows/<name>.yaml` on the THRT side).
+/// CRUD for project subflows (`subflows/<name>.yaml` on the Carta side).
 /// Mirrors WorkflowsApi's shape against /api/v1/subflows.
 class SubflowsApi {
   final String _baseUrl;

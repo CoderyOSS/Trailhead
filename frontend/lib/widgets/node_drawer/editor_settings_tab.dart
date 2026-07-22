@@ -291,7 +291,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
               hint: 'required — pairs with matching ${node.kind == 'port.in' ? 'port.out' : 'port.in'} nodes across flows',
               child: _TextInput(
                 controller: _channelCtrl,
-                onChanged: (v) => _updateNode(node.copyWith(channel: v.isEmpty ? null : v)),
+                onChanged: (v) => _updateNode(node.copyWith(channel: v)),
               ),
             ),
             if (node.channel == null || node.channel!.isEmpty)

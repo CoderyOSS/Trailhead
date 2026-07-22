@@ -102,16 +102,16 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                         : widget.node.kind == 'http.client.request'
                             ? 'http client request node'
                             : widget.node.kind == 'source.inject'
-                        ? 'inject node'
-                        : widget.node.kind == 'port.in'
-                            ? 'port in node'
-                            : widget.node.kind == 'port.out'
-                                ? 'port out node'
-                                : widget.node.kind == 'function'
-                            ? 'function \u2014 if/else router'
-                            : widget.node.kind == 'sink.log'
-                                ? 'log sink node'
-                                : 'node';
+                                ? 'inject node'
+                                : widget.node.kind == 'port.in'
+                                    ? 'port in node'
+                                    : widget.node.kind == 'port.out'
+                                        ? 'port out node'
+                                        : widget.node.kind == 'function'
+                                            ? 'function — if/else router'
+                                            : widget.node.kind == 'sink.log'
+                                                ? 'log sink node'
+                                                : 'node';
 
     return Container(
       width: widget.isPortrait ? double.infinity : 460,

@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../models/workflow_document.dart';
 import '../services/project_api.dart';
+import '../services/subflows_api.dart';
 import '../utils/workflow_to_yaml.dart';
 import '../utils/yaml_to_workflow.dart';
 import 'api_provider.dart';
@@ -79,21 +80,39 @@ void persistFlowOrder(WidgetRef ref, List<FlowTab> tabs) {
 final _emptySentinel =
     WorkflowSummary(id: emptyWorkflowId, name: '', version: 0, updated: '');
 
+/// Last-seen backend `content_hash` per flow name — the rename detector's
+/// memory. A vanished tab name only binds to an appeared flow when the hashes
+/// match (byte-identical file move); an unrelated delete+create inside one
+/// poll window falls through to remove+append instead of corrupting the
+/// local binding.
+final _flowContentHashesProvider =
+    StateProvider<Map<String, String?>>((ref) => const {});
+
 /// Reconciles flow tabs with the remote workflow list and the persisted
 /// `flow_order`. Watched once from the build-mode top bar.
 ///
 /// - Initial order: `flow_order` names first, unordered flows appended in
 ///   server-list order (stable).
 /// - Flows added remotely (or just created via the strip) are appended.
-/// - Flows removed remotely drop their tab.
+/// - Flows removed remotely drop their tab; subflow tabs confirmed gone from
+///   the server list drop theirs too (unparsable subflows keep their tab).
 /// - A 1-removed-1-added set change at equal count is treated as a rename
-///   (covers both the strip's own create+delete rename and external edits):
+///   only when the vanished and appeared entries share a content hash:
 ///   the tab keeps its position, the active doc and viewport cache follow.
 final flowTabSyncProvider = FutureProvider<void>((ref) async {
   final flows = await ref.watch(remoteWorkflowsProvider.future);
+  final dtos = await ref.watch(remoteWorkflowDtosProvider.future);
   final project = await ref
       .watch(projectInfoProvider.future)
       .then<ProjectInfo?>((p) => p, onError: (_) => null);
+  final subflowNames = ref.watch(subflowsProvider).maybeWhen(
+        data: (list) => list.map((s) => s.name).toSet(),
+        orElse: () => null,
+      );
+
+  final previousHashes = ref.read(_flowContentHashesProvider);
+  final currentHashes = {for (final d in dtos) d.name: d.contentHash};
+  ref.read(_flowContentHashesProvider.notifier).state = currentHashes;
 
   final tabs = ref.read(flowTabsProvider);
   final flowNames = flows.map((w) => w.name).toSet();
@@ -105,12 +124,21 @@ final flowTabSyncProvider = FutureProvider<void>((ref) async {
   var next = List<FlowTab>.from(tabs);
   final renamedFromTo = <String, String>{};
 
-  // Rename detection: exactly one vanished + one appeared, count unchanged.
+  // Rename detection: exactly one vanished + one appeared, count unchanged,
+  // and the vanished entry's last-seen hash matches the appeared entry's
+  // hash (an external `mv old.yaml new.yaml` preserves bytes; a teammate's
+  // delete+create does not).
   final vanished = tabFlowNames.where((n) => !flowNames.contains(n)).toList();
   final appeared = flowNames.where((n) => !tabFlowNames.contains(n)).toList();
+  var isRename = false;
   if (vanished.length == 1 &&
       appeared.length == 1 &&
       tabFlowNames.length == flowNames.length) {
+    final oldHash = previousHashes[vanished.first];
+    final newHash = currentHashes[appeared.first];
+    isRename = oldHash != null && newHash != null && oldHash == newHash;
+  }
+  if (isRename) {
     final oldName = vanished.first;
     final newName = appeared.first;
     renamedFromTo[oldName] = newName;
@@ -135,6 +163,15 @@ final flowTabSyncProvider = FutureProvider<void>((ref) async {
         next.add(FlowTab(FlowTabKind.flow, name));
       }
     }
+  }
+
+  // Subflow reconcile: drop tabs confirmed gone from the server list. Runs
+  // in both branches and only when the list loaded — a transient fetch error
+  // must never nuke tabs, and an unparsable subflow keeps its tab (the
+  // switch path binds an incompatible placeholder instead).
+  if (subflowNames != null) {
+    next.removeWhere((t) =>
+        t.kind == FlowTabKind.subflow && !subflowNames.contains(t.name));
   }
 
   // Persist a rename-swap so the stale old name never lingers in
@@ -190,7 +227,8 @@ final flowTabSyncProvider = FutureProvider<void>((ref) async {
       ref.read(workflowProvider.notifier).state = _emptySentinel;
     }
     if (next.isNotEmpty) {
-      await _switchCore(ref.read, next.first);
+      final error = await _switchCore(ref.read, next.first);
+      if (error != null) debugPrint('tab selection repair: $error');
     } else {
       ref.read(activeTabKindProvider.notifier).state = FlowTabKind.flow;
     }
@@ -200,17 +238,31 @@ final flowTabSyncProvider = FutureProvider<void>((ref) async {
 /// Switch the canvas to [tab]: flush+cache the current document, restore the
 /// target's cached viewport, clear canvas interaction state. Mirrors the
 /// switching rules the old workflow dropdown applied.
-Future<void> switchToTab(WidgetRef ref, FlowTab tab) =>
-    _switchCore(ref.read, tab);
+///
+/// Surfaces a snackbar when the switch dead-ends (subflow fetch failure,
+/// subflow confirmed deleted server-side, flow missing from the list).
+Future<void> switchToTab(WidgetRef ref, FlowTab tab) async {
+  final error = await _switchCore(ref.read, tab);
+  if (error != null) {
+    debugPrint(error);
+    final context = ref.context;
+    if (context.mounted) {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        SnackBar(content: Text(error)),
+      );
+    }
+  }
+}
 
-Future<void> _switchCore(
+/// Returns null on success, or an error message when the switch dead-ended.
+Future<String?> _switchCore(
   T Function<T>(ProviderListenable<T>) read,
   FlowTab tab,
 ) async {
   final currentKind = read(activeTabKindProvider);
   final currentWf = read(workflowProvider);
   final alreadyThere = currentKind == tab.kind && currentWf.name == tab.name;
-  if (alreadyThere && currentWf.id != emptyWorkflowId) return;
+  if (alreadyThere && currentWf.id != emptyWorkflowId) return null;
 
   // Flush + cache the outgoing document.
   if (currentWf.id != emptyWorkflowId && currentWf.parseError == null) {
@@ -237,26 +289,46 @@ Future<void> _switchCore(
       target = read(workflowsProvider)
           .cast<WorkflowSummary?>()
           .firstWhere((w) => w!.name == tab.name, orElse: () => null);
+      if (target == null) return 'flow "${tab.name}" is not available';
     } else {
+      final SubflowDto? match;
       try {
         final subflows = await read(subflowsProvider.future);
-        for (final s in subflows) {
-          if (s.name == tab.name) {
-            try {
-              target =
-                  yamlToWorkflow(s.name, s.content).copyWith(id: tab.docId);
-            } catch (_) {
-              target = null;
-            }
-            break;
-          }
-        }
-      } catch (_) {
-        target = null;
+        match = subflows
+            .cast<SubflowDto?>()
+            .firstWhere((s) => s!.name == tab.name, orElse: () => null);
+      } catch (e) {
+        return 'failed to load subflow "${tab.name}": $e';
+      }
+      if (match == null) {
+        // Confirmed gone from the server list — drop the stale tab (and its
+        // viewport cache) so the strip stops dead-ending on it.
+        read(flowTabsProvider.notifier).update(
+          (tabs) => tabs.where((t) => t != tab).toList(),
+        );
+        read(documentsProvider.notifier).update((docs) {
+          if (!docs.containsKey(tab.docId)) return docs;
+          final m = Map<String, WorkflowDocument>.from(docs)
+            ..remove(tab.docId);
+          return m;
+        });
+        return 'subflow "${tab.name}" no longer exists';
+      }
+      try {
+        target =
+            yamlToWorkflow(match.name, match.content).copyWith(id: tab.docId);
+      } catch (e) {
+        // Same incompatible-summary path flows use: bind a parseError
+        // placeholder (delete-only, never flushed back — the flush above and
+        // the autosave listener both skip parseError docs). Tab stays open.
+        target = WorkflowSummary.incompatible(
+          name: match.name,
+          parseError: e.toString(),
+          remoteContent: match.content,
+        ).copyWith(id: tab.docId);
       }
     }
   }
-  if (target == null) return;
 
   read(activeTabKindProvider.notifier).state = tab.kind;
   read(workflowProvider.notifier).state = target;
@@ -270,6 +342,7 @@ Future<void> _switchCore(
   read(selectedNodeIdProvider.notifier).state = null;
   read(nodeDrawerOpenProvider.notifier).state = false;
   read(workflowDirtyProvider.notifier).state = false;
+  return null;
 }
 
 /// Open [name] as a subflow tab (no-op when already open) and switch to it.

@@ -5,6 +5,7 @@ import '../models/workflow_node.dart';
 import '../utils/yaml_to_workflow.dart';
 import '../widgets/mode_rail.dart';
 import '../services/jobs_api.dart';
+import '../services/workflows_api.dart';
 import 'api_provider.dart';
 import 'mock_data.dart';
 
@@ -14,15 +15,22 @@ final selectedJobProvider = StateProvider<JobDto?>((ref) => null);
 
 final autoRefreshJobsProvider = StateProvider<int>((ref) => 0);
 
+/// Raw workflow DTOs from the backend (name + content + content_hash).
+/// Split from [remoteWorkflowsProvider] so consumers that need transport
+/// metadata (e.g. the tab-sync rename detector) keep access to content_hash.
+final remoteWorkflowDtosProvider =
+    FutureProvider<List<WorkflowDto>>((ref) async {
+  // Watch api so a config reload re-fetches.
+  ref.watch(workflowsApiProvider);
+  return ref.read(workflowsApiProvider).list();
+});
+
 /// All workflows loaded from backend, parsed into canvas models.
 /// Each item is either a fully parsed WorkflowSummary or an "incompatible"
 /// placeholder (parseError != null) that can only be deleted.
 final remoteWorkflowsProvider =
     FutureProvider<List<WorkflowSummary>>((ref) async {
-  // Watch api so a config reload re-fetches.
-  ref.watch(workflowsApiProvider);
-  final api = ref.read(workflowsApiProvider);
-  final dtos = await api.list();
+  final dtos = await ref.watch(remoteWorkflowDtosProvider.future);
   return dtos.map((d) {
     try {
       return yamlToWorkflow(d.name, d.content);

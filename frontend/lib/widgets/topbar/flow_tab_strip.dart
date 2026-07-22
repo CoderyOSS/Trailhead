@@ -123,12 +123,8 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
     try {
       if (tab.kind == FlowTabKind.flow) {
         await ref.read(workflowsApiProvider).delete(tab.name);
-        ref.invalidate(remoteWorkflowsProvider);
-        await ref.read(remoteWorkflowsProvider.future);
       } else {
         await ref.read(subflowsApiProvider).delete(tab.name);
-        ref.invalidate(subflowsProvider);
-        await ref.read(subflowsProvider.future);
       }
     } catch (e) {
       if (mounted) {
@@ -139,6 +135,10 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
       return;
     }
 
+    // Remove the tab locally BEFORE refreshing the server list: the sync
+    // provider reconciles tabs against the refreshed list, so the local set
+    // must already reflect the delete or the reconcile + selection repair
+    // race the neighbor switch below.
     final tabs = List<FlowTab>.from(ref.read(flowTabsProvider));
     final index = tabs.indexOf(tab);
     tabs.remove(tab);
@@ -168,6 +168,20 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
         ref.read(activeTabKindProvider.notifier).state = FlowTabKind.flow;
       }
     }
+
+    // Refresh the server list last so the sync reconcile sees the already
+    // consistent local tab set.
+    try {
+      if (tab.kind == FlowTabKind.flow) {
+        ref.invalidate(remoteWorkflowsProvider);
+        await ref.read(remoteWorkflowsProvider.future);
+      } else {
+        ref.invalidate(subflowsProvider);
+        await ref.read(subflowsProvider.future);
+      }
+    } catch (e) {
+      debugPrint('post-delete refresh failed: $e');
+    }
   }
 
   // ---- rename ----
@@ -182,6 +196,32 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
     final liveDoc = ref.read(workflowProvider);
     final isActive = ref.read(activeTabKindProvider) == tab.kind &&
         liveDoc.name == tab.name;
+
+    // Apply the tab swap + active-doc / viewport-cache migration immediately
+    // (before the server-list refresh): the sync provider reconciles tabs
+    // against the refreshed list and would otherwise drop the old-named tab
+    // mid-rename — a subflow tab would never be re-added.
+    void swapTab() {
+      final tabs = List<FlowTab>.from(ref.read(flowTabsProvider));
+      final idx = tabs.indexOf(tab);
+      if (idx >= 0) {
+        tabs[idx] = newTab;
+        ref.read(flowTabsProvider.notifier).state = tabs;
+      }
+      final current = ref.read(workflowProvider);
+      if (ref.read(activeTabKindProvider) == tab.kind &&
+          current.name == tab.name) {
+        ref.read(workflowProvider.notifier).state =
+            current.copyWith(name: clean, id: newTab.docId);
+      }
+      ref.read(documentsProvider.notifier).update((docs) {
+        if (!docs.containsKey(tab.docId)) return docs;
+        final m = Map<String, WorkflowDocument>.from(docs);
+        m[newTab.docId] = m.remove(tab.docId)!;
+        return m;
+      });
+    }
+
     try {
       if (tab.kind == FlowTabKind.flow) {
         // Serialize the live/cached canvas doc when present, else the remote
@@ -197,6 +237,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
         final api = ref.read(workflowsApiProvider);
         await api.replace(clean, workflowToYaml(wf));
         await api.delete(tab.name).catchError((_) => false);
+        swapTab();
         ref.invalidate(remoteWorkflowsProvider);
         await ref.read(remoteWorkflowsProvider.future);
       } else {
@@ -216,6 +257,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
         final api = ref.read(subflowsApiProvider);
         await api.replace(clean, content);
         await api.delete(tab.name).catchError((_) => false);
+        swapTab();
         ref.invalidate(subflowsProvider);
         await ref.read(subflowsProvider.future);
       }
@@ -228,27 +270,6 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
       return;
     }
 
-    // Update the tab in place (the sync provider's rename detection would
-    // also converge, but immediate is snappier) and follow with the active
-    // document + viewport cache.
-    final tabs = List<FlowTab>.from(ref.read(flowTabsProvider));
-    final idx = tabs.indexOf(tab);
-    if (idx >= 0) {
-      tabs[idx] = newTab;
-      ref.read(flowTabsProvider.notifier).state = tabs;
-    }
-    final current = ref.read(workflowProvider);
-    if (ref.read(activeTabKindProvider) == tab.kind &&
-        current.name == tab.name) {
-      ref.read(workflowProvider.notifier).state =
-          current.copyWith(name: clean, id: newTab.docId);
-    }
-    ref.read(documentsProvider.notifier).update((docs) {
-      if (!docs.containsKey(tab.docId)) return docs;
-      final m = Map<String, WorkflowDocument>.from(docs);
-      m[newTab.docId] = m.remove(tab.docId)!;
-      return m;
-    });
     if (tab.kind == FlowTabKind.flow) {
       persistFlowOrder(ref, ref.read(flowTabsProvider));
     }

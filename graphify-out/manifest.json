@@ -1,6 +1,6 @@
 {
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784843653.6253297,
+    "mtime": 1784848300.559075,
     "ast_hash": "2dd787283f386aa1f153686ac3bc3e1a",
     "semantic_hash": ""
   },
@@ -40,12 +40,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784843654.0043285,
+    "mtime": 1784848300.9450743,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784843654.0053284,
+    "mtime": 1784848300.9470742,
     "ast_hash": "66755780f26d1485b53c42abfddaa13e",
     "semantic_hash": ""
   },
@@ -2025,8 +2025,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/drawer_panel.dart": {
-    "mtime": 1784842831.9408278,
-    "ast_hash": "6c82574bc0c02465ef1c31034a4c4d60",
+    "mtime": 1784848200.909322,
+    "ast_hash": "54f9fff2e2e8b025299394fbc8262f1b",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/log_drawer/log_drawer.dart": {
@@ -2050,7 +2050,7 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dart_plugin_registrant.dart": {
-    "mtime": 1784843668.640284,
+    "mtime": 1784848294.65309,
     "ast_hash": "e6e3ccc0956514696b35445bc6236ee8",
     "semantic_hash": ""
   },
@@ -2265,12 +2265,12 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/main.dart.js": {
-    "mtime": 1784843459.9729185,
-    "ast_hash": "bbf04c7740bb059ea096f6cc82c14d1c",
+    "mtime": 1784848329.1340039,
+    "ast_hash": "c4c1c17bc621450eb72e511a0224bc39",
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/outputs.json": {
-    "mtime": 1784843462.2849114,
+    "mtime": 1784848331.6569974,
     "ast_hash": "e4ba14d0ae05f99926b81a16e3810615",
     "semantic_hash": ""
   },
@@ -2310,8 +2310,8 @@
     "semantic_hash": ""
   },
   "frontend/test/drawer_panel_test.dart": {
-    "mtime": 1784843644.4343576,
-    "ast_hash": "fa9c4881a8d91439e810634463539e67",
+    "mtime": 1784848273.4381428,
+    "ast_hash": "31d235cb207334ff837acec925663e07",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_isolatedDiff.png": {

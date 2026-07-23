@@ -163,6 +163,11 @@ GET    /api/v1/jobs                      - list jobs (each with content snapshot
 GET    /api/v1/jobs/{id}                 - get job
 POST   /api/v1/jobs/{id}/cancel          - undeploy flow, mark job cancelled
 DELETE /api/v1/jobs/{id}                 - alias of cancel
+GET    /api/v1/configs                  - list config objects (current project; no project param)
+POST   /api/v1/configs                  - create {key, source} → 201 / 409 key_exists / 400 bad literal
+GET    /api/v1/configs/{key}            - get {key, source, updated_at} / 404
+PUT    /api/v1/configs/{key}            - replace {source} → 200 / 404 / 400
+DELETE /api/v1/configs/{key}            - delete → 204 / 404
 ```
 
 ## MCP Integration
@@ -181,6 +186,24 @@ Deferred. See roadmap.
 *None currently.*
 
 ## Recently Landed
+
+- **Configuration objects (2026-07-23)**: Project-scoped named Elixir literals
+  stored via `Carta.FileStore` (YAML files in `configs/`, sibling of `flows/`) —
+  `Carta.ConfigStore` is a **stateless module** (not Mnesia/GenServer; cluster
+  replication of FileStore deferred to a separate effort). Editable in Settings
+  → Configuration Objects. Opt-in per node via `config.config_key`; node
+  startup (`Carta.Node.Server.resolve_config/1`) deep-merges the stored term
+  over the node's inline `config:` (stored wins, maps recurse, atom-keyed
+  stored stringified to match YAML's string keys). Deploy-time validation
+  rejects unknown keys with `{:config_key_not_found, node_id, key}` (runs for
+  ALL node kinds, gates validate/deploy/job-launch). 5 REST endpoints under
+  `/api/v1/configs` — **no `project` param** (current project is implicit,
+  like subflows). Frontend: `ConfigsApi`/`configsProvider` mirror the subflows
+  client/provider; `WorkflowNode.configKey` + `config.config_key` YAML
+  round-trip (universal — a config-only node emits a `config:` block); drawer
+  field in `editor_settings_tab.dart`. ConfigsSection cards expand to a
+  PayloadEditor; save coalesces (buffer+drain) and keeps the editor mounted
+  across collapse/re-expand so typed text isn't lost.
 
 - **`logging_enabled` removed + http client request/response logging (2026-07-22)**:
   Root cause of "http node logs the same thing for in and out": actor graph

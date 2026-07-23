@@ -86,6 +86,13 @@ proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
   drop earlier entries server-side. `workflow_to_yaml.dart` folds everything
   (expr, payload, log flags) into a single block; function `expr` uses the
   `expr: |` block scalar (no quote escaping).
+- **`config_key` on any node** references a stored configuration object
+  (Settings → Configuration Objects, server-side `configs/*.yaml`). Round-trips
+  via `config.config_key` in YAML (`WorkflowNode.configKey`); drawer field in
+  `editor_settings_tab.dart`. Universal — a node with only `config_key` (no
+  expr/log flags) still emits a `config:` block (`wantsConfig` includes it).
+  `ConfigsApi`/`configsProvider` mirror the subflows client/provider (no
+  project param — current project is implicit server-side).
 - Node/edge ids are short base36 (`n_x4k9q2` / `e_8z1m0p`) via `_shortId()`
   in `graph_canvas.dart`, collision-checked against existing ids.
 - Launch (JobBar) gates on `POST /workflows/validate` before PUT — a flow

@@ -2,23 +2,26 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Add persistent, project-scoped configuration objects (Elixir literals) stored server-side in Mnesia, editable in a new Settings section, and opt-in per-node via `config.config_key` with deep-merge at node startup.
+**Goal:** Add persistent, project-scoped configuration objects (Elixir literals) stored server-side, editable in a new Settings section, and opt-in per-node via `config.config_key` with deep-merge at node startup.
 
-**Architecture:** `Carta.ConfigStore` GenServer owns a Mnesia `:carta_configs` table (disc-backed, project-local). Five new REST endpoints under `/api/v1/configs`. `Carta.Node.Server.init/3` reads `config_key` and deep-merges the stored term over the node's inline `config:` map before calling the behaviour's `init/3`. Deploy-time validation rejects flows referencing missing keys. Frontend adds a Settings section (expandable cards with `PayloadEditor`), a Riverpod provider, a `ConfigsApi` client, a `configKey` field on `WorkflowNode`, YAML round-trip, and a drawer text field.
+**Architecture:** `Carta.ConfigStore` is a **stateless module** wrapping `Carta.FileStore` (the same YAML-file CRUD that backs flows and subflows) against a new `Carta.Project.configs_dir/0` (sibling of `flows/`, `subflows/`, `skills/`). Source is validated via `Carta.ElixirTerm.parse_literal/1` on write; the parsed term is derived on read. Five REST endpoints under `/api/v1/configs` **take no `project` param** — the current project's dir is implicit, exactly like the subflow endpoints (`api.ex:164-204`). `Carta.Node.Server.init/1` reads `config_key` and deep-merges the stored term over the node's inline `config:` map before calling the behaviour's init. Deploy-time validation rejects flows referencing missing keys. Frontend adds a Settings section (expandable cards with `PayloadEditor`), a Riverpod provider, a `ConfigsApi` client, a `configKey` field on `WorkflowNode`, YAML round-trip, and a drawer text field.
 
-**Tech Stack:** Elixir (Mnesia, GenServer, Plug) + Flutter (Riverpod, `flutter_code_editor`).
+**Tech Stack:** Elixir (FileStore, Plug) + Flutter (Riverpod, `flutter_code_editor`).
+
+> **⚠️ DESIGN REVISION (2026-07-23).** Storage substrate changed from Mnesia → **FileStore** (cluster replication deferred to a separate future effort that will migrate flows + subflows + configs together). Project scoping changed from an explicit `project` API param → **implicit current-project dir** (mirrors subflows). ConfigStore changed from a supervised GenServer → **stateless module**. Consequences: no `:mnesia` dep, no `extra_applications` change, no supervision-tree change, no `Carta.Project.name/0`. The Mnesia/project-param code blocks in Tasks 1–9 below are **STALE** and are being rewritten per-task at dispatch time; each task's dispatch prompt carries the authoritative corrected code.
 
 ## Global Constraints
 
-- Backend lives in `/home/gem/projects/Carta` (separate repo, no commits from CartaClient).
+- Backend lives in `/home/gem/projects/Carta` (branch `config-objects`, based on `local-install-projects` tip — the post-THRT→Carta rename line; do NOT base off `main` which is stale pre-rename).
 - Frontend lives in `/home/gem/projects/CartaClient/frontend`.
-- Mnesia table: `:carta_configs`, type `:set`, `disc_copies: [node()]`.
-- Record shape: `{:config, {project, key}, source, term, updated_at}`.
+- **Storage = `Carta.FileStore`** (YAML-file CRUD, `%{name, content, content_hash, updated_at}`), against `Carta.Project.configs_dir/0`. No Mnesia, no DETS, no new deps, no `extra_applications` change, no GenServer, no supervision change.
+- **Project scoping = implicit** (current project dir via `Carta.Project.configs_dir/0`). No `project` API param, no `Carta.Project.name/0`.
+- Config object file = `{key}.yaml` whose content is the raw Elixir source string (`.yaml` extension is cosmetic FileStore behavior; content is opaque to FileStore).
 - Merge semantics: **stored wins** (deep-merge; maps recurse, other types overwrite).
 - `config_key` is a string; empty/missing = no stored config lookup.
 - Deploy-time validation rejects unknown `config_key` with `{:config_key_not_found, node_id, key}`.
 - Source validation uses existing `Carta.ElixirTerm.parse_literal/1`.
-- All tests: `mix test` (Carta), `~/projects/flutter/bin/flutter test` (frontend) — must stay green.
+- All tests: `mix test` (Carta), `~/projects/flutter/bin/flutter test` (frontend) — must stay green. (Carta toolchain lives in the apps container: run via `ssh gem@apps "cd /home/gem/projects/Carta && mix test ..."`.)
 - Commits in Carta repo: plain `git commit`. Commits in CartaClient repo: plain `git commit`. Never push.
 
 ---

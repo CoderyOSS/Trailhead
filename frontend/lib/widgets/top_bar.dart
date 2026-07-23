@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
 import '../providers/api_provider.dart';
+import '../providers/drawer_provider.dart';
 import '../providers/flow_tabs_provider.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart' show WorkflowSummary;
@@ -205,6 +206,20 @@ class _BuildBar extends ConsumerWidget {
           label: 'YAML',
           onTap: () {
             ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
+          },
+        ),
+        const SizedBox(width: 8),
+        // Unified drawer (settings + logs) toggle.
+        AppButton(
+          variant: ref.watch(drawerOpenProvider)
+              ? AppButtonVariant.secondary
+              : AppButtonVariant.ghost,
+          size: AppButtonSize.sm,
+          icon: CartaIconData.panelRight,
+          label: 'panel',
+          onTap: () {
+            final open = ref.read(drawerOpenProvider);
+            ref.read(drawerOpenProvider.notifier).state = !open;
           },
         ),
         const SizedBox(width: 8),

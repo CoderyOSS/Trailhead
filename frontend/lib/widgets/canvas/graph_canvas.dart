@@ -11,6 +11,7 @@ import '../../models/workflow_document.dart';
 import '../../models/workflow_edge.dart';
 import '../../models/workflow_node.dart';
 import '../../providers/canvas_controller.dart';
+import '../../providers/drawer_provider.dart';
 import '../../providers/mode_provider.dart';
 import '../../providers/settings_provider.dart';
 import '../../providers/mock_data.dart';
@@ -274,7 +275,13 @@ class _GraphCanvasState extends ConsumerState<GraphCanvas>
 
   void _openNodeDrawer(String nodeId) {
     ref.read(selectedNodeIdProvider.notifier).state = nodeId;
-    ref.read(nodeDrawerOpenProvider.notifier).state = true;
+    ref.read(drawerOpenProvider.notifier).state = true;
+    // Opening a node implies the user wants its settings — switch the
+    // unified drawer out of a logs-only view.
+    if (ref.read(drawerViewModeProvider) == DrawerViewMode.logs) {
+      ref.read(drawerViewModeProvider.notifier).state = DrawerViewMode.both;
+      scheduleDrawerPrefsSave(ref);
+    }
   }
 
   Future<void> _pollStatus() async {

@@ -8,6 +8,7 @@ import '../utils/workflow_to_yaml.dart';
 import '../utils/yaml_to_workflow.dart';
 import 'api_provider.dart';
 import 'canvas_controller.dart';
+import 'drawer_provider.dart';
 import 'mode_provider.dart';
 import 'mock_data.dart' show WorkflowSummary;
 import 'project_provider.dart';
@@ -340,7 +341,7 @@ Future<String?> _switchCore(
   read(draggingNodeIdProvider.notifier).state = null;
   read(dragOffsetProvider.notifier).state = Offset.zero;
   read(selectedNodeIdProvider.notifier).state = null;
-  read(nodeDrawerOpenProvider.notifier).state = false;
+  read(drawerOpenProvider.notifier).state = false;
   read(workflowDirtyProvider.notifier).state = false;
   return null;
 }

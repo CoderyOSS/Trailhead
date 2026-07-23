@@ -15,7 +15,9 @@ import 'subflow_settings_tab.dart';
 enum NodeDrawerView { builder, job }
 
 class NodeDrawer extends ConsumerStatefulWidget {
-  final WorkflowNode node;
+  /// Null = no node selected: the settings pane renders an empty state
+  /// (header + placeholder body) instead of node tabs.
+  final WorkflowNode? node;
   final NodeDrawerView view;
   final VoidCallback onClose;
   final bool isPortrait;
@@ -35,19 +37,19 @@ class NodeDrawer extends ConsumerStatefulWidget {
 class _NodeDrawerState extends ConsumerState<NodeDrawer> {
   late TextEditingController _labelCtrl;
 
-  String get _tabKey => '${widget.node.id}_${widget.view.name}';
+  String get _tabKey => '${widget.node?.id ?? 'none'}_${widget.view.name}';
 
   @override
   void initState() {
     super.initState();
-    _labelCtrl = TextEditingController(text: widget.node.label);
+    _labelCtrl = TextEditingController(text: widget.node?.label ?? '');
   }
 
   @override
   void didUpdateWidget(covariant NodeDrawer oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.node.id != widget.node.id) {
-      _labelCtrl.text = widget.node.label;
+    if (oldWidget.node?.id != widget.node?.id) {
+      _labelCtrl.text = widget.node?.label ?? '';
     }
   }
 
@@ -58,20 +60,91 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
   }
 
   void _updateLabel(String value) {
-    updateCanvasNode(ref, widget.node.id, (n) => n.copyWith(label: value));
+    final node = widget.node;
+    if (node == null) return;
+    updateCanvasNode(ref, node.id, (n) => n.copyWith(label: value));
+  }
+
+  /// Empty state for the settings pane when no node is selected. The header
+  /// stays visible; node-specific tab bodies are replaced by a placeholder.
+  /// Integration point: a workflow-level tab (selection-independent) renders
+  /// above this state.
+  Widget _buildEmptyState() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Container(
+          padding: const EdgeInsets.fromLTRB(16, 14, 16, 12),
+          decoration: BoxDecoration(
+            border: Border(
+              bottom: BorderSide(color: AppColors.border1, width: 1),
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: AppColors.bg3,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                alignment: Alignment.center,
+                child: CartaIcon(
+                  icon: CartaIconData.zap,
+                  size: 14,
+                  color: AppColors.fg3,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'settings',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.fg2,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'no node selected',
+                      style: TextStyle(
+                        fontFamily: 'monospace',
+                        fontSize: 10.5,
+                        color: AppColors.fg3,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        Expanded(
+          child: EmptyBlock(label: 'select a node on the canvas'),
+        ),
+      ],
+    );
   }
 
   @override
   Widget build(BuildContext context) {
+    final node = widget.node;
+    if (node == null) return _buildEmptyState();
     final tabsMap = ref.watch(nodeDrawerTabProvider);
-    final isWorker = widget.node.kind == 'genserver' || widget.node.kind == 'task' || widget.node.kind == 'delay' || widget.node.kind == 'http.server.ingress' || widget.node.kind == 'http.server.egress' || widget.node.kind == 'http.client.request' || widget.node.kind == 'source.inject' || widget.node.kind == 'subflow' || widget.node.kind == 'sink.log' || widget.node.kind == 'port.in' || widget.node.kind == 'port.out';
+    final isWorker = node.kind == 'genserver' || node.kind == 'task' || node.kind == 'delay' || node.kind == 'http.server.ingress' || node.kind == 'http.server.egress' || node.kind == 'http.client.request' || node.kind == 'source.inject' || node.kind == 'subflow' || node.kind == 'sink.log' || node.kind == 'port.in' || node.kind == 'port.out';
     final isBuilder = widget.view == NodeDrawerView.builder;
 
-    // Job view prepends a runtime 'job' tab (executions + inject trigger)
-    // and defaults to it; the remaining editor tabs mirror builder mode and
-    // edit the job's workflow snapshot (never the stored workflow).
+    // Job view prepends a runtime 'job' tab (node runtime info + inject
+    // trigger) and defaults to it; the remaining editor tabs mirror builder
+    // mode and edit the job's workflow snapshot (never the stored workflow).
     final editorTabs = isWorker
-        ? (widget.node.kind == 'source.inject'
+        ? (node.kind == 'source.inject'
             ? [
                 _Tab(value: 'settings', label: 'node'),
                 _Tab(value: 'payload', label: 'payload'),
@@ -89,45 +162,33 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
         : [_Tab(value: 'job', label: 'job'), ...editorTabs];
     final defaultTab = isBuilder ? 'settings' : 'job';
     final _tab = tabsMap[_tabKey] ?? defaultTab;
-    final meta = widget.node.kind == 'genserver'
+    final meta = node.kind == 'genserver'
         ? 'genserver node'
-        : widget.node.kind == 'task'
+        : node.kind == 'task'
             ? 'task node'
-            : widget.node.kind == 'delay'
+            : node.kind == 'delay'
                 ? 'delay node'
-                : widget.node.kind == 'http.server.ingress'
+                : node.kind == 'http.server.ingress'
                     ? 'http server ingress node'
-                    : widget.node.kind == 'http.server.egress'
+                    : node.kind == 'http.server.egress'
                         ? 'http server egress node'
-                        : widget.node.kind == 'http.client.request'
+                        : node.kind == 'http.client.request'
                             ? 'http client request node'
-                            : widget.node.kind == 'source.inject'
+                            : node.kind == 'source.inject'
                                 ? 'inject node'
-                                : widget.node.kind == 'port.in'
+                                : node.kind == 'port.in'
                                     ? 'port in node'
-                                    : widget.node.kind == 'port.out'
+                                    : node.kind == 'port.out'
                                         ? 'port out node'
-                                        : widget.node.kind == 'function'
+                                        : node.kind == 'function'
                                             ? 'function — if/else router'
-                                            : widget.node.kind == 'sink.log'
+                                            : node.kind == 'sink.log'
                                                 ? 'log sink node'
                                                 : 'node';
 
-    return Container(
-      width: widget.isPortrait ? double.infinity : 460,
-      height: widget.isPortrait ? double.infinity : null,
-      decoration: BoxDecoration(
-        color: AppColors.bg1,
-        border: Border(
-          top: widget.isPortrait
-              ? BorderSide(color: AppColors.border1, width: 1)
-              : BorderSide.none,
-          left: widget.isPortrait
-              ? BorderSide.none
-              : BorderSide(color: AppColors.border1, width: 1),
-        ),
-      ),
-      child: Column(
+    // Sizing + outer border live in the UnifiedDrawer — this widget fills
+    // whatever extent the settings pane gets.
+    return Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           // Header
@@ -187,7 +248,7 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                       ),
                       const SizedBox(height: 2),
                       Text(
-                        '${widget.node.id} \u00b7 $meta${!isBuilder ? " \u00b7 job" : ""}',
+                        '${node.id} \u00b7 $meta${!isBuilder ? " \u00b7 job" : ""}',
                         style: TextStyle(
                           fontFamily: 'monospace',
                           fontSize: 10.5,
@@ -197,30 +258,7 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                // Close button hidden in job view — the active-mode panel is
-                // forced open and has no close affordance.
-                if (isBuilder)
-                GestureDetector(
-                  onTap: widget.onClose,
-                  child: MouseRegion(
-                    cursor: SystemMouseCursors.click,
-                    child: Container(
-                      width: 26,
-                      height: 26,
-                      decoration: BoxDecoration(
-                        color: AppColors.bg2,
-                        borderRadius: BorderRadius.circular(6),
-                      ),
-                      alignment: Alignment.center,
-                      child: CartaIcon(
-                        icon: CartaIconData.x,
-                        size: 14,
-                        color: AppColors.fg2,
-                      ),
-                    ),
-                  ),
-                ),
+                // Close lives in the UnifiedDrawer header.
               ],
             ),
           ),
@@ -240,21 +278,20 @@ class _NodeDrawerState extends ConsumerState<NodeDrawer> {
           // Body
           Expanded(
             child: !isBuilder && _tab == 'job'
-                ? JobLogView(node: widget.node)
-                : (widget.node.kind == 'subflow'
-                    ? SubflowSettingsTab(node: widget.node)
+                ? JobLogView(node: node)
+                : (node.kind == 'subflow'
+                    ? SubflowSettingsTab(node: node)
                     : (_tab == 'settings'
-                        ? EditorSettingsTab(node: widget.node)
+                        ? EditorSettingsTab(node: node)
                         : _tab == 'payload'
-                            ? EditorPayloadTab(node: widget.node)
+                            ? EditorPayloadTab(node: node)
                             : _tab == 'prompt'
-                                ? EditorPromptTab(node: widget.node)
+                                ? EditorPromptTab(node: node)
                                 : _tab == 'result'
-                                    ? EditorResultTab(node: widget.node)
+                                    ? EditorResultTab(node: node)
                                     : const SizedBox.shrink())),
           ),
         ],
-      ),
     );
   }
 

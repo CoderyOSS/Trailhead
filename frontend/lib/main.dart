@@ -10,6 +10,7 @@ import 'providers/flow_tabs_provider.dart';
 import 'providers/mode_provider.dart';
 import 'providers/subflows_provider.dart';
 import 'providers/carta_provider.dart';
+import 'providers/drawer_provider.dart';
 import 'widgets/validation_banner.dart';
 import 'providers/mock_data.dart' show WorkflowSummary;
 import 'providers/server_defs_provider.dart';
@@ -76,6 +77,13 @@ class CartaShell extends ConsumerStatefulWidget {
 class _CartaShellState extends ConsumerState<CartaShell> {
   Timer? _autosaveTimer;
   String? _lastSavedYaml;
+
+  @override
+  void initState() {
+    super.initState();
+    // Prime drawer view mode / layout / sizes from persisted prefs.
+    loadDrawerPrefs(ref);
+  }
 
   @override
   void dispose() {
@@ -155,7 +163,8 @@ class _CartaShellState extends ConsumerState<CartaShell> {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
     final yamlOpen = mode == AppMode.build && ref.watch(yamlDrawerOpenProvider);
-    final nodeOpen = ref.watch(nodeDrawerOpenProvider);
+    final drawerOpen = ref.watch(drawerOpenProvider);
+    final drawerSize = ref.watch(drawerSizeProvider);
     final selectedNodeId = ref.watch(selectedNodeIdProvider);
     final workflow = ref.watch(workflowProvider);
     final settingsOpen = ref.watch(settingsModalOpenProvider);
@@ -229,7 +238,7 @@ class _CartaShellState extends ConsumerState<CartaShell> {
               children: [
                 TopBar(),
                 Expanded(child: _buildCanvasContent()),
-                if (bottomPanel != null) Expanded(child: bottomPanel),
+                if (bottomPanel != null) bottomPanel,
               ],
             ),
           ),
@@ -238,45 +247,56 @@ class _CartaShellState extends ConsumerState<CartaShell> {
     }
 
     Widget buildDrawerPanel() {
-      // Active mode: drawer is forced open (2-column logs | node layout).
+      // Active mode: drawer is forced open (unified settings + logs panel).
       final activeForced = mode == AppMode.active;
-      if (!yamlOpen && !nodeOpen && !activeForced) {
+      if (!yamlOpen && !drawerOpen && !activeForced) {
         return const SizedBox.shrink();
       }
 
-      final showNodeDrawer = activeForced ||
-          (nodeOpen && selectedNode != null && mode != AppMode.history);
+      // Selection no longer gates the drawer — it only decides whether the
+      // settings pane shows node tabs or an empty state.
+      final showDrawer =
+          (drawerOpen || activeForced) && mode != AppMode.history;
 
       void closeDrawer() {
-        ref.read(nodeDrawerOpenProvider.notifier).state = false;
+        ref.read(drawerOpenProvider.notifier).state = false;
         ref.read(selectedNodeIdProvider.notifier).state = null;
       }
 
+      final screen = MediaQuery.of(context).size;
+
+      final drawer = !showDrawer
+          ? null
+          : UnifiedDrawer(
+              node: selectedNode,
+              view: drawerView,
+              nodeKey: _nodeDrawerKey(selectedNode?.id ?? 'none', drawerView),
+              onClose: closeDrawer,
+              isPortrait: isPortrait,
+              forcedOpen: activeForced,
+            );
+
       if (isPortrait) {
-        return Row(
-          children: [
-            if (yamlOpen)
-              Expanded(
-                child: YamlDrawer(
-                  key: _yamlDrawerKey,
-                  workflow: workflow,
-                  onClose: () => ref
-                      .read(yamlDrawerOpenProvider.notifier)
-                      .state = false,
-                  isPortrait: true,
+        // Portrait: the whole drawer region has a consistent, resizable
+        // height; YAML + unified drawer split the row if both are open.
+        return SizedBox(
+          height: clampDrawerExtent(drawerSize.portrait, true, screen),
+          child: Row(
+            children: [
+              if (yamlOpen)
+                Expanded(
+                  child: YamlDrawer(
+                    key: _yamlDrawerKey,
+                    workflow: workflow,
+                    onClose: () => ref
+                        .read(yamlDrawerOpenProvider.notifier)
+                        .state = false,
+                    isPortrait: true,
+                  ),
                 ),
-              ),
-            if (showNodeDrawer)
-              Expanded(
-                child: DrawerPanel(
-                  key: _nodeDrawerKey(selectedNode?.id ?? 'none', drawerView),
-                  node: selectedNode,
-                  view: drawerView,
-                  onClose: closeDrawer,
-                  isPortrait: true,
-                ),
-              ),
-          ],
+              if (drawer != null) Expanded(child: drawer),
+            ],
+          ),
         );
       }
 
@@ -291,12 +311,10 @@ class _CartaShellState extends ConsumerState<CartaShell> {
                   .read(yamlDrawerOpenProvider.notifier)
                   .state = false,
             ),
-          if (showNodeDrawer)
-            DrawerPanel(
-              key: _nodeDrawerKey(selectedNode?.id ?? 'none', drawerView),
-              node: selectedNode,
-              view: drawerView,
-              onClose: closeDrawer,
+          if (drawer != null)
+            SizedBox(
+              width: clampDrawerExtent(drawerSize.landscape, false, screen),
+              child: drawer,
             ),
         ],
       );
@@ -309,7 +327,7 @@ class _CartaShellState extends ConsumerState<CartaShell> {
             children: [
               Expanded(
                 child: isPortrait &&
-                        (yamlOpen || nodeOpen || mode == AppMode.active)
+                        (yamlOpen || drawerOpen || mode == AppMode.active)
                      ? workflowRegion(bottomPanel: buildDrawerPanel())
                      : Row(
                          children: [

@@ -187,6 +187,29 @@ Deferred. See roadmap.
 
 ## Recently Landed
 
+- **Unified resizable drawer + mock executions removed (2026-07-23)**: Node
+  details drawer (now "settings drawer") and logs drawer merged into a single
+  `UnifiedDrawer` (`lib/widgets/drawer_panel.dart`) in BOTH build and active
+  mode — logs are now a view option while editing, not just in active jobs.
+  Header: 3-state view switch (logs|settings|both, last-used persisted
+  globally) + split-direction toggle (horizontal/vertical panes) + close
+  (build only; active stays forced open). Resizable via slim drag handles
+  (touch/trackpad/mouse): outer edge (drawer↔graph — width in landscape,
+  height in portrait) and inner (logs↔settings split). Sizes/split/layout/
+  view-mode persist via `shared_preferences` (new dep; `drawer_provider.dart`,
+  keys `drawer.*`); open state is session-only. Landscape = consistent width
+  (default 520, clamped [360, 80%]); portrait = consistent height (default
+  320, clamped [240, 70%]) replacing the old 50/50 split. Selection no longer
+  gates drawer visibility — no selection → settings pane shows an empty state
+  under the (selection-independent) tab bar; TopBar gains a "panel" toggle
+  (build mode) so logs are reachable without a selection; node double-tap
+  still opens the drawer and bumps a logs-only view to both. The mock
+  EXECUTIONS section in the job tab (fed by `mockStageExecutions`) is
+  deleted — job tab keeps genserver header info + the inject trigger;
+  `StageExecution`/`ToolCall` model classes went with it. History mode
+  untouched. `nodeDrawerOpenProvider` renamed to `drawerOpenProvider`
+  (call sites: main, mode_rail, flow_tabs_provider, graph_canvas,
+  yaml_drawer). `flutter analyze` 0 errors; `flutter test` 94 green.
 - **Configuration objects (2026-07-23)**: Project-scoped named Elixir literals
   stored via `Carta.FileStore` (YAML files in `configs/`, sibling of `flows/`) —
   `Carta.ConfigStore` is a **stateless module** (not Mnesia/GenServer; cluster

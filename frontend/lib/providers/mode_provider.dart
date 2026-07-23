@@ -99,8 +99,6 @@ final runsTableViewModeProvider = StateProvider<String>((ref) => 'flat');
 
 final yamlDrawerOpenProvider = StateProvider<bool>((ref) => false);
 
-final nodeDrawerOpenProvider = StateProvider<bool>((ref) => false);
-
 final selectedNodeIdProvider = StateProvider<String?>((ref) => null);
 
 final nodeDrawerTabProvider = StateProvider<Map<String, String>>((ref) => {});

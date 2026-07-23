@@ -44,7 +44,7 @@ Flutter SPA for Carta workflow visualization and management. Follows the Codery 
 ### Not Yet Implemented
 
 - Snapshot filmstrip (bottom strip)
-- Per-node executions feed in the drawer's job tab (still `mockStageExecutions`)
+- Per-node executions feed in the drawer's job tab (mock EXECUTIONS section removed 2026-07-23; needs a real server-side feed)
 - Routing (multiple pages)
 - **Zoom control UI overlay** — zoom exists in controller but no `−`/`+`/reset bar yet
 
@@ -74,7 +74,9 @@ proxy to `/api/v1/workflows/:name/deploy|status|inject|log-flags|logs/stream`.
 - `lib/utils/yaml_to_workflow.dart` — parses stored YAML into canvas model
 - `lib/utils/workflow_to_yaml.dart` — serializes canvas model to YAML
 - `lib/providers/api_provider.dart` — `workflowsApiProvider` (relative URL)
-- `lib/widgets/drawer_panel.dart` — active mode: forced-open 2-column panel (logs left, node details right); builder mode: NodeDrawer only
+- `lib/widgets/drawer_panel.dart` — `UnifiedDrawer`: single settings+logs panel in both build and active mode. Header: 3-state view switch (logs|settings|both) + split-direction toggle (horizontal/vertical) + close (build only; active is forced open). Drag-resize: outer edge handle (drawer↔graph) and inner handle (logs↔settings), touch+mouse. Settings pane shows an empty state when no node is selected
+- `lib/providers/drawer_provider.dart` — `drawerOpenProvider` (session), `drawerViewModeProvider`, `drawerLayoutProvider`, `drawerSizeProvider` (per-orientation), `drawerSplitProvider`; all but open state persist via `shared_preferences` (`loadDrawerPrefs` from shell initState, debounced `scheduleDrawerPrefsSave`)
+- `lib/widgets/drawer/resize_handle.dart` — slim axis-parametrized drag handle (8px hit strip, accent on hover/drag)
 - `lib/widgets/log_drawer/log_drawer.dart` — per-point toggle rail + stream container
 - `lib/widgets/log_drawer/log_stream_view.dart` — aggregated timestamp-ordered log stream
 - `lib/widgets/node_drawer/payload_editor.dart` — Elixir code field (flutter_code_editor) + live validation pip. Shared by the inject payload tab and the transform expr field; **always key it by node id** (`ValueKey('...-${node.id}')`) — `initialCode` binds in `initState` only, so an unkeyed editor keeps the previous node's text

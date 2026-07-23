@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 import '../theme/tokens.dart';
+import '../providers/drawer_provider.dart';
 import '../providers/mode_provider.dart';
 import '../providers/settings_provider.dart';
 import 'icons.dart';
@@ -44,7 +45,7 @@ class ModeRail extends ConsumerWidget {
             active: mode == AppMode.active,
             badge: activeCount,
             onTap: () {
-              ref.read(nodeDrawerOpenProvider.notifier).state = false;
+              ref.read(drawerOpenProvider.notifier).state = false;
               ref.read(selectedNodeIdProvider.notifier).state = null;
               ref.read(modeProvider.notifier).state = AppMode.active;
             },
@@ -54,7 +55,7 @@ class ModeRail extends ConsumerWidget {
             label: 'History \u00b7 past jobs',
             active: mode == AppMode.history,
             onTap: () {
-              ref.read(nodeDrawerOpenProvider.notifier).state = false;
+              ref.read(drawerOpenProvider.notifier).state = false;
               ref.read(selectedNodeIdProvider.notifier).state = null;
               ref.read(modeProvider.notifier).state = AppMode.history;
             },

@@ -4,6 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../theme/tokens.dart';
 import '../providers/api_provider.dart';
+import '../providers/drawer_provider.dart';
 import '../providers/flow_tabs_provider.dart';
 import '../providers/mode_provider.dart';
 import '../providers/mock_data.dart' show WorkflowSummary;
@@ -454,7 +455,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
                   GestureDetector(
                     onTap: () {
                       ref.read(selectedNodeIdProvider.notifier).state = nodeIdForLine;
-                      ref.read(nodeDrawerOpenProvider.notifier).state = true;
+                      ref.read(drawerOpenProvider.notifier).state = true;
                     },
                     child: MouseRegion(
                       cursor: SystemMouseCursors.click,

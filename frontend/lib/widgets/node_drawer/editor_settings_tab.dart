@@ -36,6 +36,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
   late TextEditingController _httpEgressBodyCtrl;
   late TextEditingController _httpRequestUrlCtrl;
   late TextEditingController _channelCtrl;
+  late TextEditingController _configKeyCtrl;
 
   @override
   void initState() {
@@ -54,6 +55,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _httpEgressBodyCtrl = TextEditingController(text: widget.node.httpEgressBody ?? '');
     _httpRequestUrlCtrl = TextEditingController(text: widget.node.httpRequestUrl ?? '');
     _channelCtrl = TextEditingController(text: widget.node.channel ?? '');
+    _configKeyCtrl = TextEditingController(text: widget.node.configKey ?? '');
   }
 
   @override
@@ -72,6 +74,7 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
     _httpEgressBodyCtrl.dispose();
     _httpRequestUrlCtrl.dispose();
     _channelCtrl.dispose();
+    _configKeyCtrl.dispose();
     super.dispose();
   }
 
@@ -380,6 +383,22 @@ class _EditorSettingsTabState extends ConsumerState<EditorSettingsTab> {
               ),
             ],
           ],
+
+          // ── config_key (applies to all node kinds) ──
+          // References a stored configuration object (Settings → Configuration
+          // Objects). The backend deep-merges its term over this node's inline
+          // config at deploy (stored wins); deploy-time validation rejects an
+          // unknown key.
+          Field(
+            label: 'config_key',
+            hint: 'stored config object — merged over inline config at deploy',
+            child: _TextInput(
+              controller: _configKeyCtrl,
+              onChanged: (v) => _updateNode(node.copyWith(
+                configKey: v.trim().isEmpty ? null : v.trim(),
+              )),
+            ),
+          ),
 
           // ── Per-node logging section (applies to all node kinds) ──
           // log_in / log_out are runtime flags checked per message by the

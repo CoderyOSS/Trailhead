@@ -188,6 +188,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
   bool logOut = false;
   Map<String, dynamic>? genericConfig;
   String? channel;
+  String? configKey;
   if (config is YamlMap) {
     expr = _toStr(config['expr']);
     if (kind == 'delay') {
@@ -225,6 +226,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     }
     logIn = (config['log_in'] as bool?) ?? false;
     logOut = (config['log_out'] as bool?) ?? false;
+    configKey = _toStr(config['config_key']);
 
     // Subflow nodes store their whole config under `config:` — pull it
     // through generically so the drawer can re-read selected subflow + params.
@@ -349,6 +351,7 @@ WorkflowNode _parseNode(YamlMap stage, int index) {
     logOut: logOut,
     config: genericConfig,
     channel: channel,
+    configKey: configKey,
   );
 }
 

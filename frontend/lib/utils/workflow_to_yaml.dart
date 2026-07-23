@@ -187,6 +187,9 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         }
         if (node.logIn) configLines.add('      log_in: true');
         if (node.logOut) configLines.add('      log_out: true');
+        if (node.configKey != null && node.configKey!.isNotEmpty) {
+          configLines.add('      config_key: "${node.configKey}"');
+        }
 
         // Subflow nodes — emit `subflow:` plus one entry per param. The
         // node.config map carries the full payload (key 'subflow' is the

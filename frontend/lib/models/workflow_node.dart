@@ -92,6 +92,11 @@ class WorkflowNode {
   // across flows by matching channel via the runtime PortRegistry.
   final String? channel;
 
+  // Opt-in reference to a stored configuration object (Settings →
+  // Configuration Objects). The backend deep-merges the stored term over
+  // this node's inline config at deploy. Emitted under config.config_key.
+  final String? configKey;
+
   static const List<BranchOutput> defaultBranchOutputs = [
     BranchOutput(id: '0', label: 'high'),
     BranchOutput(id: '1', label: 'medium'),
@@ -154,6 +159,7 @@ class WorkflowNode {
     this.logOut = false,
     this.config,
     this.channel,
+    this.configKey,
   });
 
   WorkflowNode copyWith({
@@ -202,6 +208,7 @@ class WorkflowNode {
     bool? logOut,
     Map<String, dynamic>? config,
     String? channel,
+    String? configKey,
   }) {
     return WorkflowNode(
       id: id ?? this.id,
@@ -249,6 +256,7 @@ class WorkflowNode {
       logOut: logOut ?? this.logOut,
       config: config ?? this.config,
       channel: channel ?? this.channel,
+      configKey: configKey ?? this.configKey,
     );
   }
 }

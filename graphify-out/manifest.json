@@ -5,7 +5,7 @@
     "semantic_hash": "758c5bf8bd1b695dd11523c800baf5c8"
   },
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784825382.2983358,
+    "mtime": 1784829750.523446,
     "ast_hash": "5256cc49698b6509f42403c1f86ecb1b",
     "semantic_hash": ""
   },
@@ -45,12 +45,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784825382.6743348,
+    "mtime": 1784829750.892445,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784825382.6773345,
+    "mtime": 1784829750.893445,
     "ast_hash": "efe843859d073e34bc63bb1d089af6a7",
     "semantic_hash": ""
   },
@@ -375,8 +375,8 @@
     "semantic_hash": "cafdd99d14adcd7f90c0cd6a50ed5f9a"
   },
   "AGENTS.md": {
-    "mtime": 1784786353.6421776,
-    "ast_hash": "871929a78aa6410faa8bc81367cd37c7",
+    "mtime": 1784829478.6972542,
+    "ast_hash": "46e476cdb77dea70660b7f929610bc15",
     "semantic_hash": ""
   },
   "docs/operations/troubleshooting.md": {
@@ -588,16 +588,6 @@
     "mtime": 1780328898.3056183,
     "ast_hash": "73504b0b881fbad80325fcc4a821684a",
     "semantic_hash": "73504b0b881fbad80325fcc4a821684a"
-  },
-  "frontend/assets/images/trailhead-logo.png": {
-    "mtime": 1780328898.3006182,
-    "ast_hash": "a2d2545428194b538a99595a4122c4ce",
-    "semantic_hash": "a2d2545428194b538a99595a4122c4ce"
-  },
-  "frontend/assets/images/trailhead-logo.svg": {
-    "mtime": 1780328898.3006182,
-    "ast_hash": "2f31285d83bc97959e9b79be5e9d36a8",
-    "semantic_hash": "2f31285d83bc97959e9b79be5e9d36a8"
   },
   "frontend/ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png": {
     "mtime": 1780328898.301618,
@@ -2130,7 +2120,7 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dart_plugin_registrant.dart": {
-    "mtime": 1784825373.7403612,
+    "mtime": 1784829763.2914083,
     "ast_hash": "75d59b80420856968e90f15d4a7178e0",
     "semantic_hash": ""
   },
@@ -2275,8 +2265,8 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/outputs.json": {
-    "mtime": 1784825413.1762438,
-    "ast_hash": "a31eb525f0a84809ceb29e13592943bf",
+    "mtime": 1784829203.732072,
+    "ast_hash": "e4ba14d0ae05f99926b81a16e3810615",
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/web_plugin_registrant.dart": {
@@ -2285,13 +2275,38 @@
     "semantic_hash": ""
   },
   "docs/superpowers/plans/2026-07-23-config-objects.md": {
-    "mtime": 1784824860.2248845,
-    "ast_hash": "b56b0a6f63b44645ea7613d6d99918c7",
+    "mtime": 1784828310.674738,
+    "ast_hash": "5d86fea6951bf0af512dc5e851ca54c8",
     "semantic_hash": ""
   },
   "docs/superpowers/specs/2026-07-23-config-objects-design.md": {
     "mtime": 1784824374.996306,
     "ast_hash": "1a14cc20579755683e3a48f0bd5c4073",
+    "semantic_hash": ""
+  },
+  "frontend/lib/providers/configs_provider.dart": {
+    "mtime": 1784829715.166551,
+    "ast_hash": "fc9c4c5947a746b30da815161e905bc9",
+    "semantic_hash": ""
+  },
+  "frontend/lib/services/configs_api.dart": {
+    "mtime": 1784829734.021495,
+    "ast_hash": "05a3fa2be2755675a639f50be94798e5",
+    "semantic_hash": ""
+  },
+  "frontend/test/services/configs_api_test.dart": {
+    "mtime": 1784829698.4956007,
+    "ast_hash": "efe84381c8d11d8be94dacd472ecab27",
+    "semantic_hash": ""
+  },
+  "frontend/assets/images/carta-logo.png": {
+    "mtime": 1780328898.3006182,
+    "ast_hash": "a2d2545428194b538a99595a4122c4ce",
+    "semantic_hash": ""
+  },
+  "frontend/assets/images/carta-logo.svg": {
+    "mtime": 1780328898.3006182,
+    "ast_hash": "2f31285d83bc97959e9b79be5e9d36a8",
     "semantic_hash": ""
   }
 }

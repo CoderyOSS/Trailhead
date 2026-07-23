@@ -50,5 +50,26 @@ connections: []
       expect(wf.nodes.single.configKey, isNull);
       expect(workflowToYaml(wf), isNot(contains('config_key')));
     });
+
+    test('config_key emits a config block even with no other config (universal)', () {
+      // A node may pull its ENTIRE config from a stored object — config_key
+      // alone must still produce a `config:` block, regardless of kind.
+      const yaml = '''
+name: w
+version: 1
+nodes:
+  - id: "a"
+    type: task
+    label: "a"
+    config:
+      config_key: "db"
+connections: []
+''';
+      final wf = yamlToWorkflow('w', yaml);
+      expect(wf.nodes.single.configKey, 'db');
+      final emitted = workflowToYaml(wf);
+      expect(emitted, contains('config:'));
+      expect(emitted, contains('config_key: "db"'));
+    });
   });
 }

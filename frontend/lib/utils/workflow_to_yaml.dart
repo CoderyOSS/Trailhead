@@ -126,7 +126,9 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
         }
       }
 
-      // Node kinds with config sub-map
+      // Node kinds with config sub-map. config_key is universal — a node can
+      // pull its ENTIRE config from a stored object, so a config_key-only node
+      // (any kind) must still emit a `config:` block.
       final wantsConfig = node.kind == 'delay' ||
           node.kind == 'http.server.ingress' ||
           node.kind == 'http.server.egress' ||
@@ -137,7 +139,8 @@ YamlResult workflowToYamlWithLines(WorkflowSummary workflow) {
           node.kind == 'port.out' ||
           (node.kind == 'function' && node.expr != null) ||
           node.logIn ||
-          node.logOut;
+          node.logOut ||
+          (node.configKey != null && node.configKey!.isNotEmpty);
 
       if (wantsConfig) {
         // Build child lines first — a bare `config:` header with no entries

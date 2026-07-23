@@ -173,8 +173,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
     // consistent local tab set.
     try {
       if (tab.kind == FlowTabKind.flow) {
-        ref.invalidate(remoteWorkflowsProvider);
-        await ref.read(remoteWorkflowsProvider.future);
+        await refreshWorkflows(ref);
       } else {
         ref.invalidate(subflowsProvider);
         await ref.read(subflowsProvider.future);
@@ -238,8 +237,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
         await api.replace(clean, workflowToYaml(wf));
         await api.delete(tab.name).catchError((_) => false);
         swapTab();
-        ref.invalidate(remoteWorkflowsProvider);
-        await ref.read(remoteWorkflowsProvider.future);
+        await refreshWorkflows(ref);
       } else {
         final cached = isActive
             ? liveDoc

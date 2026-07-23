@@ -53,6 +53,17 @@ final workflowsProvider = Provider<List<WorkflowSummary>>((ref) {
       );
 });
 
+/// Invalidate the workflow DTO fetch (the HTTP source) and await the fresh
+/// parsed result. Riverpod only invalidates dependents, not dependencies, so
+/// invalidating [remoteWorkflowsProvider] alone recomputes the parser against
+/// cached DTOs — mutations never surface. Invalidating
+/// [remoteWorkflowDtosProvider] cascades to the parser, this sync provider,
+/// and [flowTabSyncProvider].
+Future<void> refreshWorkflows(WidgetRef ref) async {
+  ref.invalidate(remoteWorkflowDtosProvider);
+  await ref.read(remoteWorkflowsProvider.future);
+}
+
 /// Sentinel for "no workflow selected" state. The canvas renders an empty
 /// graph (no nodes/edges) and the top bar shows a create-first-workflow CTA.
 const emptyWorkflowId = '__empty__';

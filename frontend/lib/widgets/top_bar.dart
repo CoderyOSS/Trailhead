@@ -145,7 +145,7 @@ class _BuildBar extends ConsumerWidget {
             size: AppButtonSize.sm,
             icon: CartaIconData.copy,
             label: 'retry',
-            onTap: () { ref.invalidate(remoteWorkflowsProvider); },
+            onTap: () { ref.invalidate(remoteWorkflowDtosProvider); },
           ),
         ],
       );

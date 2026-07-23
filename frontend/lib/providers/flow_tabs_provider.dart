@@ -371,8 +371,7 @@ Future<void> createUntitledFlow(WidgetRef ref) async {
   );
   try {
     await api.create(name, workflowToYaml(placeholder));
-    ref.invalidate(remoteWorkflowsProvider);
-    await ref.read(remoteWorkflowsProvider.future);
+    await refreshWorkflows(ref);
   } catch (e) {
     debugPrint('create flow failed: $e');
     return;

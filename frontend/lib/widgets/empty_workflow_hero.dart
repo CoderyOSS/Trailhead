@@ -45,8 +45,7 @@ class _EmptyWorkflowHeroState extends ConsumerState<EmptyWorkflowHero> {
         nodes: const [],
       );
       await api.create(name, workflowToYaml(placeholder));
-      ref.invalidate(remoteWorkflowsProvider);
-      await ref.read(remoteWorkflowsProvider.future);
+      await refreshWorkflows(ref);
       final created = ref.read(workflowsProvider).firstWhere(
             (w) => w.name == name,
             orElse: () => placeholder,

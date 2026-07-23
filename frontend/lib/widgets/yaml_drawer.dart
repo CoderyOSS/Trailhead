@@ -62,7 +62,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
         final dto = await api.get(widget.workflow.name);
         final updated = yamlToWorkflow(dto.name, dto.content);
         ref.read(workflowProvider.notifier).state = updated;
-        ref.invalidate(remoteWorkflowsProvider);
+        ref.invalidate(remoteWorkflowDtosProvider);
       }
     } catch (e) {
       debugPrint('yaml reload failed: $e');

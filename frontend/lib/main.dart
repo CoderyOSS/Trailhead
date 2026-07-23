@@ -117,8 +117,7 @@ class _CartaShellState extends ConsumerState<CartaShell> {
         await api.replace(wf.name, yaml);
         _lastSavedYaml = yaml;
         // Update remote list so tabs reflect new mtime if it changes.
-        ref.invalidate(remoteWorkflowsProvider);
-        await ref.read(remoteWorkflowsProvider.future);
+        await refreshWorkflows(ref);
       }
     } catch (e) {
       debugPrint('autosave failed: $e');

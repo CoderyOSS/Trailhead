@@ -1,6 +1,6 @@
 {
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784875847.2770114,
+    "mtime": 1784878803.040214,
     "ast_hash": "2dd787283f386aa1f153686ac3bc3e1a",
     "semantic_hash": ""
   },
@@ -40,12 +40,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784875847.7100089,
+    "mtime": 1784878803.4452128,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784875847.7120087,
+    "mtime": 1784878803.447213,
     "ast_hash": "66755780f26d1485b53c42abfddaa13e",
     "semantic_hash": ""
   },
@@ -235,8 +235,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/icons.dart": {
-    "mtime": 1784843319.1323466,
-    "ast_hash": "50c15cf23967fb3d8cc93c137edeefb2",
+    "mtime": 1784878757.47736,
+    "ast_hash": "9156815915eab94dd88255b28fe41a83",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/mode_rail.dart": {
@@ -2025,8 +2025,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/drawer_panel.dart": {
-    "mtime": 1784875766.7625093,
-    "ast_hash": "23200b52ef6f0ea5ec3ead681736b86e",
+    "mtime": 1784878749.5293856,
+    "ast_hash": "f3fb18d9e1828910488abdf050d26052",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/log_drawer/log_drawer.dart": {
@@ -2050,7 +2050,7 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dart_plugin_registrant.dart": {
-    "mtime": 1784875861.5459268,
+    "mtime": 1784878787.6082635,
     "ast_hash": "e6e3ccc0956514696b35445bc6236ee8",
     "semantic_hash": ""
   },
@@ -2265,12 +2265,12 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/main.dart.js": {
-    "mtime": 1784875820.1261752,
-    "ast_hash": "d1e538f575c216753341a333188f1a16",
+    "mtime": 1784878830.6001258,
+    "ast_hash": "fcbcf14b3dbe3a9f743ee5c59c3ac18c",
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/outputs.json": {
-    "mtime": 1784875822.5551605,
+    "mtime": 1784878833.0041182,
     "ast_hash": "e4ba14d0ae05f99926b81a16e3810615",
     "semantic_hash": ""
   },
@@ -2300,8 +2300,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/providers/drawer_provider.dart": {
-    "mtime": 1784842732.1881313,
-    "ast_hash": "32d33a3e9040095305025cccbfd1b379",
+    "mtime": 1784878449.5323417,
+    "ast_hash": "edb1f6311c8da8007587c6efce6fa968",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/drawer/resize_handle.dart": {
@@ -2310,8 +2310,8 @@
     "semantic_hash": ""
   },
   "frontend/test/drawer_panel_test.dart": {
-    "mtime": 1784875841.834044,
-    "ast_hash": "e203beb621b62308237a885a1f9e59d2",
+    "mtime": 1784878757.4483602,
+    "ast_hash": "e43b17eed3485843d24cc0ae8203fde2",
     "semantic_hash": ""
   },
   "frontend/test/failures/marquee_painter_isolatedDiff.png": {

@@ -4,7 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:frontend/providers/drawer_provider.dart';
 import 'package:frontend/widgets/drawer_panel.dart';
+import 'package:frontend/widgets/icons.dart';
 import 'package:frontend/widgets/node_drawer/node_drawer.dart';
+
+Finder _panelIcon(CartaIconData icon) => find.byWidgetPredicate(
+      (w) => w is CartaIcon && w.icon == icon,
+    );
 
 Widget _host({NodeDrawerView view = NodeDrawerView.builder}) {
   return ProviderScope(
@@ -44,9 +49,9 @@ void main() {
     // empty state alongside the logs pane.
     expect(find.text('select a node on the canvas'), findsOneWidget);
     // Split-direction toggle only visible in both mode. Default layout is
-    // horizontal (side-by-side); the icon shows the action (switch to
-    // vertical/stacked), not the current state.
-    expect(find.byIcon(Icons.vertical_split), findsOneWidget);
+    // verticalSplit (side-by-side columns); the icon shows the action
+    // (switch to horizontalSplit / stacked rows), not the current state.
+    expect(_panelIcon(CartaIconData.panelBottom), findsOneWidget);
   });
 
   testWidgets('switching to logs-only hides the settings pane',
@@ -61,18 +66,18 @@ void main() {
 
     expect(find.text('select a node on the canvas'), findsNothing);
     // Layout toggle hidden when not in both mode.
-    expect(find.byIcon(Icons.view_column), findsNothing);
-    expect(find.byIcon(Icons.vertical_split), findsNothing);
+    expect(_panelIcon(CartaIconData.panelRight), findsNothing);
+    expect(_panelIcon(CartaIconData.panelBottom), findsNothing);
   });
 
   testWidgets('layout toggle flips split direction', (tester) async {
     await tester.pumpWidget(_host());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.vertical_split));
+    await tester.tap(_panelIcon(CartaIconData.panelBottom));
     await tester.pumpAndSettle();
-    expect(find.byIcon(Icons.view_column), findsOneWidget);
-    expect(find.byIcon(Icons.vertical_split), findsNothing);
+    expect(_panelIcon(CartaIconData.panelRight), findsOneWidget);
+    expect(_panelIcon(CartaIconData.panelBottom), findsNothing);
     // Flush the debounced prefs-save timer (300ms).
     await tester.pump(const Duration(milliseconds: 400));
   });

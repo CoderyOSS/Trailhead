@@ -13,7 +13,7 @@ enum DrawerViewMode { logs, settings, both }
 
 /// Internal arrangement of the two panes when [DrawerViewMode.both]:
 /// horizontal = side-by-side columns, vertical = stacked rows.
-enum DrawerSplitLayout { horizontal, vertical }
+enum DrawerSplitLayout { verticalSplit, horizontalSplit }
 
 /// Drawer open/closed. Session-only — never persisted. Replaces the old
 /// nodeDrawerOpenProvider; selection no longer gates visibility.
@@ -25,7 +25,7 @@ final drawerViewModeProvider =
 
 /// Internal split direction for the two-pane view.
 final drawerLayoutProvider =
-    StateProvider<DrawerSplitLayout>((ref) => DrawerSplitLayout.horizontal);
+    StateProvider<DrawerSplitLayout>((ref) => DrawerSplitLayout.verticalSplit);
 
 /// Outer drawer extent in px: width in landscape, height in portrait.
 /// Stored per orientation.
@@ -63,7 +63,7 @@ Future<void> loadDrawerPrefs(WidgetRef ref) async {
     if (layout != null) {
       ref.read(drawerLayoutProvider.notifier).state =
           DrawerSplitLayout.values.asNameMap()[layout] ??
-              DrawerSplitLayout.horizontal;
+              DrawerSplitLayout.verticalSplit;
     }
     final ls = prefs.getDouble(_kSizeLandscape);
     final ps = prefs.getDouble(_kSizePortrait);

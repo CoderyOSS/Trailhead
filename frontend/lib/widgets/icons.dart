@@ -38,6 +38,7 @@ enum CartaIconData {
   globe,
   alertTriangle,
   panelRight,
+  panelBottom,
 }
 
 class CartaIcon extends StatelessWidget {
@@ -239,4 +240,8 @@ const Map<CartaIconData, String> _bodies = {
   CartaIconData.panelRight:
       '<rect x="3" y="4" width="18" height="16" rx="2"/>'
       '<line x1="15" y1="4" x2="15" y2="20"/>',
+
+  CartaIconData.panelBottom:
+      '<rect x="3" y="4" width="18" height="16" rx="2"/>'
+      '<line x1="3" y1="15" x2="21" y2="15"/>',
 };

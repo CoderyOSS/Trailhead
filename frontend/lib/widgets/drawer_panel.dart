@@ -4,6 +4,7 @@ import '../models/workflow_node.dart';
 import '../providers/drawer_provider.dart';
 import '../theme/tokens.dart';
 import 'drawer/resize_handle.dart';
+import 'icons.dart';
 import 'node_drawer/node_drawer.dart';
 import 'log_drawer/log_drawer.dart';
 
@@ -80,8 +81,8 @@ class UnifiedDrawer extends ConsumerWidget {
         Expanded(
           child: LayoutBuilder(
             builder: (context, constraints) {
-              final horizontalSplit = layout == DrawerSplitLayout.horizontal;
-              final total = horizontalSplit
+              final isSideBySide = layout == DrawerSplitLayout.verticalSplit;
+              final total = isSideBySide
                   ? constraints.maxWidth
                   : constraints.maxHeight;
               final frac = clampDrawerSplit(split, total);
@@ -107,17 +108,17 @@ class UnifiedDrawer extends ConsumerWidget {
               }
 
               final handle = ResizeHandle(
-                axis: horizontalSplit ? Axis.horizontal : Axis.vertical,
+                axis: isSideBySide ? Axis.horizontal : Axis.vertical,
                 onDelta: onSplitDelta,
                 onEnd: () => scheduleDrawerPrefsSave(ref),
               );
 
               final logsExtent = total * frac;
-              final first = horizontalSplit
+              final first = isSideBySide
                   ? SizedBox(width: logsExtent, child: logsPane)
                   : SizedBox(height: logsExtent, child: logsPane);
 
-              if (horizontalSplit) {
+              if (isSideBySide) {
                 return Row(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [first, handle, Expanded(child: settingsPane)],
@@ -175,23 +176,35 @@ class _DrawerHeader extends ConsumerWidget {
           const Spacer(),
           if (viewMode == DrawerViewMode.both)
             _HeaderIconButton(
-              icon: layout == DrawerSplitLayout.horizontal
-                  ? Icons.vertical_split
-                  : Icons.view_column,
-              tooltip: layout == DrawerSplitLayout.horizontal
+              iconWidget: layout == DrawerSplitLayout.verticalSplit
+                  ? CartaIcon(
+                      icon: CartaIconData.panelBottom,
+                      size: 14,
+                      color: AppColors.fg2,
+                    )
+                  : CartaIcon(
+                      icon: CartaIconData.panelRight,
+                      size: 14,
+                      color: AppColors.fg2,
+                    ),
+              tooltip: layout == DrawerSplitLayout.verticalSplit
                   ? 'stack panes vertically'
                   : 'arrange panes side by side',
               onTap: () {
                 ref.read(drawerLayoutProvider.notifier).state =
-                    layout == DrawerSplitLayout.horizontal
-                        ? DrawerSplitLayout.vertical
-                        : DrawerSplitLayout.horizontal;
+                    layout == DrawerSplitLayout.verticalSplit
+                        ? DrawerSplitLayout.horizontalSplit
+                        : DrawerSplitLayout.verticalSplit;
                 scheduleDrawerPrefsSave(ref);
               },
             ),
           if (showClose)
             _HeaderIconButton(
-              icon: Icons.close,
+              iconWidget: Icon(
+                Icons.close,
+                size: 14,
+                color: AppColors.fg2,
+              ),
               tooltip: 'close drawer',
               onTap: onClose,
             ),
@@ -292,12 +305,12 @@ class _SegmentState extends State<_Segment> {
 }
 
 class _HeaderIconButton extends StatefulWidget {
-  final IconData icon;
+  final Widget iconWidget;
   final String tooltip;
   final VoidCallback onTap;
 
   const _HeaderIconButton({
-    required this.icon,
+    required this.iconWidget,
     required this.tooltip,
     required this.onTap,
   });
@@ -328,7 +341,7 @@ class _HeaderIconButtonState extends State<_HeaderIconButton> {
               borderRadius: BorderRadius.circular(6),
             ),
             alignment: Alignment.center,
-            child: Icon(widget.icon, size: 14, color: AppColors.fg2),
+            child: widget.iconWidget,
           ),
         ),
       ),

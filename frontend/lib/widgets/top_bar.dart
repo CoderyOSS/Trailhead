@@ -27,18 +27,13 @@ class TopBar extends ConsumerWidget {
     final mode = ref.watch(modeProvider);
     final job = ref.watch(selectedJobProvider);
     final yamlOpen = ref.watch(yamlDrawerOpenProvider);
-    final isJobView =
-        (mode == AppMode.active && job != null) ||
-        (mode == AppMode.history && job != null);
 
     return ClipRect(
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
           constraints: const BoxConstraints(minHeight: 56),
-          padding: isJobView
-              ? const EdgeInsets.symmetric(horizontal: 14, vertical: 8)
-              : const EdgeInsets.symmetric(horizontal: 14),
+          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
           decoration: BoxDecoration(
             color: AppColors.bg1.withValues(alpha: 0.92),
             border: Border(
@@ -196,72 +191,57 @@ class _BuildBarState extends ConsumerState<_BuildBar> {
       );
     }
 
-    return SizedBox(
-      height: 56,
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          const Expanded(child: FlowTabStrip()),
-          if (dirty)
-            Padding(
-              padding: const EdgeInsets.only(right: 8, bottom: 6),
-              child: Text(
-                'saving…',
-                style: TextStyle(color: AppColors.fg2, fontSize: 11),
-              ),
-            ),
+    return Row(
+      children: [
+        const Expanded(child: FlowTabStrip()),
+        if (dirty)
           Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: AppButton(
-              variant:
-                  yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
-              size: AppButtonSize.sm,
-              icon: CartaIconData.file,
-              label: 'YAML',
-              onTap: () {
-                ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
-              },
+            padding: const EdgeInsets.only(right: 6),
+            child: Text(
+              'saving…',
+              style: TextStyle(color: AppColors.fg2, fontSize: 11),
             ),
           ),
-          const SizedBox(width: 8),
-          // Unified drawer (settings + logs) toggle.
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: AppButton(
-              variant: ref.watch(drawerOpenProvider)
-                  ? AppButtonVariant.secondary
-                  : AppButtonVariant.ghost,
-              size: AppButtonSize.sm,
-              icon: CartaIconData.panelRight,
-              label: 'panel',
-              onTap: () {
-                final open = ref.read(drawerOpenProvider);
-                ref.read(drawerOpenProvider.notifier).state = !open;
-              },
-            ),
-          ),
-          const SizedBox(width: 8),
-          Padding(
-            padding: const EdgeInsets.only(bottom: 6),
-            child: Container(
-              width: 1,
-              height: 22,
-              color: AppColors.border1,
-              margin: const EdgeInsets.symmetric(horizontal: 2),
-            ),
-          ),
-          const SizedBox(width: 8),
-          // Subflows aren't deployable on their own — no launch on subflow tabs.
-          if (!isSubflowTab)
-            Padding(
-              padding: const EdgeInsets.only(bottom: 6),
-              child: AppButton(
-                variant: AppButtonVariant.primary,
-                size: AppButtonSize.sm,
-                icon: CartaIconData.play,
-                label: 'launch',
-                loading: _launching,
-                onTap: () async {
+        AppButton(
+          variant: yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
+          size: AppButtonSize.sm,
+          icon: CartaIconData.file,
+          label: 'YAML',
+          onTap: () {
+            ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
+          },
+        ),
+        const SizedBox(width: 6),
+        // Unified drawer (settings + logs) toggle.
+        AppButton(
+          variant: ref.watch(drawerOpenProvider)
+              ? AppButtonVariant.secondary
+              : AppButtonVariant.ghost,
+          size: AppButtonSize.sm,
+          icon: CartaIconData.panelRight,
+          label: 'panel',
+          onTap: () {
+            final open = ref.read(drawerOpenProvider);
+            ref.read(drawerOpenProvider.notifier).state = !open;
+          },
+        ),
+        const SizedBox(width: 6),
+        Container(
+          width: 1,
+          height: 22,
+          color: AppColors.border1,
+          margin: const EdgeInsets.symmetric(horizontal: 2),
+        ),
+        const SizedBox(width: 6),
+        // Subflows aren't deployable on their own — no launch on subflow tabs.
+        if (!isSubflowTab)
+          AppButton(
+            variant: AppButtonVariant.primary,
+            size: AppButtonSize.sm,
+            icon: CartaIconData.play,
+            label: 'launch',
+            loading: _launching,
+            onTap: () async {
                   if (_launching) return;
                   setState(() => _launching = true);
                   try {
@@ -307,10 +287,8 @@ class _BuildBarState extends ConsumerState<_BuildBar> {
                   }
                 },
               ),
-            ),
-        ],
-      ),
-    );
+            ],
+          );
   }
 }
 

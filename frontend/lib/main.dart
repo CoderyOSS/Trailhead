@@ -18,6 +18,7 @@ import 'utils/workflow_to_yaml.dart';
 import 'widgets/mode_rail.dart';
 import 'widgets/top_bar.dart';
 import 'widgets/canvas/graph_canvas.dart';
+import 'widgets/empty_active_job_hero.dart';
 import 'widgets/empty_workflow_hero.dart';
 import 'widgets/runs_table.dart';
 import 'widgets/yaml_drawer.dart';
@@ -215,9 +216,11 @@ class _CartaShellState extends ConsumerState<CartaShell> {
           Positioned.fill(
             child: isEmptyWorkflow
                 ? EmptyWorkflowHero()
-                : mode == AppMode.history && job == null
-                    ? RunsTable()
-                    : GraphCanvas(),
+                : mode == AppMode.active && job == null
+                    ? EmptyActiveJobHero()
+                    : mode == AppMode.history && job == null
+                        ? RunsTable()
+                        : GraphCanvas(),
           ),
           Positioned(
             top: 0,

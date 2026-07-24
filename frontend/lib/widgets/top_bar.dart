@@ -32,8 +32,8 @@ class TopBar extends ConsumerWidget {
       child: BackdropFilter(
         filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
         child: Container(
-          constraints: const BoxConstraints(minHeight: 56),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+          height: 52,
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           decoration: BoxDecoration(
             color: AppColors.bg1.withValues(alpha: 0.92),
             border: Border(

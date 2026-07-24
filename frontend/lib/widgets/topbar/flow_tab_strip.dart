@@ -356,7 +356,7 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
     final statuses = ref.watch(flowStatusProvider);
 
     return SizedBox(
-      height: 40,
+      height: 52,
       child: Row(
         children: [
           Expanded(
@@ -503,7 +503,7 @@ class _TabChipState extends State<_TabChip> {
         : AppColors.info;
 
     return Container(
-      height: 40,
+      height: 52,
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: GestureDetector(
         onTap: widget.onTap,

@@ -87,11 +87,19 @@ class TopBar extends ConsumerWidget {
   }
 }
 
-class _BuildBar extends ConsumerWidget {
+class _BuildBar extends ConsumerStatefulWidget {
   _BuildBar();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_BuildBar> createState() => _BuildBarState();
+}
+
+class _BuildBarState extends ConsumerState<_BuildBar> {
+  bool _launching = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final ref = this.ref;
     final wf = ref.watch(workflowProvider);
     final workflows = ref.watch(workflowsProvider);
     final yamlOpen = ref.watch(yamlDrawerOpenProvider);
@@ -188,98 +196,120 @@ class _BuildBar extends ConsumerWidget {
       );
     }
 
-    return Row(
-      children: [
-        const Expanded(child: FlowTabStrip()),
-        if (dirty)
+    return SizedBox(
+      height: 56,
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          const Expanded(child: FlowTabStrip()),
+          if (dirty)
+            Padding(
+              padding: const EdgeInsets.only(right: 8, bottom: 6),
+              child: Text(
+                'saving…',
+                style: TextStyle(color: AppColors.fg2, fontSize: 11),
+              ),
+            ),
           Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Text(
-              'saving…',
-              style: TextStyle(color: AppColors.fg2, fontSize: 11),
+            padding: const EdgeInsets.only(bottom: 6),
+            child: AppButton(
+              variant:
+                  yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
+              size: AppButtonSize.sm,
+              icon: CartaIconData.file,
+              label: 'YAML',
+              onTap: () {
+                ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
+              },
             ),
           ),
-        AppButton(
-          variant: yamlOpen ? AppButtonVariant.secondary : AppButtonVariant.ghost,
-          size: AppButtonSize.sm,
-          icon: CartaIconData.file,
-          label: 'YAML',
-          onTap: () {
-            ref.read(yamlDrawerOpenProvider.notifier).state = !yamlOpen;
-          },
-        ),
-        const SizedBox(width: 8),
-        // Unified drawer (settings + logs) toggle.
-        AppButton(
-          variant: ref.watch(drawerOpenProvider)
-              ? AppButtonVariant.secondary
-              : AppButtonVariant.ghost,
-          size: AppButtonSize.sm,
-          icon: CartaIconData.panelRight,
-          label: 'panel',
-          onTap: () {
-            final open = ref.read(drawerOpenProvider);
-            ref.read(drawerOpenProvider.notifier).state = !open;
-          },
-        ),
-        const SizedBox(width: 8),
-        Container(
-          width: 1,
-          height: 22,
-          color: AppColors.border1,
-          margin: const EdgeInsets.symmetric(horizontal: 2),
-        ),
-        const SizedBox(width: 8),
-        // Subflows aren't deployable on their own — no launch on subflow tabs.
-        if (!isSubflowTab)
-          AppButton(
-            variant: AppButtonVariant.trail,
-            size: AppButtonSize.sm,
-            icon: CartaIconData.play,
-            label: 'launch',
-            onTap: () async {
-            try {
-              final yaml = workflowToYaml(wf);
-              // Gate: server-side validation first — a bad flow must not be
-              // persisted or launched. Blocks with a readable error list.
-              final errors = await ref
-                  .read(cartaApiProvider)
-                  .validateWorkflow(content: yaml);
-              if (errors.isNotEmpty) {
-                if (context.mounted) {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(
-                        'invalid workflow:\n${errors.take(3).join('\n')}',
-                      ),
-                    ),
-                  );
-                }
-                return;
-              }
-              await ref.read(workflowsApiProvider).replace(wf.name, yaml);
-              final jobsApi = ref.read(jobsApiProvider);
-              final job = await jobsApi.create(wf.name);
-              ref.invalidate(jobsProvider);
-              // Snapshot the launched workflow as the job's independent
-              // document — Active-mode edits never touch the workflow.
-              ref.read(jobDocumentsProvider.notifier).update((docs) {
-                final m = Map<String, WorkflowSummary>.from(docs);
-                m[job.id] = wf;
-                return m;
-              });
-              ref.read(selectedJobProvider.notifier).state = job;
-              ref.read(modeProvider.notifier).state = AppMode.active;
-            } catch (e) {
-              if (context.mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('launch failed: $e')),
-                );
-              }
-            }
-          },
-        ),
-      ],
+          const SizedBox(width: 8),
+          // Unified drawer (settings + logs) toggle.
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: AppButton(
+              variant: ref.watch(drawerOpenProvider)
+                  ? AppButtonVariant.secondary
+                  : AppButtonVariant.ghost,
+              size: AppButtonSize.sm,
+              icon: CartaIconData.panelRight,
+              label: 'panel',
+              onTap: () {
+                final open = ref.read(drawerOpenProvider);
+                ref.read(drawerOpenProvider.notifier).state = !open;
+              },
+            ),
+          ),
+          const SizedBox(width: 8),
+          Padding(
+            padding: const EdgeInsets.only(bottom: 6),
+            child: Container(
+              width: 1,
+              height: 22,
+              color: AppColors.border1,
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+            ),
+          ),
+          const SizedBox(width: 8),
+          // Subflows aren't deployable on their own — no launch on subflow tabs.
+          if (!isSubflowTab)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: AppButton(
+                variant: AppButtonVariant.primary,
+                size: AppButtonSize.sm,
+                icon: CartaIconData.play,
+                label: 'launch',
+                loading: _launching,
+                onTap: () async {
+                  if (_launching) return;
+                  setState(() => _launching = true);
+                  try {
+                    final yaml = workflowToYaml(wf);
+                    // Gate: server-side validation first — a bad flow must not be
+                    // persisted or launched. Blocks with a readable error list.
+                    final errors = await ref
+                        .read(cartaApiProvider)
+                        .validateWorkflow(content: yaml);
+                    if (errors.isNotEmpty) {
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(
+                              'invalid workflow:\n${errors.take(3).join('\n')}',
+                            ),
+                          ),
+                        );
+                      }
+                      return;
+                    }
+                    await ref.read(workflowsApiProvider).replace(wf.name, yaml);
+                    final jobsApi = ref.read(jobsApiProvider);
+                    final job = await jobsApi.create(wf.name);
+                    ref.invalidate(jobsProvider);
+                    // Snapshot the launched workflow as the job's independent
+                    // document — Active-mode edits never touch the workflow.
+                    ref.read(jobDocumentsProvider.notifier).update((docs) {
+                      final m = Map<String, WorkflowSummary>.from(docs);
+                      m[job.id] = wf;
+                      return m;
+                    });
+                    ref.read(selectedJobProvider.notifier).state = job;
+                    ref.read(modeProvider.notifier).state = AppMode.active;
+                  } catch (e) {
+                    if (context.mounted) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(content: Text('launch failed: $e')),
+                      );
+                    }
+                  } finally {
+                    if (mounted) setState(() => _launching = false);
+                  }
+                },
+              ),
+            ),
+        ],
+      ),
     );
   }
 }

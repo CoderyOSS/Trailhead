@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../theme/tokens.dart';
 import 'icons.dart';
 
-enum AppButtonVariant { primary, trail, secondary, ghost, danger }
+enum AppButtonVariant { primary, secondary, ghost, danger }
 
 enum AppButtonSize { sm, md }
 
@@ -11,6 +11,7 @@ class AppButton extends StatefulWidget {
   final AppButtonSize size;
   final String? label;
   final CartaIconData? icon;
+  final bool loading;
   final VoidCallback? onTap;
 
   AppButton({
@@ -19,6 +20,7 @@ class AppButton extends StatefulWidget {
     this.size = AppButtonSize.md,
     this.label,
     this.icon,
+    this.loading = false,
     this.onTap,
   });
 
@@ -41,8 +43,6 @@ class _AppButtonState extends State<AppButton> {
     switch (widget.variant) {
       case AppButtonVariant.primary:
         return AppColors.accent;
-      case AppButtonVariant.trail:
-        return const Color(0xFF8b6914);
       case AppButtonVariant.secondary:
         return _hovering ? AppColors.bg4 : AppColors.bg3;
       case AppButtonVariant.ghost:
@@ -56,8 +56,6 @@ class _AppButtonState extends State<AppButton> {
     switch (widget.variant) {
       case AppButtonVariant.primary:
         return AppColors.accentInk;
-      case AppButtonVariant.trail:
-        return const Color(0xFFfbf3e6);
       case AppButtonVariant.secondary:
         return AppColors.fg0;
       case AppButtonVariant.ghost:
@@ -70,7 +68,6 @@ class _AppButtonState extends State<AppButton> {
   Color get _border {
     switch (widget.variant) {
       case AppButtonVariant.primary:
-      case AppButtonVariant.trail:
       case AppButtonVariant.ghost:
         return Colors.transparent;
       case AppButtonVariant.secondary:
@@ -99,7 +96,17 @@ class _AppButtonState extends State<AppButton> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              if (widget.icon != null) ...[
+              if (widget.loading) ...[
+                SizedBox(
+                  width: _iconSize,
+                  height: _iconSize,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: _fg,
+                  ),
+                ),
+                if (widget.label != null) const SizedBox(width: 6),
+              ] else if (widget.icon != null) ...[
                 CartaIcon(
                   icon: widget.icon!,
                   size: _iconSize,

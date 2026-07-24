@@ -502,8 +502,9 @@ class _TabChipState extends State<_TabChip> {
         ? (widget.active ? AppColors.accent : AppColors.fg3)
         : AppColors.info;
 
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+    return Container(
+      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 2),
       child: GestureDetector(
         onTap: widget.onTap,
         onSecondaryTapUp: (d) => widget.onContextMenu(d.globalPosition),
@@ -512,21 +513,24 @@ class _TabChipState extends State<_TabChip> {
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _hovering = true),
           onExit: (_) => setState(() => _hovering = false),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.symmetric(horizontal: 10),
             decoration: BoxDecoration(
               color: widget.active
-                  ? AppColors.bg3
-                  : _hovering
-                      ? AppColors.bg2
-                      : Colors.transparent,
-              border: Border.all(
-                color: widget.active ? AppColors.border2 : AppColors.border1,
+                  ? AppColors.bg2
+                  : (_hovering ? AppColors.bg2 : Colors.transparent),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(6)),
+              border: Border(
+                bottom: BorderSide(
+                  color: widget.active ? AppColors.accent : Colors.transparent,
+                  width: 2,
+                ),
               ),
-              borderRadius: BorderRadius.circular(7),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 CartaIcon(
                   icon: isFlow

@@ -1,6 +1,6 @@
 {
   "frontend/.dart_tool/dartpad/web_plugin_registrant.dart": {
-    "mtime": 1784856695.4929519,
+    "mtime": 1784861569.267494,
     "ast_hash": "2dd787283f386aa1f153686ac3bc3e1a",
     "semantic_hash": ""
   },
@@ -40,12 +40,12 @@
     "semantic_hash": "770f4f65e02ca2fc57f46f4f4148d15d"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.h": {
-    "mtime": 1784856695.8999505,
+    "mtime": 1784861569.656492,
     "ast_hash": "decb9041b5e91a07e66f4664e5dac408",
     "semantic_hash": "decb9041b5e91a07e66f4664e5dac408"
   },
   "frontend/ios/Runner/GeneratedPluginRegistrant.m": {
-    "mtime": 1784856695.9019506,
+    "mtime": 1784861569.6574922,
     "ast_hash": "66755780f26d1485b53c42abfddaa13e",
     "semantic_hash": ""
   },
@@ -260,8 +260,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/top_bar.dart": {
-    "mtime": 1784843340.6832812,
-    "ast_hash": "be56c62fb3ae3ddda2bae83f787ec193",
+    "mtime": 1784861488.8209014,
+    "ast_hash": "c3cf94468b544122f155d7566e890018",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/view_toggle.dart": {
@@ -2030,8 +2030,8 @@
     "semantic_hash": ""
   },
   "frontend/lib/widgets/log_drawer/log_drawer.dart": {
-    "mtime": 1784786113.2489092,
-    "ast_hash": "cab04e0ab4e9a732d402aede630194cf",
+    "mtime": 1784861514.8127677,
+    "ast_hash": "16b6430fb1bd017feafc6c1915ffead7",
     "semantic_hash": ""
   },
   "frontend/lib/widgets/log_drawer/log_stream_view.dart": {
@@ -2050,7 +2050,7 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dart_plugin_registrant.dart": {
-    "mtime": 1784848294.65309,
+    "mtime": 1784861562.640527,
     "ast_hash": "e6e3ccc0956514696b35445bc6236ee8",
     "semantic_hash": ""
   },
@@ -2265,12 +2265,12 @@
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/main.dart.js": {
-    "mtime": 1784856724.530857,
-    "ast_hash": "42d0fae1bb3412ad0f8533e8f8bd84d2",
+    "mtime": 1784861597.7253542,
+    "ast_hash": "2d85969319e4587ae7d21714297a3d2b",
     "semantic_hash": ""
   },
   "frontend/.dart_tool/flutter_build/dabdc0bc896b4c1afc0509458b9e391d/outputs.json": {
-    "mtime": 1784856727.1508484,
+    "mtime": 1784861600.1703422,
     "ast_hash": "e4ba14d0ae05f99926b81a16e3810615",
     "semantic_hash": ""
   },
@@ -2332,6 +2332,11 @@
   "frontend/test/failures/marquee_painter_testImage.png": {
     "mtime": 1784703933.217435,
     "ast_hash": "d04b81a251b964b14ab6d4a38eaf9114",
+    "semantic_hash": ""
+  },
+  "docs/ui-polish-agenda.md": {
+    "mtime": 1784861169.9207258,
+    "ast_hash": "4389701a07982d8e34dd33b1128904f1",
     "semantic_hash": ""
   }
 }

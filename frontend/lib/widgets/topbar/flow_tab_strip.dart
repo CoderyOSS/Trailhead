@@ -383,20 +383,24 @@ class _FlowTabStripState extends ConsumerState<FlowTabStrip> {
                 return ReorderableDragStartListener(
                   key: ValueKey(tab.docId),
                   index: i,
-                  child: _TabChip(
-                    tab: tab,
-                    active: tab.kind == activeKind && tab.name == activeName,
-                    deployed: tab.kind == FlowTabKind.flow &&
-                        (statuses[tab.name]?.deployed ?? false),
-                    renaming: _renaming == tab,
-                    siblings: siblings,
-                    onTap: () {
-                      _closeMenus();
-                      switchToTab(ref, tab);
-                    },
-                    onContextMenu: (pos) => _showTabMenu(tab, pos),
-                    onRenameCommit: (name) => _commitRename(tab, name),
-                    onRenameCancel: () => setState(() => _renaming = null),
+                  child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: _TabChip(
+                      tab: tab,
+                      active:
+                          tab.kind == activeKind && tab.name == activeName,
+                      deployed: tab.kind == FlowTabKind.flow &&
+                          (statuses[tab.name]?.deployed ?? false),
+                      renaming: _renaming == tab,
+                      siblings: siblings,
+                      onTap: () {
+                        _closeMenus();
+                        switchToTab(ref, tab);
+                      },
+                      onContextMenu: (pos) => _showTabMenu(tab, pos),
+                      onRenameCommit: (name) => _commitRename(tab, name),
+                      onRenameCancel: () => setState(() => _renaming = null),
+                    ),
                   ),
                 );
               },
@@ -486,13 +490,16 @@ class _TabChipState extends State<_TabChip> {
   @override
   Widget build(BuildContext context) {
     if (widget.renaming) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
-        child: _TabRenameField(
-          initial: widget.tab.name,
-          siblings: widget.siblings,
-          onCommit: widget.onRenameCommit,
-          onCancel: widget.onRenameCancel,
+      return Align(
+        alignment: Alignment.bottomCenter,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(2, 0, 2, 3),
+          child: _TabRenameField(
+            initial: widget.tab.name,
+            siblings: widget.siblings,
+            onCommit: widget.onRenameCommit,
+            onCancel: widget.onRenameCancel,
+          ),
         ),
       );
     }
@@ -503,7 +510,7 @@ class _TabChipState extends State<_TabChip> {
         : AppColors.info;
 
     return Container(
-      height: 52,
+      height: 32,
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: GestureDetector(
         onTap: widget.onTap,

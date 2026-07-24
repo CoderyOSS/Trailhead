@@ -4,6 +4,7 @@ import '../../providers/log_provider.dart';
 import '../../providers/mode_provider.dart';
 import '../../providers/carta_provider.dart';
 import '../../theme/tokens.dart';
+import '../app_button.dart';
 import 'log_stream_view.dart';
 
 /// Log drawer. Selection-agnostic: shows a log point for every node with a
@@ -127,27 +128,16 @@ class _DrawerHeader extends ConsumerWidget {
           ),
           const Spacer(),
           // Clear accumulated frames for the current flow.
-          GestureDetector(
+          AppButton(
+            variant: AppButtonVariant.secondary,
+            size: AppButtonSize.sm,
+            label: 'clear',
             onTap: () {
               final name = ref.read(canvasWorkflowProvider).name;
               if (name.isNotEmpty) {
                 ref.read(logBufferProvider.notifier).clear(name);
               }
             },
-            child: MouseRegion(
-              cursor: SystemMouseCursors.click,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                child: Text(
-                  'clear',
-                  style: TextStyle(
-                    fontFamily: 'monospace',
-                    fontSize: 10.5,
-                    color: AppColors.fg3,
-                  ),
-                ),
-              ),
-            ),
           ),
           const SizedBox(width: 6),
           Container(

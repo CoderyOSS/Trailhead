@@ -350,39 +350,28 @@ class _JobBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (mode == AppMode.active) {
-      // Active bar: job dropdown on the left; YAML + stop/reload on the
-      // right; running-status chip on a second row under the controls.
-      return Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+      // Active bar: job dropdown on the left with the running-status chip
+      // right next to it (left-justified); YAML + stop/reload on the right.
+      return Row(
         children: [
-          Row(
-            children: [
-              _JobSelect(job: job),
-              const Spacer(),
-              AppButton(
-                variant: yamlOpen
-                    ? AppButtonVariant.secondary
-                    : AppButtonVariant.ghost,
-                size: AppButtonSize.sm,
-                icon: CartaIconData.file,
-                label: 'YAML',
-                onTap: onToggleYaml,
-              ),
-              if (job != null) ...[
-                const SizedBox(width: 6),
-                _JobControls(job: job!),
-              ],
-            ],
+          _JobSelect(job: job),
+          if (job != null) ...[
+            const SizedBox(width: 6),
+            StatusTag(status: job!.jobState),
+          ],
+          const Spacer(),
+          AppButton(
+            variant: yamlOpen
+                ? AppButtonVariant.secondary
+                : AppButtonVariant.ghost,
+            size: AppButtonSize.sm,
+            icon: CartaIconData.file,
+            label: 'YAML',
+            onTap: onToggleYaml,
           ),
           if (job != null) ...[
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                const Spacer(),
-                StatusTag(status: job!.jobState),
-              ],
-            ),
+            const SizedBox(width: 6),
+            _JobControls(job: job!),
           ],
         ],
       );

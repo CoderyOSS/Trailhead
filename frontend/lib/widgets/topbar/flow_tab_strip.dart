@@ -520,77 +520,68 @@ class _TabChipState extends State<_TabChip> {
           cursor: SystemMouseCursors.click,
           onEnter: (_) => setState(() => _hovering = true),
           onExit: (_) => setState(() => _hovering = false),
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // bg2 fill with rounded top corners only. No border — a
-              // non-uniform Border.bottom paired with this borderRadius
-              // makes Flutter fall back to per-side painting that ignores
-              // the rounded clip path, bleeding the accent across the
-              // full rect and peeking out at the rounded corners.
-              AnimatedContainer(
-                duration: const Duration(milliseconds: 120),
-                padding: const EdgeInsets.fromLTRB(10, 0, 10, 2),
-                decoration: BoxDecoration(
-                  color: widget.active
-                      ? AppColors.bg2
-                      : (_hovering ? AppColors.bg2 : Colors.transparent),
-                  borderRadius:
-                      const BorderRadius.vertical(top: Radius.circular(6)),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    CartaIcon(
-                      icon: isFlow
-                          ? CartaIconData.workflow
-                          : CartaIconData.gitBranch,
-                      size: 12,
-                      color: iconColor,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 120),
+            padding: const EdgeInsets.fromLTRB(10, 0, 10, 2),
+            decoration: BoxDecoration(
+              color: widget.active
+                  ? AppColors.bg2
+                  : (_hovering ? AppColors.bg2 : Colors.transparent),
+              borderRadius:
+                  const BorderRadius.vertical(top: Radius.circular(6)),
+            ),
+            // Accent underline on a separate decoration layer with NO
+            // borderRadius — the bottom edge of the rect is straight (only
+            // the top is rounded), so a rectangular Border.bottom paints a
+            // clean line with no clip-path bleed at the corners.
+            foregroundDecoration: widget.active
+                ? BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(width: 2, color: AppColors.accent),
                     ),
-                    const SizedBox(width: 6),
-                    ConstrainedBox(
-                      constraints: const BoxConstraints(maxWidth: 220),
-                      child: Text(
-                        widget.tab.name,
-                        style: TextStyle(
-                          fontFamily: 'monospace',
-                          fontSize: 11.5,
-                          fontWeight: widget.active
-                              ? FontWeight.w600
-                              : FontWeight.w500,
-                          color: widget.active ? AppColors.fg0 : AppColors.fg1,
-                          height: 1.2,
-                        ),
-                        overflow: TextOverflow.ellipsis,
-                      ),
+                  )
+                : null,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                CartaIcon(
+                  icon: isFlow
+                      ? CartaIconData.workflow
+                      : CartaIconData.gitBranch,
+                  size: 12,
+                  color: iconColor,
+                ),
+                const SizedBox(width: 6),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 220),
+                  child: Text(
+                    widget.tab.name,
+                    style: TextStyle(
+                      fontFamily: 'monospace',
+                      fontSize: 11.5,
+                      fontWeight: widget.active
+                          ? FontWeight.w600
+                          : FontWeight.w500,
+                      color: widget.active ? AppColors.fg0 : AppColors.fg1,
+                      height: 1.2,
                     ),
-                    if (widget.deployed) ...[
-                      const SizedBox(width: 6),
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: AppColors.success,
-                          shape: BoxShape.circle,
-                        ),
-                      ),
-                    ],
-                  ],
+                    overflow: TextOverflow.ellipsis,
+                  ),
                 ),
-              ),
-              // Accent underline as a separate plain rect overlay — no
-              // borderRadius interaction, no clip artifacts.
-              if (widget.active)
-                Positioned(
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  height: 2,
-                  child: Container(color: AppColors.accent),
-                ),
-            ],
+                if (widget.deployed) ...[
+                  const SizedBox(width: 6),
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: BoxDecoration(
+                      color: AppColors.success,
+                      shape: BoxShape.circle,
+                    ),
+                  ),
+                ],
+              ],
+            ),
           ),
         ),
       ),

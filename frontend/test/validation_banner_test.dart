@@ -12,7 +12,7 @@ void main() {
           validationErrorsProvider
               .overrideWith((ref) => const <String>[]),
         ],
-        child: const MaterialApp(home: Scaffold(body: ValidationBanner())),
+        child: MaterialApp(home: Scaffold(body: ValidationBanner())),
       ),
     );
 
@@ -29,7 +29,7 @@ void main() {
                 'path name: "missing"',
               ]),
         ],
-        child: const MaterialApp(home: Scaffold(body: ValidationBanner())),
+        child: MaterialApp(home: Scaffold(body: ValidationBanner())),
       ),
     );
 

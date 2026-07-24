@@ -9,7 +9,7 @@ import '../../widgets/icons.dart';
 /// installed from, and the runtime mode. Read-only — local-install mode fixes
 /// the project dir at boot, so there is nothing to edit here.
 class InstanceSection extends ConsumerWidget {
-  const InstanceSection({super.key});
+  InstanceSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

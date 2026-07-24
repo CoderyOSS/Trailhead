@@ -14,7 +14,7 @@ import '../node_drawer/payload_editor.dart';
 /// literals stored server-side in configs/*.yaml). Each card expands to a
 /// PayloadEditor bound to its source. Nodes opt in via config.config_key.
 class ConfigsSection extends ConsumerWidget {
-  const ConfigsSection({super.key});
+  ConfigsSection({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

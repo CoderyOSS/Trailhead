@@ -344,7 +344,7 @@ class _YamlDrawerState extends ConsumerState<YamlDrawer> {
             ),
           ),
           // validation problems for this workflow (deploy-blocking)
-          const ValidationBanner(),
+          ValidationBanner(),
           // body
           Expanded(
             child: Container(

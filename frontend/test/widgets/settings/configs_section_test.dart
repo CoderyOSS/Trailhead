@@ -59,7 +59,7 @@ void main() {
   testWidgets('renders config keys from the provider', (tester) async {
     await tester.pumpWidget(ProviderScope(
       overrides: [configsApiProvider.overrideWithValue(_FakeConfigsApi())],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(child: ConfigsSection()),
         ),
@@ -76,7 +76,7 @@ void main() {
     final fake = _FakeEmptyApi();
     await tester.pumpWidget(ProviderScope(
       overrides: [configsApiProvider.overrideWithValue(fake)],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(child: ConfigsSection()),
         ),
@@ -95,7 +95,7 @@ void main() {
         configsApiProvider.overrideWithValue(fake),
         cartaApiProvider.overrideWithValue(_StubCartaApi()),
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(child: ConfigsSection()),
         ),
@@ -131,7 +131,7 @@ void main() {
         configsApiProvider.overrideWithValue(fake),
         cartaApiProvider.overrideWithValue(_StubCartaApi()),
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(child: ConfigsSection()),
         ),
@@ -163,7 +163,7 @@ void main() {
         configsApiProvider.overrideWithValue(fake),
         cartaApiProvider.overrideWithValue(_StubCartaApi()),
       ],
-      child: const MaterialApp(
+      child: MaterialApp(
         home: Scaffold(
           body: SingleChildScrollView(child: ConfigsSection()),
         ),

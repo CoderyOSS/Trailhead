@@ -14,7 +14,7 @@ import 'log_stream_view.dart';
 /// (client-side filter). Right pane shows the aggregated stream of frames
 /// from all toggled-on points, ordered by timestamp.
 class LogDrawer extends ConsumerStatefulWidget {
-  const LogDrawer({super.key});
+  LogDrawer({super.key});
 
   @override
   ConsumerState<LogDrawer> createState() => _LogDrawerState();
@@ -92,7 +92,7 @@ class _LogDrawerState extends ConsumerState<LogDrawer> {
                       ),
               ),
               // Right: aggregated stream
-              const Expanded(child: LogStreamView()),
+              Expanded(child: LogStreamView()),
             ],
           ),
         ),

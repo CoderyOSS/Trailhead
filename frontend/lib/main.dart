@@ -219,7 +219,7 @@ class _CartaShellState extends ConsumerState<CartaShell> {
                     ? RunsTable()
                     : GraphCanvas(),
           ),
-          const Positioned(
+          Positioned(
             top: 0,
             left: 0,
             right: 0,

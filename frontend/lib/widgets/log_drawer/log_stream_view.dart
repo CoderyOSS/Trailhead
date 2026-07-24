@@ -8,7 +8,7 @@ import '../../theme/tokens.dart';
 /// Aggregated log stream. Merges frames from all enabled log points into a
 /// single timestamp-ordered view. Auto-scrolls to the latest frame.
 class LogStreamView extends ConsumerStatefulWidget {
-  const LogStreamView({super.key});
+  LogStreamView({super.key});
 
   @override
   ConsumerState<LogStreamView> createState() => _LogStreamViewState();

@@ -193,7 +193,7 @@ class _BuildBarState extends ConsumerState<_BuildBar> {
 
     return Row(
       children: [
-        const Expanded(child: FlowTabStrip()),
+        Expanded(child: FlowTabStrip()),
         if (dirty)
           Padding(
             padding: const EdgeInsets.only(right: 6),

@@ -11,7 +11,7 @@ import '../../widgets/icons.dart';
 /// node types and packaged subflows. Register/unregister writes through to
 /// `~/.carta/projects.yaml` (idempotent — no restart needed).
 class ModulesSection extends ConsumerStatefulWidget {
-  const ModulesSection({super.key});
+  ModulesSection({super.key});
 
   @override
   ConsumerState<ModulesSection> createState() => _ModulesSectionState();

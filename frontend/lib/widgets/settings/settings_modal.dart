@@ -391,13 +391,13 @@ class _SettingsDialogState extends ConsumerState<SettingsDialog>
       case 'messaging':
         return MessagingSection();
       case 'modules':
-        return const ModulesSection();
+        return ModulesSection();
       case 'packages':
-        return const PackagesSection();
+        return PackagesSection();
       case 'configs':
-        return const ConfigsSection();
+        return ConfigsSection();
       case 'instance':
-        return const InstanceSection();
+        return InstanceSection();
       default:
         return const SizedBox.shrink();
     }

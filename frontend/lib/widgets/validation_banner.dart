@@ -7,7 +7,7 @@ import '../theme/tokens.dart';
 /// Hidden when the workflow is valid. Shown above the canvas in build mode
 /// and inside the YAML drawer.
 class ValidationBanner extends ConsumerWidget {
-  const ValidationBanner({super.key});
+  ValidationBanner({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {

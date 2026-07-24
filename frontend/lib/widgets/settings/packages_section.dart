@@ -13,7 +13,7 @@ import '../../widgets/icons.dart';
 /// `pending.json` on the backend and applied at next BEAM restart via the
 /// `apply_pending!/0` boot hook.
 class PackagesSection extends ConsumerStatefulWidget {
-  const PackagesSection({super.key});
+  PackagesSection({super.key});
 
   @override
   ConsumerState<PackagesSection> createState() => _PackagesSectionState();

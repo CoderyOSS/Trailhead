@@ -94,7 +94,7 @@ class UnifiedDrawer extends ConsumerWidget {
                 onClose: onClose,
                 isPortrait: isPortrait,
               );
-              const logsPane = LogDrawer();
+              final logsPane = LogDrawer();
 
               if (viewMode == DrawerViewMode.logs) return logsPane;
               if (viewMode == DrawerViewMode.settings) return settingsPane;

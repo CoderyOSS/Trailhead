@@ -18,7 +18,7 @@ import '../icons.dart';
 /// reorder (persisted via flow-order for flows), `+` menu to create, and a
 /// context/long-press menu for rename + delete (no close buttons).
 class FlowTabStrip extends ConsumerStatefulWidget {
-  const FlowTabStrip({super.key});
+  FlowTabStrip({super.key});
 
   @override
   ConsumerState<FlowTabStrip> createState() => _FlowTabStripState();

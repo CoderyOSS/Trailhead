@@ -677,10 +677,7 @@ class _JobControls extends ConsumerWidget {
             onPressed: () async {
               Navigator.pop(ctx);
               try {
-                final api = ref.read(jobsApiProvider);
-                final cancelled = await api.cancel(jobId);
-                ref.read(selectedJobProvider.notifier).state = cancelled;
-                ref.invalidate(jobsProvider);
+                await cancelJob(ref, jobId);
               } catch (e) {
                 if (context.mounted) {
                   ScaffoldMessenger.of(context).showSnackBar(

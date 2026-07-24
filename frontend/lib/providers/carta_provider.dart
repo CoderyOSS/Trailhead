@@ -1,6 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../services/carta_api.dart';
+import '../services/jobs_api.dart';
 import '../widgets/mode_rail.dart';
+import 'api_provider.dart';
 import 'mode_provider.dart';
 
 /// Carta runtime API client. Targets the same-origin Bun proxy at
@@ -58,3 +60,14 @@ final installedNodesProvider = FutureProvider<List<InstalledNode>>((ref) async {
 /// POST /api/v1/workflows/validate. Empty = valid (or not yet checked).
 /// Updated by the shell after autosave and on workflow switch.
 final validationErrorsProvider = StateProvider<List<String>>((ref) => const []);
+
+/// Cancel [jobId] via [JobsApi], then clear [selectedJobProvider] and
+/// refresh [jobsProvider]. Clearing the selection (rather than holding the
+/// cancelled [JobDto]) lets the Active-mode empty-state hero render — a
+/// cancelled job is no longer the "active" canvas. The job remains in the
+/// refreshed [jobsProvider] list and is re-selectable from the runs table.
+Future<void> cancelJob(WidgetRef ref, String jobId) async {
+  await ref.read(jobsApiProvider).cancel(jobId);
+  ref.read(selectedJobProvider.notifier).state = null;
+  ref.invalidate(jobsProvider);
+}

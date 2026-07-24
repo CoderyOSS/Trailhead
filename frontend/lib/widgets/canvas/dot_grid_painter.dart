@@ -18,27 +18,36 @@ class DotGridPainter extends CustomPainter {
     final originX = pan.dx;
     final originY = pan.dy;
 
-    // Axes — always draw
-    final xAxisPaint = Paint()
-      ..color = AppColors.accent
-      ..strokeWidth = 1.5;
-    final yAxisPaint = Paint()
-      ..color = AppColors.trail
+    // Axes + major grid lines — subtle theme-aware gray.
+    // Origin axes always drawn; repeating lines every 10 grid units (= 320 world-px).
+    final axisPaint = Paint()
+      ..color = AppColors.chartGrid
       ..strokeWidth = 1.5;
 
     if (originY >= 0 && originY <= size.height) {
-      canvas.drawLine(
-        Offset(0, originY),
-        Offset(size.width, originY),
-        xAxisPaint,
-      );
+      canvas.drawLine(Offset(0, originY), Offset(size.width, originY), axisPaint);
     }
     if (originX >= 0 && originX <= size.width) {
-      canvas.drawLine(
-        Offset(originX, 0),
-        Offset(originX, size.height),
-        yAxisPaint,
-      );
+      canvas.drawLine(Offset(originX, 0), Offset(originX, size.height), axisPaint);
+    }
+
+    const majorEvery = 10;
+    final majorSpacing = spacing * majorEvery;
+    if (majorSpacing >= 2) {
+      final firstV = (-originX / majorSpacing).ceil();
+      final lastV = ((size.width - originX) / majorSpacing).floor();
+      for (var k = firstV; k <= lastV; k++) {
+        if (k == 0) continue;
+        final x = originX + k * majorSpacing;
+        canvas.drawLine(Offset(x, 0), Offset(x, size.height), axisPaint);
+      }
+      final firstH = (-originY / majorSpacing).ceil();
+      final lastH = ((size.height - originY) / majorSpacing).floor();
+      for (var k = firstH; k <= lastH; k++) {
+        if (k == 0) continue;
+        final y = originY + k * majorSpacing;
+        canvas.drawLine(Offset(0, y), Offset(size.width, y), axisPaint);
+      }
     }
 
     // Dot grid — hide when zoomed too far out

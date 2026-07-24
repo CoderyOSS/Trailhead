@@ -176,8 +176,8 @@ class _DrawerHeader extends ConsumerWidget {
           if (viewMode == DrawerViewMode.both)
             _HeaderIconButton(
               icon: layout == DrawerSplitLayout.horizontal
-                  ? Icons.swap_vert
-                  : Icons.swap_horiz,
+                  ? Icons.vertical_split
+                  : Icons.view_column,
               tooltip: layout == DrawerSplitLayout.horizontal
                   ? 'stack panes vertically'
                   : 'arrange panes side by side',
